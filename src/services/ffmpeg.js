@@ -113,9 +113,24 @@ async function extractClip(filePath, startSeconds, endSeconds, outPath) {
   );
 }
 
+// Checked once at server startup so a missing ffmpeg/ffprobe fails loudly at boot
+// instead of surfacing as a confusing ENOENT deep inside a client's job.
+async function checkAvailable() {
+  const missing = [];
+  for (const [name, bin] of [['ffmpeg', FFMPEG_PATH], ['ffprobe', FFPROBE_PATH]]) {
+    try {
+      await execFileAsync(bin, ['-version'], { maxBuffer: MAX_BUFFER });
+    } catch {
+      missing.push(name);
+    }
+  }
+  return missing;
+}
+
 module.exports = {
   getDuration,
   detectSilences,
   extractFrame,
   extractClip,
+  checkAvailable,
 };

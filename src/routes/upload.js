@@ -1,12 +1,21 @@
 const express = require('express');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuid } = require('uuid');
 
-const { UPLOAD_DIR, MAX_UPLOAD_MB } = require('../config');
+const { UPLOAD_DIR, MAX_UPLOAD_MB, UPLOAD_RATE_LIMIT_PER_HOUR } = require('../config');
 const db = require('../db');
-const { processJob } = require('../services/pipeline');
+const { enqueue } = require('../services/queue');
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: UPLOAD_RATE_LIMIT_PER_HOUR,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many uploads from this client - try again later' },
+});
 
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -31,7 +40,7 @@ const upload = multer({
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.post('/', uploadLimiter, (req, res) => {
   upload.single('video')(req, res, (err) => {
     if (err) {
       return res.status(400).json({ error: err.message });
@@ -47,10 +56,8 @@ router.post('/', (req, res) => {
       storedPath: req.file.path,
     });
 
-    // Fire and forget: the client polls GET /api/jobs/:id for progress.
-    processJob(jobId, req.file.path).catch((err) => {
-      console.error(`[job ${jobId}] processing failed:`, err);
-    });
+    // Queued, not fired directly: the client polls GET /api/jobs/:id for progress.
+    enqueue(jobId, req.file.path);
 
     res.status(202).json({ jobId });
   });

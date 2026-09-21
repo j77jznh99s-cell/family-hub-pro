@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { v4: uuid } = require('uuid');
 
-const { CLIPS_DIR, CLIP_COUNT } = require('../config');
+const { CLIPS_DIR, CLIP_COUNT, DELETE_SOURCE_AFTER_PROCESSING } = require('../config');
 const ffmpeg = require('./ffmpeg');
 const { buildCandidateSegments } = require('./segmenter');
 const { analyzeSegments } = require('./claudeAnalyzer');
@@ -58,6 +58,12 @@ async function processJob(jobId, videoPath) {
     }
 
     db.updateJob(jobId, { status: 'complete' });
+
+    if (DELETE_SOURCE_AFTER_PROCESSING) {
+      // Clips are already cut from it - the source video is the biggest file per job,
+      // and disk on most deploy targets is limited/ephemeral. Safe to drop it now.
+      await fs.rm(videoPath, { force: true });
+    }
   } catch (err) {
     db.updateJob(jobId, { status: 'failed', error: err.message });
     throw err;

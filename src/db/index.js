@@ -54,6 +54,18 @@ function getClip(jobId, clipId) {
   return db.prepare('SELECT * FROM clips WHERE job_id = ? AND id = ?').get(jobId, clipId);
 }
 
+// A job left in 'processing' means the server died mid-pipeline (crash/restart/deploy) -
+// nothing is going to resume it, so surface that instead of leaving it stuck forever.
+function failStaleProcessingJobs() {
+  const result = db
+    .prepare(
+      `UPDATE jobs SET status = 'failed', error = 'Interrupted by a server restart - please re-upload', updated_at = datetime('now')
+       WHERE status = 'processing'`
+    )
+    .run();
+  return result.changes;
+}
+
 module.exports = {
   db,
   createJob,
@@ -63,4 +75,5 @@ module.exports = {
   insertClip,
   getClipsForJob,
   getClip,
+  failStaleProcessingJobs,
 };

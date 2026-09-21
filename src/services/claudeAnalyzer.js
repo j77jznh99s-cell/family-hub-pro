@@ -60,6 +60,48 @@ Respond with ONLY a JSON array, one object per segment, in the same order they w
 [{"index": 0, "title": "short punchy title", "description": "one sentence on why this moment stands out", "score": 0-10}]
 No prose outside the JSON array.`;
 
+async function requestScores(content, { strict } = {}) {
+  const anthropic = getClient();
+  const messages = [{ role: 'user', content }];
+  if (strict) {
+    messages.push(
+      { role: 'assistant', content: 'Sorry, let me redo that.' },
+      {
+        role: 'user',
+        content:
+          'That response could not be parsed as JSON. Reply with ONLY the JSON array - no markdown fences, no explanation, nothing before or after it.',
+      }
+    );
+  }
+
+  const response = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 2048,
+    system: SYSTEM_PROMPT,
+    messages,
+  });
+
+  const text = response.content
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n');
+
+  return extractJsonArray(text);
+}
+
+// Falls back to picking clips in chronological order with generic titles rather than
+// failing the whole job - by this point ffmpeg has already done the expensive silence
+// detection + segmentation work, so a Claude hiccup (bad JSON, API error) shouldn't
+// throw all of that away.
+function fallbackResults(segments) {
+  return segments.map((_, i) => ({
+    index: i,
+    title: `Clip ${i + 1}`,
+    description: 'Auto-selected (AI scoring was unavailable for this video).',
+    score: segments.length - i, // preserves chronological order once sorted by score
+  }));
+}
+
 async function analyzeSegments(videoPath, segments, framesDir) {
   if (segments.length === 0) return [];
 
@@ -85,20 +127,18 @@ async function analyzeSegments(videoPath, segments, framesDir) {
     text: `There are ${segments.length} segments total (indices 0-${segments.length - 1}). Return the JSON array now.`,
   });
 
-  const anthropic = getClient();
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 2048,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content }],
-  });
-
-  const text = response.content
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n');
-
-  const results = extractJsonArray(text);
+  let results;
+  try {
+    results = await requestScores(content);
+  } catch (firstErr) {
+    console.warn('[claudeAnalyzer] first scoring attempt failed, retrying once:', firstErr.message);
+    try {
+      results = await requestScores(content, { strict: true });
+    } catch (secondErr) {
+      console.error('[claudeAnalyzer] scoring failed twice, falling back to chronological order:', secondErr.message);
+      results = fallbackResults(segments);
+    }
+  }
 
   return segments.map((segment, i) => {
     const match = results.find((r) => r.index === i) || {};
