@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuid } = require('uuid');
 
-const { UPLOAD_DIR, MAX_UPLOAD_MB, UPLOAD_RATE_LIMIT_PER_HOUR } = require('../config');
+const { UPLOAD_DIR, MAX_UPLOAD_MB, UPLOAD_RATE_LIMIT_PER_HOUR, STRIPE_SECRET_KEY } = require('../config');
 const db = require('../db');
 const { enqueue } = require('../services/queue');
 
@@ -19,7 +19,7 @@ const uploadLimiter = rateLimit({
 
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-const storage = multer.diskStorage({
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.mp4';
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage,
+  storage: diskStorage,
   limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith('video/')) {
@@ -40,8 +40,8 @@ const upload = multer({
 
 const router = express.Router();
 
-router.post('/', uploadLimiter, (req, res) => {
-  upload.single('video')(req, res, (err) => {
+router.post('/', uploadLimiter, (req, res, next) => {
+  upload.single('video')(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -49,17 +49,36 @@ router.post('/', uploadLimiter, (req, res) => {
       return res.status(400).json({ error: 'No video file was uploaded (field name: video)' });
     }
 
-    const jobId = uuid();
-    db.createJob({
-      id: jobId,
-      originalName: req.file.originalname,
-      storedPath: req.file.path,
-    });
+    try {
+      if (STRIPE_SECRET_KEY) {
+        const accountId = req.body?.accountId || req.query.accountId;
+        if (!accountId) {
+          await fs.promises.rm(req.file.path, { force: true });
+          return res.status(400).json({ error: 'accountId is required' });
+        }
+        const spent = await db.spendCreditIfAvailable(accountId);
+        if (!spent) {
+          await fs.promises.rm(req.file.path, { force: true });
+          return res.status(402).json({
+            error: 'No credits remaining for this account. Buy more via POST /api/billing/checkout.',
+          });
+        }
+      }
 
-    // Queued, not fired directly: the client polls GET /api/jobs/:id for progress.
-    enqueue(jobId, req.file.path);
+      const jobId = uuid();
+      await db.createJob({
+        id: jobId,
+        originalName: req.file.originalname,
+        storedPath: req.file.path,
+      });
 
-    res.status(202).json({ jobId });
+      // Queued, not fired directly: the client polls GET /api/jobs/:id for progress.
+      await enqueue(jobId, req.file.path);
+
+      res.status(202).json({ jobId });
+    } catch (dbErr) {
+      next(dbErr);
+    }
   });
 });
 

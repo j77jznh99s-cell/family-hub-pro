@@ -4,17 +4,30 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { PORT } = require('./config');
+const { PORT, STRIPE_SECRET_KEY } = require('./config');
 const { requireAccessToken } = require('./middleware/auth');
 const uploadRouter = require('./routes/upload');
 const jobsRouter = require('./routes/jobs');
 const clipsRouter = require('./routes/clips');
+const billingRouter = require('./routes/billing');
+const { stripeWebhookHandler } = require('./routes/stripeWebhook');
 const ffmpeg = require('./services/ffmpeg');
 const db = require('./db');
 
 const app = express();
 
 app.use(cors());
+
+// Must come before express.json() - Stripe's signature check needs the raw request body.
+// Not behind requireAccessToken: Stripe doesn't have our token, the signature is the auth.
+if (STRIPE_SECRET_KEY) {
+  app.post(
+    '/api/billing/webhook',
+    express.raw({ type: 'application/json' }),
+    stripeWebhookHandler
+  );
+}
+
 app.use(express.json());
 
 app.get('/healthz', (req, res) => res.json({ ok: true }));
@@ -22,6 +35,9 @@ app.get('/healthz', (req, res) => res.json({ ok: true }));
 app.use('/api/jobs/:jobId/clips', requireAccessToken, clipsRouter);
 app.use('/api/jobs', requireAccessToken, jobsRouter);
 app.use('/api/upload', requireAccessToken, uploadRouter);
+if (STRIPE_SECRET_KEY) {
+  app.use('/api/billing', requireAccessToken, billingRouter);
+}
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -40,7 +56,7 @@ async function start() {
     );
   }
 
-  const recovered = db.failStaleProcessingJobs();
+  const recovered = await db.failStaleProcessingJobs();
   if (recovered > 0) {
     console.warn(`Marked ${recovered} job(s) left mid-processing from a prior run as failed.`);
   }

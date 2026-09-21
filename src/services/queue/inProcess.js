@@ -1,10 +1,10 @@
-// Small in-process job queue. Uploads fire fast (multer already wrote the file to disk),
-// but the actual ffmpeg + Claude pipeline is heavy - without this, N simultaneous uploads
-// would kick off N concurrent ffmpeg processes and Claude requests on what's usually a
-// single small instance. MAX_CONCURRENT_JOBS keeps that bounded (default: 1 at a time).
+// Default queue driver - zero config, used whenever REDIS_URL is unset. Jobs live only
+// in memory: fine for a single instance, but a crash/restart loses anything still queued
+// (in-flight jobs are separately recovered as 'failed' by db.failStaleProcessingJobs).
+// See queue/bullmq.js for the persistent, multi-instance-capable alternative.
 
-const { MAX_CONCURRENT_JOBS } = require('../config');
-const { processJob } = require('./pipeline');
+const { MAX_CONCURRENT_JOBS } = require('../../config');
+const { processJob } = require('../pipeline');
 
 const pending = [];
 let active = 0;

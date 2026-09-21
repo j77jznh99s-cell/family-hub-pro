@@ -23,3 +23,20 @@ CREATE TABLE IF NOT EXISTS clips (
 );
 
 CREATE INDEX IF NOT EXISTS idx_clips_job_id ON clips(job_id);
+
+-- One row per paying account (keyed by whatever the caller uses to identify a client -
+-- e.g. their ACCESS_TOKEN or an email). Only used when Stripe billing is enabled;
+-- absent that, uploads aren't gated on credits at all.
+CREATE TABLE IF NOT EXISTS accounts (
+  id TEXT PRIMARY KEY,
+  credits INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Stripe can and does deliver the same webhook event more than once - this makes
+-- crediting an account idempotent per event id.
+CREATE TABLE IF NOT EXISTS processed_stripe_events (
+  id TEXT PRIMARY KEY,
+  processed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

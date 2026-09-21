@@ -30,16 +30,25 @@ function serializeJob(job) {
   };
 }
 
-router.get('/', (req, res) => {
-  res.json(db.listJobs().map(serializeJob));
+router.get('/', async (req, res, next) => {
+  try {
+    const jobs = await db.listJobs();
+    res.json(jobs.map(serializeJob));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get('/:id', (req, res) => {
-  const job = db.getJob(req.params.id);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
+router.get('/:id', async (req, res, next) => {
+  try {
+    const job = await db.getJob(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
 
-  const clips = db.getClipsForJob(job.id).map(serializeClip);
-  res.json({ ...serializeJob(job), clips });
+    const clips = (await db.getClipsForJob(job.id)).map(serializeClip);
+    res.json({ ...serializeJob(job), clips });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

@@ -2,6 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { extractFrame } = require('./ffmpeg');
+const { textForRange } = require('./transcription');
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 const FRAMES_PER_SEGMENT = 3;
@@ -52,7 +53,7 @@ function extractJsonArray(text) {
   return JSON.parse(candidate.slice(start, end + 1));
 }
 
-const SYSTEM_PROMPT = `You are a video producer helping select the best short-form clips from a longer video (podcast, webinar, or talk).
+const SYSTEM_PROMPT_VISUAL_ONLY = `You are a video producer helping select the best short-form clips from a longer video (podcast, webinar, or talk).
 You will be shown a few sample frames from each candidate segment, in order, along with its start/end time in the source video.
 You cannot hear the audio, so judge purely on what's visually suggested: facial expressions, gestures, on-screen text/slides, scene changes, and general energy.
 For each segment, decide how likely it is to make a compelling standalone short clip (a strong visual hook, a moment of reaction, a slide with a clear takeaway, etc).
@@ -60,7 +61,16 @@ Respond with ONLY a JSON array, one object per segment, in the same order they w
 [{"index": 0, "title": "short punchy title", "description": "one sentence on why this moment stands out", "score": 0-10}]
 No prose outside the JSON array.`;
 
-async function requestScores(content, { strict } = {}) {
+const SYSTEM_PROMPT_WITH_TRANSCRIPT = `You are a video producer helping select the best short-form clips from a longer video (podcast, webinar, or talk).
+For each candidate segment you'll see its start/end time, a transcript of what was actually said during it, and a few sample frames.
+Judge primarily on the transcript - a strong hook, a surprising claim, a complete and quotable thought, humor, a clear takeaway - and use the frames as supporting context (expression, energy, on-screen text).
+Prefer segments that are a self-contained thought: they shouldn't need what came immediately before or after to make sense.
+For each segment, decide how likely it is to make a compelling standalone short clip.
+Respond with ONLY a JSON array, one object per segment, in the same order they were given, with this shape:
+[{"index": 0, "title": "short punchy title", "description": "one sentence on why this moment stands out", "score": 0-10}]
+No prose outside the JSON array.`;
+
+async function requestScores(content, systemPrompt, { strict } = {}) {
   const anthropic = getClient();
   const messages = [{ role: 'user', content }];
   if (strict) {
@@ -77,7 +87,7 @@ async function requestScores(content, { strict } = {}) {
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 2048,
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages,
   });
 
@@ -102,18 +112,21 @@ function fallbackResults(segments) {
   }));
 }
 
-async function analyzeSegments(videoPath, segments, framesDir) {
+async function analyzeSegments(videoPath, segments, framesDir, transcript = null) {
   if (segments.length === 0) return [];
 
   const perSegmentFrames = await extractSegmentFrames(videoPath, segments, framesDir);
+  const systemPrompt = transcript ? SYSTEM_PROMPT_WITH_TRANSCRIPT : SYSTEM_PROMPT_VISUAL_ONLY;
 
   const content = [];
   for (let i = 0; i < segments.length; i++) {
     const { start, end } = segments[i];
-    content.push({
-      type: 'text',
-      text: `Segment ${i}: ${start.toFixed(1)}s - ${end.toFixed(1)}s (${(end - start).toFixed(1)}s long)`,
-    });
+    let text = `Segment ${i}: ${start.toFixed(1)}s - ${end.toFixed(1)}s (${(end - start).toFixed(1)}s long)`;
+    if (transcript) {
+      const transcriptText = textForRange(transcript, start, end);
+      text += `\nTranscript: "${transcriptText || '(no speech detected in this range)'}"`;
+    }
+    content.push({ type: 'text', text });
     for (const framePath of perSegmentFrames[i]) {
       const base64 = await fs.readFile(framePath, { encoding: 'base64' });
       content.push({
@@ -129,11 +142,11 @@ async function analyzeSegments(videoPath, segments, framesDir) {
 
   let results;
   try {
-    results = await requestScores(content);
+    results = await requestScores(content, systemPrompt);
   } catch (firstErr) {
     console.warn('[claudeAnalyzer] first scoring attempt failed, retrying once:', firstErr.message);
     try {
-      results = await requestScores(content, { strict: true });
+      results = await requestScores(content, systemPrompt, { strict: true });
     } catch (secondErr) {
       console.error('[claudeAnalyzer] scoring failed twice, falling back to chronological order:', secondErr.message);
       results = fallbackResults(segments);

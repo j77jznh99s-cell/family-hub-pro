@@ -87,28 +87,53 @@ async function extractFrame(filePath, timestampSeconds, outPath, { width = 480 }
   );
 }
 
-async function extractClip(filePath, startSeconds, endSeconds, outPath) {
+// ffmpeg's filtergraph syntax treats ':' and other characters as special inside a
+// filename argument (e.g. subtitles=path) - escape them so a normal path never breaks
+// the filter string. Not a security boundary (paths here are always ones we generated).
+function escapeForFilterPath(filePath) {
+  return filePath.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+}
+
+async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtitlesPath } = {}) {
   const duration = Math.max(0.1, endSeconds - startSeconds);
+  const args = [
+    '-y',
+    '-ss',
+    String(Math.max(0, startSeconds)),
+    '-i',
+    filePath,
+    '-t',
+    String(duration),
+  ];
+
+  if (subtitlesPath) {
+    args.push(
+      '-vf',
+      `subtitles=${escapeForFilterPath(subtitlesPath)}:force_style='FontSize=20,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=2,Alignment=2'`
+    );
+  }
+
+  args.push(
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-c:a',
+    'aac',
+    '-movflags',
+    '+faststart',
+    outPath
+  );
+
+  await execFileAsync(FFMPEG_PATH, args, { maxBuffer: MAX_BUFFER });
+}
+
+// Mono 16kHz WAV - small, and exactly what Whisper-family transcription APIs expect.
+// No extra codec needed (pcm_s16le is always built into ffmpeg), unlike mp3/aac.
+async function extractAudio(filePath, outPath) {
   await execFileAsync(
     FFMPEG_PATH,
-    [
-      '-y',
-      '-ss',
-      String(Math.max(0, startSeconds)),
-      '-i',
-      filePath,
-      '-t',
-      String(duration),
-      '-c:v',
-      'libx264',
-      '-preset',
-      'veryfast',
-      '-c:a',
-      'aac',
-      '-movflags',
-      '+faststart',
-      outPath,
-    ],
+    ['-y', '-i', filePath, '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', outPath],
     { maxBuffer: MAX_BUFFER }
   );
 }
@@ -132,5 +157,6 @@ module.exports = {
   detectSilences,
   extractFrame,
   extractClip,
+  extractAudio,
   checkAvailable,
 };

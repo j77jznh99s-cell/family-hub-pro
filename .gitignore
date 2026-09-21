@@ -8,4 +8,5 @@ clips/*
 *.sqlite
 *.sqlite-journal
 *.log
+dump.rdb
 .DS_Store

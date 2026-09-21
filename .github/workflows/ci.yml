@@ -8,6 +8,27 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: clipapp
+          POSTGRES_PASSWORD: clipapp
+          POSTGRES_DB: clipdetect
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,7 +36,16 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm test
+      - name: Run tests (sqlite + in-process queue drivers)
+        run: npm test
+      - name: Run DB tests against Postgres driver
+        run: node --test --test-force-exit tests/db.test.js
+        env:
+          DATABASE_URL: postgresql://clipapp:clipapp@localhost:5432/clipdetect
+      - name: Run queue tests against BullMQ/Redis driver
+        run: node --test --test-force-exit tests/queue.test.js
+        env:
+          REDIS_URL: redis://localhost:6379
       - run: node --check src/server.js
       - name: Verify Docker image builds
         run: docker build -t clip-detection-mvp:ci .
