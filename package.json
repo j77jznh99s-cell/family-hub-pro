@@ -1,0 +1,19 @@
+{
+  "name": "trading-bot",
+  "version": "1.0.0",
+  "description": "Risk-gated Bybit USDT perpetuals trading bot: GPT-6 Astra proposes, a deterministic MCP risk gate approves or rejects every order.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:gate": "npm install --prefix risk-gate",
+    "build:gate": "npm run build --prefix risk-gate",
+    "test:gate": "npm test --prefix risk-gate",
+    "cycle": "codex exec --model gpt-6-astra \"$(cat prompts/cycle.md)\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  }
+}

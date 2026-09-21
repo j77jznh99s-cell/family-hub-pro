@@ -1,0 +1,17 @@
+node_modules/
+risk-gate/dist/
+*.log
+.env
+.env.*
+!.env.example
+
+# Internal script bookkeeping (position snapshots, telegram offsets) —
+# runtime state, not something to version.
+scripts/.state/
+
+# Runtime logs — keep the directory, not its generated contents.
+logs/*.jsonl
+logs/*.log
+
+# Emergency kill switch: must never be silently committed on or off.
+/HALT_TRADING

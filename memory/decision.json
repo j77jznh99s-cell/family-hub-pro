@@ -1,0 +1,11 @@
+{
+  "ts": null,
+  "symbol": null,
+  "action": "none",
+  "qty": 0,
+  "stop": null,
+  "take_profit": null,
+  "confidence": 0,
+  "reasoning": "No cycle has run yet.",
+  "checked_learnings": []
+}

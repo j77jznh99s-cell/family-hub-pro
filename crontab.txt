@@ -1,0 +1,17 @@
+# Trading bot schedule. Replace /path/to/trading-bot with this project's
+# absolute path before installing (crontab -e, or crontab crontab.txt).
+# Only the 15-minute job wakes the model; the other two are plain,
+# deterministic Node scripts.
+
+# Analyze entries on each 15 minute candle close
+*/15 * * * * cd /path/to/trading-bot && codex exec --model gpt-6-astra "$(cat prompts/cycle.md)" >> logs/cycle.log 2>&1
+
+# Check positions every minute
+* * * * * cd /path/to/trading-bot && node scripts/position-check.js >> logs/position.log 2>&1
+
+# Check funding every four hours
+0 */4 * * * cd /path/to/trading-bot && node scripts/funding-check.js >> logs/funding.log 2>&1
+
+# scripts/telegram-commands.js is NOT a cron job: it long-polls Telegram
+# and must run continuously. Start it under systemd/pm2/tmux instead, e.g.:
+#   node scripts/telegram-commands.js
