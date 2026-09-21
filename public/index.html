@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clip Studio</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --text: #eef0f4;
+    --muted: #9aa1ad;
+    --accent: #6c8cff;
+    --good: #43c98a;
+    --bad: #ef5b5b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 3rem;
+  }
+  header {
+    padding: 1.5rem 1rem 1rem;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+  header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  main { max-width: 640px; margin: 0 auto; padding: 0 1rem; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .row { display: flex; gap: 0.5rem; align-items: center; }
+  input[type="file"] { width: 100%; color: var(--text); }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #0d0f14;
+    color: var(--text);
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+    background: #0d0f14;
+    overflow: hidden;
+    margin-top: 0.6rem;
+    display: none;
+  }
+  .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
+  .status { margin-top: 0.6rem; font-size: 0.9rem; color: var(--muted); }
+  .status.error { color: var(--bad); }
+  .status.done { color: var(--good); }
+  .clip-card {
+    display: flex;
+    gap: 0.75rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .clip-card img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: #000; flex-shrink: 0; }
+  .clip-info { flex: 1; min-width: 0; }
+  .clip-info h3 { margin: 0 0 0.2rem; font-size: 1rem; }
+  .clip-info p { margin: 0 0 0.4rem; font-size: 0.85rem; color: var(--muted); }
+  .clip-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .score-badge { background: var(--accent); color: white; padding: 0.1rem 0.5rem; border-radius: 999px; font-weight: 600; }
+  .clip-actions { display: flex; gap: 0.5rem; }
+  .clip-actions a, .clip-actions button { flex: 1; text-align: center; text-decoration: none; padding: 0.5rem; border-radius: 8px; font-size: 0.85rem; }
+  .clip-actions a { background: var(--accent); color: white; }
+  .job-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.9rem; }
+  .job-item:last-child { border-bottom: none; }
+  .job-status { color: var(--muted); }
+  details summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; }
+  video { width: 100%; border-radius: 8px; margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎬 Clip Studio</h1>
+  <p>Upload a long video. Get back the best short clips.</p>
+</header>
+<main>
+  <div class="panel">
+    <div class="row">
+      <input id="videoInput" type="file" accept="video/*" />
+    </div>
+    <div class="progress" id="progressWrap"><div id="progressBar"></div></div>
+    <button id="uploadBtn" style="margin-top:0.75rem">Upload &amp; Find Clips</button>
+    <div class="status" id="statusText"></div>
+    <details style="margin-top:0.75rem">
+      <summary>Access token</summary>
+      <div style="margin-top:0.5rem">
+        <input id="tokenInput" type="password" placeholder="Paste your access token" />
+      </div>
+    </details>
+  </div>
+
+  <div class="panel" id="clipsPanel" style="display:none">
+    <h2 id="clipsHeading" style="margin-top:0;font-size:1.1rem"></h2>
+    <div id="clipsList"></div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0;font-size:1.1rem">Recent uploads</h2>
+    <div id="jobsList"><p class="status">No uploads yet.</p></div>
+  </div>
+</main>
+
+<script>
+const tokenInput = document.getElementById('tokenInput');
+const videoInput = document.getElementById('videoInput');
+const uploadBtn = document.getElementById('uploadBtn');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progressBar');
+const statusText = document.getElementById('statusText');
+const clipsPanel = document.getElementById('clipsPanel');
+const clipsHeading = document.getElementById('clipsHeading');
+const clipsList = document.getElementById('clipsList');
+const jobsList = document.getElementById('jobsList');
+
+const urlToken = new URLSearchParams(location.search).get('token');
+if (urlToken) localStorage.setItem('accessToken', urlToken);
+tokenInput.value = localStorage.getItem('accessToken') || '';
+tokenInput.addEventListener('change', () => localStorage.setItem('accessToken', tokenInput.value));
+
+function token() { return localStorage.getItem('accessToken') || ''; }
+function withToken(url) {
+  const t = token();
+  if (!t) return url;
+  return url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(t);
+}
+function authHeaders() {
+  const t = token();
+  return t ? { 'x-access-token': t } : {};
+}
+
+let pollTimer = null;
+
+function setStatus(msg, cls) {
+  statusText.textContent = msg;
+  statusText.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+function renderClips(job) {
+  clipsPanel.style.display = 'block';
+  clipsHeading.textContent = job.originalName;
+  clipsList.innerHTML = '';
+
+  if (job.status === 'failed') {
+    setStatus('Failed: ' + (job.error || 'unknown error'), 'error');
+    return;
+  }
+  if (job.status !== 'complete') {
+    setStatus('Status: ' + job.status + '… this can take a few minutes for longer videos.');
+    return;
+  }
+  setStatus('Done! ' + job.clips.length + ' clip(s) ready.', 'done');
+
+  if (job.clips.length === 0) {
+    clipsList.innerHTML = '<p class="status">No standout clips were found.</p>';
+    return;
+  }
+
+  for (const clip of job.clips) {
+    const card = document.createElement('div');
+    card.className = 'clip-card';
+    card.innerHTML = `
+      <img src="${clip.thumbnailUrl ? withToken(clip.thumbnailUrl) : ''}" alt="" onerror="this.style.visibility='hidden'"/>
+      <div class="clip-info">
+        <h3>${escapeHtml(clip.title)}</h3>
+        <p>${escapeHtml(clip.description || '')}</p>
+        <div class="clip-meta">
+          <span>${formatTime(clip.startTime)} – ${formatTime(clip.endTime)}</span>
+          <span class="score-badge">${Math.round(clip.score * 10) / 10}/10</span>
+        </div>
+        <div class="clip-actions">
+          <a href="${withToken(clip.downloadUrl)}" download>Download</a>
+        </div>
+      </div>
+    `;
+    clipsList.appendChild(card);
+  }
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+async function pollJob(jobId) {
+  clearInterval(pollTimer);
+  const check = async () => {
+    const res = await fetch(withToken(`/api/jobs/${jobId}`), { headers: authHeaders() });
+    if (!res.ok) {
+      setStatus('Could not load job status', 'error');
+      clearInterval(pollTimer);
+      return;
+    }
+    const job = await res.json();
+    renderClips(job);
+    if (job.status === 'complete' || job.status === 'failed') {
+      clearInterval(pollTimer);
+      loadJobsList();
+    }
+  };
+  await check();
+  pollTimer = setInterval(check, 4000);
+}
+
+uploadBtn.addEventListener('click', () => {
+  const file = videoInput.files[0];
+  if (!file) {
+    setStatus('Choose a video file first', 'error');
+    return;
+  }
+
+  const form = new FormData();
+  form.append('video', file);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', withToken('/api/upload'));
+
+  progressWrap.style.display = 'block';
+  uploadBtn.disabled = true;
+  setStatus('Uploading…');
+
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      progressBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+    }
+  };
+
+  xhr.onload = () => {
+    uploadBtn.disabled = false;
+    progressWrap.style.display = 'none';
+    if (xhr.status === 202) {
+      const { jobId } = JSON.parse(xhr.responseText);
+      setStatus('Uploaded. Analyzing video for the best moments…');
+      pollJob(jobId);
+    } else {
+      let msg = 'Upload failed';
+      try { msg = JSON.parse(xhr.responseText).error || msg; } catch {}
+      setStatus(msg, 'error');
+    }
+  };
+  xhr.onerror = () => {
+    uploadBtn.disabled = false;
+    progressWrap.style.display = 'none';
+    setStatus('Upload failed (network error)', 'error');
+  };
+
+  xhr.send(form);
+});
+
+async function loadJobsList() {
+  const res = await fetch(withToken('/api/jobs'), { headers: authHeaders() });
+  if (!res.ok) return;
+  const jobs = await res.json();
+  if (jobs.length === 0) {
+    jobsList.innerHTML = '<p class="status">No uploads yet.</p>';
+    return;
+  }
+  jobsList.innerHTML = '';
+  for (const job of jobs) {
+    const el = document.createElement('div');
+    el.className = 'job-item';
+    el.innerHTML = `<span>${escapeHtml(job.originalName)}</span><span class="job-status">${job.status}</span>`;
+    el.addEventListener('click', () => pollJob(job.id));
+    jobsList.appendChild(el);
+  }
+}
+
+loadJobsList();
+</script>
+</body>
+</html>

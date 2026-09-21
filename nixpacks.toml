@@ -1,0 +1,4 @@
+# Only needed if deploying via Railway/nixpacks without the Dockerfile.
+# Ensures ffmpeg is present in the build/runtime image.
+[phases.setup]
+aptPkgs = ["ffmpeg"]
