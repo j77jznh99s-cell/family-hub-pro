@@ -1,0 +1,32 @@
+name: Family Hub iOS
+
+on:
+  push:
+    branches: ['**']
+    paths: ['FamilyHub/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['FamilyHub/**', '.github/workflows/ios.yml']
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)" && xcodebuild -version
+      - name: Core logic tests
+        working-directory: FamilyHub/Packages/FamilyHubCore
+        run: swift test
+      - name: Generate Xcode project
+        working-directory: FamilyHub
+        run: brew install xcodegen && xcodegen generate
+      - name: Build app + widget (iOS Simulator, unsigned)
+        working-directory: FamilyHub
+        run: |
+          xcodebuild build \
+            -project FamilyHub.xcodeproj \
+            -scheme FamilyHub \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log | grep -E 'error:|warning:|BUILD' || true
+          grep -q 'BUILD SUCCEEDED' build.log

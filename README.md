@@ -1,3 +1,5 @@
+> **Family Hub** (the iPhone app for keeping in touch with family, with lock screen and home screen widgets) lives in [`FamilyHub/`](FamilyHub/README.md). The rest of this README covers Clip Studio.
+
 # Clip Studio
 
 Upload a long-form video, get back a handful of AI-selected short clips ready to download and share.
