@@ -122,7 +122,18 @@ public struct StreakStatus: Equatable, Sendable {
     /// Days a freeze saved the streak.
     public var frozenDays: [Date]
 
-    public var goalMetToday: Bool { doneToday >= goal }
+    public init(current: Int, longest: Int, freezes: Int, doneToday: Int, goal: Int, frozenDays: [Date]) {
+        self.current = current
+        self.longest = longest
+        self.freezes = freezes
+        self.doneToday = doneToday
+        self.goal = goal
+        self.frozenDays = frozenDays
+    }
+
+    public static let none = StreakStatus(current: 0, longest: 0, freezes: 0, doneToday: 0, goal: 1, frozenDays: [])
+
+        public var goalMetToday: Bool { doneToday >= goal }
     /// A streak is going but today's goal isn't met yet.
     public var atRisk: Bool { current > 0 && !goalMetToday }
 }

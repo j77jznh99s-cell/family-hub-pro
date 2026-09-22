@@ -10,7 +10,7 @@ struct SuggestionEntry: TimelineEntry {
     let date: Date
     let suggestions: [Suggestion]
     let hasPeople: Bool
-    var streak: StreakStatus = StreakStatus(current: 0, longest: 0, freezes: 0, doneToday: 0, goal: 1, frozenDays: [])
+    var streak: StreakStatus = .none
     var theme: Theme = .coral
     /// Photos for the people on screen, decoded once per timeline (widgets have a tight memory budget).
     var photos: [UUID: UIImage] = [:]
