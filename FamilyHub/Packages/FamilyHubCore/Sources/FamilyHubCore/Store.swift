@@ -10,19 +10,47 @@ public struct AppData: Codable, Equatable, Sendable {
     public var openersRefreshedAt: Date?
     /// Hash of the inputs the current AI openers were written from; a change means they're stale.
     public var openersInputHash: String?
+    /// Every reach-out, oldest first. Streaks, points and badges are all computed from this.
+    public var log: [ReachOut]
+    /// Badge raw value → when it was earned.
+    public var badges: [String: Date]
+    public var preferences: Preferences
 
     public init(
         people: [Person] = [],
         openers: [UUID: Opener] = [:],
         context: LifeContext = LifeContext(),
         openersRefreshedAt: Date? = nil,
-        openersInputHash: String? = nil
+        openersInputHash: String? = nil,
+        log: [ReachOut] = [],
+        badges: [String: Date] = [:],
+        preferences: Preferences = Preferences()
     ) {
         self.people = people
         self.openers = openers
         self.context = context
         self.openersRefreshedAt = openersRefreshedAt
         self.openersInputHash = openersInputHash
+        self.log = log
+        self.badges = badges
+        self.preferences = preferences
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case people, openers, context, openersRefreshedAt, openersInputHash, log, badges, preferences
+    }
+
+    /// Tolerant of files written by older versions: anything missing gets its default instead of failing the whole load.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        people = try c.decodeIfPresent([Person].self, forKey: .people) ?? []
+        openers = try c.decodeIfPresent([UUID: Opener].self, forKey: .openers) ?? [:]
+        context = try c.decodeIfPresent(LifeContext.self, forKey: .context) ?? LifeContext()
+        openersRefreshedAt = try c.decodeIfPresent(Date.self, forKey: .openersRefreshedAt)
+        openersInputHash = try c.decodeIfPresent(String.self, forKey: .openersInputHash)
+        log = try c.decodeIfPresent([ReachOut].self, forKey: .log) ?? []
+        badges = try c.decodeIfPresent([String: Date].self, forKey: .badges) ?? [:]
+        preferences = try c.decodeIfPresent(Preferences.self, forKey: .preferences) ?? Preferences()
     }
 
     public func suggestions(now: Date = .now, includeUpToDate: Bool = false) -> [Suggestion] {
@@ -32,12 +60,8 @@ public struct AppData: Codable, Equatable, Sendable {
         )
     }
 
-    /// Log that you reached out. Clears any snooze and the used opener so tomorrow's is fresh.
-    public mutating func markContacted(_ id: UUID, at date: Date = .now) {
-        guard let i = people.firstIndex(where: { $0.id == id }) else { return }
-        people[i].lastContacted = date
-        people[i].snoozedUntil = nil
-        openers[id] = nil
+    public var favorites: [Person] {
+        people.filter(\.isFavorite).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     public mutating func snooze(_ id: UUID, days: Int, from date: Date = .now, calendar: Calendar = .current) {
@@ -71,6 +95,28 @@ public final class Store: @unchecked Sendable {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(fileName)
+    }
+
+    // MARK: Photos (JPEG files next to the JSON so the widget can read them too)
+
+    public var photosDirectory: URL { url.deletingLastPathComponent().appendingPathComponent("Photos", isDirectory: true) }
+
+    public func photoURL(for id: UUID) -> URL { photosDirectory.appendingPathComponent("\(id.uuidString).jpg") }
+
+    public var backgroundURL: URL { photosDirectory.appendingPathComponent("background.jpg") }
+
+    public func hasPhoto(for id: UUID) -> Bool { FileManager.default.fileExists(atPath: photoURL(for: id).path) }
+
+    public var hasBackground: Bool { FileManager.default.fileExists(atPath: backgroundURL.path) }
+
+    /// Writes (or with nil, removes) an image file. Callers pass already-downscaled JPEG data.
+    public func writeImage(_ data: Data?, to fileURL: URL) throws {
+        try FileManager.default.createDirectory(at: photosDirectory, withIntermediateDirectories: true)
+        if let data {
+            try data.write(to: fileURL, options: [.atomic])
+        } else if FileManager.default.fileExists(atPath: fileURL.path) {
+            try FileManager.default.removeItem(at: fileURL)
+        }
     }
 
     public func load() -> AppData {

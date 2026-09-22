@@ -1,6 +1,7 @@
 import AppIntents
 import FamilyHubCore
 import SwiftUI
+import UIKit
 import WidgetKit
 
 // MARK: - Timeline
@@ -9,6 +10,11 @@ struct SuggestionEntry: TimelineEntry {
     let date: Date
     let suggestions: [Suggestion]
     let hasPeople: Bool
+    var streak: StreakStatus = StreakStatus(current: 0, longest: 0, freezes: 0, doneToday: 0, goal: 1, frozenDays: [])
+    var theme: Theme = .coral
+    /// Photos for the people on screen, decoded once per timeline (widgets have a tight memory budget).
+    var photos: [UUID: UIImage] = [:]
+    var background: UIImage?
 
     static let placeholder = SuggestionEntry(
         date: .now,
@@ -47,15 +53,38 @@ struct Provider: TimelineProvider {
             next = cal.date(byAdding: .day, value: 1, to: next)!
             dates.append(next.addingTimeInterval(60))
         }
+        let photos = Self.photos(for: data.suggestions(now: .now))
+        let background = UIImage(contentsOfFile: Store.shared.backgroundURL.path)
         let entries = dates.map { date in
-            SuggestionEntry(date: date, suggestions: data.suggestions(now: date), hasPeople: !data.people.isEmpty)
+            Self.entry(data: data, at: date, photos: photos, background: background)
         }
         completion(Timeline(entries: entries, policy: .atEnd))
     }
 
     static func entry(at date: Date) -> SuggestionEntry {
         let data = Store.shared.load()
-        return SuggestionEntry(date: date, suggestions: data.suggestions(now: date), hasPeople: !data.people.isEmpty)
+        let photos = photos(for: data.suggestions(now: date))
+        return entry(data: data, at: date, photos: photos, background: UIImage(contentsOfFile: Store.shared.backgroundURL.path))
+    }
+
+    static func entry(data: AppData, at date: Date, photos: [UUID: UIImage], background: UIImage?) -> SuggestionEntry {
+        SuggestionEntry(
+            date: date,
+            suggestions: data.suggestions(now: date),
+            hasPeople: !data.people.isEmpty,
+            streak: data.streakStatus(now: date),
+            theme: data.preferences.theme,
+            photos: photos,
+            background: background
+        )
+    }
+
+    static func photos(for suggestions: [Suggestion]) -> [UUID: UIImage] {
+        var result: [UUID: UIImage] = [:]
+        for s in suggestions.prefix(3) {
+            if let image = UIImage(contentsOfFile: Store.shared.photoURL(for: s.person.id).path) { result[s.person.id] = image }
+        }
+        return result
     }
 }
 
@@ -85,6 +114,19 @@ func textURL(_ s: Suggestion) -> URL {
     URL(string: "familyhub://text/\(s.person.id.uuidString)")!
 }
 
+private func color(_ hex: UInt32) -> Color {
+    Color(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
+}
+
+private func urgencyColor(_ u: Urgency) -> Color {
+    switch u {
+    case .overdue: return .red
+    case .due: return .orange
+    case .dueSoon: return .blue
+    case .upToDate: return .green
+    }
+}
+
 struct FamilyHubWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: SuggestionEntry
@@ -100,7 +142,7 @@ struct FamilyHubWidgetView: View {
     }
 
     private var top: Suggestion? { entry.suggestions.first }
-
+    private var accent: Color { color(entry.theme.colors.0) }
     private var emptyText: String { entry.hasPeople ? "All caught up" : "Add people" }
 
     // Lock screen, above the clock: "💬 Text Mom · 9 days"
@@ -108,25 +150,29 @@ struct FamilyHubWidgetView: View {
         if let top {
             Label("Text \(top.person.firstName) · \(top.sinceLabel)", systemImage: "message.fill")
                 .widgetURL(textURL(top))
+        } else if entry.streak.current > 0 {
+            Label("\(entry.streak.current)-day streak", systemImage: "flame.fill")
         } else {
             Label(emptyText, systemImage: "checkmark.message")
         }
     }
 
-    // Lock screen, small circle: how many people are waiting on a text.
+    // Lock screen circle: your streak, or how many people are waiting if you don't have one yet.
     private var circular: some View {
         ZStack {
             AccessoryWidgetBackground()
             VStack(spacing: 0) {
-                Image(systemName: "message.fill").font(.caption)
-                Text("\(entry.suggestions.count)").font(.title3.bold())
+                Image(systemName: entry.streak.current > 0 ? "flame.fill" : "message.fill").font(.caption)
+                Text("\(entry.streak.current > 0 ? entry.streak.current : entry.suggestions.count)")
+                    .font(.title3.bold())
+                    .minimumScaleFactor(0.6)
             }
         }
         .widgetURL(top.map(textURL))
-        .accessibilityLabel("\(entry.suggestions.count) people to text")
+        .accessibilityLabel(entry.streak.current > 0 ? "\(entry.streak.current) day streak" : "\(entry.suggestions.count) people to text")
     }
 
-    // Lock screen, rectangle: who + what to say.
+    // Lock screen rectangle: who + what to say.
     @ViewBuilder private var rectangular: some View {
         if let top {
             VStack(alignment: .leading, spacing: 1) {
@@ -144,32 +190,66 @@ struct FamilyHubWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .widgetURL(textURL(top))
         } else {
-            Label(emptyText, systemImage: "checkmark.message")
+            Label(entry.streak.current > 0 ? "🔥 \(entry.streak.current)-day streak · all caught up" : emptyText, systemImage: "checkmark.message")
         }
+    }
+
+    private func avatar(_ person: Person, size: CGFloat) -> some View {
+        Group {
+            if let image = entry.photos[person.id] {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                ZStack {
+                    LinearGradient(colors: [accent, color(entry.theme.colors.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Text(String(person.name.prefix(1)).uppercased())
+                        .font(.system(size: size * 0.42, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+    }
+
+    private var streakChip: some View {
+        HStack(spacing: 2) {
+            Image(systemName: "flame.fill")
+            Text("\(entry.streak.current)")
+        }
+        .font(.caption.bold())
+        .foregroundStyle(entry.streak.current > 0 ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.secondary))
+        .accessibilityLabel("\(entry.streak.current) day streak")
+    }
+
+    private func checkButton(_ s: Suggestion) -> some View {
+        Button(intent: MarkTextedIntent(personID: s.person.id)) {
+            Image(systemName: "checkmark.circle.fill").font(.title3)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(accent)
+        .accessibilityLabel("I texted \(s.person.firstName)")
     }
 
     @ViewBuilder private var small: some View {
         if let top {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(top.person.firstName)
-                        .font(.headline)
-                        .lineLimit(1)
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .top) {
+                    avatar(top.person, size: 38)
                     Spacer(minLength: 0)
-                    Button(intent: MarkTextedIntent(personID: top.person.id)) {
-                        Image(systemName: "checkmark.circle")
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tint)
-                    .accessibilityLabel("I texted \(top.person.firstName)")
+                    checkButton(top)
+                }
+                HStack(spacing: 4) {
+                    Text(top.person.firstName).font(.headline).lineLimit(1)
+                    Spacer(minLength: 0)
+                    streakChip
                 }
                 Text(top.sinceLabel)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(color(top.urgency))
+                    .foregroundStyle(urgencyColor(top.urgency))
                 Text(top.opener.text)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(4)
+                    .lineLimit(2)
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -183,30 +263,33 @@ struct FamilyHubWidgetView: View {
         if entry.suggestions.isEmpty {
             empty
         } else {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack {
+                    Text("Who to text").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                    Spacer()
+                    streakChip
+                }
                 ForEach(entry.suggestions.prefix(3)) { s in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(spacing: 8) {
                         Link(destination: textURL(s)) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                HStack(spacing: 4) {
-                                    Text(s.person.firstName).font(.subheadline.bold())
-                                    Text(s.sinceLabel)
-                                        .font(.caption2.weight(.semibold))
-                                        .foregroundStyle(color(s.urgency))
+                            HStack(spacing: 8) {
+                                avatar(s.person, size: 30)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack(spacing: 4) {
+                                        Text(s.person.firstName).font(.subheadline.bold())
+                                        Text(s.sinceLabel)
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(urgencyColor(s.urgency))
+                                    }
+                                    Text(s.opener.text)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
-                                Text(s.opener.text)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        Button(intent: MarkTextedIntent(personID: s.person.id)) {
-                            Image(systemName: "checkmark.circle").font(.title3)
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.tint)
-                        .accessibilityLabel("I texted \(s.person.firstName)")
+                        checkButton(s)
                     }
                 }
                 Spacer(minLength: 0)
@@ -219,18 +302,39 @@ struct FamilyHubWidgetView: View {
         VStack(spacing: 6) {
             Image(systemName: entry.hasPeople ? "checkmark.seal.fill" : "person.badge.plus")
                 .font(.title2)
-                .foregroundStyle(.tint)
+                .foregroundStyle(accent)
             Text(emptyText).font(.caption.weight(.semibold))
+            if entry.streak.current > 0 { streakChip }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
 
-    private func color(_ u: Urgency) -> Color {
-        switch u {
-        case .overdue: return .red
-        case .due: return .orange
-        case .dueSoon: return .blue
-        case .upToDate: return .green
+/// On a photo background, home screen widgets switch to light-on-dark text; otherwise they follow the system.
+struct WidgetRoot: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.widgetFamily) private var family
+    let entry: SuggestionEntry
+
+    var body: some View {
+        let onPhoto = entry.background != nil && (family == .systemSmall || family == .systemMedium)
+        FamilyHubWidgetView(entry: entry)
+            .environment(\.colorScheme, onPhoto ? .dark : scheme)
+    }
+}
+
+/// Your background photo behind the home screen widgets (dimmed, with light text), or the system fill.
+struct WidgetBackground: View {
+    let entry: SuggestionEntry
+
+    var body: some View {
+        if let image = entry.background {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .overlay(Color.black.opacity(0.45))
+        } else {
+            Color(.secondarySystemBackground)
         }
     }
 }
@@ -240,11 +344,11 @@ struct FamilyHubWidgetView: View {
 struct FamilyHubWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "FamilyHubWidget", provider: Provider()) { entry in
-            FamilyHubWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+            WidgetRoot(entry: entry)
+                .containerBackground(for: .widget) { WidgetBackground(entry: entry) }
         }
         .configurationDisplayName("Who to Text")
-        .description("Who's due for a text, and a message to start with. Tap to open it in Messages.")
+        .description("Who's due for a text, what to say, and your streak. Tap to open it in Messages.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline, .accessoryCircular])
     }
 }

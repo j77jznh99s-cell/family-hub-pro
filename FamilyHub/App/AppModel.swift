@@ -2,6 +2,8 @@ import EventKit
 import FamilyHubCore
 import Foundation
 import Observation
+import UIKit
+import UserNotifications
 import WidgetKit
 
 /// Single source of truth for the app. Every change is saved to the shared store and the widgets are told to reload.
@@ -13,6 +15,13 @@ final class AppModel {
     var lastError: String?
     /// Set by a widget tap or the Text button; drives the message composer sheet.
     var composeTarget: ComposeTarget?
+    /// Set after a reach-out is logged; drives the celebration overlay.
+    var celebration: ReachOutResult?
+    /// Bumped whenever a photo changes so views reload their images.
+    private(set) var photoVersion = 0
+    var selectedTab: Tab = .today
+
+    enum Tab: Hashable { case today, favorites, progress, people, me }
 
     @ObservationIgnored private let store: Store
     @ObservationIgnored private let eventStore = EKEventStore()
@@ -34,6 +43,7 @@ final class AppModel {
     func reload() {
         let latest = store.load()
         if latest != data { data = latest }
+        scheduleReminder()
     }
 
     var sortedPeople: [Person] {
@@ -67,9 +77,120 @@ final class AppModel {
             d.people.removeAll { ids.contains($0.id) }
             for id in ids { d.openers[id] = nil }
         }
+        for id in ids { setPhoto(nil, for: id) }
     }
 
-    func markContacted(_ id: UUID) { update { $0.markContacted(id) } }
+    /// Log a reach-out and celebrate it (points, streak, badges).
+    @discardableResult
+    func markContacted(_ id: UUID, celebrate: Bool = true) -> ReachOutResult? {
+        var result: ReachOutResult?
+        update { result = $0.markContacted(id) }
+        if celebrate { self.celebrate(result) }
+        scheduleReminder()
+        return result
+    }
+
+    /// Show the celebration, optionally after a sheet has finished sliding away.
+    func celebrate(_ result: ReachOutResult?, after delay: Duration = .zero) {
+        guard let result, result.counted else { return }
+        Task {
+            if delay > .zero { try? await Task.sleep(for: delay) }
+            celebration = result
+        }
+    }
+
+    func person(_ id: UUID) -> Person? { data.people.first { $0.id == id } }
+
+    // MARK: - Engagement
+
+    var theme: Theme { data.preferences.theme }
+    var streak: StreakStatus { data.streakStatus() }
+    var level: Level { data.level }
+
+    func setPreferences(_ change: (inout Preferences) -> Void) {
+        update { change(&$0.preferences) }
+        scheduleReminder()
+    }
+
+    // MARK: - Photos
+
+    var hasBackground: Bool {
+        _ = photoVersion
+        return store.hasBackground
+    }
+
+    var backgroundImage: UIImage? { ImageCache.image(at: store.backgroundURL) }
+
+    func photo(for id: UUID) -> UIImage? { ImageCache.image(at: store.photoURL(for: id)) }
+
+    /// Pass nil to remove. Photos are shrunk before saving so the widget can load them cheaply.
+    func setPhoto(_ data: Data?, for id: UUID) {
+        writeImage(data.flatMap { ImageCache.jpeg(from: $0, maxSide: 400) }, remove: data == nil, to: store.photoURL(for: id))
+    }
+
+    func setBackground(_ data: Data?) {
+        writeImage(data.flatMap { ImageCache.jpeg(from: $0, maxSide: 1200) }, remove: data == nil, to: store.backgroundURL)
+    }
+
+    private func writeImage(_ jpeg: Data?, remove: Bool, to url: URL) {
+        guard jpeg != nil || remove else {
+            lastError = "Couldn't read that photo."
+            return
+        }
+        do {
+            try store.writeImage(jpeg, to: url)
+        } catch {
+            lastError = "Couldn't save the photo: \(error.localizedDescription)"
+        }
+        ImageCache.invalidate(url)
+        photoVersion += 1
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    // MARK: - Reminders
+
+    /// Turn on the daily nudge; asks for notification permission the first time.
+    func enableReminders(_ on: Bool) async {
+        if on {
+            let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+            setPreferences { $0.remindersOn = granted }
+            if !granted { lastError = "Notifications are off for Family Hub. Turn them on in the Settings app." }
+        } else {
+            setPreferences { $0.remindersOn = false }
+        }
+    }
+
+    /// Keeps exactly one pending reminder: at your chosen time today if that's still ahead and there's a reason
+    /// to nudge, otherwise tomorrow. Re-run after every change so the text is always current.
+    func scheduleReminder() {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["daily-reminder"])
+        let prefs = data.preferences
+        guard prefs.remindersOn else { return }
+
+        let cal = Calendar.current
+        let now = Date.now
+        guard var fire = cal.date(bySettingHour: prefs.reminderHour, minute: prefs.reminderMinute, second: 0, of: now) else { return }
+        var text = Engagement.reminder(for: data, now: now)
+        if fire <= now || text == nil {
+            fire = cal.date(byAdding: .day, value: 1, to: fire) ?? fire
+            text = Engagement.reminder(for: data, now: fire)
+                ?? ("💬 Who will you text today?", "Open Family Hub for today's suggestions.")
+        }
+        guard let text else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = text.title
+        content.body = text.body
+        content.sound = .default
+        let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        let request = UNNotificationRequest(
+            identifier: "daily-reminder",
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        )
+        center.add(request)
+    }
 
     func snooze(_ id: UUID, days: Int) { update { $0.snooze(id, days: days) } }
 

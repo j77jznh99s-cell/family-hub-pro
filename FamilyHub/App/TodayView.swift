@@ -1,29 +1,29 @@
 import FamilyHubCore
 import SwiftUI
 
-/// The main screen: who to text today, each with a ready-to-send opener and one big button.
+/// The main screen: your streak up top, then who to text today, each with a ready-to-send opener.
 struct TodayView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         NavigationStack {
-            Group {
-                if model.data.people.isEmpty {
-                    ContentUnavailableView {
-                        Label("Add your people", systemImage: "person.badge.plus")
-                    } description: {
-                        Text("Pick family and friends in the People tab, and Family Hub will tell you when it's been a while — and what to say.")
+            ScrollView {
+                VStack(spacing: 12) {
+                    StreakHeader()
+                    if let error = model.lastError {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .card()
                     }
-                } else if model.suggestions.isEmpty {
-                    ContentUnavailableView(
-                        "You're all caught up",
-                        systemImage: "checkmark.seal.fill",
-                        description: Text("Nobody's due for a text right now. Nice work!")
-                    )
-                } else {
-                    list
+                    content
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
             }
+            .background(AppBackground())
             .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -43,22 +43,84 @@ struct TodayView: View {
         }
     }
 
-    private var list: some View {
-        List {
-            if let error = model.lastError {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+    @ViewBuilder private var content: some View {
+        if model.data.people.isEmpty {
+            EmptyCard(symbol: "person.badge.plus", title: "Add your people",
+                      message: "Pick family and friends in the People tab, and Family Hub will tell you when it's been a while — and what to say.")
+        } else if model.suggestions.isEmpty {
+            EmptyCard(symbol: "checkmark.seal.fill", title: "You're all caught up",
+                      message: "Nobody's due for a text right now. Nice work!")
+        } else {
+            ForEach(model.suggestions) { SuggestionCard(suggestion: $0) }
+        }
+    }
+}
+
+/// Streak flame, today's goal and level, all in one tappable strip that opens Progress.
+struct StreakHeader: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let s = model.streak
+        let level = model.level
+        Button {
+            model.selectedTab = .progress
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle().stroke(Color.secondary.opacity(0.2), lineWidth: 5)
+                    Circle()
+                        .trim(from: 0, to: min(1, Double(s.doneToday) / Double(max(1, s.goal))))
+                        .stroke(s.goalMetToday ? Color.green : model.theme.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Image(systemName: "flame.fill")
+                        .font(.title2)
+                        .foregroundStyle(s.current > 0 ? AnyShapeStyle(LinearGradient(colors: [.yellow, .orange, .red], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(Color.secondary))
+                        .symbolEffect(.bounce, value: s.current)
+                }
+                .frame(width: 54, height: 54)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(s.current == 1 ? "1 day streak" : "\(s.current) day streak")
+                        .font(.headline)
+                    Text(s.goalMetToday ? "Today's goal done 🎉" : s.atRisk ? "Text someone to keep it going" : "Text someone to start a streak")
+                        .font(.subheadline)
+                        .foregroundStyle(s.atRisk ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.secondary))
+                }
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Lv \(level.number)").font(.headline).foregroundStyle(model.theme.accent)
+                    ProgressView(value: level.progress)
+                        .tint(model.theme.accent)
+                        .frame(width: 56)
+                    if s.freezes > 0 {
+                        Label("\(s.freezes)", systemImage: "snowflake").font(.caption2.bold()).foregroundStyle(.cyan)
+                    }
                 }
             }
-            ForEach(model.suggestions) { s in
-                SuggestionCard(suggestion: s)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-            }
+            .padding(14)
+            .card()
         }
-        .listStyle(.plain)
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(s.current) day streak, level \(level.number). Open progress.")
+    }
+}
+
+struct EmptyCard: View {
+    let symbol: String
+    let title: String
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: symbol).font(.system(size: 44)).foregroundStyle(.tint)
+            Text(title).font(.title3.bold())
+            Text(message).multilineTextAlignment(.center).foregroundStyle(.secondary)
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity)
+        .card()
+        .padding(.top, 20)
     }
 }
 
@@ -67,12 +129,22 @@ struct SuggestionCard: View {
     let suggestion: Suggestion
 
     var body: some View {
+        let personStreak = model.data.personStreak(suggestion.person)
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(suggestion.person.name)
-                    .font(.title3.bold())
-                if suggestion.person.isFavorite {
-                    Image(systemName: "star.fill").foregroundStyle(.yellow).font(.caption)
+            HStack(spacing: 10) {
+                Avatar(person: suggestion.person, size: 40)
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 4) {
+                        Text(suggestion.person.name).font(.headline)
+                        if suggestion.person.isFavorite {
+                            Image(systemName: "star.fill").foregroundStyle(.yellow).font(.caption)
+                        }
+                    }
+                    if personStreak > 1 {
+                        Label("\(personStreak) in a row", systemImage: "flame.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.orange)
+                    }
                 }
                 Spacer()
                 UrgencyBadge(suggestion: suggestion)
@@ -82,7 +154,7 @@ struct SuggestionCard: View {
                 .font(.body)
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .background(model.theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
                 .overlay(alignment: .bottomTrailing) {
                     if suggestion.opener.isAI {
                         Image(systemName: "sparkles").font(.caption2).foregroundStyle(.tint).padding(6)
@@ -121,7 +193,7 @@ struct SuggestionCard: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20))
+        .card()
     }
 }
 
@@ -133,16 +205,7 @@ struct UrgencyBadge: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(color.opacity(0.18), in: Capsule())
-            .foregroundStyle(color)
-    }
-
-    private var color: Color {
-        switch suggestion.urgency {
-        case .overdue: return .red
-        case .due: return .orange
-        case .dueSoon: return .blue
-        case .upToDate: return .green
-        }
+            .background(suggestion.urgency.color.opacity(0.18), in: Capsule())
+            .foregroundStyle(suggestion.urgency.color)
     }
 }

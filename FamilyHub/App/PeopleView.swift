@@ -1,5 +1,6 @@
 import ContactsUI
 import FamilyHubCore
+import PhotosUI
 import SwiftUI
 
 struct PeopleView: View {
@@ -50,8 +51,9 @@ struct PeopleView: View {
                 ContactPicker { picked in
                     showingPicker = false
                     let known = Set(model.data.people.map(\.phone))
-                    for p in picked where p.phone.isEmpty || !known.contains(p.phone) {
-                        model.upsert(p)
+                    for c in picked where c.person.phone.isEmpty || !known.contains(c.person.phone) {
+                        model.upsert(c.person)
+                        if let photo = c.photo { model.setPhoto(photo, for: c.person.id) }
                     }
                     Task { await model.refreshOpenersIfNeeded() }
                 }
@@ -71,7 +73,8 @@ struct PersonRow: View {
     let person: Person
 
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            Avatar(person: person, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(person.name).font(.headline)
@@ -98,8 +101,12 @@ struct PersonRow: View {
 
 struct PersonEditor: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppModel.self) private var model
     @State var person: Person
     let onSave: (Person) -> Void
+    @State private var pickerItem: PhotosPickerItem?
+    /// nil = unchanged, .some(nil) = remove, .some(data) = new photo.
+    @State private var photoChange: Data??
 
     static let cadences = [1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90]
 
@@ -113,9 +120,49 @@ struct PersonEditor: View {
         }
     }
 
+    private var hasPhoto: Bool {
+        switch photoChange {
+        case .some(.some): return true
+        case .some(.none): return false
+        case .none: return model.photo(for: person.id) != nil
+        }
+    }
+
+    @ViewBuilder private var photoPreview: some View {
+        if case .some(.some(let data)) = photoChange, let image = UIImage(data: data) {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else if case .some(.none) = photoChange {
+            Avatar(person: Person(id: UUID(), name: person.name), size: 96)
+        } else {
+            Avatar(person: person, size: 96)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 8) {
+                            photoPreview
+                                .frame(width: 96, height: 96)
+                                .clipShape(Circle())
+                            HStack(spacing: 16) {
+                                PhotosPicker(selection: $pickerItem, matching: .images) {
+                                    Text(hasPhoto ? "Change photo" : "Add photo")
+                                }
+                                if hasPhoto {
+                                    Button("Remove", role: .destructive) { photoChange = .some(nil) }
+                                }
+                            }
+                            .font(.subheadline)
+                            .buttonStyle(.borderless)
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
                 Section {
                     TextField("Name", text: $person.name)
                         .textContentType(.name)
@@ -151,6 +198,12 @@ struct PersonEditor: View {
                 }
             }
             .navigationTitle(person.name.isEmpty ? "New person" : person.name)
+            .onChange(of: pickerItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self) { photoChange = .some(data) }
+                }
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -158,6 +211,7 @@ struct PersonEditor: View {
                     Button("Save") {
                         person.name = person.name.trimmingCharacters(in: .whitespacesAndNewlines)
                         onSave(person)
+                        if let change = photoChange { model.setPhoto(change, for: person.id) }
                         dismiss()
                     }
                     .disabled(person.name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -167,9 +221,14 @@ struct PersonEditor: View {
     }
 }
 
+struct PickedContact {
+    let person: Person
+    let photo: Data?
+}
+
 /// System contact picker. Runs out-of-process, so it needs no Contacts permission and sees only what you pick.
 struct ContactPicker: UIViewControllerRepresentable {
-    let onPick: ([Person]) -> Void
+    let onPick: ([PickedContact]) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
 
@@ -182,8 +241,8 @@ struct ContactPicker: UIViewControllerRepresentable {
     func updateUIViewController(_ vc: CNContactPickerViewController, context: Context) {}
 
     final class Coordinator: NSObject, CNContactPickerDelegate {
-        let onPick: ([Person]) -> Void
-        init(onPick: @escaping ([Person]) -> Void) { self.onPick = onPick }
+        let onPick: ([PickedContact]) -> Void
+        init(onPick: @escaping ([PickedContact]) -> Void) { self.onPick = onPick }
 
         func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
             onPick(contacts.compactMap { c in
@@ -192,7 +251,8 @@ struct ContactPicker: UIViewControllerRepresentable {
                 guard !name.isEmpty else { return nil }
                 let phone = c.phoneNumbers.first(where: { $0.label == CNLabelPhoneNumberMobile || $0.label == CNLabelPhoneNumberiPhone })
                     ?? c.phoneNumbers.first
-                return Person(name: name, phone: phone?.value.stringValue ?? "")
+                let photo = c.isKeyAvailable(CNContactThumbnailImageDataKey) ? c.thumbnailImageData : nil
+                return PickedContact(person: Person(name: name, phone: phone?.value.stringValue ?? ""), photo: photo)
             })
         }
 
