@@ -5,9 +5,13 @@ An iPhone app that helps you keep in touch with the people you care about, for a
 - **Who to text**: add family and friends and choose how often you'd like to reach out (every day, every week, every month…). Family Hub tells you when it's been too long.
 - **What to say**: each person gets a ready-to-send opener. Claude writes it from the person's notes and from what's going on in your life: your projects, your week, and (optionally) your calendar. Without an API key you still get simple built-in openers.
 - **One tap to send**: tap **Text Mom** and Messages opens with the opener already typed. When you hit send, the clock resets on its own.
+- **Streaks & rewards**: text at least one person a day (you set the goal) to grow a 🔥 streak. Every 7-day run earns a ❄️ freeze that saves your streak on a missed day. You also earn XP and levels ("Newcomer" up to "Family Glue", "Legend" and beyond) and badges, and each text ends with a confetti celebration.
+- **Favorites**: your inner circle as big photo tiles, each with a ring that fills up as they come due and a 🔥 streak for that person.
+- **Progress**: your streak, freezes, daily goal, level, a chart of your week, and your badge collection.
+- **Make it yours**: photos for each person (imported from Contacts automatically), your own background photo, six color themes, and a daily reminder notification at a time you choose.
 - **Widgets**:
-  - *Lock screen*: "💬 Text Mom · 9 days" above the clock, or a rectangle that also shows the opener. Tap it to open the message.
-  - *Home screen*: small (the top person) or medium (the top 3). Tap a name to text them, or ✓ if you already did.
+  - *Lock screen*: "💬 Text Mom · 9 days" above the clock, a 🔥 streak circle, or a rectangle that also shows the opener. Tap one to open the message.
+  - *Home screen*: small (the top person) or medium (the top 3), with photos, your streak, and your background photo. Tap a name to text them, or ✓ if you already did.
 
 ## Getting it on your iPhone
 
@@ -29,7 +33,7 @@ You need a Mac with Xcode 15 or newer (it's free from the Mac App Store). A free
 ## Using it
 
 1. **People** tab → **+** → *From Contacts*. Tap each person and set how often you want to text them, and add a short note about what's going on with them ("the new job", "the Denver trip").
-2. **About Me** tab → add what you're working on and anything happening this week. Turn on *Use my calendar* if you want openers to mention your schedule.
+2. **Me** tab → pick a theme, add a background photo, set your daily goal, and turn on the daily reminder. Then add what you're working on and anything happening this week. Turn on *Use my calendar* if you want openers to mention your schedule.
 3. Optional: paste a Claude API key (from [console.anthropic.com](https://console.anthropic.com)) under *AI conversation starters*.
 4. **Today** tab → tap **Text [name]**. That's it.
 
@@ -43,9 +47,10 @@ FamilyHub/
 ├── Packages/FamilyHubCore/     All the logic, as a plain Swift package with unit tests
 │   ├── Models.swift            Person, LifeContext, Opener, Suggestion
 │   ├── SuggestionEngine.swift  Who's due, ranked; offline fallback openers
-│   ├── Store.swift             One small JSON file in the App Group, shared by app + widget
+│   ├── Engagement.swift        Streaks and freezes, XP, levels, badges, reminder text
+│   ├── Store.swift             One small JSON file (+ photos) in the App Group, shared by app + widget
 │   └── OpenerGenerator.swift   Claude Messages API call (one request for everyone on the list)
-├── App/                        SwiftUI app: Today, People, About Me, Messages composer
+├── App/                        SwiftUI app: Today, Favorites, Progress, People, Me, celebration, Messages composer
 └── Widget/                     WidgetKit: lock screen (inline/rectangular/circular) + home (small/medium)
 ```
 
