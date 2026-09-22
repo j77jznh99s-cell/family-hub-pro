@@ -28,7 +28,7 @@ You need a Mac with Xcode 15 or newer (it's free from the Mac App Store). A free
 
 ## Using it
 
-1. **People** tab → **+** → *From Contacts*. Tap each person and set how often you want to text them, and add a note about what's going on with them ("new job at the hospital", "planning a trip to Denver").
+1. **People** tab → **+** → *From Contacts*. Tap each person and set how often you want to text them, and add a short note about what's going on with them ("the new job", "the Denver trip").
 2. **About Me** tab → add what you're working on and anything happening this week. Turn on *Use my calendar* if you want openers to mention your schedule.
 3. Optional: paste a Claude API key (from [console.anthropic.com](https://console.anthropic.com)) under *AI conversation starters*.
 4. **Today** tab → tap **Text [name]**. That's it.

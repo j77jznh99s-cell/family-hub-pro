@@ -142,12 +142,12 @@ struct PersonEditor: View {
                     Text("Family Hub nudges you once it's been longer than this.")
                 }
                 Section {
-                    TextField("What's going on with them? (new job, trip, kid's recital…)", text: $person.notes, axis: .vertical)
+                    TextField("What's going on with them? (the new job, the Denver trip…)", text: $person.notes, axis: .vertical)
                         .lineLimit(3...8)
                 } header: {
                     Text("Notes")
                 } footer: {
-                    Text("Used to write better conversation starters. The first line is used even without AI.")
+                    Text("Short topics work best, like “the new job” or “the Denver trip”. Used to write conversation starters.")
                 }
             }
             .navigationTitle(person.name.isEmpty ? "New person" : person.name)
