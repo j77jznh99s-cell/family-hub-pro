@@ -21,7 +21,9 @@ Before you finish, update memory so the next session can pick up where you left 
 2. Update the project's task list: tick done items, add new ones with an owner role.
 3. Record any decision the owner made in `vault/Memory/Decisions.md`.
 4. Rewrite `vault/Memory/Active Context.md` so it's true *now* (keep it under ~40 lines).
-5. Commit and push the vault changes on the branch you're working on.
+5. Commit and push. **Memory's home is the `main` branch** (the default branch, so every new session
+   loads it). If you worked on a project branch, also copy your `vault/` changes onto `main` and push
+   (for example with `git worktree add ../main-wt main`, copy the files, commit, push).
 
 ## Projects
 
@@ -31,6 +33,11 @@ Before you finish, update memory so the next session can pick up where you left 
 | Clip Studio (AI video clipper) | `claude/video-clip-detection-mvp-g18ggk` → repo root (`src/`) | `vault/Projects/Clip Studio.md` |
 | Family Hub (iPhone app + widgets) | `claude/family-hub-widget-1w7cv9` → `FamilyHub/` | `vault/Projects/Family Hub.md` |
 | Bybit trading bot (risk-gated) | `claude/bybit-trading-bot-risk-gate-r7apfr` → repo root | `vault/Projects/Bybit Trading Bot.md` |
+
+## Branches
+
+- `main`: default branch and home of `CLAUDE.md`, `vault/` and `.claude/agents/`. It also carries the Clip Studio code (it was created from that branch).
+- Project work happens on the project branches in the table above. Start new projects on a new branch from `main`.
 
 ## Agents
 
