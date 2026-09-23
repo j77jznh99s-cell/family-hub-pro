@@ -79,7 +79,7 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 - `POST /api/upload` — multipart, field `video` (+ `accountId` field/query param if Stripe billing is on). Returns `202 { jobId }`, or `400` with a readable `error` if the file isn't a usable video (checked with `ffprobe` before any credit is spent).
 - `GET /api/jobs` — list jobs.
 - `GET /api/jobs/:id` — job status + `clips[]` once processing finishes. `processingSeconds` is the pipeline's wall-clock time once the job completes or fails.
-- `GET /api/stats` — usage totals: jobs by status, jobs in the last 24h/7d, failure rate, total clips, source minutes processed, average/max processing time.
+- `GET /api/stats` — usage totals (also shown as a panel on the dashboard when opened with `?stats=1`): jobs by status, jobs in the last 24h/7d, failure rate, total clips, source minutes processed, average/max processing time.
 - `GET /api/jobs/:id/clips/:clipId/file` — download a clip (redirects to a presigned URL when using S3).
 - `GET /api/jobs/:id/clips/:clipId/thumbnail` — clip thumbnail (same).
 - `POST /api/billing/checkout`, `GET /api/billing/balance`, `POST /api/billing/webhook` — only mounted when `STRIPE_SECRET_KEY` is set; see above.

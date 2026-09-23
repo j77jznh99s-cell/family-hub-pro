@@ -95,6 +95,11 @@
   .job-status { color: var(--muted); }
   details summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; }
   video { width: 100%; border-radius: 8px; margin-top: 0.5rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .stat { background: #0d0f14; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; }
+  .stat .value { font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+  @media (max-width: 420px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -121,6 +126,13 @@
   <div class="panel" id="clipsPanel" style="display:none">
     <h2 id="clipsHeading" style="margin-top:0;font-size:1.1rem"></h2>
     <div id="clipsList"></div>
+  </div>
+
+  <!-- Operator view: only shown with ?stats=1 so clients sharing this dashboard don't see
+       aggregate usage by default. Not access control - /api/stats uses the same token. -->
+  <div class="panel" id="statsPanel" style="display:none">
+    <h2 style="margin-top:0;font-size:1.1rem">Usage</h2>
+    <div class="stats-grid" id="statsGrid"></div>
   </div>
 
   <div class="panel">
@@ -231,6 +243,7 @@ async function pollJob(jobId) {
     if (job.status === 'complete' || job.status === 'failed') {
       clearInterval(pollTimer);
       loadJobsList();
+      loadStats();
     }
   };
   await check();
@@ -300,7 +313,43 @@ async function loadJobsList() {
   }
 }
 
+const showStats = new URLSearchParams(location.search).get('stats') === '1';
+const statsPanel = document.getElementById('statsPanel');
+const statsGrid = document.getElementById('statsGrid');
+
+function formatDuration(seconds) {
+  if (seconds === null || seconds === undefined) return '–';
+  return seconds < 60 ? seconds.toFixed(1) + 's' : formatTime(seconds);
+}
+
+async function loadStats() {
+  if (!showStats) return;
+  const res = await fetch(withToken('/api/stats'), { headers: authHeaders() });
+  if (!res.ok) return;
+  const s = await res.json();
+  const tiles = [
+    [s.jobs.total, 'Videos uploaded'],
+    [s.jobs.last24h, 'Last 24 hours'],
+    [s.jobs.last7d, 'Last 7 days'],
+    [s.clips.total, 'Clips made'],
+    [s.processing.sourceMinutesProcessed, 'Minutes processed'],
+    [s.jobs.failureRate === null ? '–' : Math.round(s.jobs.failureRate * 100) + '%', 'Failure rate'],
+    [formatDuration(s.processing.avgSeconds), 'Avg processing'],
+    [formatDuration(s.processing.maxSeconds), 'Longest processing'],
+    [s.jobs.byStatus.processing + s.jobs.byStatus.uploaded, 'In queue now'],
+  ];
+  statsGrid.innerHTML = '';
+  for (const [value, label] of tiles) {
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.innerHTML = `<div class="value">${escapeHtml(String(value))}</div><div class="label">${label}</div>`;
+    statsGrid.appendChild(el);
+  }
+  statsPanel.style.display = 'block';
+}
+
 loadJobsList();
+loadStats();
 </script>
 </body>
 </html>
