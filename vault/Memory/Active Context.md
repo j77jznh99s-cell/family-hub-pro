@@ -11,7 +11,6 @@ updated: 2026-09-23
 The whole team plan is written. Everything now waits on the **owner's Studio play-test** and **decisions**.
 
 ## Waiting on the owner
-- [ ] **Set the default branch to `main`**: GitHub still showed the old default at the last check. Repo → Settings → General → Default branch → ⇄ → main → Update → confirm.
 - [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio, following the test plan in [[Sproutling Isles - QA Review]]. Paste any Output errors.
 - [ ] Answer the 15 pending decisions in [[Decisions]]. #1–4 block the next build.
 - [ ] Create the 13 Robux items (steps in [[Sproutling Isles - Launch & Live Ops]]) and share their IDs.
