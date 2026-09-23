@@ -78,7 +78,8 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 
 - `POST /api/upload` — multipart, field `video` (+ `accountId` field/query param if Stripe billing is on). Returns `202 { jobId }`.
 - `GET /api/jobs` — list jobs.
-- `GET /api/jobs/:id` — job status + `clips[]` once processing finishes.
+- `GET /api/jobs/:id` — job status + `clips[]` once processing finishes. `processingSeconds` is the pipeline's wall-clock time once the job completes or fails.
+- `GET /api/stats` — usage totals: jobs by status, jobs in the last 24h/7d, failure rate, total clips, source minutes processed, average/max processing time.
 - `GET /api/jobs/:id/clips/:clipId/file` — download a clip (redirects to a presigned URL when using S3).
 - `GET /api/jobs/:id/clips/:clipId/thumbnail` — clip thumbnail (same).
 - `POST /api/billing/checkout`, `GET /api/billing/balance`, `POST /api/billing/webhook` — only mounted when `STRIPE_SECRET_KEY` is set; see above.
@@ -89,5 +90,5 @@ All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`
 
 - **Real per-client auth.** The `accountId` string used for billing isn't validated against anything (see Payments above) — fine for a handful of hand-onboarded clients, not for self-serve signup.
 - **Multiple video format/codec hardening.** ffmpeg handles most inputs fine, but there's no exhaustive test matrix of containers/codecs/corrupt files.
-- **Analytics.** No tracking of processing time, clip performance, or client usage yet.
+- **Deeper analytics.** `GET /api/stats` covers processing time and volume, but there's no per-client breakdown (no real client identity yet, see above) and no tracking of how clips perform once posted.
 - **Subject-aware vertical crop.** `CLIP_ASPECT=9:16` (see Configuration) does a fixed center crop; it doesn't track the speaker, so off-center subjects can end up partly out of frame.

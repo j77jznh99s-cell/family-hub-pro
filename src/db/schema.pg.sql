@@ -4,10 +4,14 @@ CREATE TABLE IF NOT EXISTS jobs (
   stored_path TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'uploaded',
   duration_seconds DOUBLE PRECISION,
+  processing_ms INTEGER,
   error TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Added after the table first shipped; CREATE TABLE IF NOT EXISTS won't add it to an existing DB.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS processing_ms INTEGER;
 
 CREATE TABLE IF NOT EXISTS clips (
   id TEXT PRIMARY KEY,

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   stored_path TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'uploaded', -- uploaded | processing | complete | failed
   duration_seconds REAL,
+  processing_ms INTEGER, -- wall-clock pipeline time, set when a job completes or fails
   error TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

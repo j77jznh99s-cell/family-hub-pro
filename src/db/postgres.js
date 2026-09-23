@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { DATABASE_URL } = require('../config');
+const { buildStats } = require('./stats');
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
@@ -136,6 +137,36 @@ async function recordStripeEvent(eventId) {
   return result.rowCount > 0; // true only if this call actually inserted it
 }
 
+// Aggregate usage numbers for GET /api/stats. Same shape as sqlite.js's getStats.
+// COUNT/SUM come back from pg as strings (bigint/numeric) - buildStats normalizes them.
+async function getStats() {
+  const { rows: statusRows } = await query(
+    'SELECT status, COUNT(*) AS count FROM jobs GROUP BY status'
+  );
+  const {
+    rows: [totals],
+  } = await query(
+    `SELECT
+       COUNT(*) AS completed,
+       COALESCE(SUM(duration_seconds), 0) AS source_seconds,
+       AVG(processing_ms) AS avg_processing_ms,
+       MAX(processing_ms) AS max_processing_ms
+     FROM jobs WHERE status = 'complete'`
+  );
+  const {
+    rows: [recent],
+  } = await query(
+    `SELECT
+       COUNT(*) FILTER (WHERE created_at >= now() - interval '1 day') AS last_24h,
+       COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days') AS last_7d
+     FROM jobs`
+  );
+  const {
+    rows: [{ clips }],
+  } = await query('SELECT COUNT(*) AS clips FROM clips');
+  return buildStats({ statusRows, totals, recent, clips });
+}
+
 module.exports = {
   createJob,
   updateJob,
@@ -149,4 +180,5 @@ module.exports = {
   addCredits,
   spendCreditIfAvailable,
   recordStripeEvent,
+  getStats,
 };

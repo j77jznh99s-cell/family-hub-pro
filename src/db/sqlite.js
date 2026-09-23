@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
+const { buildStats } = require('./stats');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', '..', 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -14,6 +15,11 @@ db.pragma('foreign_keys = ON');
 
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
+
+// Columns added after a table first shipped - CREATE TABLE IF NOT EXISTS won't add them to
+// an existing DB file, and SQLite has no ADD COLUMN IF NOT EXISTS.
+const jobColumns = new Set(db.prepare('PRAGMA table_info(jobs)').all().map((c) => c.name));
+if (!jobColumns.has('processing_ms')) db.exec('ALTER TABLE jobs ADD COLUMN processing_ms INTEGER');
 
 async function createJob({ id, originalName, storedPath }) {
   db.prepare(
@@ -103,6 +109,31 @@ async function recordStripeEvent(eventId) {
   }
 }
 
+// Aggregate usage numbers for GET /api/stats. Same shape as postgres.js's getStats.
+async function getStats() {
+  const statusRows = db.prepare('SELECT status, COUNT(*) AS count FROM jobs GROUP BY status').all();
+  const totals = db
+    .prepare(
+      `SELECT
+         COUNT(*) AS completed,
+         COALESCE(SUM(duration_seconds), 0) AS source_seconds,
+         AVG(processing_ms) AS avg_processing_ms,
+         MAX(processing_ms) AS max_processing_ms
+       FROM jobs WHERE status = 'complete'`
+    )
+    .get();
+  const recent = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN created_at >= datetime('now', '-1 day') THEN 1 ELSE 0 END) AS last_24h,
+         SUM(CASE WHEN created_at >= datetime('now', '-7 days') THEN 1 ELSE 0 END) AS last_7d
+       FROM jobs`
+    )
+    .get();
+  const { clips } = db.prepare('SELECT COUNT(*) AS clips FROM clips').get();
+  return buildStats({ statusRows, totals, recent, clips });
+}
+
 module.exports = {
   createJob,
   updateJob,
@@ -116,4 +147,5 @@ module.exports = {
   addCredits,
   spendCreditIfAvailable,
   recordStripeEvent,
+  getStats,
 };

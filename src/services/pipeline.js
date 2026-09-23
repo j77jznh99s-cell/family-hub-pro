@@ -35,6 +35,7 @@ async function processJob(jobId, videoPath) {
   const jobClipsDir = path.join(CLIPS_DIR, jobId);
   const framesDir = path.join(jobClipsDir, 'frames');
   const audioPath = path.join(jobClipsDir, 'audio.wav');
+  const startedAt = Date.now();
 
   try {
     await db.updateJob(jobId, { status: 'processing', error: null });
@@ -104,7 +105,7 @@ async function processJob(jobId, videoPath) {
       });
     }
 
-    await db.updateJob(jobId, { status: 'complete' });
+    await db.updateJob(jobId, { status: 'complete', processing_ms: Date.now() - startedAt });
 
     if (S3_BUCKET) {
       // Every clip/thumbnail was uploaded to S3 and its local scratch copy removed -
@@ -118,7 +119,11 @@ async function processJob(jobId, videoPath) {
       await fs.rm(videoPath, { force: true });
     }
   } catch (err) {
-    await db.updateJob(jobId, { status: 'failed', error: err.message });
+    await db.updateJob(jobId, {
+      status: 'failed',
+      error: err.message,
+      processing_ms: Date.now() - startedAt,
+    });
     throw err;
   } finally {
     await fs.rm(framesDir, { recursive: true, force: true });

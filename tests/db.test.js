@@ -104,3 +104,32 @@ test('recordStripeEvent is idempotent per event id', async () => {
   assert.equal(await db.recordStripeEvent(eventId), true);
   assert.equal(await db.recordStripeEvent(eventId), false); // webhook retry - already processed
 });
+
+test('getStats reflects new jobs, clips, and processing time', async () => {
+  // Deltas, not absolutes - the Postgres run in CI shares one database across test runs.
+  const before = await db.getStats();
+
+  const doneId = uniqueId('job');
+  await db.createJob({ id: doneId, originalName: 'done.mp4', storedPath: '/tmp/done.mp4' });
+  await db.updateJob(doneId, { status: 'complete', duration_seconds: 120, processing_ms: 4000 });
+  await db.insertClip({ id: uniqueId('clip'), job_id: doneId, title: 't', description: '', score: 5, start_time: 0, end_time: 10, file_path: 'x.mp4', thumbnail_path: null });
+
+  const failedId = uniqueId('job');
+  await db.createJob({ id: failedId, originalName: 'bad.mp4', storedPath: '/tmp/bad.mp4' });
+  await db.updateJob(failedId, { status: 'failed', error: 'boom', processing_ms: 500 });
+
+  const after = await db.getStats();
+  assert.equal(after.jobs.total - before.jobs.total, 2);
+  assert.equal(after.jobs.byStatus.complete - before.jobs.byStatus.complete, 1);
+  assert.equal(after.jobs.byStatus.failed - before.jobs.byStatus.failed, 1);
+  assert.equal(after.jobs.last24h - before.jobs.last24h, 2);
+  assert.equal(after.jobs.last7d - before.jobs.last7d, 2);
+  assert.equal(after.clips.total - before.clips.total, 1);
+  assert.ok(Math.abs(after.processing.sourceMinutesProcessed - before.processing.sourceMinutesProcessed - 2) < 0.01);
+  assert.equal(typeof after.processing.avgSeconds, 'number');
+  assert.ok(after.processing.maxSeconds >= 4);
+  assert.ok(after.jobs.failureRate > 0 && after.jobs.failureRate < 1);
+
+  const job = await db.getJob(doneId);
+  assert.equal(Number(job.processing_ms), 4000);
+});

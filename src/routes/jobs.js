@@ -24,6 +24,7 @@ function serializeJob(job) {
     originalName: job.original_name,
     status: job.status,
     durationSeconds: job.duration_seconds,
+    processingSeconds: job.processing_ms == null ? null : job.processing_ms / 1000,
     error: job.error,
     createdAt: job.created_at,
     updatedAt: job.updated_at,
