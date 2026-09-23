@@ -7,7 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
-| 2026-09-23 | Workspace | Created `main` as the home of memory (owner approved). **Still to do:** GitHub still reported the old default branch at the last check | New sessions load `CLAUDE.md` + `vault/` automatically once `main` is the default | Owner + Claude |
+| 2026-09-23 | Workspace | `main` is the default branch and the home of memory (verified 2026-09-23) | New sessions load `CLAUDE.md` + `vault/` automatically | Owner + Claude |
 | 2026-09-23 | Sproutling Isles | Rebirth during a snatch: the thief can still win; a failed carry makes the Sproutling vanish (no dupe, a thief can't block rebirth) | QA M3 fix | Claude (roblox-engineer) |
 | 2026-09-23 | Workspace | GitHub is the source of truth for memory; Obsidian is optional (open `vault/` as a vault) | Obsidian isn't synced; GitHub is reachable from phone, laptop and every Claude session | Owner + Claude |
 | 2026-09-23 | Sproutling Isles | Build the top-revenue genre: collect/grow/idle sim with a light PvP "snatch" layer | Grow a Garden, Steal a Brainrot and Fish It led 2025–26; the loop fits Roblox's 28-day retention ranking | Owner asked for the top pick; Claude chose |
