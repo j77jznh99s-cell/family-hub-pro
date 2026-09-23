@@ -1,8 +1,8 @@
 // Exercises whichever queue driver is active (in-process by default, BullMQ when
 // REDIS_URL is set - see src/services/queue/index.js) end-to-end: enqueue a job and
-// confirm it actually gets processed (the pipeline will fail fast with ENOENT since
-// this test environment has no ffmpeg - that's fine, it's the queue mechanics being
-// verified here, not the pipeline itself, which has its own tests).
+// confirm it actually gets processed (the pipeline fails fast on the nonexistent source
+// file - that's fine, it's the queue mechanics being verified here, not the pipeline
+// itself, which tests/pipeline.integration.test.js covers).
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const os = require('node:os');
