@@ -42,6 +42,18 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human.
 - [ ] **live-ops-manager:** rewarded video ads + analytics events (funnel: first plant → first hatch → first purchase)
 - [ ] **market-researcher:** monthly trend refresh; compare against competitors after launch
 
+## Bugs
+Full details, file:line references and the Studio test plan are in [[Sproutling Isles - QA Review]] (2026-09-23, static review; nothing has been run in Studio yet).
+- [ ] **Blocker B1 (roblox-engineer):** Snatch prompts are hidden for everyone (`OnlyUser` stays 0; `PlotService.luau:453`, `claim()` never clears it). Fix this before the play-test.
+- [ ] **Major M1-M6 (roblox-engineer):**
+  - M1: snatch trusts the client's position.
+  - M2: the Bonk prompt competes with E soil prompts.
+  - M3: a snatched Sproutling survives rebirth.
+  - M4: rejoining rerolls shop stock.
+  - M5: paid items lost when saving is off, and Luck Boost isn't saved.
+  - M6: the Studio shield blocks snatch testing.
+- [ ] **Minor m1-m18:** see the review.
+
 ## Gotchas for agents
 - The cloud sandbox can't run Roblox Studio. Validate with `rojo build`, `lune run tools/bake-map` and `selene src tools`.
 - Rojo, Lune and Selene are installed with `cargo install` (about 5 min). See [[Environment Setup]].
