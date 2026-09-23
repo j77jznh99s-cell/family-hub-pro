@@ -1,0 +1,1 @@
+- [ ] **<agent role or owner>:** <verb + outcome> · done when: <check> · context: [[<note>]]
