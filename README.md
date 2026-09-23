@@ -76,7 +76,7 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 
 ## API
 
-- `POST /api/upload` — multipart, field `video` (+ `accountId` field/query param if Stripe billing is on). Returns `202 { jobId }`.
+- `POST /api/upload` — multipart, field `video` (+ `accountId` field/query param if Stripe billing is on). Returns `202 { jobId }`, or `400` with a readable `error` if the file isn't a usable video (checked with `ffprobe` before any credit is spent).
 - `GET /api/jobs` — list jobs.
 - `GET /api/jobs/:id` — job status + `clips[]` once processing finishes. `processingSeconds` is the pipeline's wall-clock time once the job completes or fails.
 - `GET /api/stats` — usage totals: jobs by status, jobs in the last 24h/7d, failure rate, total clips, source minutes processed, average/max processing time.
@@ -89,6 +89,6 @@ All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`
 ## Still open — needs a product decision, not just code
 
 - **Real per-client auth.** The `accountId` string used for billing isn't validated against anything (see Payments above) — fine for a handful of hand-onboarded clients, not for self-serve signup.
-- **Multiple video format/codec hardening.** ffmpeg handles most inputs fine, but there's no exhaustive test matrix of containers/codecs/corrupt files.
+- **Wider format test matrix.** Uploads are now probed with `ffprobe` and rejected up front (400, no credit spent) if they're unreadable, truncated, audio-only, or missing duration/dimensions, but there's still no exhaustive matrix of exotic containers/codecs (ProRes, HEVC 10-bit, VFR phone footage, etc.).
 - **Deeper analytics.** `GET /api/stats` covers processing time and volume, but there's no per-client breakdown (no real client identity yet, see above) and no tracking of how clips perform once posted.
 - **Subject-aware vertical crop.** `CLIP_ASPECT=9:16` (see Configuration) does a fixed center crop; it doesn't track the speaker, so off-center subjects can end up partly out of frame.

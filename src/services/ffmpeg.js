@@ -22,6 +22,50 @@ async function getDuration(filePath) {
   return duration;
 }
 
+// Stream-level summary of a media file. Throws if ffprobe can't parse it at all
+// (corrupt/truncated/not media) - callers treat that as "not a usable video".
+async function probeMedia(filePath) {
+  const { stdout } = await execFileAsync(
+    FFPROBE_PATH,
+    [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration:stream=codec_type,codec_name,width,height:stream_disposition=attached_pic',
+      '-of',
+      'json',
+      filePath,
+    ],
+    { maxBuffer: MAX_BUFFER }
+  );
+  return summarizeProbe(JSON.parse(stdout));
+}
+
+function summarizeProbe(parsed) {
+  const streams = parsed?.streams || [];
+  // Album art in an audio file (mp3/m4a) shows up as a one-frame "video" stream.
+  const video = streams.find((s) => s.codec_type === 'video' && !s.disposition?.attached_pic);
+  const duration = parseFloat(parsed?.format?.duration);
+  return {
+    duration: Number.isFinite(duration) ? duration : null,
+    hasVideo: Boolean(video),
+    hasAudio: streams.some((s) => s.codec_type === 'audio'),
+    videoCodec: video?.codec_name || null,
+    width: video?.width || null,
+    height: video?.height || null,
+  };
+}
+
+// Returns a client-facing reason the file can't be processed, or null if it's usable.
+function describeProbeProblem(probe) {
+  if (!probe.hasVideo) return 'This file has no video track - upload a video file';
+  if (!probe.duration || probe.duration <= 0) {
+    return 'Could not read the length of this video - it may be corrupt or still encoding';
+  }
+  if (!probe.width || !probe.height) return 'Could not read the dimensions of this video';
+  return null;
+}
+
 // Runs silencedetect and returns [{start, end}] gaps of silence in the audio track.
 async function detectSilences(filePath, { noiseDb = -30, minSilenceDuration = 0.6 } = {}) {
   let stderr = '';
@@ -183,6 +227,9 @@ async function checkAvailable() {
 
 module.exports = {
   getDuration,
+  probeMedia,
+  summarizeProbe,
+  describeProbeProblem,
   detectSilences,
   extractFrame,
   extractClip,

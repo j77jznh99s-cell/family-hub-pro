@@ -34,3 +34,43 @@ test('buildVideoFilters keeps subtitles-only behavior unchanged', () => {
   const vf = buildVideoFilters({ subtitlesPath: '/tmp/x.srt' });
   assert.match(vf, /^subtitles=\/tmp\/x\.srt:force_style=/);
 });
+
+const { summarizeProbe, describeProbeProblem } = require('../src/services/ffmpeg');
+
+test('summarizeProbe reads video/audio streams and duration', () => {
+  const probe = summarizeProbe({
+    streams: [
+      { codec_type: 'video', codec_name: 'h264', width: 1920, height: 1080, disposition: { attached_pic: 0 } },
+      { codec_type: 'audio', codec_name: 'aac' },
+    ],
+    format: { duration: '5.000000' },
+  });
+  assert.deepEqual(probe, { duration: 5, hasVideo: true, hasAudio: true, videoCodec: 'h264', width: 1920, height: 1080 });
+  assert.equal(describeProbeProblem(probe), null);
+});
+
+test('album art in an audio file does not count as a video track', () => {
+  const probe = summarizeProbe({
+    streams: [
+      { codec_type: 'audio', codec_name: 'mp3' },
+      { codec_type: 'video', codec_name: 'mjpeg', width: 600, height: 600, disposition: { attached_pic: 1 } },
+    ],
+    format: { duration: '180.0' },
+  });
+  assert.equal(probe.hasVideo, false);
+  assert.match(describeProbeProblem(probe), /no video track/);
+});
+
+test('describeProbeProblem flags missing duration or dimensions', () => {
+  const base = { duration: 10, hasVideo: true, hasAudio: true, videoCodec: 'h264', width: 640, height: 360 };
+  assert.match(describeProbeProblem({ ...base, duration: null }), /length/);
+  assert.match(describeProbeProblem({ ...base, duration: 0 }), /length/);
+  assert.match(describeProbeProblem({ ...base, width: null }), /dimensions/);
+  assert.equal(describeProbeProblem({ ...base, hasAudio: false }), null); // silent video is fine
+});
+
+test('summarizeProbe tolerates empty ffprobe output', () => {
+  const probe = summarizeProbe({});
+  assert.equal(probe.hasVideo, false);
+  assert.equal(probe.duration, null);
+});
