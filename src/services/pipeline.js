@@ -87,7 +87,11 @@ async function processJob(jobId, videoPath) {
 
       let thumbnailKey = null;
       if (segment.thumbnailPath) {
-        await fs.copyFile(segment.thumbnailPath, thumbPath);
+        if (ffmpeg.parseAspect(CLIP_ASPECT)) {
+          await ffmpeg.cropImage(segment.thumbnailPath, thumbPath, CLIP_ASPECT);
+        } else {
+          await fs.copyFile(segment.thumbnailPath, thumbPath);
+        }
         thumbnailKey = path.join(jobId, thumbFile);
         await storage.store(thumbPath, thumbnailKey);
       }

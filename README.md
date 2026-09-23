@@ -34,7 +34,7 @@ Full list with comments in `.env.example`. The only required var is `ANTHROPIC_A
 
 ### Vertical clips
 
-Set `CLIP_ASPECT=9:16` (or `1:1`, `4:5`, any `W:H`) to center-crop every exported clip to that ratio for TikTok/Reels/Shorts. It takes the largest centered window that fits the source frame, so nothing gets upscaled, and any captions are burned in after the crop so they fit the vertical frame. Leave it unset to keep the source aspect ratio.
+Set `CLIP_ASPECT=9:16` (or `1:1`, `4:5`, any `W:H`) to center-crop every exported clip to that ratio for TikTok/Reels/Shorts. It takes the largest centered window that fits the source frame, so nothing gets upscaled, and any captions are burned in after the crop so they fit the vertical frame. Thumbnails get the same crop so the dashboard previews match the clips. Leave it unset to keep the source aspect ratio.
 
 ## Scaling up (each is optional)
 

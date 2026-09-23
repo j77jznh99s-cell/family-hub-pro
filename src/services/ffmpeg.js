@@ -201,6 +201,18 @@ async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtit
   await execFileAsync(FFMPEG_PATH, args, { maxBuffer: MAX_BUFFER });
 }
 
+// Writes a copy of a still image, center-cropped to the given aspect ratio - keeps a
+// clip's thumbnail the same shape as the clip itself when CLIP_ASPECT is set.
+async function cropImage(inPath, outPath, aspect) {
+  const ratio = parseAspect(aspect);
+  if (!ratio) throw new Error(`Invalid aspect ratio: ${aspect}`);
+  await execFileAsync(
+    FFMPEG_PATH,
+    ['-y', '-i', inPath, '-vf', buildCropFilter(ratio), '-q:v', '4', outPath],
+    { maxBuffer: MAX_BUFFER }
+  );
+}
+
 // Mono 16kHz WAV - small, and exactly what Whisper-family transcription APIs expect.
 // No extra codec needed (pcm_s16le is always built into ffmpeg), unlike mp3/aac.
 async function extractAudio(filePath, outPath) {
@@ -234,6 +246,7 @@ module.exports = {
   extractFrame,
   extractClip,
   extractAudio,
+  cropImage,
   checkAvailable,
   parseAspect,
   buildVideoFilters,
