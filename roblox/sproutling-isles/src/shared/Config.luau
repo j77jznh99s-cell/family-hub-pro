@@ -1,0 +1,76 @@
+--!strict
+-- Every gameplay tunable lives here so designers can rebalance without touching systems code.
+
+local Config = {}
+
+Config.GameName = "Sproutling Isles"
+Config.CurrencyName = "Dew"
+
+-- New players
+Config.StartingDew = 25
+Config.StartingSeeds = { mossbun = 2 }
+Config.NewPlayerShieldSeconds = 15 * 60 -- can't be snatched from during first 15 min of playtime
+
+-- Plots
+Config.PlotCount = 8
+Config.SoilTilesPerPlot = 12 -- 4 x 3 grid
+Config.BasePads = 8
+Config.BonusPadsPass = 4 -- "Big Greenhouse" game pass
+
+-- Gate lock (defence)
+Config.LockSeconds = 60
+Config.LockSecondsWithPass = 90
+
+-- Snatching
+Config.SnatchHoldSeconds = 1.5
+Config.SnatchCarrySeconds = 45 -- thief must reach home within this time
+Config.CarryWalkSpeed = 12
+Config.SnatchCooldownSeconds = 20
+
+-- Selling
+Config.SellRatio = 0.6 -- sell value = seed price * ratio * mutation * size
+
+-- Growth & weather
+Config.WeatherEverySeconds = { 300, 480 } -- random gap between natural weather events
+Config.WeatherDurationSeconds = 120
+Config.GoldenChance = 0.01 -- mutation roll available in any weather
+Config.HugeChance = 0.01
+Config.HugeSize = 2.5
+
+-- Shop restock (per player)
+Config.RestockSeconds = 300
+
+-- Pollen Parade conveyor
+Config.ParadeSpawnSeconds = 6
+Config.ParadeTravelSeconds = 32
+
+-- Wishing Pond
+Config.PondCooldownSeconds = 8
+Config.PondBiteSeconds = 3
+
+-- Rebirth: cost grows x4 per rebirth, each rebirth adds +50% permanent Dew
+Config.RebirthBaseCost = 250_000
+Config.RebirthCostGrowth = 4
+Config.RebirthBonus = 0.5
+
+-- Daily streak rewards, index = streak day (loops after 7)
+Config.DailyRewards = {
+	{ dew = 100 },
+	{ dew = 250 },
+	{ seed = "clovercub", count = 2 },
+	{ dew = 1_000 },
+	{ seed = "tulipaca", count = 2 },
+	{ dew = 5_000 },
+	{ seed = "mushroomph", count = 1 },
+}
+Config.DailyResetHours = 48 -- miss more than this and the streak restarts
+
+-- Testing: set true to get every game pass perk while play-testing in Studio
+Config.StudioTestPasses = false
+
+-- Saving
+Config.DataStoreName = "SproutlingIsles_v1"
+Config.AutosaveSeconds = 60
+Config.SessionLockSeconds = 90
+
+return Config
