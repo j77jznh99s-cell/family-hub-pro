@@ -8,7 +8,8 @@ const {
   PutObjectCommand,
   GetObjectCommand,
 } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+// Kept as a module reference (not destructured) so tests can mock getSignedUrl.
+const presigner = require('@aws-sdk/s3-request-presigner');
 
 const {
   S3_BUCKET,
@@ -46,7 +47,7 @@ async function getServeInfo(key, { downloadFilename } = {}) {
       ? `attachment; filename="${downloadFilename}"`
       : undefined,
   });
-  const url = await getSignedUrl(client, command, { expiresIn: S3_DOWNLOAD_URL_TTL_SECONDS });
+  const url = await presigner.getSignedUrl(client, command, { expiresIn: S3_DOWNLOAD_URL_TTL_SECONDS });
   return { type: 'redirect', url };
 }
 
