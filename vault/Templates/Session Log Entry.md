@@ -1,0 +1,16 @@
+## YYYY-MM-DD: short title
+**Device:** phone / laptop / scheduled · **Branch:** `...` · **Agents used:** ...
+
+**Owner asked**
+- ...
+
+**What was done**
+- ...
+
+**Not verified**
+- ...
+
+**Decisions** (also add to [[Decisions]])
+- ...
+
+**Next:** see [[Active Context]].
