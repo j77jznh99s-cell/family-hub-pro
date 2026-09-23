@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { PORT, STRIPE_SECRET_KEY } = require('./config');
+const { PORT, STRIPE_SECRET_KEY, CLIP_ASPECT } = require('./config');
 const { requireAccessToken } = require('./middleware/auth');
 const uploadRouter = require('./routes/upload');
 const jobsRouter = require('./routes/jobs');
@@ -61,6 +61,12 @@ async function start() {
   const recovered = await db.failStaleProcessingJobs();
   if (recovered > 0) {
     console.warn(`Marked ${recovered} job(s) left mid-processing from a prior run as failed.`);
+  }
+
+  if (CLIP_ASPECT && !ffmpeg.parseAspect(CLIP_ASPECT)) {
+    console.warn(
+      `[config] CLIP_ASPECT="${CLIP_ASPECT}" isn't a W:H ratio like 9:16 - ignoring it, clips will keep the source aspect ratio.`
+    );
   }
 
   app.listen(PORT, () => {

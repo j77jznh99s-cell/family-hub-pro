@@ -7,6 +7,7 @@ const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
 const FFPROBE_PATH = process.env.FFPROBE_PATH || 'ffprobe';
 
 const MAX_BUFFER = 1024 * 1024 * 50; // 50MB of stdout/stderr, ffmpeg logs can be chatty
+const PROBE_TIMEOUT_MS = 30 * 1000;
 
 async function getDuration(filePath) {
   const { stdout } = await execFileAsync(
@@ -36,7 +37,8 @@ async function probeMedia(filePath) {
       'json',
       filePath,
     ],
-    { maxBuffer: MAX_BUFFER }
+    // Runs inside the upload request, so a pathological file must not hang it.
+    { maxBuffer: MAX_BUFFER, timeout: PROBE_TIMEOUT_MS }
   );
   return summarizeProbe(JSON.parse(stdout));
 }
