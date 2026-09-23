@@ -94,7 +94,40 @@ function escapeForFilterPath(filePath) {
   return filePath.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
 }
 
-async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtitlesPath } = {}) {
+// Parses "W:H" (e.g. "9:16") into a width/height ratio, or null for unset/invalid -
+// null means "keep the source aspect ratio", which is the default.
+function parseAspect(aspect) {
+  const match = /^\s*(\d+(?:\.\d+)?)\s*:\s*(\d+(?:\.\d+)?)\s*$/.exec(aspect || '');
+  if (!match) return null;
+  const w = parseFloat(match[1]);
+  const h = parseFloat(match[2]);
+  if (!(w > 0 && h > 0)) return null;
+  return w / h;
+}
+
+// Center-crops to the target ratio using the largest window that fits the source frame
+// (never upscales). Dimensions are rounded down to even numbers since libx264 requires it.
+// Commas are escaped because they'd otherwise split the filtergraph.
+function buildCropFilter(ratio) {
+  const r = ratio.toFixed(6);
+  return `crop=w='trunc(min(iw\\,ih*${r})/2)*2':h='trunc(min(ih\\,iw/${r})/2)*2'`;
+}
+
+// Crop runs before subtitles so captions are laid out for the final frame size rather
+// than being cut off at the edges of a vertical crop.
+function buildVideoFilters({ aspect, subtitlesPath } = {}) {
+  const filters = [];
+  const ratio = parseAspect(aspect);
+  if (ratio) filters.push(buildCropFilter(ratio));
+  if (subtitlesPath) {
+    filters.push(
+      `subtitles=${escapeForFilterPath(subtitlesPath)}:force_style='FontSize=20,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=2,Alignment=2'`
+    );
+  }
+  return filters.length ? filters.join(',') : null;
+}
+
+async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtitlesPath, aspect } = {}) {
   const duration = Math.max(0.1, endSeconds - startSeconds);
   const args = [
     '-y',
@@ -106,12 +139,8 @@ async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtit
     String(duration),
   ];
 
-  if (subtitlesPath) {
-    args.push(
-      '-vf',
-      `subtitles=${escapeForFilterPath(subtitlesPath)}:force_style='FontSize=20,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=2,Alignment=2'`
-    );
-  }
+  const videoFilters = buildVideoFilters({ aspect, subtitlesPath });
+  if (videoFilters) args.push('-vf', videoFilters);
 
   args.push(
     '-c:v',
@@ -159,4 +188,6 @@ module.exports = {
   extractClip,
   extractAudio,
   checkAvailable,
+  parseAspect,
+  buildVideoFilters,
 };

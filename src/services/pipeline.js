@@ -9,6 +9,7 @@ const {
   S3_BUCKET,
   OPENAI_API_KEY,
   BURN_IN_CAPTIONS,
+  CLIP_ASPECT,
 } = require('../config');
 const ffmpeg = require('./ffmpeg');
 const { buildCandidateSegments } = require('./segmenter');
@@ -74,7 +75,10 @@ async function processJob(jobId, videoPath) {
         }
       }
 
-      await ffmpeg.extractClip(videoPath, segment.start, segment.end, clipPath, { subtitlesPath });
+      await ffmpeg.extractClip(videoPath, segment.start, segment.end, clipPath, {
+        subtitlesPath,
+        aspect: CLIP_ASPECT,
+      });
       if (subtitlesPath) await fs.rm(subtitlesPath, { force: true });
 
       const clipKey = path.join(jobId, clipFile);

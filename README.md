@@ -32,6 +32,10 @@ Run the test suite with `npm test` (uses SQLite + the in-process queue by defaul
 
 Full list with comments in `.env.example`. The only required var is `ANTHROPIC_API_KEY`. `ACCESS_TOKEN` is technically optional but **you should set it before sending a link to anyone** — without it, the API and dashboard are open to anyone with the URL. Send clients `https://your-app/?token=...`.
 
+### Vertical clips
+
+Set `CLIP_ASPECT=9:16` (or `1:1`, `4:5`, any `W:H`) to center-crop every exported clip to that ratio for TikTok/Reels/Shorts. It takes the largest centered window that fits the source frame, so nothing gets upscaled, and any captions are burned in after the crop so they fit the vertical frame. Leave it unset to keep the source aspect ratio.
+
 ## Scaling up (each is optional)
 
 ### Database: SQLite (default) or Postgres
@@ -86,4 +90,4 @@ All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`
 - **Real per-client auth.** The `accountId` string used for billing isn't validated against anything (see Payments above) — fine for a handful of hand-onboarded clients, not for self-serve signup.
 - **Multiple video format/codec hardening.** ffmpeg handles most inputs fine, but there's no exhaustive test matrix of containers/codecs/corrupt files.
 - **Analytics.** No tracking of processing time, clip performance, or client usage yet.
-- **Vertical/9:16 auto-crop** for social platforms that expect it — currently clips keep the source's aspect ratio.
+- **Subject-aware vertical crop.** `CLIP_ASPECT=9:16` (see Configuration) does a fixed center crop; it doesn't track the speaker, so off-center subjects can end up partly out of frame.
