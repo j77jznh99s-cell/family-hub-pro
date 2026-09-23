@@ -7,6 +7,20 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-23 (evening): moved everything into the vault for the laptop
+**Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` → synced to `main`
+
+**Owner asked:** move all the information into the Obsidian files, to continue on the laptop.
+
+**What was done**
+- Exported the Claude design doc into [[Sproutling Isles - Design Doc]] (now the working copy) and added the map image in `vault/Attachments/`.
+- Added [[Start Here - Laptop]] (download or clone, open in Obsidian, optional Obsidian Git sync, continuing with Claude, playing the game).
+- Linked both from [[00 Home]], [[Sproutling Isles]] and [[Active Context]].
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-23 (later): first agent team run
 **Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (+ `main`) · **Agents used:** qa-tester, game-designer, live-ops-manager, roblox-engineer
 

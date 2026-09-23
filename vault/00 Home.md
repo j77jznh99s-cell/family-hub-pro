@@ -4,6 +4,8 @@ updated: 2026-09-23
 ---
 # Home
 
+**New on the laptop?** Read [[Start Here - Laptop]].
+
 The owner's shared brain. Every Claude session and agent starts here (see `CLAUDE.md`).
 Open this folder in Obsidian as a vault to browse it with links and graph view.
 
@@ -15,6 +17,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 
 ## Projects
 - [[Sproutling Isles]]: Roblox grow-and-snatch game (active)
+  - [[Sproutling Isles - Design Doc]]: the full design (working copy)
 - [[Roblox Market Research 2026]]: the research behind the game choice
   - [[Sproutling Isles - QA Review]] · [[Sproutling Isles - Art Brief]] · [[Sproutling Isles - Trading Spec]] · [[Sproutling Isles - Launch & Live Ops]]
 - [[Clip Studio]]: AI video clipper web app

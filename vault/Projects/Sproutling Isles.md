@@ -8,7 +8,7 @@ updated: 2026-09-23
 Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch into Sproutlings
 (plant-creatures that earn Dew every second), defend their greenhouse gate and snatch rivals' rare Sproutlings.
 
-- **Design doc (source of truth for design):** https://claude.ai/code/artifact/a3a37801-bd42-4d71-a221-69ce94bf62e6
+- **Design doc (source of truth):** [[Sproutling Isles - Design Doc]] (vault copy; the older Claude Doc snapshot: https://claude.ai/code/artifact/a3a37801-bd42-4d71-a221-69ce94bf62e6)
 - **Code:** branch `claude/roblox-popular-game-trends-6u7sie`, folder `roblox/sproutling-isles/` (start with its `README.md`)
 - **Playable file:** `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` (map baked in)
 - **Why this game:** [[Roblox Market Research 2026]]

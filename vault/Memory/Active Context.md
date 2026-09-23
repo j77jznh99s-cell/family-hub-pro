@@ -25,5 +25,6 @@ The whole team plan is written. Everything now waits on the **owner's Studio pla
 Beta 2–8 Oct and launch 10 Oct need a clean play-test by about 1 Oct. If launch slips past 24 Oct, skip Halloween.
 
 ## Key links
-- Design doc: https://claude.ai/code/artifact/a3a37801-bd42-4d71-a221-69ce94bf62e6
+- Design doc: [[Sproutling Isles - Design Doc]] (vault copy is the working version)
+- Laptop setup: [[Start Here - Laptop]]
 - Code: branch `claude/roblox-popular-game-trends-6u7sie`, folder `roblox/sproutling-isles/`
