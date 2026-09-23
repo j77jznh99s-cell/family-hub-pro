@@ -25,6 +25,9 @@ export type Session = {
 	passes: { [string]: boolean },
 	joinedAt: number,
 	dewRemainder: number,
+	leaving: boolean?, -- set once the player starts leaving; stops autosaves and double saves
+	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
+	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)
 }
 
 local State = {}
@@ -52,8 +55,13 @@ end
 
 function State.income(session: Session): number
 	local total = 0
-	for _, sprout in session.data.pads do
-		total += SproutModel.income(sprout)
+	local capacity = State.padCapacity(session)
+	for key, sprout in session.data.pads do
+		-- pads above capacity (e.g. a refunded Big Greenhouse pass) don't earn
+		local pad = tonumber(key)
+		if pad and pad <= capacity then
+			total += SproutModel.income(sprout)
+		end
 	end
 	return total * State.multiplier(session)
 end

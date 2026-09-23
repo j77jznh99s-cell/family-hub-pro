@@ -45,7 +45,27 @@ function ShopService.rollStock(session: State.Session)
 			stock[species.id] = 0
 		end
 	end
+	-- M4: stock is saved with the restock window it belongs to, so rejoining can't reroll it
 	session.stock = stock
+	session.data.stock = stock
+	session.data.stockEpoch = ShopService.nextRestockAt()
+	session.player:SetAttribute("Stock", HttpService:JSONEncode(stock))
+end
+
+-- On join: reuse the saved stock if it belongs to the current restock window, otherwise roll.
+function ShopService.loadStock(session: State.Session)
+	local saved = session.data.stock
+	if type(saved) ~= "table" or session.data.stockEpoch ~= ShopService.nextRestockAt() then
+		ShopService.rollStock(session)
+		return
+	end
+	local stock = {}
+	for _, species in Species.ShopList do
+		local count = tonumber(saved[species.id]) or 0
+		stock[species.id] = math.max(0, math.floor(count))
+	end
+	session.stock = stock
+	session.data.stock = stock
 	session.player:SetAttribute("Stock", HttpService:JSONEncode(stock))
 end
 

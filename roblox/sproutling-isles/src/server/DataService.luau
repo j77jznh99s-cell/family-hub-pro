@@ -24,6 +24,29 @@ end
 
 local jobId = if game.JobId ~= "" then game.JobId else "studio"
 
+-- Saves are serialised per player so an older write can never land after a newer one:
+--   inFlight[userId]  - a save for this player is running right now
+--   released[userId]  - the leave-save (lock release) is done; later non-release saves are
+--                       dropped so a late autosave can't re-take the lock (cleared on next load)
+local inFlight: { [number]: boolean } = {}
+local released: { [number]: boolean } = {}
+
+local function waitIdle(userId: number, timeout: number)
+	local deadline = os.clock() + timeout
+	while inFlight[userId] and os.clock() < deadline do
+		task.wait(0.1)
+	end
+end
+
+-- Number of saves currently running (BindToClose waits for this to reach 0).
+function DataService.pendingSaves(): number
+	local n = 0
+	for _ in inFlight do
+		n += 1
+	end
+	return n
+end
+
 function DataService.defaultData()
 	return {
 		dew = Config.StartingDew,
@@ -38,6 +61,10 @@ function DataService.defaultData()
 		playSeconds = 0,
 		starterBought = false,
 		receipts = {},
+		stock = {}, -- [speciesId] = count left in this player's Seed Shop
+		stockEpoch = 0, -- the restock time (ShopService.nextRestockAt) the saved stock belongs to
+		luckUntil = 0, -- Luck Boost end, absolute Unix time so it survives server hops
+		shieldForfeited = false, -- true once the player has snatched (no new-player shield after that)
 	}
 end
 
@@ -60,6 +87,9 @@ function DataService.load(player: Player): ({ [string]: any }, boolean)
 	if not store then
 		return DataService.defaultData(), false
 	end
+	-- a fast rejoin to this same server must not read data older than the leave-save still in flight
+	waitIdle(player.UserId, 30)
+	released[player.UserId] = nil
 	for attempt = 1, 6 do
 		local loaded = nil
 		local locked = false
@@ -97,6 +127,12 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	if not store then
 		return true
 	end
+	local userId = player.UserId
+	waitIdle(userId, 30)
+	if released[userId] then
+		return true -- this player already left and released the lock; nothing newer to write
+	end
+	inFlight[userId] = true
 	local ok, err = pcall(function()
 		store:UpdateAsync(key(player), function(old)
 			old = old or {}
@@ -108,6 +144,10 @@ function DataService.save(player: Player, data, release: boolean): boolean
 			return old
 		end)
 	end)
+	inFlight[userId] = nil
+	if ok and release then
+		released[userId] = true
+	end
 	if not ok then
 		warn("[Sproutling] save failed for", player.Name, err)
 	end

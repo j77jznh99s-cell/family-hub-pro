@@ -16,6 +16,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 ## Projects
 - [[Sproutling Isles]]: Roblox grow-and-snatch game (active)
 - [[Roblox Market Research 2026]]: the research behind the game choice
+  - [[Sproutling Isles - QA Review]] · [[Sproutling Isles - Art Brief]] · [[Sproutling Isles - Trading Spec]] · [[Sproutling Isles - Launch & Live Ops]]
 - [[Clip Studio]]: AI video clipper web app
 - [[Family Hub]]: iPhone family app with widgets
 - [[Bybit Trading Bot]]: risk-gated perpetuals bot

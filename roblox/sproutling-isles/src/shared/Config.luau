@@ -26,6 +26,13 @@ Config.SnatchHoldSeconds = 1.5
 Config.SnatchCarrySeconds = 45 -- thief must reach home within this time
 Config.CarryWalkSpeed = 12
 Config.SnatchCooldownSeconds = 20
+-- Server-side anti-cheat for carries (the thief's client owns its character physics).
+-- Horizontal speed is checked with a token bucket: the thief earns CarryWalkSpeed * CarryMaxSpeedFactor
+-- studs of allowance per second, banked up to CarryBurstSeconds' worth, so lag spikes (no movement,
+-- then a catch-up jump) don't trip it but sustained speed hacks or teleports do. Tuning is unverified.
+Config.CarryMaxSpeedFactor = 1.3 -- 12 * 1.3 = 15.6 studs/s, below the default 16 walk speed
+Config.CarryBurstSeconds = 2.5
+Config.SnatchReachSlack = 6 -- extra studs allowed beyond the prompt's range when the snatch fires
 
 -- Selling
 Config.SellRatio = 0.6 -- sell value = seed price * ratio * mutation * size
@@ -67,6 +74,10 @@ Config.DailyResetHours = 48 -- miss more than this and the streak restarts
 
 -- Testing: set true to get every game pass perk while play-testing in Studio
 Config.StudioTestPasses = false
+-- Testing: turns off the new-player shield, but ONLY inside Roblox Studio (RunService:IsStudio()).
+-- Studio sessions never save playtime, so without this every test player is shielded for 15 min.
+-- Live servers ignore this flag.
+Config.StudioDisableShield = true
 
 -- Saving
 Config.DataStoreName = "SproutlingIsles_v1"

@@ -11,6 +11,7 @@ local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
+local SnatchService = require(script.Parent.SnatchService)
 
 local ProgressionService = {}
 
@@ -34,6 +35,9 @@ local function rebirth(player: Player)
 		State.notify(session, "Rebirth needs " .. Format.number(cost) .. " Dew. Keep growing!", "#ffb070")
 		return
 	end
+	-- M3: Sproutlings being carried away from this player right now must not come back into the
+	-- reborn garden. See SnatchService.forfeitCarriesFrom for why we void instead of refusing.
+	SnatchService.forfeitCarriesFrom(player)
 	local data = session.data
 	data.rebirths += 1
 	data.dew = Config.StartingDew
@@ -106,13 +110,22 @@ function ProgressionService.init(map: Instance)
 	end
 	touchPad(sky:FindFirstChild("LaunchPad") :: BasePart, function(player, character)
 		local session = State.get(player)
-		if session and session.data.rebirths >= 1 then
+		if session and session.carrying then
+			State.notify(session, "You can't fly while carrying a Sproutling!", "#ffb070")
+		elseif session and session.data.rebirths >= 1 then
+			session.serverMovedAt = os.clock()
+			session.serverMovedTo = landing.Position
 			character:PivotTo(landing.CFrame + Vector3.new(0, 4, 0))
 		elseif session then
 			State.notify(session, "The Sky Garden opens after your first Rebirth.", "#d0a0ff")
 		end
 	end)
-	touchPad(sky:FindFirstChild("ReturnPad") :: BasePart, function(_player, character)
+	touchPad(sky:FindFirstChild("ReturnPad") :: BasePart, function(player, character)
+		local session = State.get(player)
+		if session then
+			session.serverMovedAt = os.clock()
+			session.serverMovedTo = Vector3.new(0, 5, 220)
+		end
 		character:PivotTo(CFrame.new(0, 5, 220))
 	end)
 	game:GetService("Players").PlayerRemoving:Connect(function(player)

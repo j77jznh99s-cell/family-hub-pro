@@ -2,6 +2,7 @@
 -- service, and manages the player lifecycle (load -> claim plot -> tick income -> save).
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -64,12 +65,13 @@ end
 local function onPlayerAdded(player: Player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
-	local dew = Instance.new("StringValue")
-	dew.Name = "Dew"
-	dew.Parent = stats
+	-- Rebirths first so the player list sorts by it (Dew is a formatted string, which sorts as text; m13)
 	local rebirths = Instance.new("IntValue")
 	rebirths.Name = "Rebirths"
 	rebirths.Parent = stats
+	local dew = Instance.new("StringValue")
+	dew.Name = "Dew"
+	dew.Parent = stats
 	stats.Parent = player
 	local seeds = Instance.new("Folder")
 	seeds.Name = "Seeds"
@@ -85,6 +87,9 @@ local function onPlayerAdded(player: Player)
 
 	local now = os.time()
 	local shield = if data.playSeconds < Config.NewPlayerShieldSeconds then now + (Config.NewPlayerShieldSeconds - data.playSeconds) else 0
+	if data.shieldForfeited or (Config.StudioDisableShield and RunService:IsStudio()) then
+		shield = 0 -- m7: snatching gives the shield up for good; M6: Studio test switch
+	end
 	local session: State.Session = {
 		player = player,
 		data = data,
@@ -96,7 +101,7 @@ local function onPlayerAdded(player: Player)
 		shieldUntil = shield,
 		carrying = nil,
 		snatchReadyAt = 0,
-		luckUntil = 0,
+		luckUntil = tonumber(data.luckUntil) or 0, -- M5: a paid Luck Boost survives rejoining
 		pondReadyAt = 0,
 		passes = {},
 		joinedAt = now,
@@ -110,7 +115,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	MonetizationService.loadPasses(session)
-	ShopService.rollStock(session)
+	ShopService.loadStock(session)
 	State.syncAll(session)
 	PlotService.renderPads(session)
 
@@ -131,9 +136,10 @@ end
 
 local function onPlayerRemoving(player: Player)
 	local session = State.get(player)
-	if not session then
-		return
+	if not session or session.leaving then
+		return -- m1: PlayerRemoving and BindToClose both call this on shutdown; save once
 	end
+	session.leaving = true
 	SnatchService.onLeaving(player)
 	session.data.playSeconds += os.time() - session.joinedAt
 	session.joinedAt = os.time()
@@ -179,7 +185,7 @@ task.spawn(function()
 	while true do
 		task.wait(Config.AutosaveSeconds)
 		for player, session in State.sessions do
-			if session.persist then
+			if session.persist and not session.leaving then -- m2
 				local now = os.time()
 				session.data.playSeconds += now - session.joinedAt
 				session.joinedAt = now
@@ -199,7 +205,8 @@ game:BindToClose(function()
 		end)
 	end
 	local deadline = os.clock() + 25
-	while pending > 0 and os.clock() < deadline do
+	-- also wait for saves started by PlayerRemoving (onPlayerRemoving returns early for those)
+	while (pending > 0 or DataService.pendingSaves() > 0) and os.clock() < deadline do
 		task.wait(0.2)
 	end
 end)

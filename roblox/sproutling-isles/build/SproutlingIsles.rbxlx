@@ -62,6 +62,13 @@ Config.SnatchHoldSeconds = 1.5
 Config.SnatchCarrySeconds = 45 -- thief must reach home within this time
 Config.CarryWalkSpeed = 12
 Config.SnatchCooldownSeconds = 20
+-- Server-side anti-cheat for carries (the thief's client owns its character physics).
+-- Horizontal speed is checked with a token bucket: the thief earns CarryWalkSpeed * CarryMaxSpeedFactor
+-- studs of allowance per second, banked up to CarryBurstSeconds' worth, so lag spikes (no movement,
+-- then a catch-up jump) don't trip it but sustained speed hacks or teleports do. Tuning is unverified.
+Config.CarryMaxSpeedFactor = 1.3 -- 12 * 1.3 = 15.6 studs/s, below the default 16 walk speed
+Config.CarryBurstSeconds = 2.5
+Config.SnatchReachSlack = 6 -- extra studs allowed beyond the prompt's range when the snatch fires
 
 -- Selling
 Config.SellRatio = 0.6 -- sell value = seed price * ratio * mutation * size
@@ -103,6 +110,10 @@ Config.DailyResetHours = 48 -- miss more than this and the streak restarts
 
 -- Testing: set true to get every game pass perk while play-testing in Studio
 Config.StudioTestPasses = false
+-- Testing: turns off the new-player shield, but ONLY inside Roblox Studio (RunService:IsStudio()).
+-- Studio sessions never save playtime, so without this every test player is shielded for 15 min.
+-- Live servers ignore this flag.
+Config.StudioDisableShield = true
 
 -- Saving
 Config.DataStoreName = "SproutlingIsles_v1"
@@ -665,7 +676,8 @@ return MapBuilder
           <string name="Name">Products</string>
           <string name="Source"><![CDATA[--!strict
 -- Robux catalogue. IDs are 0 until you create the passes/products on the Creator Dashboard
--- and paste the real IDs here. Items with id 0 are hidden from the in-game store.
+-- and paste the real IDs here. Items with id 0 still show in the in-game store, with a "Set ID"
+-- button instead of a price, and can't be bought.
 
 export type Pass = { key: string, id: number, name: string, price: number, description: string }
 export type Product = { key: string, id: number, name: string, price: number, description: string }
@@ -1051,6 +1063,7 @@ return Weather
 -- service, and manages the player lifecycle (load -> claim plot -> tick income -> save).
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -1113,12 +1126,13 @@ end
 local function onPlayerAdded(player: Player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
-	local dew = Instance.new("StringValue")
-	dew.Name = "Dew"
-	dew.Parent = stats
+	-- Rebirths first so the player list sorts by it (Dew is a formatted string, which sorts as text; m13)
 	local rebirths = Instance.new("IntValue")
 	rebirths.Name = "Rebirths"
 	rebirths.Parent = stats
+	local dew = Instance.new("StringValue")
+	dew.Name = "Dew"
+	dew.Parent = stats
 	stats.Parent = player
 	local seeds = Instance.new("Folder")
 	seeds.Name = "Seeds"
@@ -1134,6 +1148,9 @@ local function onPlayerAdded(player: Player)
 
 	local now = os.time()
 	local shield = if data.playSeconds < Config.NewPlayerShieldSeconds then now + (Config.NewPlayerShieldSeconds - data.playSeconds) else 0
+	if data.shieldForfeited or (Config.StudioDisableShield and RunService:IsStudio()) then
+		shield = 0 -- m7: snatching gives the shield up for good; M6: Studio test switch
+	end
 	local session: State.Session = {
 		player = player,
 		data = data,
@@ -1145,7 +1162,7 @@ local function onPlayerAdded(player: Player)
 		shieldUntil = shield,
 		carrying = nil,
 		snatchReadyAt = 0,
-		luckUntil = 0,
+		luckUntil = tonumber(data.luckUntil) or 0, -- M5: a paid Luck Boost survives rejoining
 		pondReadyAt = 0,
 		passes = {},
 		joinedAt = now,
@@ -1159,7 +1176,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	MonetizationService.loadPasses(session)
-	ShopService.rollStock(session)
+	ShopService.loadStock(session)
 	State.syncAll(session)
 	PlotService.renderPads(session)
 
@@ -1180,9 +1197,10 @@ end
 
 local function onPlayerRemoving(player: Player)
 	local session = State.get(player)
-	if not session then
-		return
+	if not session or session.leaving then
+		return -- m1: PlayerRemoving and BindToClose both call this on shutdown; save once
 	end
+	session.leaving = true
 	SnatchService.onLeaving(player)
 	session.data.playSeconds += os.time() - session.joinedAt
 	session.joinedAt = os.time()
@@ -1228,7 +1246,7 @@ task.spawn(function()
 	while true do
 		task.wait(Config.AutosaveSeconds)
 		for player, session in State.sessions do
-			if session.persist then
+			if session.persist and not session.leaving then -- m2
 				local now = os.time()
 				session.data.playSeconds += now - session.joinedAt
 				session.joinedAt = now
@@ -1248,7 +1266,8 @@ game:BindToClose(function()
 		end)
 	end
 	local deadline = os.clock() + 25
-	while pending > 0 and os.clock() < deadline do
+	-- also wait for saves started by PlayerRemoving (onPlayerRemoving returns early for those)
+	while (pending > 0 or DataService.pendingSaves() > 0) and os.clock() < deadline do
 		task.wait(0.2)
 	end
 end)
@@ -1283,6 +1302,29 @@ end
 
 local jobId = if game.JobId ~= "" then game.JobId else "studio"
 
+-- Saves are serialised per player so an older write can never land after a newer one:
+--   inFlight[userId]  - a save for this player is running right now
+--   released[userId]  - the leave-save (lock release) is done; later non-release saves are
+--                       dropped so a late autosave can't re-take the lock (cleared on next load)
+local inFlight: { [number]: boolean } = {}
+local released: { [number]: boolean } = {}
+
+local function waitIdle(userId: number, timeout: number)
+	local deadline = os.clock() + timeout
+	while inFlight[userId] and os.clock() < deadline do
+		task.wait(0.1)
+	end
+end
+
+-- Number of saves currently running (BindToClose waits for this to reach 0).
+function DataService.pendingSaves(): number
+	local n = 0
+	for _ in inFlight do
+		n += 1
+	end
+	return n
+end
+
 function DataService.defaultData()
 	return {
 		dew = Config.StartingDew,
@@ -1297,6 +1339,10 @@ function DataService.defaultData()
 		playSeconds = 0,
 		starterBought = false,
 		receipts = {},
+		stock = {}, -- [speciesId] = count left in this player's Seed Shop
+		stockEpoch = 0, -- the restock time (ShopService.nextRestockAt) the saved stock belongs to
+		luckUntil = 0, -- Luck Boost end, absolute Unix time so it survives server hops
+		shieldForfeited = false, -- true once the player has snatched (no new-player shield after that)
 	}
 end
 
@@ -1319,6 +1365,9 @@ function DataService.load(player: Player): ({ [string]: any }, boolean)
 	if not store then
 		return DataService.defaultData(), false
 	end
+	-- a fast rejoin to this same server must not read data older than the leave-save still in flight
+	waitIdle(player.UserId, 30)
+	released[player.UserId] = nil
 	for attempt = 1, 6 do
 		local loaded = nil
 		local locked = false
@@ -1356,6 +1405,12 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	if not store then
 		return true
 	end
+	local userId = player.UserId
+	waitIdle(userId, 30)
+	if released[userId] then
+		return true -- this player already left and released the lock; nothing newer to write
+	end
+	inFlight[userId] = true
 	local ok, err = pcall(function()
 		store:UpdateAsync(key(player), function(old)
 			old = old or {}
@@ -1367,6 +1422,10 @@ function DataService.save(player: Player, data, release: boolean): boolean
 			return old
 		end)
 	end)
+	inFlight[userId] = nil
+	if ok and release then
+		released[userId] = true
+	end
 	if not ok then
 		warn("[Sproutling] save failed for", player.Name, err)
 	end
@@ -1433,6 +1492,9 @@ end
 
 -- Each handler returns true when the purchase was granted.
 local handlers: { [string]: (State.Session) -> boolean } = {
+	-- The store hides the Starter Pack once StarterBought is set, so a repeat can only come from an
+	-- old/stale prompt. It then grants just the 5,000 Dew (the seeds stay one-time). Refusing repeats
+	-- instead is an owner decision (QA m15).
 	StarterPack = function(session)
 		if not session.data.starterBought then
 			session.data.starterBought = true
@@ -1459,6 +1521,7 @@ local handlers: { [string]: (State.Session) -> boolean } = {
 	end,
 	LuckBoost = function(session)
 		session.luckUntil = math.max(session.luckUntil, os.time()) + 15 * 60
+		session.data.luckUntil = session.luckUntil -- M5: saved, absolute Unix time, survives rejoin/hops
 		session.player:SetAttribute("LuckUntil", session.luckUntil)
 		return true
 	end,
@@ -1486,6 +1549,14 @@ local function processReceipt(receipt)
 	local receipts = session.data.receipts
 	if table.find(receipts, receipt.PurchaseId) then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+	-- M5: in a live server a non-saving session (DataStore load failed) would lose the purchase on
+	-- leave, so don't grant it; Roblox retries the receipt on a later join where saving works.
+	-- In Studio without API access nothing ever saves: we grant in memory so products can be tested,
+	-- and that grant is simply gone when the test stops (expected).
+	if not session.persist and not RunService:IsStudio() then
+		State.notify(session, "Saving is unavailable right now, so " .. product.name .. " will be delivered next time you join.", "#ffb070")
+		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local handler = handlers[product.key]
 	if not handler or not handler(session) then
@@ -1584,6 +1655,12 @@ local WeatherService = require(script.Parent.WeatherService)
 local PlotService = {}
 
 local MAX_STORAGE = 60
+local SELL_CONFIRM_SECONDS = 5
+local RARE_OR_BETTER = { Rare = true, Epic = true, Legendary = true, Mythic = true, Secret = true }
+local ANNOUNCE_MUTATIONS = { starry = true, prismatic = true, golden = true }
+local ANNOUNCE_RARITIES = { Legendary = true, Mythic = true, Secret = true }
+
+local sellConfirmUntil: { [Player]: number } = {}
 
 type PlotInfo = {
 	model: Model,
@@ -1667,9 +1744,10 @@ function PlotService.renderPads(session: State.Session)
 		padPart.Transparency = if pad <= capacity then 0 else 0.7
 		local sprout = session.data.pads[tostring(pad)]
 		info.sellPrompts[pad]:SetAttribute("Active", sprout ~= nil)
-		info.snatchPrompts[pad]:SetAttribute("Active", sprout ~= nil and not PlotService.isLocked(session))
 		if sprout then
 			local species = Species.get(sprout.s)
+			-- longer hold for Rare and better so they aren't sold by accident
+			info.sellPrompts[pad].HoldDuration = if species and RARE_OR_BETTER[species.rarity] then 1 else 0.4
 			local model = SproutModel.build(sprout, true)
 			local top = padPart.Position + Vector3.new(0, padPart.Size.X / 2, 0)
 			model:PivotTo(CFrame.lookAt(top, top + Vector3.new(info.inward, 0, 0)))
@@ -1684,8 +1762,22 @@ function PlotService.renderPads(session: State.Session)
 			info.snatchPrompts[pad].ObjectText = SproutModel.displayName(sprout) .. (species and (" (" .. species.rarity .. ")") or "")
 		end
 	end
+	PlotService.refreshSnatchable(session)
 	session.player:SetAttribute("Stored", #session.data.storage)
 	State.syncDew(session)
+end
+
+-- Snatch prompts only show (for other players) on filled pads while the gate is open and the
+-- owner's new-player shield has run out. The server re-checks all of this on trigger anyway.
+function PlotService.refreshSnatchable(session: State.Session)
+	local info = session.plot and plotByModel[session.plot]
+	if not info then
+		return
+	end
+	local open = not PlotService.isLocked(session) and session.shieldUntil <= os.time()
+	for pad = 1, 12 do
+		info.snatchPrompts[pad]:SetAttribute("Active", open and session.data.pads[tostring(pad)] ~= nil)
+	end
 end
 
 local function plantVisual(info: PlotInfo, tile: number): BasePart
@@ -1767,7 +1859,8 @@ end
 -- actions
 
 -- Puts a Sproutling on the first free pad, or into storage. Returns false if everything is full.
-function PlotService.placeSprout(session: State.Session, sprout): boolean
+-- `force` lets storage go past MAX_STORAGE (used when a stolen Sproutling comes home, so it is never deleted).
+function PlotService.placeSprout(session: State.Session, sprout, force: boolean?): boolean
 	for pad = 1, State.padCapacity(session) do
 		if not session.data.pads[tostring(pad)] then
 			session.data.pads[tostring(pad)] = sprout
@@ -1775,7 +1868,7 @@ function PlotService.placeSprout(session: State.Session, sprout): boolean
 			return true
 		end
 	end
-	if #session.data.storage >= MAX_STORAGE then
+	if #session.data.storage >= MAX_STORAGE and not force then
 		return false
 	end
 	table.insert(session.data.storage, sprout)
@@ -1840,7 +1933,8 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		updateSoil(info, session)
 		local species = Species.get(sprout.s) :: Species.Species
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
-		if sprout.m or sprout.z >= 2 or table.find({ "Legendary", "Mythic", "Secret" }, species.rarity) then
+		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
+		if (sprout.m and ANNOUNCE_MUTATIONS[sprout.m]) or sprout.z >= 2 or ANNOUNCE_RARITIES[species.rarity] then
 			Net.announce(player.DisplayName .. " hatched a " .. SproutModel.displayName(sprout) .. "!", "#ffe070")
 		end
 	end
@@ -1873,6 +1967,21 @@ function PlotService.sellStorage(session: State.Session)
 		State.notify(session, "Nothing in storage. Sproutlings go to storage when your pads are full.")
 		return
 	end
+	-- selling Rare+ Sproutlings needs a second trigger within a few seconds
+	local rares = 0
+	for _, sprout in session.data.storage do
+		local species = Species.get(sprout.s)
+		if species and RARE_OR_BETTER[species.rarity] then
+			rares += 1
+		end
+	end
+	local player = session.player
+	if rares > 0 and (sellConfirmUntil[player] or 0) < os.clock() then
+		sellConfirmUntil[player] = os.clock() + SELL_CONFIRM_SECONDS
+		State.notify(session, "Storage has " .. rares .. " Rare or better Sproutling(s). Use the Sell Stand again within " .. SELL_CONFIRM_SECONDS .. "s to sell all " .. count .. ".", "#ffb070")
+		return
+	end
+	sellConfirmUntil[player] = nil
 	table.clear(session.data.storage)
 	State.addDew(session, total)
 	session.player:SetAttribute("Stored", 0)
@@ -1891,12 +2000,13 @@ local function onLock(info: PlotInfo, player: Player)
 	if not session or info.owner ~= player then
 		return
 	end
+	if PlotService.isLocked(session) then
+		return -- already locked (prompt should be hidden; guards a stale client)
+	end
 	local seconds = if session.passes.SturdyGate then Config.LockSecondsWithPass else Config.LockSeconds
 	session.lockUntil = os.time() + seconds
 	info.lockPrompt:SetAttribute("Active", false)
-	for _, prompt in info.snatchPrompts do
-		prompt:SetAttribute("Active", false)
-	end
+	PlotService.refreshSnatchable(session)
 	setGateVisual(info, true)
 	State.notify(session, "Gate locked for " .. seconds .. "s. Nobody can snatch from you!", "#80ff80")
 end
@@ -1922,6 +2032,8 @@ function PlotService.claim(session: State.Session): boolean
 				prompt:SetAttribute("OnlyUser", id)
 			end
 			for _, prompt in info.snatchPrompts do
+				-- everyone but the owner may see these (B1: OnlyUser must be cleared or nobody sees them)
+				prompt:SetAttribute("OnlyUser", nil)
 				prompt:SetAttribute("ExceptUser", id)
 			end
 			info.lockPrompt:SetAttribute("OnlyUser", id)
@@ -1945,14 +2057,22 @@ function PlotService.release(session: State.Session)
 	end
 	info.owner = nil
 	info.model:SetAttribute("OwnerUserId", 0)
-	for _, list in { info.soilPrompts, info.sellPrompts, info.snatchPrompts } do
+	-- back to the same state init() leaves them in
+	for _, list in { info.soilPrompts, info.sellPrompts } do
 		for _, prompt in list do
 			prompt:SetAttribute("OnlyUser", 0)
 			prompt:SetAttribute("ExceptUser", nil)
 			prompt:SetAttribute("Active", false)
 		end
 	end
+	for _, prompt in info.snatchPrompts do
+		prompt:SetAttribute("OnlyUser", nil)
+		prompt:SetAttribute("ExceptUser", nil)
+		prompt:SetAttribute("Active", false) -- hidden for everyone while unclaimed
+	end
 	info.lockPrompt:SetAttribute("OnlyUser", 0)
+	info.lockPrompt:SetAttribute("Active", false)
+	sellConfirmUntil[session.player] = nil
 	clearPads(info)
 	updateSoil(info, nil)
 	setGateVisual(info, false)
@@ -2016,12 +2136,13 @@ function PlotService.init(map: Instance)
 			end)
 			info.sellPrompts[pad] = sell
 			local snatch = Prompts.create(padPart, "Snatch!", "", Config.SnatchHoldSeconds)
-			snatch:SetAttribute("OnlyUser", 0)
+			-- no OnlyUser here: Active=false hides it until an owner claims the plot (see claim())
 			snatch:SetAttribute("Active", false)
 			info.snatchPrompts[pad] = snatch
 		end
 		local lock = Prompts.create(model.Gate.LockButton, "Lock gate", "Gate")
 		lock:SetAttribute("OnlyUser", 0)
+		lock:SetAttribute("Active", false)
 		lock.Triggered:Connect(function(player)
 			onLock(info, player)
 		end)
@@ -2053,6 +2174,11 @@ function PlotService.init(map: Instance)
 						PlotService.renderPads(session)
 						State.notify(session, "Your gate is OPEN again. Go lock it!", "#ff9090")
 					end
+					if session.shieldUntil > 0 and session.shieldUntil <= os.time() then
+						session.shieldUntil = 0
+						session.player:SetAttribute("ShieldUntil", 0)
+						PlotService.refreshSnatchable(session)
+					end
 					local lbl = labelOf(info.model.Gate.LockButton)
 					if lbl then
 						lbl.Text = if PlotService.isLocked(session) then "LOCKED " .. (session.lockUntil - os.time()) .. "s" else "OPEN - LOCK"
@@ -2073,6 +2199,11 @@ function PlotService.init(map: Instance)
 					for _, other in Players:GetPlayers() do
 						local root = other ~= info.owner and other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 						if root and PlotService.isInside(info.model, root.Position) then
+							local otherSession = State.get(other)
+							if otherSession then
+								otherSession.serverMovedAt = os.clock() -- not a speed hack (see SnatchService)
+								otherSession.serverMovedTo = PlotService.gateOutside(info.model).Position
+							end
 							other.Character:PivotTo(PlotService.gateOutside(info.model))
 						end
 					end
@@ -2113,7 +2244,8 @@ local Prompts = require(script.Parent.Prompts)
 
 local PondService = {}
 
--- Outcome weights (sum 100). "dew" pays out minutes of the player's income.
+-- Outcome weights (sum 100). "dew" currently pays 15-45 s of the player's income (min 25).
+-- TODO(game-designer/owner, QA m10): the design intent was "minutes of income"; decide which is right.
 local POND_TABLE = {
 	{ kind = "dew", weight = 55 },
 	{ kind = "seed", weight = 35, rarities = { Common = 80, Uncommon = 20 } },
@@ -2168,6 +2300,7 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 	end
 	local now = os.clock()
 	if now < session.pondReadyAt then
+		State.notify(session, "The water is still settling. Try again in " .. math.ceil(session.pondReadyAt - now) .. "s.", "#a0e0ff")
 		return
 	end
 	session.pondReadyAt = now + Config.PondCooldownSeconds
@@ -2208,6 +2341,8 @@ function PondService.init(map: Instance)
 		local session = State.get(player)
 		if session and session.data.rebirths >= 1 then
 			cast(player, SKY_TABLE, well.Position + Vector3.new(0, 1, 12), "Sky Well")
+		elseif session then
+			State.notify(session, "The Sky Well only answers players who have rebirthed.", "#d0a0ff")
 		end
 	end)
 end
@@ -2232,6 +2367,7 @@ local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
+local SnatchService = require(script.Parent.SnatchService)
 
 local ProgressionService = {}
 
@@ -2255,6 +2391,9 @@ local function rebirth(player: Player)
 		State.notify(session, "Rebirth needs " .. Format.number(cost) .. " Dew. Keep growing!", "#ffb070")
 		return
 	end
+	-- M3: Sproutlings being carried away from this player right now must not come back into the
+	-- reborn garden. See SnatchService.forfeitCarriesFrom for why we void instead of refusing.
+	SnatchService.forfeitCarriesFrom(player)
 	local data = session.data
 	data.rebirths += 1
 	data.dew = Config.StartingDew
@@ -2327,13 +2466,22 @@ function ProgressionService.init(map: Instance)
 	end
 	touchPad(sky:FindFirstChild("LaunchPad") :: BasePart, function(player, character)
 		local session = State.get(player)
-		if session and session.data.rebirths >= 1 then
+		if session and session.carrying then
+			State.notify(session, "You can't fly while carrying a Sproutling!", "#ffb070")
+		elseif session and session.data.rebirths >= 1 then
+			session.serverMovedAt = os.clock()
+			session.serverMovedTo = landing.Position
 			character:PivotTo(landing.CFrame + Vector3.new(0, 4, 0))
 		elseif session then
 			State.notify(session, "The Sky Garden opens after your first Rebirth.", "#d0a0ff")
 		end
 	end)
-	touchPad(sky:FindFirstChild("ReturnPad") :: BasePart, function(_player, character)
+	touchPad(sky:FindFirstChild("ReturnPad") :: BasePart, function(player, character)
+		local session = State.get(player)
+		if session then
+			session.serverMovedAt = os.clock()
+			session.serverMovedTo = Vector3.new(0, 5, 220)
+		end
 		character:PivotTo(CFrame.new(0, 5, 220))
 	end)
 	game:GetService("Players").PlayerRemoving:Connect(function(player)
@@ -2431,7 +2579,27 @@ function ShopService.rollStock(session: State.Session)
 			stock[species.id] = 0
 		end
 	end
+	-- M4: stock is saved with the restock window it belongs to, so rejoining can't reroll it
 	session.stock = stock
+	session.data.stock = stock
+	session.data.stockEpoch = ShopService.nextRestockAt()
+	session.player:SetAttribute("Stock", HttpService:JSONEncode(stock))
+end
+
+-- On join: reuse the saved stock if it belongs to the current restock window, otherwise roll.
+function ShopService.loadStock(session: State.Session)
+	local saved = session.data.stock
+	if type(saved) ~= "table" or session.data.stockEpoch ~= ShopService.nextRestockAt() then
+		ShopService.rollStock(session)
+		return
+	end
+	local stock = {}
+	for _, species in Species.ShopList do
+		local count = tonumber(saved[species.id]) or 0
+		stock[species.id] = math.max(0, math.floor(count))
+	end
+	session.stock = stock
+	session.data.stock = stock
 	session.player:SetAttribute("Stock", HttpService:JSONEncode(stock))
 end
 
@@ -2623,6 +2791,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local SproutModel = require(Shared.SproutModel)
 
+local DataService = require(script.Parent.DataService)
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
@@ -2637,7 +2806,33 @@ type Carry = {
 	expiresAt: number,
 	model: Model,
 	bonkPrompt: ProximityPrompt,
+	-- anti-cheat (see Config.CarryMaxSpeedFactor)
+	lastPos: Vector3,
+	lastClock: number,
+	budget: number, -- studs of horizontal movement the thief may still make
+	-- M3: set when the victim rebirths mid-carry. The victim's garden was wiped, so a failed carry
+	-- does NOT return the Sproutling to them (it would survive the rebirth); it is simply lost.
+	-- A successful carry still pays the thief. Either way exactly one copy exists: no dupe.
+	forfeited: boolean,
 }
+
+local function maxCarrySpeed(): number
+	return Config.CarryWalkSpeed * Config.CarryMaxSpeedFactor
+end
+
+local function horizontal(v: Vector3): number
+	return Vector3.new(v.X, 0, v.Z).Magnitude
+end
+
+-- Saves both players right after a Sproutling changes hands, so a crash can't leave it in both
+-- profiles (m17). DataService serialises saves per player, so this can't clobber a newer write.
+local function saveBoth(a: State.Session?, b: State.Session?)
+	for _, session in { a, b } do
+		if session and session.persist and not session.leaving then
+			task.spawn(DataService.save, session.player, session.data, false)
+		end
+	end
+end
 
 local function restoreWalkSpeed(player: Player)
 	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -2664,9 +2859,19 @@ local function finish(thief: Player, success: boolean, reason: string?)
 		if PlotService.placeSprout(thiefSession, carry.sprout) then
 			Net.announce(thief.DisplayName .. " snatched " .. carry.victim.DisplayName .. "'s " .. SproutModel.displayName(carry.sprout) .. "!", "#ff9a5a")
 			Net.Effect:FireClient(thief, "SnatchSuccess", { name = SproutModel.displayName(carry.sprout) })
+			if victimSession and not carry.forfeited then
+				PlotService.refillPads(victimSession) -- m4: fill the emptied pad from storage
+			end
+			saveBoth(thiefSession, victimSession)
 			return
 		end
 		State.notify(thiefSession, "Your garden is full, so the Sproutling ran home!", "#ff8080")
+	end
+
+	if carry.forfeited then
+		-- the victim rebirthed mid-carry (see Carry.forfeited)
+		State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or "") .. ". The Sproutling faded away.", "#ff8080")
+		return
 	end
 
 	if victimSession then
@@ -2675,14 +2880,14 @@ local function finish(thief: Player, success: boolean, reason: string?)
 			victimSession.data.pads[key] = carry.sprout
 			PlotService.renderPads(victimSession)
 		else
-			PlotService.placeSprout(victimSession, carry.sprout)
+			PlotService.placeSprout(victimSession, carry.sprout, true) -- force: never delete a returned Sproutling
 		end
 		State.notify(victimSession, "Your " .. SproutModel.displayName(carry.sprout) .. " came back" .. (reason and (" (" .. reason .. ")") or "") .. "!", "#80ff80")
 	end
 	State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or ""), "#ff8080")
 end
 
-local function onSnatch(plot: Model, pad: number, thief: Player)
+local function onSnatch(plot: Model, pad: number, thief: Player, prompt: ProximityPrompt)
 	local thiefSession = State.get(thief)
 	local ownerId = plot:GetAttribute("OwnerUserId")
 	local victim = ownerId and Players:GetPlayerByUserId(ownerId)
@@ -2710,6 +2915,12 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 	if not root or not humanoid or humanoid.Health <= 0 then
 		return
 	end
+	-- M1: the thief must really be at the pad (don't trust the client or engine-side prompt range checks)
+	local pads = plot:FindFirstChild("Pads")
+	local padPart = pads and pads:FindFirstChild("Pad" .. pad) :: BasePart?
+	if not padPart or (root.Position - padPart.Position).Magnitude > prompt.MaxActivationDistance + Config.SnatchReachSlack then
+		return
+	end
 	local key = tostring(pad)
 	local sprout = victimSession.data.pads[key]
 	if not sprout then
@@ -2723,8 +2934,11 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 	SproutModel.weldTo(model, root, CFrame.new(0, 4.5, 0))
 	model.Parent = character
 
-	local bonk = Prompts.create(root, "Bonk thief!", thief.DisplayName, 0, Enum.KeyCode.E)
-	bonk.MaxActivationDistance = 12
+	-- M2: own key (R / gamepad Y) and AlwaysShow, so the victim's E soil prompts never hide it
+	local bonk = Prompts.create(root, "Bonk thief!", thief.DisplayName, 0, Enum.KeyCode.R)
+	bonk.GamepadKeyCode = Enum.KeyCode.ButtonY
+	bonk.Exclusivity = Enum.ProximityPromptExclusivity.AlwaysShow
+	bonk.MaxActivationDistance = 14
 	bonk:SetAttribute("OnlyUser", victim.UserId)
 	bonk.Triggered:Connect(function(player)
 		if player == victim then
@@ -2739,9 +2953,14 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 		expiresAt = os.clock() + Config.SnatchCarrySeconds,
 		model = model,
 		bonkPrompt = bonk,
+		lastPos = root.Position,
+		lastClock = os.clock(),
+		budget = maxCarrySpeed() * Config.CarryBurstSeconds,
+		forfeited = false,
 	} :: Carry
 	thiefSession.snatchReadyAt = now + Config.SnatchCooldownSeconds
 	thiefSession.shieldUntil = 0 -- snatching gives up your own new-player shield
+	thiefSession.data.shieldForfeited = true -- m7: for good, not just until you rejoin
 	thief:SetAttribute("ShieldUntil", 0)
 	thief:SetAttribute("Carrying", SproutModel.displayName(sprout))
 	thief:SetAttribute("CarryEndsAt", workspace:GetServerTimeNow() + Config.SnatchCarrySeconds)
@@ -2770,11 +2989,42 @@ function SnatchService.onLeaving(player: Player)
 	end
 end
 
+-- M3: called by the Rebirth Shrine before it wipes `victim`'s garden. Carries of their Sproutlings
+-- keep going (the thief can still win them), but a failed carry no longer returns the Sproutling
+-- to the reborn garden. We void rather than refuse the rebirth so a thief can't block it.
+function SnatchService.forfeitCarriesFrom(victim: Player)
+	for _, other in State.sessions do
+		local carry = other.carrying
+		if carry and carry.victim == victim then
+			carry.forfeited = true
+		end
+	end
+end
+
+-- M1: token-bucket speed check. Returns false if the thief moved faster than allowed.
+local function movedLegally(session: State.Session, carry: Carry, position: Vector3): boolean
+	local now = os.clock()
+	local dt = now - carry.lastClock
+	carry.lastClock = now
+	local moved = horizontal(position - carry.lastPos)
+	-- A server teleport (e.g. pushed out of a locked garden) is free. For ~1 s after it, measure from
+	-- whichever is closer, the old position or the teleport target, since the client may briefly
+	-- report either while it catches up. Jumping somewhere else in that window is still charged.
+	local movedTo = session.serverMovedTo
+	if movedTo and session.serverMovedAt and now - session.serverMovedAt < 1 then
+		moved = math.min(moved, horizontal(position - movedTo))
+	end
+	carry.lastPos = position
+	local speed = maxCarrySpeed()
+	carry.budget = math.min(carry.budget + speed * dt, speed * Config.CarryBurstSeconds) - moved
+	return carry.budget >= 0
+end
+
 function SnatchService.init()
 	for _, info in PlotService.allPlots() do
 		for pad, prompt in info.snatchPrompts do
 			prompt.Triggered:Connect(function(player)
-				onSnatch(info.model, pad, player)
+				onSnatch(info.model, pad, player, prompt)
 			end)
 		end
 	end
@@ -2788,6 +3038,9 @@ function SnatchService.init()
 					local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 					if not root then
 						finish(player, false, "the thief vanished")
+					elseif not movedLegally(session, carry, root.Position) then
+						warn("[Sproutling] carry speed check failed for", player.Name)
+						finish(player, false, "moved too fast")
 					elseif session.plot and PlotService.isInside(session.plot, root.Position) then
 						finish(player, true)
 					elseif os.clock() > carry.expiresAt then
@@ -2833,6 +3086,9 @@ export type Session = {
 	passes: { [string]: boolean },
 	joinedAt: number,
 	dewRemainder: number,
+	leaving: boolean?, -- set once the player starts leaving; stops autosaves and double saves
+	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
+	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)
 }
 
 local State = {}
@@ -2860,8 +3116,13 @@ end
 
 function State.income(session: Session): number
 	local total = 0
-	for _, sprout in session.data.pads do
-		total += SproutModel.income(sprout)
+	local capacity = State.padCapacity(session)
+	for key, sprout in session.data.pads do
+		-- pads above capacity (e.g. a refunded Big Greenhouse pass) don't earn
+		local pad = tonumber(key)
+		if pad and pad <= capacity then
+			total += SproutModel.income(sprout)
+		end
 	end
 	return total * State.multiplier(session)
 end

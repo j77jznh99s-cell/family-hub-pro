@@ -51,6 +51,9 @@ end
 
 -- Each handler returns true when the purchase was granted.
 local handlers: { [string]: (State.Session) -> boolean } = {
+	-- The store hides the Starter Pack once StarterBought is set, so a repeat can only come from an
+	-- old/stale prompt. It then grants just the 5,000 Dew (the seeds stay one-time). Refusing repeats
+	-- instead is an owner decision (QA m15).
 	StarterPack = function(session)
 		if not session.data.starterBought then
 			session.data.starterBought = true
@@ -77,6 +80,7 @@ local handlers: { [string]: (State.Session) -> boolean } = {
 	end,
 	LuckBoost = function(session)
 		session.luckUntil = math.max(session.luckUntil, os.time()) + 15 * 60
+		session.data.luckUntil = session.luckUntil -- M5: saved, absolute Unix time, survives rejoin/hops
 		session.player:SetAttribute("LuckUntil", session.luckUntil)
 		return true
 	end,
@@ -104,6 +108,14 @@ local function processReceipt(receipt)
 	local receipts = session.data.receipts
 	if table.find(receipts, receipt.PurchaseId) then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+	-- M5: in a live server a non-saving session (DataStore load failed) would lose the purchase on
+	-- leave, so don't grant it; Roblox retries the receipt on a later join where saving works.
+	-- In Studio without API access nothing ever saves: we grant in memory so products can be tested,
+	-- and that grant is simply gone when the test stops (expected).
+	if not session.persist and not RunService:IsStudio() then
+		State.notify(session, "Saving is unavailable right now, so " .. product.name .. " will be delivered next time you join.", "#ffb070")
+		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local handler = handlers[product.key]
 	if not handler or not handler(session) then

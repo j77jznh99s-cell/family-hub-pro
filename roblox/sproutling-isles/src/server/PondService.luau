@@ -14,7 +14,8 @@ local Prompts = require(script.Parent.Prompts)
 
 local PondService = {}
 
--- Outcome weights (sum 100). "dew" pays out minutes of the player's income.
+-- Outcome weights (sum 100). "dew" currently pays 15-45 s of the player's income (min 25).
+-- TODO(game-designer/owner, QA m10): the design intent was "minutes of income"; decide which is right.
 local POND_TABLE = {
 	{ kind = "dew", weight = 55 },
 	{ kind = "seed", weight = 35, rarities = { Common = 80, Uncommon = 20 } },
@@ -69,6 +70,7 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 	end
 	local now = os.clock()
 	if now < session.pondReadyAt then
+		State.notify(session, "The water is still settling. Try again in " .. math.ceil(session.pondReadyAt - now) .. "s.", "#a0e0ff")
 		return
 	end
 	session.pondReadyAt = now + Config.PondCooldownSeconds
@@ -109,6 +111,8 @@ function PondService.init(map: Instance)
 		local session = State.get(player)
 		if session and session.data.rebirths >= 1 then
 			cast(player, SKY_TABLE, well.Position + Vector3.new(0, 1, 12), "Sky Well")
+		elseif session then
+			State.notify(session, "The Sky Well only answers players who have rebirthed.", "#d0a0ff")
 		end
 	end)
 end

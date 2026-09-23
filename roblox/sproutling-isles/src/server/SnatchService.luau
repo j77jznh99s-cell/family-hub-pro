@@ -7,6 +7,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local SproutModel = require(Shared.SproutModel)
 
+local DataService = require(script.Parent.DataService)
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
@@ -21,7 +22,33 @@ type Carry = {
 	expiresAt: number,
 	model: Model,
 	bonkPrompt: ProximityPrompt,
+	-- anti-cheat (see Config.CarryMaxSpeedFactor)
+	lastPos: Vector3,
+	lastClock: number,
+	budget: number, -- studs of horizontal movement the thief may still make
+	-- M3: set when the victim rebirths mid-carry. The victim's garden was wiped, so a failed carry
+	-- does NOT return the Sproutling to them (it would survive the rebirth); it is simply lost.
+	-- A successful carry still pays the thief. Either way exactly one copy exists: no dupe.
+	forfeited: boolean,
 }
+
+local function maxCarrySpeed(): number
+	return Config.CarryWalkSpeed * Config.CarryMaxSpeedFactor
+end
+
+local function horizontal(v: Vector3): number
+	return Vector3.new(v.X, 0, v.Z).Magnitude
+end
+
+-- Saves both players right after a Sproutling changes hands, so a crash can't leave it in both
+-- profiles (m17). DataService serialises saves per player, so this can't clobber a newer write.
+local function saveBoth(a: State.Session?, b: State.Session?)
+	for _, session in { a, b } do
+		if session and session.persist and not session.leaving then
+			task.spawn(DataService.save, session.player, session.data, false)
+		end
+	end
+end
 
 local function restoreWalkSpeed(player: Player)
 	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -48,9 +75,19 @@ local function finish(thief: Player, success: boolean, reason: string?)
 		if PlotService.placeSprout(thiefSession, carry.sprout) then
 			Net.announce(thief.DisplayName .. " snatched " .. carry.victim.DisplayName .. "'s " .. SproutModel.displayName(carry.sprout) .. "!", "#ff9a5a")
 			Net.Effect:FireClient(thief, "SnatchSuccess", { name = SproutModel.displayName(carry.sprout) })
+			if victimSession and not carry.forfeited then
+				PlotService.refillPads(victimSession) -- m4: fill the emptied pad from storage
+			end
+			saveBoth(thiefSession, victimSession)
 			return
 		end
 		State.notify(thiefSession, "Your garden is full, so the Sproutling ran home!", "#ff8080")
+	end
+
+	if carry.forfeited then
+		-- the victim rebirthed mid-carry (see Carry.forfeited)
+		State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or "") .. ". The Sproutling faded away.", "#ff8080")
+		return
 	end
 
 	if victimSession then
@@ -59,14 +96,14 @@ local function finish(thief: Player, success: boolean, reason: string?)
 			victimSession.data.pads[key] = carry.sprout
 			PlotService.renderPads(victimSession)
 		else
-			PlotService.placeSprout(victimSession, carry.sprout)
+			PlotService.placeSprout(victimSession, carry.sprout, true) -- force: never delete a returned Sproutling
 		end
 		State.notify(victimSession, "Your " .. SproutModel.displayName(carry.sprout) .. " came back" .. (reason and (" (" .. reason .. ")") or "") .. "!", "#80ff80")
 	end
 	State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or ""), "#ff8080")
 end
 
-local function onSnatch(plot: Model, pad: number, thief: Player)
+local function onSnatch(plot: Model, pad: number, thief: Player, prompt: ProximityPrompt)
 	local thiefSession = State.get(thief)
 	local ownerId = plot:GetAttribute("OwnerUserId")
 	local victim = ownerId and Players:GetPlayerByUserId(ownerId)
@@ -94,6 +131,12 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 	if not root or not humanoid or humanoid.Health <= 0 then
 		return
 	end
+	-- M1: the thief must really be at the pad (don't trust the client or engine-side prompt range checks)
+	local pads = plot:FindFirstChild("Pads")
+	local padPart = pads and pads:FindFirstChild("Pad" .. pad) :: BasePart?
+	if not padPart or (root.Position - padPart.Position).Magnitude > prompt.MaxActivationDistance + Config.SnatchReachSlack then
+		return
+	end
 	local key = tostring(pad)
 	local sprout = victimSession.data.pads[key]
 	if not sprout then
@@ -107,8 +150,11 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 	SproutModel.weldTo(model, root, CFrame.new(0, 4.5, 0))
 	model.Parent = character
 
-	local bonk = Prompts.create(root, "Bonk thief!", thief.DisplayName, 0, Enum.KeyCode.E)
-	bonk.MaxActivationDistance = 12
+	-- M2: own key (R / gamepad Y) and AlwaysShow, so the victim's E soil prompts never hide it
+	local bonk = Prompts.create(root, "Bonk thief!", thief.DisplayName, 0, Enum.KeyCode.R)
+	bonk.GamepadKeyCode = Enum.KeyCode.ButtonY
+	bonk.Exclusivity = Enum.ProximityPromptExclusivity.AlwaysShow
+	bonk.MaxActivationDistance = 14
 	bonk:SetAttribute("OnlyUser", victim.UserId)
 	bonk.Triggered:Connect(function(player)
 		if player == victim then
@@ -123,9 +169,14 @@ local function onSnatch(plot: Model, pad: number, thief: Player)
 		expiresAt = os.clock() + Config.SnatchCarrySeconds,
 		model = model,
 		bonkPrompt = bonk,
+		lastPos = root.Position,
+		lastClock = os.clock(),
+		budget = maxCarrySpeed() * Config.CarryBurstSeconds,
+		forfeited = false,
 	} :: Carry
 	thiefSession.snatchReadyAt = now + Config.SnatchCooldownSeconds
 	thiefSession.shieldUntil = 0 -- snatching gives up your own new-player shield
+	thiefSession.data.shieldForfeited = true -- m7: for good, not just until you rejoin
 	thief:SetAttribute("ShieldUntil", 0)
 	thief:SetAttribute("Carrying", SproutModel.displayName(sprout))
 	thief:SetAttribute("CarryEndsAt", workspace:GetServerTimeNow() + Config.SnatchCarrySeconds)
@@ -154,11 +205,42 @@ function SnatchService.onLeaving(player: Player)
 	end
 end
 
+-- M3: called by the Rebirth Shrine before it wipes `victim`'s garden. Carries of their Sproutlings
+-- keep going (the thief can still win them), but a failed carry no longer returns the Sproutling
+-- to the reborn garden. We void rather than refuse the rebirth so a thief can't block it.
+function SnatchService.forfeitCarriesFrom(victim: Player)
+	for _, other in State.sessions do
+		local carry = other.carrying
+		if carry and carry.victim == victim then
+			carry.forfeited = true
+		end
+	end
+end
+
+-- M1: token-bucket speed check. Returns false if the thief moved faster than allowed.
+local function movedLegally(session: State.Session, carry: Carry, position: Vector3): boolean
+	local now = os.clock()
+	local dt = now - carry.lastClock
+	carry.lastClock = now
+	local moved = horizontal(position - carry.lastPos)
+	-- A server teleport (e.g. pushed out of a locked garden) is free. For ~1 s after it, measure from
+	-- whichever is closer, the old position or the teleport target, since the client may briefly
+	-- report either while it catches up. Jumping somewhere else in that window is still charged.
+	local movedTo = session.serverMovedTo
+	if movedTo and session.serverMovedAt and now - session.serverMovedAt < 1 then
+		moved = math.min(moved, horizontal(position - movedTo))
+	end
+	carry.lastPos = position
+	local speed = maxCarrySpeed()
+	carry.budget = math.min(carry.budget + speed * dt, speed * Config.CarryBurstSeconds) - moved
+	return carry.budget >= 0
+end
+
 function SnatchService.init()
 	for _, info in PlotService.allPlots() do
 		for pad, prompt in info.snatchPrompts do
 			prompt.Triggered:Connect(function(player)
-				onSnatch(info.model, pad, player)
+				onSnatch(info.model, pad, player, prompt)
 			end)
 		end
 	end
@@ -172,6 +254,9 @@ function SnatchService.init()
 					local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 					if not root then
 						finish(player, false, "the thief vanished")
+					elseif not movedLegally(session, carry, root.Position) then
+						warn("[Sproutling] carry speed check failed for", player.Name)
+						finish(player, false, "moved too fast")
 					elseif session.plot and PlotService.isInside(session.plot, root.Position) then
 						finish(player, true)
 					elseif os.clock() > carry.expiresAt then

@@ -41,7 +41,9 @@ the map at runtime if `Workspace.Map` is missing.
    "Set ID" in the in-game store and can't be bought.
 4. Set `Config.StudioTestPasses = true` in `src/shared/Config.luau` to try every pass perk while
    play-testing in Studio. Set it back to false before publishing.
-5. Test snatching with **Test > Clients and Servers > 2 players**.
+5. Test snatching with **Test > Clients and Servers > 2 players**. `Config.StudioDisableShield`
+   (default true) turns off the 15-minute new-player shield, but only inside Studio. Live servers
+   ignore it. The victim bonks a thief with **R** (gamepad **Y**).
 
 ## Code map
 

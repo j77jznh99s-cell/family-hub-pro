@@ -18,6 +18,12 @@ local WeatherService = require(script.Parent.WeatherService)
 local PlotService = {}
 
 local MAX_STORAGE = 60
+local SELL_CONFIRM_SECONDS = 5
+local RARE_OR_BETTER = { Rare = true, Epic = true, Legendary = true, Mythic = true, Secret = true }
+local ANNOUNCE_MUTATIONS = { starry = true, prismatic = true, golden = true }
+local ANNOUNCE_RARITIES = { Legendary = true, Mythic = true, Secret = true }
+
+local sellConfirmUntil: { [Player]: number } = {}
 
 type PlotInfo = {
 	model: Model,
@@ -101,9 +107,10 @@ function PlotService.renderPads(session: State.Session)
 		padPart.Transparency = if pad <= capacity then 0 else 0.7
 		local sprout = session.data.pads[tostring(pad)]
 		info.sellPrompts[pad]:SetAttribute("Active", sprout ~= nil)
-		info.snatchPrompts[pad]:SetAttribute("Active", sprout ~= nil and not PlotService.isLocked(session))
 		if sprout then
 			local species = Species.get(sprout.s)
+			-- longer hold for Rare and better so they aren't sold by accident
+			info.sellPrompts[pad].HoldDuration = if species and RARE_OR_BETTER[species.rarity] then 1 else 0.4
 			local model = SproutModel.build(sprout, true)
 			local top = padPart.Position + Vector3.new(0, padPart.Size.X / 2, 0)
 			model:PivotTo(CFrame.lookAt(top, top + Vector3.new(info.inward, 0, 0)))
@@ -118,8 +125,22 @@ function PlotService.renderPads(session: State.Session)
 			info.snatchPrompts[pad].ObjectText = SproutModel.displayName(sprout) .. (species and (" (" .. species.rarity .. ")") or "")
 		end
 	end
+	PlotService.refreshSnatchable(session)
 	session.player:SetAttribute("Stored", #session.data.storage)
 	State.syncDew(session)
+end
+
+-- Snatch prompts only show (for other players) on filled pads while the gate is open and the
+-- owner's new-player shield has run out. The server re-checks all of this on trigger anyway.
+function PlotService.refreshSnatchable(session: State.Session)
+	local info = session.plot and plotByModel[session.plot]
+	if not info then
+		return
+	end
+	local open = not PlotService.isLocked(session) and session.shieldUntil <= os.time()
+	for pad = 1, 12 do
+		info.snatchPrompts[pad]:SetAttribute("Active", open and session.data.pads[tostring(pad)] ~= nil)
+	end
 end
 
 local function plantVisual(info: PlotInfo, tile: number): BasePart
@@ -201,7 +222,8 @@ end
 -- actions
 
 -- Puts a Sproutling on the first free pad, or into storage. Returns false if everything is full.
-function PlotService.placeSprout(session: State.Session, sprout): boolean
+-- `force` lets storage go past MAX_STORAGE (used when a stolen Sproutling comes home, so it is never deleted).
+function PlotService.placeSprout(session: State.Session, sprout, force: boolean?): boolean
 	for pad = 1, State.padCapacity(session) do
 		if not session.data.pads[tostring(pad)] then
 			session.data.pads[tostring(pad)] = sprout
@@ -209,7 +231,7 @@ function PlotService.placeSprout(session: State.Session, sprout): boolean
 			return true
 		end
 	end
-	if #session.data.storage >= MAX_STORAGE then
+	if #session.data.storage >= MAX_STORAGE and not force then
 		return false
 	end
 	table.insert(session.data.storage, sprout)
@@ -274,7 +296,8 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		updateSoil(info, session)
 		local species = Species.get(sprout.s) :: Species.Species
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
-		if sprout.m or sprout.z >= 2 or table.find({ "Legendary", "Mythic", "Secret" }, species.rarity) then
+		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
+		if (sprout.m and ANNOUNCE_MUTATIONS[sprout.m]) or sprout.z >= 2 or ANNOUNCE_RARITIES[species.rarity] then
 			Net.announce(player.DisplayName .. " hatched a " .. SproutModel.displayName(sprout) .. "!", "#ffe070")
 		end
 	end
@@ -307,6 +330,21 @@ function PlotService.sellStorage(session: State.Session)
 		State.notify(session, "Nothing in storage. Sproutlings go to storage when your pads are full.")
 		return
 	end
+	-- selling Rare+ Sproutlings needs a second trigger within a few seconds
+	local rares = 0
+	for _, sprout in session.data.storage do
+		local species = Species.get(sprout.s)
+		if species and RARE_OR_BETTER[species.rarity] then
+			rares += 1
+		end
+	end
+	local player = session.player
+	if rares > 0 and (sellConfirmUntil[player] or 0) < os.clock() then
+		sellConfirmUntil[player] = os.clock() + SELL_CONFIRM_SECONDS
+		State.notify(session, "Storage has " .. rares .. " Rare or better Sproutling(s). Use the Sell Stand again within " .. SELL_CONFIRM_SECONDS .. "s to sell all " .. count .. ".", "#ffb070")
+		return
+	end
+	sellConfirmUntil[player] = nil
 	table.clear(session.data.storage)
 	State.addDew(session, total)
 	session.player:SetAttribute("Stored", 0)
@@ -325,12 +363,13 @@ local function onLock(info: PlotInfo, player: Player)
 	if not session or info.owner ~= player then
 		return
 	end
+	if PlotService.isLocked(session) then
+		return -- already locked (prompt should be hidden; guards a stale client)
+	end
 	local seconds = if session.passes.SturdyGate then Config.LockSecondsWithPass else Config.LockSeconds
 	session.lockUntil = os.time() + seconds
 	info.lockPrompt:SetAttribute("Active", false)
-	for _, prompt in info.snatchPrompts do
-		prompt:SetAttribute("Active", false)
-	end
+	PlotService.refreshSnatchable(session)
 	setGateVisual(info, true)
 	State.notify(session, "Gate locked for " .. seconds .. "s. Nobody can snatch from you!", "#80ff80")
 end
@@ -356,6 +395,8 @@ function PlotService.claim(session: State.Session): boolean
 				prompt:SetAttribute("OnlyUser", id)
 			end
 			for _, prompt in info.snatchPrompts do
+				-- everyone but the owner may see these (B1: OnlyUser must be cleared or nobody sees them)
+				prompt:SetAttribute("OnlyUser", nil)
 				prompt:SetAttribute("ExceptUser", id)
 			end
 			info.lockPrompt:SetAttribute("OnlyUser", id)
@@ -379,14 +420,22 @@ function PlotService.release(session: State.Session)
 	end
 	info.owner = nil
 	info.model:SetAttribute("OwnerUserId", 0)
-	for _, list in { info.soilPrompts, info.sellPrompts, info.snatchPrompts } do
+	-- back to the same state init() leaves them in
+	for _, list in { info.soilPrompts, info.sellPrompts } do
 		for _, prompt in list do
 			prompt:SetAttribute("OnlyUser", 0)
 			prompt:SetAttribute("ExceptUser", nil)
 			prompt:SetAttribute("Active", false)
 		end
 	end
+	for _, prompt in info.snatchPrompts do
+		prompt:SetAttribute("OnlyUser", nil)
+		prompt:SetAttribute("ExceptUser", nil)
+		prompt:SetAttribute("Active", false) -- hidden for everyone while unclaimed
+	end
 	info.lockPrompt:SetAttribute("OnlyUser", 0)
+	info.lockPrompt:SetAttribute("Active", false)
+	sellConfirmUntil[session.player] = nil
 	clearPads(info)
 	updateSoil(info, nil)
 	setGateVisual(info, false)
@@ -450,12 +499,13 @@ function PlotService.init(map: Instance)
 			end)
 			info.sellPrompts[pad] = sell
 			local snatch = Prompts.create(padPart, "Snatch!", "", Config.SnatchHoldSeconds)
-			snatch:SetAttribute("OnlyUser", 0)
+			-- no OnlyUser here: Active=false hides it until an owner claims the plot (see claim())
 			snatch:SetAttribute("Active", false)
 			info.snatchPrompts[pad] = snatch
 		end
 		local lock = Prompts.create(model.Gate.LockButton, "Lock gate", "Gate")
 		lock:SetAttribute("OnlyUser", 0)
+		lock:SetAttribute("Active", false)
 		lock.Triggered:Connect(function(player)
 			onLock(info, player)
 		end)
@@ -487,6 +537,11 @@ function PlotService.init(map: Instance)
 						PlotService.renderPads(session)
 						State.notify(session, "Your gate is OPEN again. Go lock it!", "#ff9090")
 					end
+					if session.shieldUntil > 0 and session.shieldUntil <= os.time() then
+						session.shieldUntil = 0
+						session.player:SetAttribute("ShieldUntil", 0)
+						PlotService.refreshSnatchable(session)
+					end
 					local lbl = labelOf(info.model.Gate.LockButton)
 					if lbl then
 						lbl.Text = if PlotService.isLocked(session) then "LOCKED " .. (session.lockUntil - os.time()) .. "s" else "OPEN - LOCK"
@@ -507,6 +562,11 @@ function PlotService.init(map: Instance)
 					for _, other in Players:GetPlayers() do
 						local root = other ~= info.owner and other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 						if root and PlotService.isInside(info.model, root.Position) then
+							local otherSession = State.get(other)
+							if otherSession then
+								otherSession.serverMovedAt = os.clock() -- not a speed hack (see SnatchService)
+								otherSession.serverMovedTo = PlotService.gateOutside(info.model).Position
+							end
 							other.Character:PivotTo(PlotService.gateOutside(info.model))
 						end
 					end

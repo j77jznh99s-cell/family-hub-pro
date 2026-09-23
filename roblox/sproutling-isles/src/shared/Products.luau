@@ -1,6 +1,7 @@
 --!strict
 -- Robux catalogue. IDs are 0 until you create the passes/products on the Creator Dashboard
--- and paste the real IDs here. Items with id 0 are hidden from the in-game store.
+-- and paste the real IDs here. Items with id 0 still show in the in-game store, with a "Set ID"
+-- button instead of a price, and can't be bought.
 
 export type Pass = { key: string, id: number, name: string, price: number, description: string }
 export type Product = { key: string, id: number, name: string, price: number, description: string }
