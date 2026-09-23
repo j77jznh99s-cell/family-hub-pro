@@ -7,6 +7,27 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-23 (later): first agent team run
+**Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (+ `main`) · **Agents used:** qa-tester, game-designer, live-ops-manager, roblox-engineer
+
+**Owner asked:** "Let's get started" with the agent and memory setup.
+
+**What was done**
+- Created the `main` branch with `CLAUDE.md`, `vault/` and `.claude/agents/`, and added branch rules to `CLAUDE.md`. The owner changed the default-branch setting, but GitHub still reported the old default at the last check.
+- qa-tester: [[Sproutling Isles - QA Review]] found 1 blocker (nobody could see snatch prompts), 6 majors and 18 minors, and wrote a Studio test plan.
+- roblox-engineer fixed the blocker, all 6 majors and 14 minors (anti-cheat speed and reach checks, Bonk moved to R, rebirth-during-snatch, saved shop stock and luck, Studio shield off, save ordering). Lint is clean and the place was rebuilt and baked.
+- game-designer: [[Sproutling Isles - Art Brief]] and [[Sproutling Isles - Trading Spec]].
+- live-ops-manager: [[Sproutling Isles - Launch & Live Ops]] (checklist, beta, analytics spec, ads, weeks 1–8, Halloween "Hollow Harvest", marketing).
+- Collected 15 pending owner decisions, with recommendations, in [[Decisions]].
+
+**Not verified**
+- Still nothing run in Roblox Studio. The anti-cheat thresholds (1.3x speed, 2.5 s burst) are estimates.
+- Roblox menu paths, the ads API and platform limits in the new notes were written from memory or search summaries.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system
 **Device:** phone (Claude app, cloud session) · **Branch:** `claude/roblox-popular-game-trends-6u7sie`
 

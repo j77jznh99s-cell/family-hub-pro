@@ -7,25 +7,22 @@ updated: 2026-09-23
 > Rewrite this note at the end of every session so it's true *now*. Keep it short.
 
 ## Current focus
-**[[Sproutling Isles]]**: an original Roblox grow-and-snatch simulator. The design doc is done and a
-full first build is pushed (not yet play-tested in Roblox Studio).
+**[[Sproutling Isles]]**: build 1 is fixed after the QA review (blocker + 6 majors + 14 minors).
+The whole team plan is written. Everything now waits on the **owner's Studio play-test** and **decisions**.
 
 ## Waiting on the owner
-- [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Roblox Studio on the laptop and report errors.
-- [ ] Decide: should snatching stay core, or become an opt-in PvP toggle? (Question left as a comment in the design doc.)
-- [ ] Create the 5 game passes and 8 developer products on the Creator Dashboard, and share their IDs.
-- [ ] Choose where memory lives long-term (see "Open setup question" below).
+- [ ] **Set the default branch to `main`**: GitHub still showed the old default at the last check. Repo → Settings → General → Default branch → ⇄ → main → Update → confirm.
+- [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio, following the test plan in [[Sproutling Isles - QA Review]]. Paste any Output errors.
+- [ ] Answer the 15 pending decisions in [[Decisions]]. #1–4 block the next build.
+- [ ] Create the 13 Robux items (steps in [[Sproutling Isles - Launch & Live Ops]]) and share their IDs.
 
-## Next up for agents
-1. Fix whatever the first Studio play-test turns up (roblox-engineer, then qa-tester).
-2. Art pass plan: replace placeholder part-built Sproutlings (game-designer writes the brief).
-3. Phase 2: Trading Booths (game-designer spec, then roblox-engineer build).
+## Next up for agents (once the owner replies)
+1. **roblox-engineer:** fix play-test bugs → **qa-tester** re-checks.
+2. **roblox-engineer:** analytics wrapper (before the beta), then Trading Booths, then the Halloween event.
+3. **market-researcher:** verify rewarded-ads eligibility and Ads Manager pricing.
 
-## Open setup question
-Claude Code sessions start from the repo's **default branch**, which is currently
-`claude/video-clip-detection-mvp-g18ggk`. For memory to load automatically in every new session,
-`CLAUDE.md`, `.claude/agents/` and `vault/` must be on the default branch. Recommended: create a `main`
-branch containing them, and make it the default in GitHub settings.
+## Timeline at risk
+Beta 2–8 Oct and launch 10 Oct need a clean play-test by about 1 Oct. If launch slips past 24 Oct, skip Halloween.
 
 ## Key links
 - Design doc: https://claude.ai/code/artifact/a3a37801-bd42-4d71-a221-69ce94bf62e6
