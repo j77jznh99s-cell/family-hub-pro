@@ -40,3 +40,27 @@ test('filling writes script-only runs dated for each slot, carries on past a fai
   const after = await calendar.attachRuns(calendar.planWeek({ start: TODAY, days: 3 }), dir);
   assert.deepEqual(after.map((s) => s.status), ['scripted', 'planned', 'scripted']);
 });
+
+test('each new script gets the pre-posting check and the batch is summarized in one place', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fill-'));
+  const pending = await fill.pendingSlots(dir, { today: TODAY, days: 3 });
+  let n = 0;
+  const create = async ({ niche, forDate }) => {
+    n++;
+    if (n === 3) throw new Error('Script failed checks: no sources');
+    return { runDir: path.join(dir, `${forDate.toISOString().slice(0, 10)}-${niche}-t${n}`) };
+  };
+  const checked = [];
+  const checkRun = async (runDir) => {
+    checked.push(runDir);
+    return checked.length === 1
+      ? { runDir, ok: true, problems: [], warnings: [] }
+      : { runDir, ok: false, problems: ['missing AI disclosure'], warnings: [] };
+  };
+  const results = await fill.fillSlots(pending, { create, checkRun, log: () => {} });
+  assert.equal(checked.length, 2); // failed creates aren't checked
+  const text = fill.summarize(results);
+  assert.match(text, /OK .*t1/);
+  assert.match(text, /FAIL .*t2\n\s+x missing AI disclosure/);
+  assert.match(text, /Still empty: 2026-09-26/);
+});

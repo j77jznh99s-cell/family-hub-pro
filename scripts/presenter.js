@@ -99,10 +99,11 @@ function parseArgs(argv) {
     }
     if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set - see docs/ai-presenter.md');
     const results = await fill.fillSlots(pending, { create: createPresenterVideo });
+    console.log(`\nPre-posting check on the new scripts:\n${fill.summarize(results)}`);
     const done = results.filter((r) => r.ok).length;
     console.log(`\nWrote ${done} of ${results.length} script(s). Re-read each against the news before rendering: ` +
       'scripts written days ahead can go stale.');
-    if (done < results.length) process.exitCode = 1;
+    if (done < results.length || results.some((r) => r.review && !r.review.ok)) process.exitCode = 1;
     return;
   }
   if (args.calendar) {
