@@ -2,6 +2,20 @@
 
 Upload a long-form video, get back a handful of AI-selected short clips ready to download and share.
 
+## Start here
+
+| You want to… | Run | Needs |
+|---|---|---|
+| Try clips locally | `npm install && npm start`, open http://localhost:3000 | ffmpeg, `ANTHROPIC_API_KEY` |
+| Check a deploy | open `/healthz?deep=1` on your app (see [Deploying](#deploying)) | nothing |
+| See the AI presenter without keys | `npm run presenter -- --demo` | ffmpeg |
+| Plan the week | `npm run presenter -- --calendar` | nothing |
+| Script the next few days | `npm run presenter -- --fill-week --yes` (script-only, checked) | `ANTHROPIC_API_KEY` |
+| Render and check a video | `npm run presenter`, then `npm run presenter -- --check all` | HeyGen key, avatar ID, voice ID |
+
+Nothing here posts anywhere: videos and captions are saved for you to review and post by hand.
+The presenter setup and posting guidance, including AI-content disclosure, are in [docs/ai-presenter.md](docs/ai-presenter.md).
+
 ## How it works
 
 1. **Upload** — client drops a video into the dashboard (or `POST /api/upload`).
