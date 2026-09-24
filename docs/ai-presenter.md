@@ -1,5 +1,14 @@
 # AI presenter: your digital twin on camera
 
+> **First run, in order** (each step costs nothing or very little before the next one):
+>
+> 1. `npm run presenter -- --demo` - no keys needed. Check the captions and callouts on a placeholder video.
+> 2. Add `ANTHROPIC_API_KEY`, then `npm run presenter -- --script-only` - research and script only, no render. Read `script.json` and `post.txt`.
+> 3. `npm run presenter -- --check all` - confirm the script passes the pre-posting rules.
+> 4. Add the HeyGen keys ([one-time setup](#one-time-setup)) with `HEYGEN_TEST=true`, then `npm run presenter` - a free, watermarked render to check the avatar and voice.
+> 5. Set `HEYGEN_TEST=false` for real renders, then `npm run presenter -- --check all` again before you post anything by hand.
+> 6. Weekly: `npm run presenter -- --weekly-report` and `--usage` to see what was made, missed and spent.
+
 `npm run presenter` makes one short vertical video of an AI avatar of you presenting a
 trending, informational topic:
 
