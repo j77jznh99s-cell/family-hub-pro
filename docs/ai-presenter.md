@@ -70,3 +70,12 @@ unlabeled can get videos removed or down-ranked.
 The script can only use facts from that run's research, and its sources are saved with
 every video. Still, skim `post.txt` and the sources before posting, especially for
 markets and money, where news moves fast.
+
+## Weekly calendar
+
+```
+npm run presenter -- --calendar                 # next 7 days, one video a day
+npm run presenter -- --calendar --per-day 2 --times 12:00,18:00
+```
+
+Prints and saves `data/presenter/calendar.md`: each slot's lane, a post time and its status (`planned`, `scripted`, `rendered`, `captioned`, or `missed` for a past slot with no run). The lanes rotate evenly so each one gets equal airtime. With one video a day, each slot uses the same lane `--niche auto` would pick for that date. The post times are only a starting point, so adjust them once you see your own analytics (`PRESENTER_POST_TIMES` sets the default). Planning makes no API calls.

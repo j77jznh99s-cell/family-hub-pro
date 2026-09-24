@@ -109,4 +109,4 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
   return { runDir, script, videoPath, captionedPath };
 }
 
-module.exports = { createPresenterVideo, recentTopics, postText, slugify };
+module.exports = { createPresenterVideo, recentTopics, postText, slugify, OUTPUT_DIR };
