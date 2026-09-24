@@ -203,14 +203,30 @@ async function extractClip(filePath, startSeconds, endSeconds, outPath, { subtit
   await execFileAsync(FFMPEG_PATH, args, { maxBuffer: MAX_BUFFER });
 }
 
-// Writes a copy of a still image, center-cropped to the given aspect ratio - keeps a
-// clip's thumbnail the same shape as the clip itself when CLIP_ASPECT is set.
-async function cropImage(inPath, outPath, aspect) {
+// Grabs a clip's thumbnail straight from the source at full resolution, cropped to the
+// clip's aspect ratio (when set) and then scaled down to at most `height` px tall - the
+// small frames sampled for scoring are too low-res once cropped to 9:16.
+async function extractThumbnail(filePath, timestampSeconds, outPath, { aspect, height = 640 } = {}) {
+  const filters = [];
   const ratio = parseAspect(aspect);
-  if (!ratio) throw new Error(`Invalid aspect ratio: ${aspect}`);
+  if (ratio) filters.push(buildCropFilter(ratio));
+  filters.push(`scale=-2:'min(${height}\\,ih)'`);
   await execFileAsync(
     FFMPEG_PATH,
-    ['-y', '-i', inPath, '-vf', buildCropFilter(ratio), '-q:v', '4', outPath],
+    [
+      '-y',
+      '-ss',
+      String(Math.max(0, timestampSeconds)),
+      '-i',
+      filePath,
+      '-frames:v',
+      '1',
+      '-vf',
+      filters.join(','),
+      '-q:v',
+      '3',
+      outPath,
+    ],
     { maxBuffer: MAX_BUFFER }
   );
 }
@@ -248,7 +264,7 @@ module.exports = {
   extractFrame,
   extractClip,
   extractAudio,
-  cropImage,
+  extractThumbnail,
   checkAvailable,
   parseAspect,
   buildVideoFilters,

@@ -84,6 +84,7 @@ test('processJob cuts vertical clips and thumbnails from a real video', { skip: 
     assert.ok(clip.thumbnail_path, 'clip should have a thumbnail');
     const thumb = probeSize(path.join(process.env.CLIPS_DIR, clip.thumbnail_path));
     assert.ok(Math.abs(thumb.width / thumb.height - 9 / 16) < 0.02, `thumbnail ${thumb.width}x${thumb.height} is not 9:16`);
+    assert.equal(thumb.height, 640); // full-res source frame, scaled down from 720 - not the 270px scoring frame
   }
 
   const stats = await db.getStats();

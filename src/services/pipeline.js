@@ -86,12 +86,16 @@ async function processJob(jobId, videoPath) {
       await storage.store(clipPath, clipKey);
 
       let thumbnailKey = null;
-      if (segment.thumbnailPath) {
-        if (ffmpeg.parseAspect(CLIP_ASPECT)) {
-          await ffmpeg.cropImage(segment.thumbnailPath, thumbPath, CLIP_ASPECT);
-        } else {
-          await fs.copyFile(segment.thumbnailPath, thumbPath);
-        }
+      try {
+        // Same moment as the scoring frame (segment midpoint), but full-res and cropped.
+        const midpoint = segment.start + (segment.end - segment.start) / 2;
+        await ffmpeg.extractThumbnail(videoPath, midpoint, thumbPath, { aspect: CLIP_ASPECT });
+      } catch (err) {
+        // A thumbnail is cosmetic - fall back to the low-res scoring frame rather than fail.
+        console.warn(`[pipeline] thumbnail extraction failed, using scoring frame: ${err.message}`);
+        if (segment.thumbnailPath) await fs.copyFile(segment.thumbnailPath, thumbPath);
+      }
+      if (await fs.stat(thumbPath).then(() => true, () => false)) {
         thumbnailKey = path.join(jobId, thumbFile);
         await storage.store(thumbPath, thumbnailKey);
       }
