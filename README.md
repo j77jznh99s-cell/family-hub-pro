@@ -36,6 +36,10 @@ Full list with comments in `.env.example`. The only required var is `ANTHROPIC_A
 
 Set `CLIP_ASPECT=9:16` (or `1:1`, `4:5`, any `W:H`) to center-crop every exported clip to that ratio for TikTok/Reels/Shorts. It takes the largest centered window that fits the source frame, so nothing gets upscaled, and any captions are burned in after the crop so they fit the vertical frame. Thumbnails get the same crop so the dashboard previews match the clips. Leave it unset to keep the source aspect ratio.
 
+### AI presenter (your digital twin)
+
+`npm run presenter` researches what's trending right now in a rotating lane (AI & tech, money, markets, food), writes a short sourced script in your voice with Claude, and renders it as a vertical video of your HeyGen avatar speaking in your cloned voice. `--script-only` skips the render. Setup and posting guidance, including AI-content disclosure, are in [docs/ai-presenter.md](docs/ai-presenter.md).
+
 ## Scaling up (each is optional)
 
 ### Database: SQLite (default) or Postgres
