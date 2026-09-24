@@ -5,6 +5,7 @@ const path = require('path');
 const { NICHES, resolveNiche } = require('./niches');
 const writer = require('./writer');
 const heygen = require('./heygen');
+const overlay = require('./overlay');
 
 const OUTPUT_DIR =
   process.env.PRESENTER_OUTPUT_DIR || path.join(__dirname, '..', '..', 'data', 'presenter');
@@ -87,7 +88,25 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
     'utf8'
   );
   log(`[presenter] saved ${videoPath}`);
-  return { runDir, script, videoPath };
+
+  let captionedPath = null;
+  if (process.env.PRESENTER_BURN_TEXT !== 'false') {
+    let captionSrtPath;
+    if (result.captionUrl) {
+      try {
+        captionSrtPath = await heygen.downloadTo(result.captionUrl, path.join(runDir, 'captions.srt'));
+      } catch (err) {
+        log(`[presenter] couldn't fetch HeyGen captions, estimating instead: ${err.message}`);
+      }
+    }
+    try {
+      captionedPath = await overlay.burnText(runDir, { captionSrtPath, log });
+    } catch (err) {
+      // The plain video is still usable; don't fail the run over the text pass.
+      log(`[presenter] text overlay failed, keeping plain video: ${err.message}`);
+    }
+  }
+  return { runDir, script, videoPath, captionedPath };
 }
 
 module.exports = { createPresenterVideo, recentTopics, postText, slugify };

@@ -12,9 +12,15 @@ trending, informational topic:
    spoken, and that every source actually came from this run's web search. Money and
    markets scripts get a spoken "not financial advice" line.
 4. **Render.** HeyGen generates the video with your avatar and your cloned voice (1080x1920).
-5. **Save.** Everything goes to `data/presenter/<date>-<lane>-<topic>/`:
-   `video.mp4`, `script.json`, `post.txt` (caption, hashtags, sources, AI disclosure),
-   `research.md`, `render.json`.
+5. **Add on-screen text.** Adds the script's key-fact callouts (bold, boxed, near the
+   top, spread across the video) and captions (lower third, above where TikTok and Reels
+   put their buttons). Captions use HeyGen's timed caption file when there is one;
+   otherwise they're estimated from the script. The result is `video.captioned.mp4`.
+   Turn this off with `PRESENTER_BURN_TEXT=false`, or redo it on an existing run with
+   `npm run presenter -- --overlay <run folder>`.
+6. **Save.** Everything goes to `data/presenter/<date>-<lane>-<topic>/`:
+   `video.mp4`, `video.captioned.mp4`, `script.json`, `post.txt` (caption, hashtags,
+   sources, AI disclosure), `research.md`, `render.json`.
 
 `npm run presenter -- --script-only` does steps 1-3 without spending HeyGen credits, so
 you can review scripts first.

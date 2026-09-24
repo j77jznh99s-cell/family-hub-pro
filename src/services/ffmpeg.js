@@ -268,4 +268,7 @@ module.exports = {
   checkAvailable,
   parseAspect,
   buildVideoFilters,
+  escapeForFilterPath,
+  FFMPEG_PATH,
+  MAX_BUFFER,
 };
