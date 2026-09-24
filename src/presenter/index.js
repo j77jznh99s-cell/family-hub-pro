@@ -2,6 +2,7 @@
 // render with HeyGen -> save everything (script, sources, caption, video) to one folder.
 const fs = require('fs/promises');
 const path = require('path');
+const { writeFileAtomic } = require('./fsutil');
 const { NICHES, resolveNiche } = require('./niches');
 const writer = require('./writer');
 const heygen = require('./heygen');
@@ -76,11 +77,11 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
 
   const runDir = path.join(OUTPUT_DIR, `${now.toISOString().slice(0, 10)}-${nicheKey}-${slugify(script.topic)}`);
   await fs.mkdir(runDir, { recursive: true });
-  await fs.writeFile(path.join(runDir, 'research.md'), brief, 'utf8');
-  await fs.writeFile(path.join(runDir, 'script.json'), JSON.stringify(script, null, 2), 'utf8');
-  await fs.writeFile(path.join(runDir, 'post.txt'), postText(script), 'utf8');
+  await writeFileAtomic(path.join(runDir, 'research.md'), brief, 'utf8');
+  await writeFileAtomic(path.join(runDir, 'script.json'), JSON.stringify(script, null, 2), 'utf8');
+  await writeFileAtomic(path.join(runDir, 'post.txt'), postText(script), 'utf8');
   log(`[presenter] "${script.title}" (~${script.estimatedSeconds}s) -> ${runDir}`);
-  const saveUsage = () => fs.writeFile(path.join(runDir, 'usage.json'), JSON.stringify(spent, null, 2), 'utf8');
+  const saveUsage = () => writeFileAtomic(path.join(runDir, 'usage.json'), JSON.stringify(spent, null, 2), 'utf8');
   await saveUsage();
 
   if (!render) return { runDir, script };
@@ -91,7 +92,7 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
     onStatus: (status) => log(`[presenter] HeyGen status: ${status}`),
   });
   const videoPath = await heygen.downloadTo(result.videoUrl, path.join(runDir, 'video.mp4'));
-  await fs.writeFile(
+  await writeFileAtomic(
     path.join(runDir, 'render.json'),
     JSON.stringify({ videoId, ...result, renderedAt: new Date().toISOString() }, null, 2),
     'utf8'

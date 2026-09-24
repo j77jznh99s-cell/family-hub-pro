@@ -7,6 +7,7 @@
 // recently covered topic.
 const fs = require('fs/promises');
 const path = require('path');
+const { writeFileAtomic } = require('./fsutil');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const ffmpeg = require('../services/ffmpeg');
@@ -54,12 +55,12 @@ async function createDemoRun({ outputDir, now = new Date(), seconds = 12, log = 
   const stamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const runDir = path.join(outputDir, `demo-${stamp}`);
   await fs.mkdir(runDir, { recursive: true });
-  await fs.writeFile(path.join(runDir, 'research.md'), 'DEMO RUN - no research was done.\n', 'utf8');
-  await fs.writeFile(path.join(runDir, 'script.json'), JSON.stringify(DEMO_SCRIPT, null, 2), 'utf8');
-  await fs.writeFile(path.join(runDir, 'post.txt'), `DEMO - DO NOT POST\n\n${postText(DEMO_SCRIPT)}`, 'utf8');
+  await writeFileAtomic(path.join(runDir, 'research.md'), 'DEMO RUN - no research was done.\n', 'utf8');
+  await writeFileAtomic(path.join(runDir, 'script.json'), JSON.stringify(DEMO_SCRIPT, null, 2), 'utf8');
+  await writeFileAtomic(path.join(runDir, 'post.txt'), `DEMO - DO NOT POST\n\n${postText(DEMO_SCRIPT)}`, 'utf8');
   log(`[presenter] demo: generating a ${seconds}s placeholder video`);
   const videoPath = await makePlaceholderVideo(path.join(runDir, 'video.mp4'), { seconds });
-  await fs.writeFile(
+  await writeFileAtomic(
     path.join(runDir, 'render.json'),
     JSON.stringify({ demo: true, renderedAt: now.toISOString() }, null, 2),
     'utf8'

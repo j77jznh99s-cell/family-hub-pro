@@ -4,6 +4,7 @@
 // estimated by spreading the script's words across the video at an even speaking pace.
 const fs = require('fs/promises');
 const path = require('path');
+const { produceAtomic } = require('./fsutil');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const ffmpeg = require('../services/ffmpeg');
@@ -122,10 +123,14 @@ async function burnText(runDir, { captionSrtPath, outName = 'video.captioned.mp4
 
   const assPath = path.join(runDir, 'overlay.ass');
   await fs.writeFile(assPath, buildAss({ width, height, callouts, captions }), 'utf8');
-  await execFileAsync(
-    ffmpeg.FFMPEG_PATH,
-    ['-y', '-i', input, '-vf', `ass=${ffmpeg.escapeForFilterPath(assPath)}`, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-c:a', 'copy', '-movflags', '+faststart', output],
-    { maxBuffer: ffmpeg.MAX_BUFFER }
+  // Render to a temp file and move it into place, so a failed or killed ffmpeg run never
+  // leaves a partial video.captioned.mp4 that the calendar and --check would count as done.
+  await produceAtomic(output, (tmp) =>
+    execFileAsync(
+      ffmpeg.FFMPEG_PATH,
+      ['-y', '-i', input, '-vf', `ass=${ffmpeg.escapeForFilterPath(assPath)}`, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-c:a', 'copy', '-movflags', '+faststart', tmp],
+      { maxBuffer: ffmpeg.MAX_BUFFER }
+    )
   );
   log(`[presenter] burned text -> ${output}`);
   return output;

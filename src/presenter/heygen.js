@@ -3,7 +3,7 @@
 // /v1/video_status.get, auth via the X-Api-Key header. The response fields
 // (data.video_id, data.status, data.video_url) are read defensively since HeyGen
 // doesn't publish response schemas - errors include the raw body to make any drift obvious.
-const fs = require('fs/promises');
+const { writeFileAtomic } = require('./fsutil');
 
 const API_BASE = process.env.HEYGEN_API_BASE || 'https://api.heygen.com';
 
@@ -103,7 +103,8 @@ async function waitForVideo(cfg, videoId, { fetchImpl = fetch, intervalMs = 1500
 async function downloadTo(url, outPath, { fetchImpl = fetch } = {}) {
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Download failed (${res.status}) for ${url}`);
-  await fs.writeFile(outPath, Buffer.from(await res.arrayBuffer()));
+  // Atomic: a dropped connection mustn't leave a truncated video.mp4 that looks rendered.
+  await writeFileAtomic(outPath, Buffer.from(await res.arrayBuffer()));
   return outPath;
 }
 
