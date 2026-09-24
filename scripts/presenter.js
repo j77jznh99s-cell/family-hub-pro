@@ -10,6 +10,8 @@
 //   npm run presenter -- --demo              # no API keys: sample run folder with a placeholder video + text overlay
 //   npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]
 //                                           # plan the week: lane + post time per slot, and what's done
+//   npm run presenter -- --fill-week [--days 3] [--yes]
+//                                           # list slots with no script yet; --yes writes them (script-only)
 require('dotenv').config();
 const fs = require('fs/promises');
 const path = require('path');
@@ -24,6 +26,8 @@ function parseArgs(argv) {
     else if (argv[i] === '--script-only') args.render = false;
     else if (argv[i] === '--overlay') args.overlay = argv[++i];
     else if (argv[i] === '--calendar') args.calendar = true;
+    else if (argv[i] === '--fill-week') args.fill = true;
+    else if (argv[i] === '--yes') args.yes = true;
     else if (argv[i] === '--demo') args.demo = true;
     else if (argv[i] === '--usage') args.usage = true;
     else if (argv[i] === '--weekly-report') args.weekly = true;
@@ -47,7 +51,8 @@ function parseArgs(argv) {
         '       npm run presenter -- --check <runDir|all>\n' +
         '       npm run presenter -- --usage\n' +
         '       npm run presenter -- --weekly-report\n' +
-        '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]'
+        '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]\n' +
+        '       npm run presenter -- --fill-week [--days 3] [--per-day 1] [--yes]'
     );
     return;
   }
@@ -77,6 +82,27 @@ function parseArgs(argv) {
     const { createDemoRun } = require('../src/presenter/demo');
     const { captionedPath } = await createDemoRun({ outputDir: OUTPUT_DIR });
     console.log(`Done: ${captionedPath}`);
+    return;
+  }
+  if (args.fill) {
+    const fill = require('../src/presenter/fill');
+    const pending = await fill.pendingSlots(OUTPUT_DIR, {
+      days: args.days || 3,
+      perDay: args.perDay || 1,
+      times: args.times || process.env.PRESENTER_POST_TIMES,
+    });
+    console.log(fill.describe(pending));
+    if (!pending.length) return;
+    if (!args.yes) {
+      console.log('\nDry run. Add --yes to write these scripts (research + script only, no HeyGen render).');
+      return;
+    }
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set - see docs/ai-presenter.md');
+    const results = await fill.fillSlots(pending, { create: createPresenterVideo });
+    const done = results.filter((r) => r.ok).length;
+    console.log(`\nWrote ${done} of ${results.length} script(s). Re-read each against the news before rendering: ` +
+      'scripts written days ahead can go stale.');
+    if (done < results.length) process.exitCode = 1;
     return;
   }
   if (args.calendar) {

@@ -217,3 +217,17 @@ test('a script that fails its checks still logs the Claude spend', async (t) => 
   const month = Object.values(summary.months).find((m) => m.failedAttempts);
   assert.ok(month.failedAttempts >= 1);
 });
+
+test('createPresenterVideo forDate files the run under the slot date but researches with today', async (t) => {
+  const today = new Date('2026-09-24T15:00:00Z');
+  t.mock.method(writer, 'research', async (niche, { now }) => {
+    assert.equal(now.toISOString().slice(0, 10), '2026-09-24'); // real date for the news search
+    return { brief: 'TOPIC: Ahead of time', searchedUrls: new Set(['https://reuters.com/a']) };
+  });
+  t.mock.method(writer, 'writeScript', async () => rawScript({ topic: 'Ahead of time' }));
+  const { runDir } = await presenter.createPresenterVideo({
+    niche: 'auto', render: false, now: today, forDate: new Date('2026-09-26T12:00:00Z'), log: () => {},
+  });
+  const { nicheForDate } = require('../src/presenter/niches');
+  assert.equal(path.basename(runDir), `2026-09-26-${nicheForDate(new Date('2026-09-26T12:00:00Z'))}-ahead-of-time`);
+});

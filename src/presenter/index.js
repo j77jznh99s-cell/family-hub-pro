@@ -47,8 +47,11 @@ function postText(script) {
   return `${script.title}\n\n${script.description}\n\n${tags}\n\nSources:\n${sources}\n`;
 }
 
-async function createPresenterVideo({ niche, render = true, now = new Date(), log = console.log } = {}) {
-  const nicheKey = resolveNiche(niche, now);
+// `forDate` files the run under a calendar slot's date (and picks that date's lane for
+// `auto`) while research still uses the real current date, so a script prepared ahead of
+// time lands in the right calendar slot without pretending to know that day's news.
+async function createPresenterVideo({ niche, render = true, now = new Date(), forDate, log = console.log } = {}) {
+  const nicheKey = resolveNiche(niche, forDate || now);
   const cfg = heygen.heygenConfig();
   if (render) {
     const missing = heygen.missingConfig(cfg);
@@ -75,7 +78,7 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
     throw new Error(`Script failed checks: ${problems.join('; ')}`);
   }
 
-  const runDir = path.join(OUTPUT_DIR, `${now.toISOString().slice(0, 10)}-${nicheKey}-${slugify(script.topic)}`);
+  const runDir = path.join(OUTPUT_DIR, `${(forDate || now).toISOString().slice(0, 10)}-${nicheKey}-${slugify(script.topic)}`);
   await fs.mkdir(runDir, { recursive: true });
   await writeFileAtomic(path.join(runDir, 'research.md'), brief, 'utf8');
   await writeFileAtomic(path.join(runDir, 'script.json'), JSON.stringify(script, null, 2), 'utf8');
