@@ -1,4 +1,28 @@
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const { ACCESS_TOKEN, PRESENTER_TOKEN } = require('../config');
+
+// Constant-time comparison, so response timing can't leak how much of a guess was right.
+function tokensMatch(provided, expected) {
+  if (typeof provided !== 'string' || !expected) return false;
+  const a = crypto.createHash('sha256').update(provided).digest();
+  const b = crypto.createHash('sha256').update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
+// Slows down token guessing: after 30 rejected (401) requests from one IP in 15 minutes,
+// further requests get 429 until the window passes. Successful requests don't count.
+function authFailureLimiter({ limit = 30, windowMs = 15 * 60 * 1000 } = {}) {
+  return rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    requestWasSuccessful: (req, res) => res.statusCode !== 401,
+    skipSuccessfulRequests: true,
+    message: { error: 'Too many failed attempts - try again later' },
+  });
+}
 
 let warned = false;
 
@@ -14,7 +38,7 @@ function requireAccessToken(req, res, next) {
   }
 
   const provided = req.get('x-access-token') || req.query.token;
-  if (provided === ACCESS_TOKEN) return next();
+  if (tokensMatch(provided, ACCESS_TOKEN)) return next();
 
   return res.status(401).json({ error: 'Unauthorized' });
 }
@@ -34,9 +58,9 @@ function makePresenterAuth({ presenterToken = PRESENTER_TOKEN, accessToken = ACC
     }
     if (!expected) return next();
     const provided = req.get('x-presenter-token') || req.query.ptoken || req.get('x-access-token') || req.query.token;
-    if (provided === expected) return next();
+    if (tokensMatch(provided, expected)) return next();
     return res.status(401).json({ error: 'Unauthorized' });
   };
 }
 
-module.exports = { requireAccessToken, makePresenterAuth };
+module.exports = { requireAccessToken, makePresenterAuth, tokensMatch, authFailureLimiter };

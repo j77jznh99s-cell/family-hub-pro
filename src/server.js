@@ -4,8 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { PORT, STRIPE_SECRET_KEY, CLIP_ASPECT } = require('./config');
-const { requireAccessToken, makePresenterAuth } = require('./middleware/auth');
+const { PORT, STRIPE_SECRET_KEY, CLIP_ASPECT, TRUST_PROXY } = require('./config');
+const { requireAccessToken, makePresenterAuth, authFailureLimiter } = require('./middleware/auth');
 const uploadRouter = require('./routes/upload');
 const jobsRouter = require('./routes/jobs');
 const clipsRouter = require('./routes/clips');
@@ -17,6 +17,10 @@ const ffmpeg = require('./services/ffmpeg');
 const db = require('./db');
 
 const app = express();
+if (TRUST_PROXY) {
+  // A hop count ("1") or an Express trust-proxy value ("loopback", a CIDR list).
+  app.set('trust proxy', /^\d+$/.test(TRUST_PROXY) ? Number(TRUST_PROXY) : TRUST_PROXY);
+}
 
 app.use(cors());
 
@@ -31,6 +35,7 @@ if (STRIPE_SECRET_KEY) {
 }
 
 app.use(express.json());
+app.use('/api', authFailureLimiter());
 
 app.get('/healthz', (req, res) => res.json({ ok: true }));
 

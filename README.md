@@ -74,7 +74,7 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 **Railway:**
 1. New project → deploy from this repo. Railway will pick up the `Dockerfile` automatically (this is what gets you `ffmpeg` — don't skip it). If you instead let it use Nixpacks, `nixpacks.toml` also installs `ffmpeg`.
 2. If staying on the SQLite/local-disk defaults: attach a volume mounted at `/app/data` and set `UPLOAD_DIR`, `CLIPS_DIR`, `DATA_DIR` under it — otherwise uploads/clips/the DB vanish on every redeploy. If you've switched on Postgres and S3 instead, you don't need a volume.
-3. Set `ANTHROPIC_API_KEY` and `ACCESS_TOKEN`, plus whichever of `DATABASE_URL` / `REDIS_URL` / `S3_BUCKET` / `OPENAI_API_KEY` / `STRIPE_SECRET_KEY` you're turning on.
+3. Set `TRUST_PROXY=1` (the platform's proxy sits in front of the app; without it every client shares one rate-limit bucket). Set `ANTHROPIC_API_KEY` and `ACCESS_TOKEN`, plus whichever of `DATABASE_URL` / `REDIS_URL` / `S3_BUCKET` / `OPENAI_API_KEY` / `STRIPE_SECRET_KEY` you're turning on.
 
 **Anywhere else:** the `Dockerfile` is self-contained (Node + ffmpeg); any container platform (Render, Fly.io, a plain VM) works the same way. `Procfile` is there for Heroku.
 
@@ -89,7 +89,7 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 - `POST /api/billing/checkout`, `GET /api/billing/balance`, `POST /api/billing/webhook` — only mounted when `STRIPE_SECRET_KEY` is set; see above.
 - `GET /api/presenter/runs`, `/runs/:id`, `/runs/:id/video`, `/calendar` — read-only views of the AI presenter's run folders (see `docs/ai-presenter.md`). Nothing here posts anywhere.
 
-All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`) when it's configured, except `/api/billing/webhook` (see above).
+All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`) when it's configured, except `/api/billing/webhook` (see above). Tokens are compared in constant time. After 30 rejected requests from one IP in 15 minutes, further requests from that IP get `429` until the window passes. Prefer the `x-access-token` header: `?token=` URLs (needed for video and download links) can end up in browser history and proxy logs.
 
 ### Operator views on the dashboard
 
