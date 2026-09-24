@@ -79,3 +79,11 @@ npm run presenter -- --calendar --per-day 2 --times 12:00,18:00
 ```
 
 Prints and saves `data/presenter/calendar.md`: each slot's lane, a post time and its status (`planned`, `scripted`, `rendered`, `captioned`, or `missed` for a past slot with no run). The lanes rotate evenly so each one gets equal airtime. With one video a day, each slot uses the same lane `--niche auto` would pick for that date. The post times are only a starting point, so adjust them once you see your own analytics (`PRESENTER_POST_TIMES` sets the default). Planning makes no API calls.
+
+## Try it without any keys
+
+```
+npm run presenter -- --demo
+```
+
+Builds a sample run folder (`data/presenter/demo-<time>/`) with a canned script about the pipeline itself, a 12-second placeholder video (plain background and a tone, with no avatar) and the real callout-and-caption pass burned on top. Open `video.captioned.mp4` to check that the text sits well on a vertical video before you set up HeyGen or Anthropic keys. Demo folders never count toward the calendar or the recently-covered topic list, and their `post.txt` starts with `DEMO - DO NOT POST`.

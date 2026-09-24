@@ -27,7 +27,8 @@ async function recentTopics(outputDir = OUTPUT_DIR, limit = 15) {
     return [];
   }
   const topics = [];
-  for (const entry of entries.sort().reverse().slice(0, limit)) {
+  const runs = entries.filter((e) => !e.startsWith('demo-')); // demo runs aren't real topics
+  for (const entry of runs.sort().reverse().slice(0, limit)) {
     try {
       const saved = JSON.parse(await fs.readFile(path.join(outputDir, entry, 'script.json'), 'utf8'));
       if (saved.topic) topics.push(saved.topic);

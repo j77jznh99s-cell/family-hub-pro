@@ -4,6 +4,7 @@
 //   npm run presenter -- --niche markets   # pick a lane: ai | money | markets | food | auto
 //   npm run presenter -- --script-only     # research + script, no HeyGen render
 //   npm run presenter -- --overlay <runDir> # (re)burn callouts + captions onto a rendered video
+//   npm run presenter -- --demo              # no API keys: sample run folder with a placeholder video + text overlay
 //   npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]
 //                                           # plan the week: lane + post time per slot, and what's done
 require('dotenv').config();
@@ -20,6 +21,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--script-only') args.render = false;
     else if (argv[i] === '--overlay') args.overlay = argv[++i];
     else if (argv[i] === '--calendar') args.calendar = true;
+    else if (argv[i] === '--demo') args.demo = true;
     else if (argv[i] === '--days') args.days = parseInt(argv[++i], 10);
     else if (argv[i] === '--per-day') args.perDay = parseInt(argv[++i], 10);
     else if (argv[i] === '--times') args.times = argv[++i];
@@ -35,8 +37,15 @@ function parseArgs(argv) {
     console.log(
       'Usage: npm run presenter -- [--niche ai|money|markets|food|auto] [--script-only]\n' +
         '       npm run presenter -- --overlay <runDir>\n' +
+        '       npm run presenter -- --demo\n' +
         '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]'
     );
+    return;
+  }
+  if (args.demo) {
+    const { createDemoRun } = require('../src/presenter/demo');
+    const { captionedPath } = await createDemoRun({ outputDir: OUTPUT_DIR });
+    console.log(`Done: ${captionedPath}`);
     return;
   }
   if (args.calendar) {
