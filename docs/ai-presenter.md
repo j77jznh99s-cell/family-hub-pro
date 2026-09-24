@@ -87,3 +87,7 @@ npm run presenter -- --demo
 ```
 
 Builds a sample run folder (`data/presenter/demo-<time>/`) with a canned script about the pipeline itself, a 12-second placeholder video (plain background and a tone, with no avatar) and the real callout-and-caption pass burned on top. Open `video.captioned.mp4` to check that the text sits well on a vertical video before you set up HeyGen or Anthropic keys. Demo folders never count toward the calendar or the recently-covered topic list, and their `post.txt` starts with `DEMO - DO NOT POST`.
+
+## Dashboard view
+
+Open the dashboard with `?presenter=1` (for example `http://localhost:3000/?presenter=1`) to see this week's calendar and every run: title, lane and status. Click a run to watch the video (the captioned version when there is one), read the script, check the callouts and sources, and copy the post text. This view is read-only, so nothing in it posts anywhere. It uses the same access token as the rest of the API (`/api/presenter/...`).

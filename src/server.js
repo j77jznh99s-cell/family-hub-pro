@@ -11,6 +11,7 @@ const jobsRouter = require('./routes/jobs');
 const clipsRouter = require('./routes/clips');
 const statsRouter = require('./routes/stats');
 const billingRouter = require('./routes/billing');
+const { presenterRouter } = require('./routes/presenter');
 const { stripeWebhookHandler } = require('./routes/stripeWebhook');
 const ffmpeg = require('./services/ffmpeg');
 const db = require('./db');
@@ -37,6 +38,7 @@ app.use('/api/jobs/:jobId/clips', requireAccessToken, clipsRouter);
 app.use('/api/jobs', requireAccessToken, jobsRouter);
 app.use('/api/upload', requireAccessToken, uploadRouter);
 app.use('/api/stats', requireAccessToken, statsRouter);
+app.use('/api/presenter', requireAccessToken, presenterRouter());
 if (STRIPE_SECRET_KEY) {
   app.use('/api/billing', requireAccessToken, billingRouter);
 }

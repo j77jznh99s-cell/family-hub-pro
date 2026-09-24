@@ -100,6 +100,19 @@
   .stat .value { font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
   .stat .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
   @media (max-width: 420px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .run-item { padding: 0.55rem 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.9rem; }
+  .run-item .run-meta { color: var(--muted); font-size: 0.8rem; }
+  .run-detail { margin: 0.5rem 0 0.8rem; font-size: 0.85rem; cursor: default; }
+  .run-detail video { width: 100%; max-width: 240px; aspect-ratio: 9 / 16; object-fit: contain; border-radius: 8px; background: #000; display: block; margin-bottom: 0.6rem; }
+  .run-detail pre { white-space: pre-wrap; background: #0d0f14; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; font: inherit; margin: 0.3rem 0 0.6rem; }
+  .run-detail a { color: var(--accent); word-break: break-all; }
+  .run-detail button.copy-post { width: auto; padding: 0.15rem 0.7rem; font-size: 0.8rem; margin-left: 0.4rem; }
+  .tag { display: inline-block; font-size: 0.7rem; border: 1px solid var(--border); border-radius: 999px; padding: 0 0.45rem; margin-left: 0.3rem; color: var(--muted); }
+  .cal-row { display: flex; gap: 0.6rem; font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+  .cal-row .d { width: 7.6rem; flex: none; color: var(--muted); white-space: nowrap; }
+  .cal-row .s { margin-left: auto; color: var(--muted); }
+  .cal-row .s.missed { color: var(--bad); }
+  .cal-row .s.captioned, .cal-row .s.rendered { color: var(--good); }
 </style>
 </head>
 <body>
@@ -133,6 +146,14 @@
   <div class="panel" id="statsPanel" style="display:none">
     <h2 style="margin-top:0;font-size:1.1rem">Usage</h2>
     <div class="stats-grid" id="statsGrid"></div>
+  </div>
+
+  <!-- Presenter operator view: only shown with ?presenter=1. Read-only; nothing here posts. -->
+  <div class="panel" id="presenterPanel" style="display:none">
+    <h2 style="margin-top:0;font-size:1.1rem">AI presenter</h2>
+    <details open><summary>This week</summary><div id="presenterCalendar"></div></details>
+    <h3 style="font-size:0.95rem;margin:0.9rem 0 0.2rem">Runs</h3>
+    <div id="presenterRuns"><p class="status">No runs yet. Try <code>npm run presenter -- --demo</code>.</p></div>
   </div>
 
   <div class="panel">
@@ -348,8 +369,68 @@ async function loadStats() {
   statsPanel.style.display = 'block';
 }
 
+const showPresenter = new URLSearchParams(location.search).get('presenter') === '1';
+const presenterPanel = document.getElementById('presenterPanel');
+const presenterRuns = document.getElementById('presenterRuns');
+const presenterCalendar = document.getElementById('presenterCalendar');
+const STATUS_WORDS = { planned: 'planned', scripted: 'scripted', rendered: 'rendered', captioned: 'ready', missed: 'missed' };
+
+async function getJson(url) {
+  const res = await fetch(withToken(url), { headers: authHeaders() });
+  return res.ok ? res.json() : null;
+}
+
+async function toggleRun(el, id) {
+  const open = el.querySelector('.run-detail');
+  if (open) { open.remove(); return; }
+  const run = await getJson(`/api/presenter/runs/${encodeURIComponent(id)}`);
+  if (!run) return;
+  const d = document.createElement('div');
+  d.className = 'run-detail';
+  d.addEventListener('click', (e) => e.stopPropagation());
+  const video = run.status === 'scripted' ? '' :
+    `<video controls preload="metadata" playsinline src="${withToken(`/api/presenter/runs/${encodeURIComponent(id)}/video`)}"></video>`;
+  const sources = run.sources.map((s) => `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title || s.url)}</a></li>`).join('');
+  d.innerHTML = `${video}
+    <div><b>On-screen callouts:</b> ${run.onScreenText.map(escapeHtml).join(' · ') || '–'}</div>
+    <div style="margin-top:0.4rem"><b>Script</b></div><pre>${escapeHtml(run.script)}</pre>
+    ${sources ? `<div><b>Sources</b></div><ul style="margin:0.2rem 0 0.6rem;padding-left:1.1rem">${sources}</ul>` : ''}
+    ${run.post ? `<div><b>Post text</b> <button class="secondary copy-post" type="button">Copy</button></div><pre>${escapeHtml(run.post)}</pre>` : ''}`;
+  const copyBtn = d.querySelector('.copy-post');
+  if (copyBtn) copyBtn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(run.post); copyBtn.textContent = 'Copied'; } catch { copyBtn.textContent = 'Copy failed'; }
+  });
+  el.appendChild(d);
+}
+
+async function loadPresenter() {
+  if (!showPresenter) return;
+  const [list, cal] = await Promise.all([getJson('/api/presenter/runs'), getJson('/api/presenter/calendar')]);
+  if (!list || !cal) return;
+  const today = new Date().toISOString().slice(0, 10);
+  presenterCalendar.innerHTML = cal.map((s) => {
+    const status = s.status === 'planned' && s.date < today ? 'missed' : s.status;
+    return `<div class="cal-row"><span class="d">${s.weekday} ${s.date.slice(5)} ${escapeHtml(s.postAt)}</span>` +
+      `<span>${escapeHtml(s.label)}${s.topic ? ' – ' + escapeHtml(s.topic) : ''}</span>` +
+      `<span class="s ${status}">${STATUS_WORDS[status] || status}</span></div>`;
+  }).join('');
+  if (list.length) {
+    presenterRuns.innerHTML = '';
+    for (const run of list) {
+      const el = document.createElement('div');
+      el.className = 'run-item';
+      el.innerHTML = `<div>${escapeHtml(run.title || run.id)}${run.demo ? '<span class="tag">demo</span>' : ''}</div>` +
+        `<div class="run-meta">${escapeHtml(run.createdAt.slice(0, 16).replace('T', ' '))} · ${escapeHtml(run.niche || '')} · ${STATUS_WORDS[run.status] || run.status}</div>`;
+      el.addEventListener('click', () => toggleRun(el, run.id));
+      presenterRuns.appendChild(el);
+    }
+  }
+  presenterPanel.style.display = 'block';
+}
+
 loadJobsList();
 loadStats();
+loadPresenter();
 </script>
 </body>
 </html>
