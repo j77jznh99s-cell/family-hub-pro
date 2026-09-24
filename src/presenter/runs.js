@@ -73,7 +73,14 @@ async function getRun(outputDir, id) {
     ...summary,
     script: script.script || '',
     onScreenText: script.on_screen_text || [],
-    sources: script.sources || [],
+    // Only http(s) links reach the dashboard's <a href>, whatever is in the file.
+    sources: (script.sources || []).filter((src) => {
+      try {
+        return ['http:', 'https:'].includes(new URL(src.url).protocol);
+      } catch {
+        return false;
+      }
+    }),
     hashtags: script.hashtags || [],
     post,
   };

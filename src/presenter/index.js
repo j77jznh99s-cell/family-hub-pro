@@ -68,7 +68,9 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
   const raw = await writer.writeScript(nicheKey, brief, { onResponse });
   const { script, problems } = writer.finalizeScript(raw, nicheKey, searchedUrls);
   if (problems.length) {
-    // Don't spend render credits on a script that failed its own checks.
+    // Don't spend render credits on a script that failed its own checks - but do record
+    // the Claude spend, which already happened, so --usage totals stay honest.
+    await usage.logFailedAttempt(OUTPUT_DIR, { at: now.toISOString(), niche: nicheKey, reason: problems.join('; '), usage: spent });
     throw new Error(`Script failed checks: ${problems.join('; ')}`);
   }
 

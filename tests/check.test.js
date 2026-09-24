@@ -90,3 +90,20 @@ test('unreadable script and empty folder', async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('malformed or non-web source URLs are reported, not a crash', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-test-'));
+  try {
+    const runDir = makeRun(dir, 'bad-urls', 'ai', {
+      mutate: (s) => { s.sources = [{ title: 'a', url: 'https://' }, { title: 'b', url: 'javascript:alert(1)' }]; },
+    });
+    const r = await checkRun(runDir);
+    assert.ok(r.problems.includes('malformed source URL: https://'));
+    assert.ok(r.problems.includes('source is not a web link: javascript:alert(1)'));
+    assert.ok(r.problems.includes('no sources'));
+    const all = await checkAll(dir); // one bad run must not stop the rest
+    assert.equal(all.length, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

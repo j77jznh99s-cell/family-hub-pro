@@ -201,3 +201,19 @@ test('createPresenterVideo records Claude usage in usage.json', async (t) => {
   assert.equal(saved.claude.web_searches, 1);
   assert.equal(saved.heygen.renders, 0);
 });
+
+test('a script that fails its checks still logs the Claude spend', async (t) => {
+  const usage = require('../src/presenter/usage');
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 2000, output_tokens: 100 }, content: [] });
+    return { brief: 'b', searchedUrls: new Set(['https://reuters.com/a']) };
+  });
+  t.mock.method(writer, 'writeScript', async () => rawScript({ script: 'Too short.' }));
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} }), /failed checks/);
+  const failed = await usage.readFailedAttempts(tmpOut);
+  assert.equal(failed.at(-1).usage.claude.input_tokens, 2000);
+  assert.match(failed.at(-1).reason, /words/);
+  const summary = await usage.summarize(tmpOut);
+  const month = Object.values(summary.months).find((m) => m.failedAttempts);
+  assert.ok(month.failedAttempts >= 1);
+});

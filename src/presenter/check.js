@@ -36,11 +36,18 @@ async function checkRun(runDir) {
   if (words < 90 || words > 200) problems.push(`script is ${words} words (want 110-170)`);
   if (/https?:\/\//i.test(script.script || '')) problems.push('spoken script contains a URL');
 
-  const sources = (script.sources || []).filter((s) => /^https?:\/\//.test(s.url || ''));
-  if (!sources.length) problems.push('no sources');
-  if (sources.some((s) => /(^|\.)example\.(com|org|net)\b/.test(new URL(s.url).hostname))) {
-    problems.push('placeholder source URL');
+  const hosts = [];
+  for (const src of script.sources || []) {
+    try {
+      const u = new URL(src.url);
+      if (u.protocol === 'http:' || u.protocol === 'https:') hosts.push(u.hostname);
+      else problems.push(`source is not a web link: ${src.url}`);
+    } catch {
+      problems.push(`malformed source URL: ${src.url}`);
+    }
   }
+  if (!hosts.length) problems.push('no sources');
+  if (hosts.some((h) => /(^|\.)example\.(com|org|net)$/.test(h))) problems.push('placeholder source URL');
 
   const niche = NICHES[script.niche];
   if (!niche) warnings.push(`unknown lane "${script.niche}"`);

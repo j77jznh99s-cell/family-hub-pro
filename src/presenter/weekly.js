@@ -46,7 +46,7 @@ async function buildWeeklyReport(outputDir, { now = new Date(), times } = {}) {
   lines.push('', `## Spend in ${month}`, '');
   if (m) {
     lines.push(
-      `- Runs with usage recorded: ${m.runs}`,
+      `- Runs with usage recorded: ${m.runs}${m.failedAttempts ? ` (+ ${m.failedAttempts} attempt(s) that failed the script checks)` : ''}`,
       `- Claude (estimate at list price): $${m.claudeUsd.toFixed(2)}`,
       `- Web searches: ${m.webSearches}`,
       `- HeyGen: ${m.renders} render(s), ${(m.heygenSeconds / 60).toFixed(1)} min`,

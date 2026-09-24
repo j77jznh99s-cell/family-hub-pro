@@ -49,6 +49,30 @@ async function readUsage(runDir) {
   }
 }
 
+const FAILED_LOG = 'usage-failed.jsonl';
+
+// Attempts that never got a run folder (script failed its checks) still spent tokens.
+async function logFailedAttempt(outputDir, entry) {
+  await fs.mkdir(outputDir, { recursive: true });
+  await fs.appendFile(path.join(outputDir, FAILED_LOG), `${JSON.stringify(entry)}\n`, 'utf8');
+}
+
+async function readFailedAttempts(outputDir) {
+  let text;
+  try {
+    text = await fs.readFile(path.join(outputDir, FAILED_LOG), 'utf8');
+  } catch {
+    return [];
+  }
+  return text.split('\n').filter(Boolean).flatMap((line) => {
+    try {
+      return [JSON.parse(line)];
+    } catch {
+      return []; // a torn last line from an interrupted write
+    }
+  });
+}
+
 // Per-run usage for every run folder, plus totals per calendar month (from the folder's
 // leading YYYY-MM-DD; demo runs are skipped since they use no APIs).
 async function summarize(outputDir) {
@@ -74,21 +98,31 @@ async function summarize(outputDir) {
     m.heygenSeconds += u.heygen.seconds;
     m.renders += u.heygen.renders;
   }
+  for (const f of await readFailedAttempts(outputDir)) {
+    const month = String(f.at || '').slice(0, 7) || 'unknown';
+    const cost = claudeCost(f.usage.claude);
+    const m = (months[month] ||= { runs: 0, claudeUsd: 0, webSearches: 0, heygenSeconds: 0, renders: 0 });
+    m.failedAttempts = (m.failedAttempts || 0) + 1;
+    m.claudeUsd = Math.round((m.claudeUsd + cost) * 10000) / 10000;
+    m.webSearches += f.usage.claude.web_searches;
+  }
   return { runs, months };
 }
 
 function formatSummary({ runs, months }) {
-  if (!runs.length) return 'No usage recorded yet (usage.json is written by runs made after this feature was added).';
+  if (!runs.length && !Object.keys(months).length) {
+    return 'No usage recorded yet (usage.json is written by runs made after this feature was added).';
+  }
   const lines = ['Run                                             Claude $  searches  HeyGen s'];
   for (const r of runs) {
     lines.push(`${r.run.slice(0, 46).padEnd(46)} ${r.claudeUsd.toFixed(2).padStart(9)} ${String(r.webSearches).padStart(9)} ${String(Math.round(r.heygenSeconds)).padStart(9)}`);
   }
-  lines.push('', 'Month      runs  Claude $  searches  HeyGen min');
+  lines.push('', 'Month      runs  failed  Claude $  searches  HeyGen min');
   for (const [month, m] of Object.entries(months)) {
-    lines.push(`${month.padEnd(9)} ${String(m.runs).padStart(5)} ${m.claudeUsd.toFixed(2).padStart(9)} ${String(m.webSearches).padStart(9)} ${(m.heygenSeconds / 60).toFixed(1).padStart(11)}`);
+    lines.push(`${month.padEnd(9)} ${String(m.runs).padStart(5)} ${String(m.failedAttempts || 0).padStart(7)} ${m.claudeUsd.toFixed(2).padStart(9)} ${String(m.webSearches).padStart(9)} ${(m.heygenSeconds / 60).toFixed(1).padStart(11)}`);
   }
   lines.push('', 'Claude $ is tokens at list price only; web searches and HeyGen minutes are billed separately - check your invoices.');
   return lines.join('\n');
 }
 
-module.exports = { emptyUsage, addClaudeResponse, claudeCost, prices, readUsage, summarize, formatSummary };
+module.exports = { emptyUsage, addClaudeResponse, claudeCost, prices, readUsage, summarize, formatSummary, logFailedAttempt, readFailedAttempts };

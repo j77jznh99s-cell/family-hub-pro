@@ -68,3 +68,16 @@ test('lists runs with status, skips non-run folders, and serves details + video'
 test('missing output folder lists nothing', async () => {
   assert.deepEqual(await runs.listRuns('/nonexistent/presenter'), []);
 });
+
+test('run details only pass http(s) source links to the dashboard', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'runs-test-'));
+  try {
+    makeRun(dir, 'r1', { title: 'T', script: 's', sources: [
+      { title: 'ok', url: 'https://e.com/a' }, { title: 'bad', url: 'javascript:alert(1)' }, { title: 'junk', url: 'not a url' },
+    ] });
+    const run = await runs.getRun(dir, 'r1');
+    assert.deepEqual(run.sources.map((s) => s.title), ['ok']);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
