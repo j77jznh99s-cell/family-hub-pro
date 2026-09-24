@@ -29,5 +29,6 @@ module.exports = {
   DELETE_SOURCE_AFTER_PROCESSING: process.env.DELETE_SOURCE_AFTER_PROCESSING !== 'false',
   UPLOAD_RATE_LIMIT_PER_HOUR: parseInt(process.env.UPLOAD_RATE_LIMIT_PER_HOUR || '20', 10),
   ACCESS_TOKEN: process.env.ACCESS_TOKEN || '',
+  PRESENTER_TOKEN: process.env.PRESENTER_TOKEN || '',
   PORT: parseInt(process.env.PORT || '3000', 10),
 };

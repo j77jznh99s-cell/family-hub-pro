@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 
 const { PORT, STRIPE_SECRET_KEY, CLIP_ASPECT } = require('./config');
-const { requireAccessToken } = require('./middleware/auth');
+const { requireAccessToken, makePresenterAuth } = require('./middleware/auth');
 const uploadRouter = require('./routes/upload');
 const jobsRouter = require('./routes/jobs');
 const clipsRouter = require('./routes/clips');
@@ -38,7 +38,7 @@ app.use('/api/jobs/:jobId/clips', requireAccessToken, clipsRouter);
 app.use('/api/jobs', requireAccessToken, jobsRouter);
 app.use('/api/upload', requireAccessToken, uploadRouter);
 app.use('/api/stats', requireAccessToken, statsRouter);
-app.use('/api/presenter', requireAccessToken, presenterRouter());
+app.use('/api/presenter', makePresenterAuth(), presenterRouter());
 if (STRIPE_SECRET_KEY) {
   app.use('/api/billing', requireAccessToken, billingRouter);
 }

@@ -101,7 +101,11 @@ Clients who open the dashboard see only upload and their clips. Two extra panels
 | `/?presenter=1` | This week's AI presenter calendar and every run: video, script, callouts, sources, and a copy-post-text button |
 | `/?stats=1&presenter=1&token=...` | Both panels, and remembers the token |
 
-**These flags hide the panels; they don't protect anything.** The token does that. Anyone with the `ACCESS_TOKEN` can call `/api/stats` and `/api/presenter/*` directly. If clients get the same token as you, they can reach your presenter runs too, so keep the presenter on a deployment (or token) of your own when you share the dashboard with clients.
+**These flags hide the panels; they don't protect anything.** Tokens do that:
+
+- `/api/stats` uses `ACCESS_TOKEN`, so anyone you've given the dashboard token can read the usage totals.
+- `/api/presenter/*` uses its own **`PRESENTER_TOKEN`**. Open `/?presenter=1&ptoken=YOUR_PRESENTER_TOKEN` once and your browser remembers it. With `PRESENTER_TOKEN` set, a client's `ACCESS_TOKEN` gets a 401 there.
+- If `PRESENTER_TOKEN` isn't set, the presenter view falls back to `ACCESS_TOKEN` and logs a warning. Set it before you share the dashboard with anyone.
 
 ## Still open — needs a product decision, not just code
 

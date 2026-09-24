@@ -375,8 +375,19 @@ const presenterRuns = document.getElementById('presenterRuns');
 const presenterCalendar = document.getElementById('presenterCalendar');
 const STATUS_WORDS = { planned: 'planned', scripted: 'scripted', rendered: 'rendered', captioned: 'ready', missed: 'missed' };
 
+// The presenter view has its own token (PRESENTER_TOKEN); open the dashboard once with
+// ?presenter=1&ptoken=... and it's remembered in this browser only.
+const urlPToken = new URLSearchParams(location.search).get('ptoken');
+if (urlPToken) localStorage.setItem('presenterToken', urlPToken);
+function presenterToken() { return localStorage.getItem('presenterToken') || token(); }
+function withPresenterToken(url) {
+  const t = presenterToken();
+  return t ? url + (url.includes('?') ? '&' : '?') + 'ptoken=' + encodeURIComponent(t) : url;
+}
+
 async function getJson(url) {
-  const res = await fetch(withToken(url), { headers: authHeaders() });
+  const t = presenterToken();
+  const res = await fetch(url, { headers: t ? { 'x-presenter-token': t } : {} });
   return res.ok ? res.json() : null;
 }
 
@@ -389,7 +400,7 @@ async function toggleRun(el, id) {
   d.className = 'run-detail';
   d.addEventListener('click', (e) => e.stopPropagation());
   const video = run.status === 'scripted' ? '' :
-    `<video controls preload="metadata" playsinline src="${withToken(`/api/presenter/runs/${encodeURIComponent(id)}/video`)}"></video>`;
+    `<video controls preload="metadata" playsinline src="${withPresenterToken(`/api/presenter/runs/${encodeURIComponent(id)}/video`)}"></video>`;
   const sources = run.sources.map((s) => `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title || s.url)}</a></li>`).join('');
   d.innerHTML = `${video}
     <div><b>On-screen callouts:</b> ${run.onScreenText.map(escapeHtml).join(' · ') || '–'}</div>
