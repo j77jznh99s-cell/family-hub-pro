@@ -118,3 +118,17 @@ npm run presenter -- --usage
 ```
 
 The Claude dollar figure is an estimate at list price for `claude-opus-5`: $5 per million input tokens and $25 per million output tokens, with cache writes at 1.25x and cache reads at 0.1x the input price. Override those rates with `PRESENTER_PRICE_INPUT_PER_MTOK` and `PRESENTER_PRICE_OUTPUT_PER_MTOK`. Web searches and HeyGen minutes are counted but not priced, so check your invoices for those.
+
+## Weekly review
+
+```
+npm run presenter -- --weekly-report
+```
+
+Writes `data/presenter/weekly-<date>.md`, a one-page look back at the last 7 days:
+
+- which calendar slots got a video and which were missed
+- the pre-posting check result for each run, with its problems listed
+- the month's spend so far
+
+It only reads files, so nothing is posted or called.

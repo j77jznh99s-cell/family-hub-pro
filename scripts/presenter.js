@@ -5,6 +5,7 @@
 //   npm run presenter -- --script-only     # research + script, no HeyGen render
 //   npm run presenter -- --overlay <runDir> # (re)burn callouts + captions onto a rendered video
 //   npm run presenter -- --check <runDir|all> # pre-posting check: script rules, sources, disclaimers, files
+//   npm run presenter -- --weekly-report     # last 7 days: calendar, pre-posting check, month's spend -> weekly-<date>.md
 //   npm run presenter -- --usage             # Claude tokens/$, web searches and HeyGen time per run and per month
 //   npm run presenter -- --demo              # no API keys: sample run folder with a placeholder video + text overlay
 //   npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]
@@ -25,6 +26,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--calendar') args.calendar = true;
     else if (argv[i] === '--demo') args.demo = true;
     else if (argv[i] === '--usage') args.usage = true;
+    else if (argv[i] === '--weekly-report') args.weekly = true;
     else if (argv[i] === '--check') args.check = argv[++i] || 'all';
     else if (argv[i] === '--days') args.days = parseInt(argv[++i], 10);
     else if (argv[i] === '--per-day') args.perDay = parseInt(argv[++i], 10);
@@ -44,8 +46,19 @@ function parseArgs(argv) {
         '       npm run presenter -- --demo\n' +
         '       npm run presenter -- --check <runDir|all>\n' +
         '       npm run presenter -- --usage\n' +
+        '       npm run presenter -- --weekly-report\n' +
         '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]'
     );
+    return;
+  }
+  if (args.weekly) {
+    const { buildWeeklyReport } = require('../src/presenter/weekly');
+    const md = await buildWeeklyReport(OUTPUT_DIR, { times: process.env.PRESENTER_POST_TIMES });
+    await fs.mkdir(OUTPUT_DIR, { recursive: true });
+    const out = path.join(OUTPUT_DIR, `weekly-${new Date().toISOString().slice(0, 10)}.md`);
+    await fs.writeFile(out, md, 'utf8');
+    console.log(md);
+    console.log(`Saved ${out}`);
     return;
   }
   if (args.usage) {
