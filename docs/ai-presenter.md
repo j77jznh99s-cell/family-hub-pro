@@ -108,3 +108,13 @@ Re-checks each saved run against the rules a post must meet:
 - a video has been rendered
 
 Demo runs always fail. The command exits non-zero if any run has a problem, and it prints warnings (such as no captioned video yet) without failing.
+
+## What it's costing
+
+Every run writes a `usage.json` with its Claude token counts, the number of web searches and, once rendered, the HeyGen render length. To see the totals per run and per month:
+
+```
+npm run presenter -- --usage
+```
+
+The Claude dollar figure is an estimate at list price for `claude-opus-5`: $5 per million input tokens and $25 per million output tokens, with cache writes at 1.25x and cache reads at 0.1x the input price. Override those rates with `PRESENTER_PRICE_INPUT_PER_MTOK` and `PRESENTER_PRICE_OUTPUT_PER_MTOK`. Web searches and HeyGen minutes are counted but not priced, so check your invoices for those.

@@ -183,3 +183,21 @@ test('createPresenterVideo with render=true requires HeyGen settings up front', 
   await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: true, log: () => {} }), /HEYGEN_API_KEY/);
   assert.equal(research.mock.calls.length, 0); // no Claude spend before config is valid
 });
+
+test('createPresenterVideo records Claude usage in usage.json', async (t) => {
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 1000, output_tokens: 200 }, content: [{ type: 'server_tool_use', name: 'web_search' }] });
+    return { brief: 'TOPIC: Usage check', searchedUrls: new Set(['https://reuters.com/a']) };
+  });
+  t.mock.method(writer, 'writeScript', async (niche, brief, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 500, output_tokens: 300 }, content: [] });
+    return rawScript({ topic: 'Usage check' });
+  });
+  const { runDir } = await presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} });
+  const saved = JSON.parse(fs.readFileSync(path.join(runDir, 'usage.json'), 'utf8'));
+  assert.equal(saved.claude.calls, 2);
+  assert.equal(saved.claude.input_tokens, 1500);
+  assert.equal(saved.claude.output_tokens, 500);
+  assert.equal(saved.claude.web_searches, 1);
+  assert.equal(saved.heygen.renders, 0);
+});

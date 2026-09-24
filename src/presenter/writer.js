@@ -93,7 +93,7 @@ function searchResultUrls(contents) {
   return urls;
 }
 
-async function research(nicheKey, { recentTopics = [], now = new Date() } = {}) {
+async function research(nicheKey, { recentTopics = [], now = new Date(), onResponse } = {}) {
   const niche = NICHES[nicheKey];
   const messages = [
     {
@@ -120,6 +120,7 @@ async function research(nicheKey, { recentTopics = [], now = new Date() } = {}) 
       tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 8 }],
       messages,
     });
+    if (onResponse) onResponse(response);
     assertNotRefused(response, 'research');
     allContent.push(...response.content);
     // A long server-side search turn can pause; hand the partial turn back to resume it.
@@ -135,7 +136,7 @@ async function research(nicheKey, { recentTopics = [], now = new Date() } = {}) 
   return { brief, searchedUrls: searchResultUrls(allContent), model: response.model };
 }
 
-async function writeScript(nicheKey, brief) {
+async function writeScript(nicheKey, brief, { onResponse } = {}) {
   const niche = NICHES[nicheKey];
   const response = await getClient().beta.messages.create({
     model: MODEL,
@@ -154,6 +155,7 @@ async function writeScript(nicheKey, brief) {
       },
     ],
   });
+  if (onResponse) onResponse(response);
   assertNotRefused(response, 'script');
   if (response.stop_reason === 'max_tokens') throw new Error('Script response was cut off (max_tokens)');
   return JSON.parse(textOf(response));

@@ -6,6 +6,7 @@ const { NICHES, resolveNiche } = require('./niches');
 const writer = require('./writer');
 const heygen = require('./heygen');
 const overlay = require('./overlay');
+const usage = require('./usage');
 
 const OUTPUT_DIR =
   process.env.PRESENTER_OUTPUT_DIR || path.join(__dirname, '..', '..', 'data', 'presenter');
@@ -56,12 +57,15 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
   }
 
   log(`[presenter] lane: ${NICHES[nicheKey].label}`);
+  const spent = usage.emptyUsage();
+  const onResponse = (response) => usage.addClaudeResponse(spent, response);
   const { brief, searchedUrls } = await writer.research(nicheKey, {
     recentTopics: await recentTopics(),
     now,
+    onResponse,
   });
   log('[presenter] research done, writing script');
-  const raw = await writer.writeScript(nicheKey, brief);
+  const raw = await writer.writeScript(nicheKey, brief, { onResponse });
   const { script, problems } = writer.finalizeScript(raw, nicheKey, searchedUrls);
   if (problems.length) {
     // Don't spend render credits on a script that failed its own checks.
@@ -74,6 +78,8 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
   await fs.writeFile(path.join(runDir, 'script.json'), JSON.stringify(script, null, 2), 'utf8');
   await fs.writeFile(path.join(runDir, 'post.txt'), postText(script), 'utf8');
   log(`[presenter] "${script.title}" (~${script.estimatedSeconds}s) -> ${runDir}`);
+  const saveUsage = () => fs.writeFile(path.join(runDir, 'usage.json'), JSON.stringify(spent, null, 2), 'utf8');
+  await saveUsage();
 
   if (!render) return { runDir, script };
 
@@ -89,6 +95,8 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), lo
     'utf8'
   );
   log(`[presenter] saved ${videoPath}`);
+  spent.heygen = { renders: 1, seconds: Number(result.duration) || 0, test: Boolean(cfg.test) };
+  await saveUsage();
 
   let captionedPath = null;
   if (process.env.PRESENTER_BURN_TEXT !== 'false') {
