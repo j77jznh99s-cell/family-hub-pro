@@ -91,3 +91,20 @@ Builds a sample run folder (`data/presenter/demo-<time>/`) with a canned script 
 ## Dashboard view
 
 Open the dashboard with `?presenter=1` (for example `http://localhost:3000/?presenter=1`) to see this week's calendar and every run: title, lane and status. Click a run to watch the video (the captioned version when there is one), read the script, check the callouts and sources, and copy the post text. This view is read-only, so nothing in it posts anywhere. It uses the same access token as the rest of the API (`/api/presenter/...`).
+
+## Before posting: check the run
+
+```
+npm run presenter -- --check all               # every run
+npm run presenter -- --check data/presenter/<run>
+```
+
+Re-checks each saved run against the rules a post must meet:
+
+- the spoken script is 90-200 words and contains no URLs
+- there's at least one real source (no placeholder URLs)
+- money and markets runs have the financial disclaimer, both spoken and in the description
+- the description and `post.txt` both carry the AI disclosure
+- a video has been rendered
+
+Demo runs always fail. The command exits non-zero if any run has a problem, and it prints warnings (such as no captioned video yet) without failing.

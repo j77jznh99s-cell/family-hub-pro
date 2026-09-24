@@ -4,6 +4,7 @@
 //   npm run presenter -- --niche markets   # pick a lane: ai | money | markets | food | auto
 //   npm run presenter -- --script-only     # research + script, no HeyGen render
 //   npm run presenter -- --overlay <runDir> # (re)burn callouts + captions onto a rendered video
+//   npm run presenter -- --check <runDir|all> # pre-posting check: script rules, sources, disclaimers, files
 //   npm run presenter -- --demo              # no API keys: sample run folder with a placeholder video + text overlay
 //   npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]
 //                                           # plan the week: lane + post time per slot, and what's done
@@ -22,6 +23,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--overlay') args.overlay = argv[++i];
     else if (argv[i] === '--calendar') args.calendar = true;
     else if (argv[i] === '--demo') args.demo = true;
+    else if (argv[i] === '--check') args.check = argv[++i] || 'all';
     else if (argv[i] === '--days') args.days = parseInt(argv[++i], 10);
     else if (argv[i] === '--per-day') args.perDay = parseInt(argv[++i], 10);
     else if (argv[i] === '--times') args.times = argv[++i];
@@ -38,8 +40,16 @@ function parseArgs(argv) {
       'Usage: npm run presenter -- [--niche ai|money|markets|food|auto] [--script-only]\n' +
         '       npm run presenter -- --overlay <runDir>\n' +
         '       npm run presenter -- --demo\n' +
+        '       npm run presenter -- --check <runDir|all>\n' +
         '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]'
     );
+    return;
+  }
+  if (args.check) {
+    const check = require('../src/presenter/check');
+    const results = args.check === 'all' ? await check.checkAll(OUTPUT_DIR) : [await check.checkRun(args.check)];
+    console.log(check.formatResults(results));
+    if (results.some((r) => !r.ok)) process.exitCode = 1;
     return;
   }
   if (args.demo) {
