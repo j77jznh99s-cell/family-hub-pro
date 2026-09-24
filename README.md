@@ -87,8 +87,21 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 - `GET /api/jobs/:id/clips/:clipId/file` — download a clip (redirects to a presigned URL when using S3).
 - `GET /api/jobs/:id/clips/:clipId/thumbnail` — clip thumbnail (same).
 - `POST /api/billing/checkout`, `GET /api/billing/balance`, `POST /api/billing/webhook` — only mounted when `STRIPE_SECRET_KEY` is set; see above.
+- `GET /api/presenter/runs`, `/runs/:id`, `/runs/:id/video`, `/calendar` — read-only views of the AI presenter's run folders (see `docs/ai-presenter.md`). Nothing here posts anywhere.
 
 All `/api/*` routes require `ACCESS_TOKEN` (header `x-access-token` or `?token=`) when it's configured, except `/api/billing/webhook` (see above).
+
+### Operator views on the dashboard
+
+Clients who open the dashboard see only upload and their clips. Two extra panels appear only when you add a flag to the URL, and you can combine them:
+
+| URL | Shows |
+| --- | --- |
+| `/?stats=1` | Usage totals (the `/api/stats` numbers) |
+| `/?presenter=1` | This week's AI presenter calendar and every run: video, script, callouts, sources, and a copy-post-text button |
+| `/?stats=1&presenter=1&token=...` | Both panels, and remembers the token |
+
+**These flags hide the panels; they don't protect anything.** The token does that. Anyone with the `ACCESS_TOKEN` can call `/api/stats` and `/api/presenter/*` directly. If clients get the same token as you, they can reach your presenter runs too, so keep the presenter on a deployment (or token) of your own when you share the dashboard with clients.
 
 ## Still open — needs a product decision, not just code
 
