@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const { PORT, STRIPE_SECRET_KEY, CLIP_ASPECT, TRUST_PROXY } = require('./config');
@@ -15,6 +16,8 @@ const { presenterRouter } = require('./routes/presenter');
 const { stripeWebhookHandler } = require('./routes/stripeWebhook');
 const ffmpeg = require('./services/ffmpeg');
 const db = require('./db');
+const config = require('./config');
+const { deepHealth, startupWarnings } = require('./services/health');
 
 const app = express();
 if (TRUST_PROXY) {
@@ -37,7 +40,16 @@ if (STRIPE_SECRET_KEY) {
 app.use(express.json());
 app.use('/api', authFailureLimiter());
 
-app.get('/healthz', (req, res) => res.json({ ok: true }));
+// The deep check runs ffmpeg, a DB query and file writes, so it's rate-limited.
+const deepHealthLimiter = rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false });
+app.get('/healthz', (req, res, next) => (req.query.deep === undefined ? res.json({ ok: true }) : deepHealthLimiter(req, res, next)), async (req, res, next) => {
+  try {
+    const report = await deepHealth({ ffmpeg, db, config, req });
+    res.status(report.ok ? 200 : 503).json(report);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use('/api/jobs/:jobId/clips', requireAccessToken, clipsRouter);
 app.use('/api/jobs', requireAccessToken, jobsRouter);
@@ -64,6 +76,8 @@ async function start() {
         'Every upload will fail until these are installed (see Dockerfile/nixpacks.toml).'
     );
   }
+
+  for (const w of startupWarnings({ ...config, NODE_ENV: process.env.NODE_ENV })) console.warn(`[config] ${w}`);
 
   const recovered = await db.failStaleProcessingJobs();
   if (recovered > 0) {

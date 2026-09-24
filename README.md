@@ -74,7 +74,8 @@ Verified end-to-end against real Stripe signature generation (no live Stripe acc
 **Railway:**
 1. New project → deploy from this repo. Railway will pick up the `Dockerfile` automatically (this is what gets you `ffmpeg` — don't skip it). If you instead let it use Nixpacks, `nixpacks.toml` also installs `ffmpeg`.
 2. If staying on the SQLite/local-disk defaults: attach a volume mounted at `/app/data` and set `UPLOAD_DIR`, `CLIPS_DIR`, `DATA_DIR` under it — otherwise uploads/clips/the DB vanish on every redeploy. If you've switched on Postgres and S3 instead, you don't need a volume.
-3. Set `TRUST_PROXY=1` (the platform's proxy sits in front of the app; without it every client shares one rate-limit bucket). Set `ANTHROPIC_API_KEY` and `ACCESS_TOKEN`, plus whichever of `DATABASE_URL` / `REDIS_URL` / `S3_BUCKET` / `OPENAI_API_KEY` / `STRIPE_SECRET_KEY` you're turning on.
+3. Set `TRUST_PROXY=1` (the platform's proxy sits in front of the app; without it every client shares one rate-limit bucket). Set `ANTHROPIC_API_KEY`, `ACCESS_TOKEN` (for clients) and a different `PRESENTER_TOKEN` (for you, if you use the AI presenter), plus whichever of `DATABASE_URL` / `REDIS_URL` / `S3_BUCKET` / `OPENAI_API_KEY` / `STRIPE_SECRET_KEY` you're turning on.
+4. Open `https://<your-app>/healthz?deep=1`. It actually runs ffmpeg, queries the database and writes a test file to the uploads and clips folders. Each check answers `ok`, or gives a fix hint, and it also warns if requests come through a proxy without `TRUST_PROXY`. It returns HTTP 503 if anything fails, so it can serve as the platform's health check. Plain `/healthz` stays a cheap liveness probe. Missing tokens are reported in the server log at startup, not over HTTP.
 
 **Anywhere else:** the `Dockerfile` is self-contained (Node + ffmpeg); any container platform (Render, Fly.io, a plain VM) works the same way. `Procfile` is there for Heroku.
 
