@@ -15,7 +15,7 @@ StarNet is a desktop app, so it needs the laptop. The plan was checked against S
 (no Claude sign-in: it needs an API key; spending caps start at *no limit*; start with vault-only rooms).
 
 ## Waiting on the owner
-- [ ] Install StarNet on the laptop and answer decisions #16–17 (steps in [[StarNet Automation]]).
+- [ ] Install StarNet on the laptop (steps in [[StarNet Automation]]). Decided: Anthropic API key, $5/day from the existing deposit. Still open: decisions #17–18 (per-run cap, Night Shift, model).
 - [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio, following the test plan in [[Sproutling Isles - QA Review]]. Paste any Output errors.
 - [ ] Answer the 15 pending decisions in [[Decisions]]. #1–4 block the next build.
 - [ ] Create the 13 Robux items (steps in [[Sproutling Isles - Launch & Live Ops]]) and share their IDs.

@@ -7,6 +7,19 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-25 (latest): StarNet brain and budget decided
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner decided:** Anthropic API key; $5/day, paid from the prepaid deposit already in the Anthropic Console.
+
+**What was done**
+- Recorded both in [[Decisions]] and added the setup steps to [[StarNet Automation]] (keep Console auto-reload off).
+- New pending decision #18: which Claude model (with 2026 prices). #17 narrowed to the per-run cap and Night Shift.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-25 (later): StarNet plan checked against its source code
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 

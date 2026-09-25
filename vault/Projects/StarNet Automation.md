@@ -28,7 +28,11 @@ Reel by `androo.agi` ("AI Agent Business Factory").
    - Mac with an M chip: `StarNet_<version>_aarch64.dmg` (Intel Mac: `x64.dmg`)
 3. Install it. If Windows or macOS says the publisher is unknown or the app is "damaged", **stop**.
    Don't bypass the warning (StarNet's install guide says the same).
-4. Pick a "brain" (SETTINGS → PROVIDERS). **There is no "sign in with Claude"**: Anthropic works only with an API key.
+4. **Decided: Anthropic API key, $5/day from the existing deposit** ([[Decisions]], 2026-09-25).
+   In console.anthropic.com: create an API key for StarNet and **keep auto-reload off**, so spending can never go past the deposit.
+   In StarNet: SETTINGS → PROVIDERS → ANTHROPIC → paste the key; SETTINGS → Budget → per day = 5.
+   The deposit lasts about (deposit ÷ $5) days at full use. All brain options, for reference
+   (**there is no "sign in with Claude"**: Anthropic works only with an API key):
    - **Anthropic API key** (console.anthropic.com, pay as you go, **separate from a Claude.ai subscription**). Best quality.
    - **OpenRouter key**: one key for many models, pay as you go.
    - **ChatGPT sign-in** ("Codex"): uses an existing ChatGPT subscription, no key.
@@ -86,7 +90,8 @@ Anything they'd change comes back to you as a result. You (or a Claude session) 
 - Never paste API keys into the vault or the repo. StarNet stores keys in the OS keychain and hides them in logs.
 
 ## Tasks
-- [ ] **Owner:** answer [[Decisions]] #16–17 (brain and budget).
+- [x] **Owner:** brain = Anthropic API, $5/day from the deposit (2026-09-25).
+- [ ] **Owner:** answer [[Decisions]] #17–18 (per-run cap, Night Shift, which Claude model).
 - [ ] **Owner:** clone the repo, install StarNet, pick the brain, set the caps, add the repo folder (steps above).
 - [ ] **Owner + Claude:** build the phase 1 rooms and run the morning summary once by hand before scheduling it.
 - [ ] **knowledge-keeper:** after the first week, record what worked here and decide on phase 2.

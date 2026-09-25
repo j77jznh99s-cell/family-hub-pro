@@ -7,6 +7,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-09-25 | StarNet | Brain = **Anthropic API key** | Best quality; owner's choice | Owner |
+| 2026-09-25 | StarNet | Spending cap **$5/day**, paid from the prepaid deposit already in the Anthropic Console (no new money) | Keeps cost fixed to the deposit | Owner |
 | 2026-09-23 | Workspace | `main` is the default branch and the home of memory (verified 2026-09-23) | New sessions load `CLAUDE.md` + `vault/` automatically | Owner + Claude |
 | 2026-09-23 | Sproutling Isles | Rebirth during a snatch: the thief can still win; a failed carry makes the Sproutling vanish (no dupe, a thief can't block rebirth) | QA M3 fix | Claude (roblox-engineer) |
 | 2026-09-23 | Workspace | GitHub is the source of truth for memory; Obsidian is optional (open `vault/` as a vault) | Obsidian isn't synced; GitHub is reachable from phone, laptop and every Claude session | Owner + Claude |
@@ -46,5 +48,5 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Automation ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| 16 | StarNet brain: Anthropic API key, OpenRouter key, ChatGPT sign-in, or free local Ollama? (There's no Claude sign-in; an API key is billed separately from a Claude subscription.) | Anthropic API key (best quality); Ollama only for testing |
-| 17 | StarNet spending caps (they start at *no limit*), and is Night Shift allowed? | $5/day and $1/run to start; Night Shift off until the first week is reviewed |
+| 17 | StarNet: also cap each run at $1? Night Shift off for the first week? | Yes / yes |
+| 18 | Which Claude model in StarNet? Prices per million tokens in/out (2026): Opus 5 $5/$25, Sonnet 5 $2/$10, Haiku 4.5 $1/$5 | Owner's call: Sonnet 5 gets about 2.5× more work per $5 than Opus 5; Opus 5 is the most capable |
