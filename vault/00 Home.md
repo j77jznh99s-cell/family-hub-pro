@@ -1,6 +1,6 @@
 ---
 tags: [index]
-updated: 2026-09-23
+updated: 2026-09-25
 ---
 # Home
 
@@ -23,6 +23,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Clip Studio]]: AI video clipper web app
 - [[Family Hub]]: iPhone family app with widgets
 - [[Bybit Trading Bot]]: risk-gated perpetuals bot
+- [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
 
 ## Team
 - [[Team Roster]]: agent job titles, what each one reads, writes and owns

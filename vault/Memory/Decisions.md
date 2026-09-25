@@ -42,3 +42,9 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 | 14 | Rewarded video ads plan + ad-reward products | Yes, once eligible |
 | 15 | Gate look: glowing vine curtain instead of a laser? | Yes (fits the art style) |
 
+
+**Automation ([[StarNet Automation]])**
+| # | Decision | Recommendation |
+| --- | --- | --- |
+| 16 | StarNet brain: Anthropic sign-in, OpenRouter key, or free local Ollama? | Anthropic sign-in (best quality); Ollama only for testing |
+| 17 | Daily StarNet spending cap, and is Night Shift allowed? | $5/day to start; Night Shift off until the first week is reviewed |

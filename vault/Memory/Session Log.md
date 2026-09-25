@@ -7,6 +7,23 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-25: StarNet automation setup
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner asked:** "start this working automation system" (screenshot of the StarNet Reel by androo.agi).
+
+**What was done**
+- Found StarNet's official open-source repo (github.com/androoAGI/starnet, MIT, v0.12.4) and read its README and install guide.
+- Wrote [[StarNet Automation]]: laptop install steps, a station layout that maps the [[Team Roster]] to rooms, first scheduled jobs, and safety rules.
+- Added pending decisions #16–17 (brain and budget) to [[Decisions]], and linked the note from [[00 Home]].
+
+**Not verified**
+- StarNet was not run: the cloud sandbox blocks running outside code, and it's a Windows/macOS desktop app. It must be installed on the laptop.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-23 (evening): moved everything into the vault for the laptop
 **Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` → synced to `main`
 

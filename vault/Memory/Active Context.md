@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-09-23
+updated: 2026-09-25
 ---
 # Active Context
 
@@ -10,7 +10,11 @@ updated: 2026-09-23
 **[[Sproutling Isles]]**: build 1 is fixed after the QA review (blocker + 6 majors + 14 minors).
 The whole team plan is written. Everything now waits on the **owner's Studio play-test** and **decisions**.
 
+**New:** [[StarNet Automation]]: the owner wants the agent team running as an automation system.
+StarNet is a desktop app, so it needs the laptop.
+
 ## Waiting on the owner
+- [ ] Install StarNet on the laptop and answer decisions #16–17 (steps in [[StarNet Automation]]).
 - [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio, following the test plan in [[Sproutling Isles - QA Review]]. Paste any Output errors.
 - [ ] Answer the 15 pending decisions in [[Decisions]]. #1–4 block the next build.
 - [ ] Create the 13 Robux items (steps in [[Sproutling Isles - Launch & Live Ops]]) and share their IDs.
