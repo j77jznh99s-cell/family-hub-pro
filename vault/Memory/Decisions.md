@@ -46,5 +46,5 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Automation ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| 16 | StarNet brain: Anthropic sign-in, OpenRouter key, or free local Ollama? | Anthropic sign-in (best quality); Ollama only for testing |
-| 17 | Daily StarNet spending cap, and is Night Shift allowed? | $5/day to start; Night Shift off until the first week is reviewed |
+| 16 | StarNet brain: Anthropic API key, OpenRouter key, ChatGPT sign-in, or free local Ollama? (There's no Claude sign-in; an API key is billed separately from a Claude subscription.) | Anthropic API key (best quality); Ollama only for testing |
+| 17 | StarNet spending caps (they start at *no limit*), and is Night Shift allowed? | $5/day and $1/run to start; Night Shift off until the first week is reviewed |

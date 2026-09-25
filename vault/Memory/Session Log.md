@@ -7,6 +7,28 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-25 (later): StarNet plan checked against its source code
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner asked:** back-test the StarNet information and review it several times for the best result.
+
+**What was done**
+- Pass 1: checked every claim in [[StarNet Automation]] against StarNet's code (not its README). Found 5 errors:
+  no Claude sign-in (API key only), budget caps default to no limit, agents need the repo added as a project,
+  the Roblox code isn't on `main`, and scheduled jobs can't write or run commands.
+- Rewrote the note: real object names (SHELF, DISH, CORE, WORKBENCH), a permissions table, a phased layout
+  (vault-only first), and job setup steps.
+- Pass 2: re-checked the new claims. Added that `CLAUDE.md` only loads for project chats and jobs with the repo as
+  their working folder, and that Telegram must be connected before a job can send to it.
+- Corrected decisions #16–17.
+
+**Not verified**
+- StarNet still wasn't run (the sandbox blocks outside code; it's a desktop app). Menu names come from the code.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-25: StarNet automation setup
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 

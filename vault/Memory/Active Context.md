@@ -11,7 +11,8 @@ updated: 2026-09-25
 The whole team plan is written. Everything now waits on the **owner's Studio play-test** and **decisions**.
 
 **New:** [[StarNet Automation]]: the owner wants the agent team running as an automation system.
-StarNet is a desktop app, so it needs the laptop.
+StarNet is a desktop app, so it needs the laptop. The plan was checked against StarNet's code on 2026-09-25
+(no Claude sign-in: it needs an API key; spending caps start at *no limit*; start with vault-only rooms).
 
 ## Waiting on the owner
 - [ ] Install StarNet on the laptop and answer decisions #16–17 (steps in [[StarNet Automation]]).
