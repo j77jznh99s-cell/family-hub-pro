@@ -11,6 +11,8 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 
 ## Memory
 - [[Active Context]]: what's happening right now and what's next. **Read first.**
+- [[Morning Summary]]: what the hourly runs did overnight, and what needs you
+- [[Work Queue]]: the list the hourly runs work through
 - [[Session Log]]: dated log of every working session, newest first
 - [[Decisions]]: decisions the owner made, and why
 - [[Owner Profile]]: goals, preferences and how the owner likes to work
@@ -25,10 +27,12 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Bybit Trading Bot]]: risk-gated perpetuals bot
 - [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
 - [[Gumroad Digital Products]]: original digital products sold by the agent crew (planning)
+- [[Trading Agent]]: forex setup alerts for the owner to review (separate repo)
 
 ## Team
 - [[Team Roster]]: agent job titles, what each one reads, writes and owns
 - [[How Agents Work]]: the orchestration and memory protocol
+- [[Hourly Workflow]]: the hourly Routine's standing rule
 - [[Environment Setup]]: tools, installs and known limits of the cloud sandbox
 
 ## Templates

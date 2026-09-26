@@ -7,6 +7,26 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26 (evening): hourly workflow restarted
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner asked:** go back to the hourly workflow plan, keep working on projects, make new ones based on our work, and send a morning summary.
+
+**What was done**
+- Found the old plan: session `session_01HkUDBZ…` ran a 20-minute loop on 23–25 Sep (Clip Studio AI presenter, a `trading-agent` repo,
+  artifact pages). Its queue was in a temp file (gone), it's blocked on OANDA setup, and it is very large (~758k tokens), so it isn't resumed.
+- Wrote [[Hourly Workflow]] (the standing rule), seeded [[Work Queue]], created [[Morning Summary]] and [[Trading Agent]],
+  and recorded the hourly branch's Clip Studio work in [[Clip Studio]]. Added the workflow to `CLAUDE.md`.
+- Created two Routines: hourly work (fresh session each hour) and the morning summary (~7:45 am Eastern).
+
+**Not verified**
+- [[Trading Agent]] is written from Routine records, not the code (first queue item fixes that).
+- The first hourly run hasn't happened yet.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-26 (later): Gumroad selling plan
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 

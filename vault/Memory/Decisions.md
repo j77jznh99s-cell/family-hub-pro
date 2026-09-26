@@ -7,6 +7,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-09-26 | Workspace | Hourly workflow 24/7 (fresh cloud session each hour, one task from [[Work Queue]]) + morning summary at ~7:45 am Eastern; new projects allowed (max one a day, owner OKs before real building) | Owner: "continue working on projects, make new projects, summary in the morning" | Owner |
+| 2026-09-26 | Workspace | Owner's time zone: US Eastern | For scheduling | Owner |
 | 2026-09-26 | Selling | Sell digital products on Gumroad first; print-on-demand later | $0 up front, no stock, StarNet supports it | Owner |
 | 2026-09-26 | Selling | **All products must be original** (rule is section 1 of [[Gumroad Digital Products]] and a house rule in `CLAUDE.md`) | Owner: "make all products original" | Owner |
 | 2026-09-26 | StarNet | Run lean: medium effort, max 25 steps per task, max 2 agents at once, only 2 scheduled jobs, caching on | Owner: "without overworking it or using more processing power than needed" | Owner asked, Claude chose |

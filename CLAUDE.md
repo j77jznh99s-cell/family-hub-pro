@@ -30,15 +30,21 @@ Before you finish, update memory so the next session can pick up where you left 
 | Project | Where the code lives (branch → folder) | Vault note |
 | --- | --- | --- |
 | Sproutling Isles (Roblox game) | `claude/roblox-popular-game-trends-6u7sie` → `roblox/sproutling-isles/` | `vault/Projects/Sproutling Isles.md` |
-| Clip Studio (AI video clipper) | `claude/video-clip-detection-mvp-g18ggk` → repo root (`src/`) | `vault/Projects/Clip Studio.md` |
+| Clip Studio (AI video clipper) | `claude/video-clip-detection-mvp-g18ggk` → repo root (`src/`); newest work on `claude/hourly-project-processing-ejbqs4` | `vault/Projects/Clip Studio.md` |
 | Family Hub (iPhone app + widgets) | `claude/family-hub-widget-1w7cv9` → `FamilyHub/` | `vault/Projects/Family Hub.md` |
 | Bybit trading bot (risk-gated) | `claude/bybit-trading-bot-risk-gate-r7apfr` → repo root | `vault/Projects/Bybit Trading Bot.md` |
 | Gumroad digital products (selling agents) | No code; run by StarNet agents | `vault/Projects/Gumroad Digital Products.md` |
+| Trading Agent (forex setups, review only) | separate repo `j77jznh99s-cell/trading-agent`, branch `claude/hourly-project-processing-ejbqs4` | `vault/Projects/Trading Agent.md` |
 
 ## Branches
 
 - `main`: default branch and home of `CLAUDE.md`, `vault/` and `.claude/agents/`. It also carries the Clip Studio code (it was created from that branch).
 - Project work happens on the project branches in the table above. Start new projects on a new branch from `main`.
+
+## Hourly workflow
+
+A cloud Routine runs every hour and follows `vault/Playbooks/Hourly Workflow.md` (one task from
+`vault/Memory/Work Queue.md` per run). A morning Routine writes `vault/Memory/Morning Summary.md`.
 
 ## Agents
 
