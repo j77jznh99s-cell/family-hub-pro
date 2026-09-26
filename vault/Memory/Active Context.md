@@ -11,6 +11,10 @@ updated: 2026-09-26
 [[Work Queue]] following [[Hourly Workflow]]. At about 7:45 am Eastern a second Routine writes [[Morning Summary]]
 and sends a push notification. New projects may be started (max one a day, original, waiting for the owner's OK).
 
+**[[Work Queue]] is empty as of 2026-09-26 ~17:40 UTC** (0 unblocked items — everything else is owner-blocked).
+Next run should consider starting a new project per the "max one/day, fewer than 3 unblocked items" rule, or
+just re-check whether the owner has unblocked anything (a Studio play-test, Robux IDs, etc.).
+
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
 caught in review and fixed same day, `6aece41`); QA m11 (pond walkable) fixed 2026-09-26 (`397cc4e`); Halloween
@@ -20,12 +24,11 @@ same day, `b8b34b4`: the end-of-event Dew conversion ignored the berries count);
 EventTimeOffset` — needed to Studio-test the event before its real 17 Oct start — had never been built (an
 older task called for it, got missed); **built and pushed 2026-09-26 (`04a3211`), reviewed and confirmed
 correct** — the full Hollow Harvest test plan can now actually be run, still needs the owner's Studio access;
-**Week 5 Codes redemption system built 2026-09-26** (`63c3100`, reviewed and confirmed correct — one-time
-per-player, free-tier rewards only, one placeholder demo code so far); **real Week 5 code list proposed
-2026-09-26** (5 codes; reviewing it caught a real balance flag — one code, `GROWINGSTRONG`, proposed a free
-evergreen Rare seed priced *above* the paid Starter Pack's own Rare seed; flagged in the vault with the exact
-numbers and 2 fix options, queued as a game-designer task; the other 4 codes are clean and ready to implement
-now); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
+**Week 5 Codes system fully built and populated 2026-09-26** (`63c3100` system + `da077ea` the real 5-code
+list — `SPROUT1K`, `MISSEDBLOOM`, `LUCKYGARDEN`, `GROWINGSTRONG`, `SEEDSTASH` — all free-tier only; a real
+balance flag was caught in review along the way (`GROWINGSTRONG`'s Rare seed originally priced above the paid
+Starter Pack's own Rare seed) and resolved same day by swapping species, before it shipped; not Studio-tested
+yet); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
 built 2026-09-26** (`35ab411`; reviewing it independently re-verified all 4 UTC timestamps and caught a real
 day-of-week error in a code comment — "Thu 11 Dec" should be "Fri 11 Dec"; the epoch value was already
 correct — fixed same day, `bb7f395`; both features are data/flag-only, no reward UI, not Studio-tested,
