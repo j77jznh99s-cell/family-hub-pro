@@ -272,18 +272,18 @@ local function buildLeaderboards(plaza: Instance)
 		gui.LightInfluence = 0
 		gui.MaxDistance = 100
 		gui.Parent = backing
-		local background = Instance.new("Frame")
-		background.Name = "Background"
-		background.Size = UDim2.fromScale(1, 1)
-		background.BackgroundColor3 = rgb(20, 30, 25)
-		background.BackgroundTransparency = 0.1
-		background.BorderSizePixel = 0
-		background.Parent = gui
+		-- TextLabel is a direct child of the BillboardGui ("Label" > "Text"), matching the
+		-- MapBuilder convention the `label()` helper above uses. LeaderboardService.init looks
+		-- it up with a non-recursive FindFirstChild, which an earlier version of this code broke
+		-- by nesting Text inside an extra Background Frame — background color/transparency live
+		-- directly on the TextLabel instead (TextLabel supports both, same as Frame).
 		local text = Instance.new("TextLabel")
 		text.Name = "Text"
-		text.BackgroundTransparency = 1
 		text.Size = UDim2.fromScale(0.94, 0.94)
 		text.Position = UDim2.fromScale(0.03, 0.03)
+		text.BackgroundColor3 = rgb(20, 30, 25)
+		text.BackgroundTransparency = 0.1
+		text.BorderSizePixel = 0
 		text.Font = Enum.Font.FredokaOne
 		text.TextScaled = true
 		text.TextXAlignment = Enum.TextXAlignment.Left
@@ -292,7 +292,7 @@ local function buildLeaderboards(plaza: Instance)
 		text.TextStrokeTransparency = 0.4
 		text.TextWrapped = true
 		text.Text = "Loading..."
-		text.Parent = background
+		text.Parent = gui
 	end
 
 	board("IncomeBoard", -6)
