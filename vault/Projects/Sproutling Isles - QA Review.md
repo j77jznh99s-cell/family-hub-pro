@@ -497,3 +497,37 @@ not silently omitted. I hand-verified all 3 rated products' arithmetic myself �
 clean. `DewSmall`'s much lower rate (17.2 vs. 80-100+ for the others) is flagged in the tool's own output as
 worth a look once real income data exists, but not changed — pricing decisions are game-designer/live-ops-
 manager territory, not this tool's or this task's call.
+
+---
+
+## Whole-day re-review (2026-09-26, after all of today's Sproutling Isles work)
+
+qa-tester re-reviewed everything built today in one pass, in an isolated worktree — not re-litigating each
+commit's own review, but checking for drift and interaction bugs *between* individually-reviewed commits,
+which a series of narrow reviews can miss. I re-verified the finding myself before recording it.
+
+**Passed clean:** tooling baseline (selene/rojo/lune, 1241 parts); `tools/audit-economy`'s full output
+hand-checked against the actual current `Species.luau`/`Codes.luau`/`Products.luau` contents (not just
+trusted); `Codes.list`'s 5 final entries confirmed still correct (`GROWINGSTRONG` still `mushroomph`, no later
+commit touched `Codes.luau` after `da077ea`); 5 of the 2026-09-23 fixes (B1, M6, m1, m8, m13) spot-checked
+still correct in the current code.
+
+**One real, new finding — fixed same day.** `Events.now()` (built in `04a3211` specifically so
+`Config.EventTimeOffset` could fast-forward event-phase checks in Studio) covers all 11 Hollow Harvest call
+sites, but the Founding Gardener and Frostbloom-teaser window checks — added in a *later* commit the same day
+(`35ab411`) — still called raw `os.time()` in `init.server.luau`, so the Studio hook had zero effect on them:
+a Studio tester could fast-forward Hollow Harvest but not the other two features. This is exactly the kind of
+interaction bug an individually-scoped review of `35ab411` (which correctly reviewed the two new features on
+their own terms) or of `04a3211` (which predated the two features entirely) would each miss on their own —
+only a pass looking at both together caught it. I independently re-verified the claim by reading
+`Events.luau`'s `Events.now()` definition and the exact `init.server.luau` lines myself before accepting it.
+
+**Fix:** one line, `init.server.luau`: `local now = os.time()` → `local now = Events.now()`, right before both
+window checks (`75c0dc2`). No-op in production (`Events.now()` returns bare `os.time()` outside Studio); in
+Studio it now correctly picks up the offset for both windows too. I reviewed the diff — exactly the one line
+changed, confirmed the other things reading the same `now` local in that scope (the new-player shield expiry,
+`joinedAt`) are unaffected in any way that matters (they're meant to shift by the same offset, same as before).
+selene/rojo/lune clean, 1241 parts unchanged, CI confirmed green (run #108).
+
+**Not verified:** nothing in this pass was play-tested in Roblox Studio (still unavailable in this sandbox) —
+same standing caveat as every other pass in this note.

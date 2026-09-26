@@ -11,9 +11,10 @@ updated: 2026-09-26
 [[Work Queue]] following [[Hourly Workflow]]. At about 7:45 am Eastern a second Routine writes [[Morning Summary]]
 and sends a push notification. New projects may be started (max one a day, original, waiting for the owner's OK).
 
-**[[Work Queue]] is empty again as of ~20:40 UTC** (0 unblocked items — everything else is owner-blocked).
-Both follow-ups from the `tools/audit-economy.luau` tool (added ~17:40 UTC after the queue first ran dry)
-are now done too. Next run: re-check whether the owner has unblocked anything, or consider a new project.
+**[[Work Queue]] is empty as of ~21:45 UTC** (0 unblocked items; the other dormant projects — Bybit Trading
+Bot, Family Hub — checked and also fully owner-blocked). Used the last empty-queue run for a whole-day QA
+re-review instead of a speculative new project — it found and fixed a real bug (`75c0dc2`, see below). Next
+run: re-check the owner, consider a new project, or find another genuinely useful review/maintenance task.
 
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
@@ -35,7 +36,10 @@ Gardener badge flag + Frostbloom Week 8 login tracker
 built 2026-09-26** (`35ab411`; reviewing it independently re-verified all 4 UTC timestamps and caught a real
 day-of-week error in a code comment — "Thu 11 Dec" should be "Fri 11 Dec"; the epoch value was already
 correct — fixed same day, `bb7f395`; both features are data/flag-only, no reward UI, not Studio-tested,
-months from their real dates); Frostbloom
+months from their real dates); **a whole-day QA re-review 2026-09-26 caught one more real bug**: the
+Founding Gardener/Frostbloom window checks used raw `os.time()` instead of the `Events.now()` hook built for
+`Config.EventTimeOffset`, so the Studio fast-forward trick didn't work on those two features — fixed same
+day, `75c0dc2`, one line, reviewed and CI green; Frostbloom
 Festival (winter event) got its full spec + game-designer number confirmation 2026-09-26 too (build closer to
 Dec); ads eligibility & Ads Manager pricing re-verified 2026-09-26 with real corrections found; lint/build/bake
 clean throughout; still waiting on the owner's first Studio play-test, which should now also cover Hollow Harvest

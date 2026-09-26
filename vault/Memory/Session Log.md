@@ -7,6 +7,36 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — whole-day QA re-review finds a real interaction bug, fixed same run
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (qa-tester + roblox-engineer, isolated worktrees) · **Agents used:** qa-tester, roblox-engineer
+
+**What was done**
+- CI green on both branches. Work Queue was empty; checked the other dormant projects (Bybit
+  Trading Bot, Family Hub) and found nothing unblocked there either — both are fully owner-gated.
+  Rather than manufacture a speculative new project just to fill the run, used it for a genuinely
+  useful bounded task: a whole-day QA re-review of everything built on the Sproutling Isles branch
+  today, checking for drift or interaction bugs *between* today's many individually-reviewed
+  commits (EventTimeOffset, the Codes system, Founding Gardener/Frostbloom teaser, the 3-part
+  audit-economy tool) rather than re-litigating any of them on their own.
+- Four of five checks passed clean (tooling baseline, the audit tool's output hand-verified
+  against the actual current source files, `Codes.list` still matching the earlier fix, 5
+  spot-checked 2026-09-23 fixes still correct). The fifth surfaced a real, new finding: `Events.
+  now()` — built specifically so `Config.EventTimeOffset` could fast-forward Hollow Harvest's
+  phase checks in Studio — covers all 11 Hollow Harvest call sites, but the Founding Gardener and
+  Frostbloom-teaser window checks, added in a *later* commit the same day, still called raw
+  `os.time()` directly, so the Studio hook had no effect on them. Exactly the kind of gap that
+  falls between two individually-correct reviews (one predated the two features, the other
+  reviewed them correctly on their own terms, neither cross-checked against the other).
+- I independently re-verified the finding myself (read `Events.luau`'s `Events.now()` definition
+  and the exact `init.server.luau` lines) before accepting it, then delegated the one-line fix:
+  `local now = os.time()` → `local now = Events.now()`. Pushed `75c0dc2`. Reviewed that diff too —
+  exactly the one line, no-op in production, the shield-expiry/joinedAt code that reads the same
+  `now` local is unaffected in any way that matters. selene/rojo/lune clean, 1241 parts unchanged,
+  CI confirmed green (run #108).
+- Documented both the finding and the fix in [[Sproutling Isles - QA Review]]'s new "Whole-day
+  re-review" section.
+- 2 tasks this run; stopping.
+
 ## 2026-09-26: hourly run — audit-economy's third section (Robux pricing); Work Queue now empty
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
 
