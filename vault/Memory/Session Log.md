@@ -27,6 +27,10 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
   so each hourly run now does up to 3 tasks (~20 min each). Added "Keep it cheap" and "costs money → notify" rules, set cheaper models
   for knowledge-keeper (Haiku) and market-researcher, live-ops-manager, product-maker (Sonnet), and test-fired the hourly Routine.
 
+- Test result: fresh-session Routines start without the repo and pushed nothing (~$2 wasted), so they were deleted. Created a
+  dedicated worker session (Sonnet 5, repo attached); its setup test pushed to `main` (~$0.19). New Routines "Hourly project work (worker)"
+  (hourly, 3 tasks per run) and "Morning summary (worker)" (7:45 am ET) now wake that session. First real run fired 04:36 UTC.
+
 **Next:** see [[Active Context]].
 
 ---

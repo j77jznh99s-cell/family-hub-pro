@@ -4,7 +4,10 @@ updated: 2026-09-26
 ---
 # Hourly Workflow (the standing rule)
 
-Every hour a fresh Claude Code session (a cloud Routine) runs this playbook. At about **7:45 am Eastern** a second
+Every hour a Routine wakes the **worker session** `session_01BrULKC2WJStcZAoyR4g9Xs` ("Hourly worker (family-hub-pro)", Sonnet 5,
+repo attached so it can push) and it runs this playbook. (Fresh-session Routines were tried first on 2026-09-26: they start
+without the repo and couldn't push, so they were deleted.) If the worker's context gets large (over ~400k tokens) or it
+stops working, a new worker session replaces it; see the Routines list: "Hourly project work (worker)" and "Morning summary (worker)". At about **7:45 am Eastern** a second
 Routine sends the owner a morning summary. The owner approved this on 2026-09-26 ("every hour, 24/7").
 This replaces the old 20-minute loop from session `session_01HkUDBZ…` (23–25 Sep), whose queue lived in a temporary
 file and is gone. The queue now lives in the vault: [[Work Queue]].
