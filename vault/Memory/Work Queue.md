@@ -8,7 +8,6 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **roblox-engineer:** Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth/EventShop/Ad) + custom events (Hatch/SnatchStart/WeatherStart/etc.), spec sections 3b/3d in [[Sproutling Isles - Launch & Live Ops]] — follow-up to the onboarding/economy wrapper built 2026-09-26.
 - [ ] **game-designer:** m11 pond water surface (map art) and check the Halloween numbers.
 - [ ] **roblox-engineer:** Hollow Harvest Halloween event (build by about 15 Oct; skip if launch slips past 24 Oct).
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov.
@@ -24,6 +23,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: roblox-engineer wired Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth) + custom events (Hatch, Snatch*, GateLock, Weather*, Rebirth, DailyClaim, PondCatch, StorageFull/NoSeeds, SessionEnd), `e432cfd`. EventShop/Ad funnels and Store steps 1-3 deliberately skipped (dependencies don't exist yet). I reviewed the full diff before recording — no bugs found this time (unlike last run's leaderboard bug). 2 tasks this run (CI port + funnels/events); stopping.
 - 2026-09-26: **CI-first task.** The same pre-existing S3-mocking CI bug fixed on `main` last run was still red on `claude/roblox-popular-game-trends-6u7sie` (that branch forked before the fix, and also carries the Clip Studio code). Ported the identical fix (`c5e7884`); 30/30 tests pass locally. See [[Clip Studio]].
 - 2026-09-26: roblox-engineer built Sproutling Isles leaderboards (cross-server income + rarest hatch, `21c68c3`). Reviewing the diff myself before recording found a real display bug (TextLabel nested wrong for the lookup code to ever find it — boards would have stayed on "Loading..." forever); fixed and re-validated directly (`6aece41`). 2 tasks this run (CI fix + leaderboards); stopping given the CI investigation's extra time.
 - 2026-09-26: **CI-first task.** `main`'s CI had been red since 2026-09-23 (every push failing `storage.test.js`'s presigned-URL test — a mocking bug in `src/services/storage/s3.js`, unrelated to any of this session's vault-only pushes). Found the exact fix already on `claude/hourly-project-processing-ejbqs4` and ported it to `main` (`fd327a0`); 30/30 tests pass locally. See [[Clip Studio]] for detail.

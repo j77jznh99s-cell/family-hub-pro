@@ -7,6 +7,27 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete)
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
+
+**What was done**
+- Task 2 from [[Work Queue]] (after the CI port below): roblox-engineer wired the recurring
+  funnels (3b) and custom events (3d) from the analytics spec that were deliberately scoped out
+  of the earlier onboarding/economy build. Wired `Store` funnel step 4 only, `Snatch`
+  (Grabbed/ReachedHome), `Rebirth` (CanAfford/Rebirthed); custom events `Hatch`/`HugeHatch`,
+  `SnatchStart`/`SnatchResult`/`SnatchVictimLeft`, `GateLock`, `WeatherStart`/`WeatherSummonHatches`,
+  `Rebirth`, `DailyClaim`, `PondCatch`, `StorageFull`/`NoSeeds`, `SessionEnd` (`e432cfd`).
+  Correctly skipped `Store` steps 1-3, `EventShop` and `Ad` funnels — those need a client remote
+  and two services (`EventService.luau`, `Ads.luau`) that don't exist yet; no stubs added.
+- After finding a real display bug in the previous task's leaderboard work, I read this whole
+  diff line-by-line before recording it (not just the agent's report): checked the once-per-carry
+  `SnatchResult` guard, the once-per-tier `CanAfford` guard, the `reason`-string→result-bucket
+  matching against the actual `finish()` call sites, and that every new field/function referenced
+  (`ProgressionService.rebirthCost`, `State.income`, `MapBuilder.PlotSize`, `info.cx/cz`) really
+  exists with the signature used. No bugs found this time — validated correct.
+- `selene`/`rojo build`/`lune bake-map` clean, part count unchanged (1214). Not Studio-tested.
+- Recorded in [[Sproutling Isles]] and ticked the task.
+
 ## 2026-09-26: hourly run — ported the S3/CI fix to the roblox branch (CI-first task)
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none (done directly)
 
