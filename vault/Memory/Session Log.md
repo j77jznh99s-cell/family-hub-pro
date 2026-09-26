@@ -7,6 +7,26 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — GROWINGSTRONG balance flag resolved, code list handed to roblox-engineer
+**Device:** cloud Routine · **Branch:** `main` (vault-only resolution) + `claude/roblox-popular-game-trends-6u7sie` (implementation, in progress) · **Agents used:** roblox-engineer (implementation)
+
+**What was done**
+- Resolved last run's own review finding directly (no agent — a simple pick between two
+  already-scoped fix options, not new analysis): swapped `GROWINGSTRONG`'s reward from `lilypadger`
+  (Rare, 180s payback, priced above the paid Starter Pack's own Rare seed) to `mushroomph` (Rare,
+  120s payback, matches the Starter Pack's own seed) so it's back to "smaller than the cheapest
+  paid pack" like every other code on the list. Kept the code evergreen rather than adding one-off
+  per-code expiry logic to `CodesService.luau`, which doesn't have that today.
+- Updated [[Sproutling Isles - Launch & Live Ops]]'s Week 5 code table and resolved the reviewer
+  flag in place (collapsed, marked resolved, kept for the record rather than deleted). Ticked the
+  game-designer task and merged the two split queue tasks back into one now that all 5 codes are
+  unflagged.
+- Delegated the (now fully unblocked) implementation to roblox-engineer: translate the final
+  5-code table into `Codes.luau`'s `Codes.list`. Still running at the time of this entry — will be
+  reviewed and recorded next run or later this run if it finishes in time.
+- 2 tasks this run (the resolution + delegating the implementation); stopping the "new task"
+  count here, though the implementation itself may still land and get reviewed before the run ends.
+
 ## 2026-09-26: hourly run — Week 5 code list proposed, a real balance flag caught in review
 **Device:** cloud Routine · **Branch:** `main` (vault-only) · **Agents used:** live-ops-manager
 
