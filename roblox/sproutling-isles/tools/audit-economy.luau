@@ -9,6 +9,10 @@
 -- src/server/Codes.luau's seed rewards against src/shared/Products.luau's paid catalogue, so the
 -- exact GROWINGSTRONG-style mistake (a free code outpaying a paid item) gets caught automatically.
 -- Event/gift tables beyond Codes.luau are still future work.
+--
+-- Also prints Products.luau's Dew-per-Robux rates, and a fourth section, steady-state Dew/hour
+-- per species -- a different metric from the payback section above (income rate once placed, not
+-- value per Dew spent); see the comment above that section for the exact baseline and caveats.
 
 local roblox = require("@lune/roblox")
 Color3 = roblox.Color3 :: any -- Species.luau evaluates Color3.fromRGB(...) at module load time;
@@ -18,6 +22,7 @@ Color3 = roblox.Color3 :: any -- Species.luau evaluates Color3.fromRGB(...) at m
 local Species = require("../src/shared/Species")
 local Codes = require("../src/server/Codes")
 local Products = require("../src/shared/Products")
+local Config = require("../src/shared/Config")
 
 local byRarity: { [string]: { Species.Species } } = {}
 for _, rarity in Species.RarityOrder do
@@ -253,4 +258,59 @@ print("")
 print("No flat Dew amount to rate:")
 for _, entry in unrated do
 	print(string.format("  %-14s -- %s", entry.key, entry.reason))
+end
+
+-- ---------------------------------------------------------------------------------------------
+-- Steady-state Dew/hour per species (baseline, unboosted)
+-- ---------------------------------------------------------------------------------------------
+-- This is a genuinely different question from the payback-time section above: payback measures
+-- "value per Dew spent on this seed" (price / dewPerSecond); this measures "income rate once you
+-- already have Sproutlings of this species placed" -- i.e. State.income(session), which sums
+-- SproutModel.income(sprout) = species.dewPerSecond * mutationMultiplier * sprout.z (size) for
+-- every placed Sproutling, up to State.padCapacity(session) pads.
+--
+-- Baseline assumption for this section (a floor, not a ceiling -- see caveats below):
+--   Dew/hour = Config.BasePads * species.dewPerSecond * 3600
+-- i.e. a fresh player, no rebirths and no passes, has filled all base pads with unmutated,
+-- fully-hatched (size 1.0) Sproutlings of one species.
+--
+-- Caveats (do not read this as a full income estimate):
+--   1. It assumes the pads are already filled with hatched Sproutlings -- it does NOT model how
+--      long it takes to grow/hatch enough of them (that depends on growSeconds, seed
+--      availability, luck and active play time, none of which this offline script can simulate).
+--   2. It only uses Config.BasePads (8), not BigGreenhouse's +4 pads, and assumes no rebirths,
+--      DoubleDew, VIP or mutation multiplier -- every one of those only ever increases the real
+--      rate, so treat this as a floor for an average, no-boosts player, not a ceiling for an
+--      optimized one.
+--   3. It is a different metric from the payback-time section above (per-Dew-spent value, not
+--      income rate) -- the two should never be conflated.
+print("")
+print(string.format(
+	"Steady-state Dew/hour per species (baseline: %d base pads, one species, no rebirths/passes/mutations -- a floor, not a ceiling; see comment above)",
+	Config.BasePads
+))
+print(string.rep("-", 70))
+print(string.format("%-14s %-12s %8s %14s  %s", "Species", "Rarity", "Dew/s", "Dew/hour", "Notes"))
+print(string.rep("-", 70))
+
+for _, rarity in Species.RarityOrder do
+	local bucket = byRarity[rarity]
+	-- byRarity[rarity] is already sorted ascending by payback time from the first section above;
+	-- re-sort here by this section's own metric (ascending Dew/hour, i.e. ascending dewPerSecond)
+	-- so this section stands on its own rather than silently inheriting the other section's order.
+	table.sort(bucket, function(a, b)
+		return a.dewPerSecond < b.dewPerSecond
+	end)
+	for _, species in bucket do
+		local dewPerHour = Config.BasePads * species.dewPerSecond * 3600
+		local note = species.limited and ("limited: " .. species.limited) or ""
+		print(string.format(
+			"%-14s %-12s %8d %14d  %s",
+			species.name,
+			species.rarity,
+			species.dewPerSecond,
+			dewPerHour,
+			note
+		))
+	end
 end
