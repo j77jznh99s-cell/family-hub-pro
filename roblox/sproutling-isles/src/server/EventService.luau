@@ -384,7 +384,11 @@ function EventService.onJoin(session: State.Session)
 	local now = os.time()
 	if now >= cfg.endAt and session.data.event.berries > 0 then
 		local berries = session.data.event.berries
-		local dew = math.max(100, math.floor(State.income(session) * 5 * 60))
+		-- spec: "1 [berry] = 5 min of income" -- each berry converts independently, not the whole
+		-- balance at once (the worked example, 37 berries -> 12,400 Dew, only holds with `berries *`
+		-- here; the first version of this line dropped it, so every player got the same flat
+		-- ~5-minutes-of-income payout regardless of their balance).
+		local dew = math.max(100, math.floor(berries * State.income(session) * 5 * 60))
 		session.data.event.berries = 0
 		player:SetAttribute("Moonberries", 0)
 		State.addDew(session, dew, "Event:Conversion")
