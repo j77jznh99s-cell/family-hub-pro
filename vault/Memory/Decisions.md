@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-09-26 | StarNet | Run lean: medium effort, max 25 steps per task, max 2 agents at once, only 2 scheduled jobs, caching on | Owner: "without overworking it or using more processing power than needed" | Owner asked, Claude chose |
 | 2026-09-26 | StarNet | Models per job: Haiku 4.5 for summaries, Sonnet 5 for research, Opus 5 for design (on demand only) | Owner: "pick the most effective for the job"; cheapest model that does each job well | Owner asked, Claude chose |
 | 2026-09-26 | StarNet | Cap each run at $1; Night Shift off for the first week | Safety defaults, owner accepted | Owner asked, Claude chose |
 | 2026-09-25 | StarNet | Brain = **Anthropic API key** | Best quality; owner's choice | Owner |

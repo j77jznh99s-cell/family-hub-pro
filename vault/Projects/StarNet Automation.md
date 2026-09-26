@@ -75,6 +75,17 @@ Check out the project branch in a second folder (for example `git worktree add .
 add that folder as a second project, and add a Build Bay (roblox-engineer) and a QA Deck (qa-tester)
 with a WORKBENCH. **Leave out the trading bot completely.**
 
+## Keep it lean (owner: "don't overwork it", 2026-09-26)
+Checked in StarNet's code. The AI runs on Anthropic's servers, so the laptop only runs the app itself.
+| Setting | Where | Set to | Why |
+| --- | --- | --- | --- |
+| Thinking effort | Each agent's MODEL card (effort picker) | Sonnet 5 research: **medium** · Opus 5 design: **medium**, raise to high only for a big design job · Haiku: leave as is | Lower effort = fewer tokens, less "overthinking" on routine work |
+| Max steps per task | SETTINGS → ADVANCED → maxIters (applies after restart) | **25** | Default is *no limit*; stops an agent looping |
+| Max agents at once | SETTINGS → ADVANCED → maxConcurrentAgents (after restart) | **2** | Default is *no limit* |
+| Prompt caching | On by default for Anthropic | **Leave on** | Repeated context costs ~90% less |
+| Schedules | The jobs table below | **Only these 2 jobs** | No extra background runs |
+| Laptop load | — | Minimize StarNet when you're not watching; don't use Ollama | The station animation pauses when hidden; Ollama runs the AI on the laptop itself |
+
 ## First jobs to schedule
 | Job | Agent | Model | When | Send result to |
 | --- | --- | --- | --- | --- |
