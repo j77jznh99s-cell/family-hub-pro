@@ -7,6 +7,21 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — QA'd Clip Studio's hourly branch
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** qa-tester
+
+**What was done**
+- Task 2 from [[Work Queue]]: qa-tester reviewed `claude/hourly-project-processing-ejbqs4` (29 commits ahead of
+  the mainline branch) in an isolated `git worktree`, never touching `main`'s working tree or pushing/merging
+  anything. Reproduced every CI step it could (Postgres/Redis service containers, ffmpeg, `npm test`, driver
+  tests, syntax check): **101+6+1 tests passed.** Docker build step unverified (sandbox has no working Docker
+  daemon — not a code issue).
+- Found 2 minor, non-blocking bugs (a fragile hardcoded-string disclaimer check, a missing `|| ''` guard) and
+  reviewed the security pass (constant-time tokens, failed-auth limiter, path-traversal-safe run IDs, atomic
+  credit spend) — all looked sound.
+- Wrote the full QA report into [[Clip Studio]] (`## QA Review (2026-09-26)`), ticked the review task, added
+  follow-ups: owner (merge decision), app-engineer (fix the two minor bugs).
+
 ## 2026-09-26: hourly run — documented Trading Agent
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly; task was read-only research)
 
