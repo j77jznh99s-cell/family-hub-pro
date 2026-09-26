@@ -1,7 +1,7 @@
 ---
 tags: [project, roblox, active]
 status: build-1-untested
-updated: 2026-09-23
+updated: 2026-09-26
 ---
 # Sproutling Isles
 
@@ -47,7 +47,8 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **live-ops-manager:** launch checklist, beta plan, week 1–8 calendar, Halloween spec, ads plan, see [[Sproutling Isles - Launch & Live Ops]]
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov
 - [ ] **game-designer:** m11 pond water surface (map art), and check the Halloween numbers
-- [ ] **market-researcher:** verify rewarded-ads eligibility and Ads Manager pricing; monthly trend refresh
+- [x] **market-researcher:** verify rewarded-ads eligibility and Ads Manager pricing — done 2026-09-26, see [[Sproutling Isles - Launch & Live Ops]] section 4 caution box and section 6 note (corrections found, not just re-confirmed; sources listed there)
+- [ ] **market-researcher:** monthly trend refresh (not part of the 2026-09-26 ads-verification pass; still open)
 
 ## Bugs
 Full details, file:line references and the Studio test plan are in [[Sproutling Isles - QA Review]] (2026-09-23, static review; nothing has been run in Studio yet).

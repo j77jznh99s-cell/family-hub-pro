@@ -7,6 +7,23 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — verified Roblox ads eligibility & pricing (3/3, run complete)
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** market-researcher
+
+**What was done**
+- Task 3 from [[Work Queue]]: market-researcher re-checked the "unverified" rewarded-video-ads and Ads
+  Manager claims in [[Sproutling Isles - Launch & Live Ops]]. Direct fetches to create.roblox.com/devforum
+  are blocked in-sandbox, but the agent found and read Roblox's own creator-docs source repo on GitHub
+  (`github.com/Roblox/creator-docs`) — close to primary, not just a search summary.
+- Real corrections found, not just re-confirmation: the API success check is `Enum.ShowAdResult.ShowCompleted`
+  (not `Succeeded` as previously written), eligibility has 3 more requirements than noted (two-step verification,
+  no free-form user creation, questionnaire must be *approved* not just submitted), Ads Manager bills as
+  auto-bid/Cost-Per-Play rather than CPM/CPC/CPI, and "new-creator ad credits" turned up no evidence and should
+  be treated as likely not existing. The `ExperienceIneligible` bug is confirmed real and apparently still open.
+- Updated [[Sproutling Isles - Launch & Live Ops]] (sections 1D, 4, 6, task list, sources) and ticked the
+  matching tasks in both that note and [[Sproutling Isles]]. I reviewed the diff before committing.
+- This was the 3rd task this run — stopping per [[Hourly Workflow]]'s cap.
+
 ## 2026-09-26: hourly run — Gumroad product-line demand brief
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** market-researcher
 

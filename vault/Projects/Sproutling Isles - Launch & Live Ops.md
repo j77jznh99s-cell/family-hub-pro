@@ -3,7 +3,7 @@ tags: [project, roblox, live-ops, launch, monetization, analytics]
 project: "[[Sproutling Isles]]"
 owner_role: live-ops-manager
 status: draft
-updated: 2026-09-23
+updated: 2026-09-26
 ---
 # Sproutling Isles: Launch & Live Ops
 
@@ -66,6 +66,9 @@ Tick these in order. "CH" means Creator Hub (create.roblox.com, then **Creations
   - Expected result: **Minimal** or **Mild** (unverified). If any question asks about "paid random items" or loot boxes, answer **yes** for Luck Boost and the summons. Being honest protects the game from takedowns.
   - The experience must **not** end up 17+/restricted. Rewarded ads need an unrestricted game (see section 4).
 - [ ] Click **Submit**. The rating appears on the experience page.
+
+> [!note] Verified 2026-09-26 (market-researcher), via the GitHub mirror of Roblox's creator-docs (`content-maturity.md`)
+> The questionnaire has **14 content categories** — Violence, Blood, Fear, Crude Humor, Unplayable Gambling, Strong Language, Romantic Themes, Alcohol, Social Hangout, Free-Form User Creation, Sensitive Issues, **Paid Random Items**, **Paid Item Trading**, and Media Sharing & AI Interaction. Two of those apply directly here: **Paid Random Items** (Luck Boost, weather summons — answer yes, as this note already says) and **Paid Item Trading** (the planned [[Sproutling Isles - Trading Spec|Trading Booths]] feature, once built, will also need a "yes" here even though it's earn-only trading, since the category is about exchanging *purchased* items, not payment). Labels run N/A → Minimal → Mild → Moderate → Restricted; rewarded ads (section 4) require the questionnaire to be **completed and approved**, not merely "not Restricted."
 
 ### E. Private servers (CH > **Monetization > Private Servers**, or **Configure > Access**)
 - [ ] Turn on **Allow Private Servers**.
@@ -274,8 +277,18 @@ Currency `"Dew"` (and `"Moonberries"` during Halloween, `"Snowdrops"` in winter)
 ---
 
 ## 4. Rewarded video ads plan
-> [!caution] Verify current Roblox ads API and eligibility before building
-> What public sources said as of Sep 2026 (not confirmed in Studio): Rewarded Video ads opened to **all ads-eligible creators on 18 Feb 2026**. Eligibility: the creator is **13+ and ID-verified**, and the experience is **public, unrestricted** and has **at least 2,000 unique visitors per month**. Integration: `AdService:CreateAdRewardFromDevProductId(productId)` → `AdService:ShowRewardedVideoAdAsync(player, adReward)`, and the reward is granted **only on `ShowAdResult.Succeeded`** (granting on the button press breaks policy). There is also an availability check (`GetAdAvailabilityNowAsync` or similar). DevForum threads report an `ExperienceIneligible` result on some eligible games. **So ads will not work in the closed beta. Earliest realistic date is Week 3–5, after 2k monthly visitors.** Sources are listed at the bottom.
+> [!caution] Re-checked 2026-09-26 (market-researcher) — mostly confirmed, some corrections; still not confirmed in Studio
+> **Method:** sandbox blocks direct fetches to roblox.com and devforum.roblox.com, so this was checked via web search plus one working path: the GitHub mirror of Roblox's own docs repo, `github.com/Roblox/creator-docs` (raw file `content/en-us/production/promotion/rewarded-video-ads.md`), which is a primary-ish source (it's the source for create.roblox.com's docs) even though the *live* create.roblox.com page couldn't be opened directly. DevForum claims below are still search-result summaries only, not opened pages.
+>
+> **Confirmed/refined against the creator-docs mirror (as of 2026-09-26):**
+> - Eligibility is **broader than the old note said**: besides 13+/ID-verified creator, public+unrestricted experience, and ≥2,000 unique visitors/month, the docs also require **two-step verification enabled** on the account, **no free-form user creation** in the experience, and a **completed *and approved*** Maturity & Compliance Questionnaire (not just "not Restricted" — an unsubmitted or pending questionnaire blocks ads outright). Sproutling Isles has no free-form creation, so that part is fine.
+> - API shape is right but one detail was wrong: the success check is **`Enum.ShowAdResult.ShowCompleted`**, not `ShowAdResult.Succeeded` as previously written. Flow per the docs: client calls `AdService:GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)` to gate the button; on click, the server calls `AdService:CreateAdRewardFromDevProductId(productId)` then `AdService:ShowRewardedVideoAdAsync(player, reward)` inside `pcall`; the client-side event checks `result == Enum.ShowAdResult.ShowCompleted`; **the actual reward grant happens through the normal `MarketplaceService.ProcessReceipt` callback** for that dev product ID (confirms the note's "verify whether ad rewards come through ProcessReceipt" — yes, they do).
+> - There's a previously-unlisted method, **`AdService:RegisterAdOpportunityAsync(button, placementId)`**, for tracking how often a player had the chance to see the ad button vs. how often they actually watched — worth wiring in for the `Ad` funnel (section 3b).
+> - The **`ExperienceIneligible`** report is real and still looks unresolved: a DevForum bug report dated 29 Jul 2026 describes `GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)` returning `Enum.AdAvailabilityResult.ExperienceIneligible` for a live experience the Creator Hub dashboard listed as fully eligible (all-green checklist). Related open bug reports found in the same search: `GetAdAvailabilityNowAsync()` "permanently freezes after second call," and `GetCampaignEligibilityAsync()` returning "Request failed." Read together, this looks like **general AdService flakiness on Roblox's side**, not something we can code around — budget extra buffer time in Week 5 and don't be surprised if the availability check misbehaves even once the 2k-visitor bar is cleared.
+> - The **"opened to all ads-eligible creators 18 Feb 2026"** date is unchanged from before: still only a search-result summary (the DevForum announcement thread itself couldn't be opened), but two independent searches converged on the same date, so confidence is moderate, not certain.
+> - **So ads will not work in the closed beta. Earliest realistic date is still Week 3–5, after 2k monthly visitors** — this conclusion holds.
+>
+> Sources are listed at the bottom (updated).
 
 ### Principles
 - **Always opt-in.** A player taps a clearly labelled "▶ Watch ad" button. No forced or interstitial ads.
@@ -479,6 +492,14 @@ Rule: **don't pay for traffic until the public D1 is ≥ 30% and the average ses
 
 Also consider the **search/home sponsored** placements and any new-creator ad credits Roblox may offer (unverified; check Ads Manager).
 
+> [!note] Verified 2026-09-26 (market-researcher) — Ads Manager pricing model, via search summaries and the GitHub mirror of Roblox's creator-docs (`content/en-us/production/promotion/ads-manager.md`); the live create.roblox.com/devforum pages themselves could not be opened directly, so treat this as high-but-not-first-hand confidence.
+> - **Billing is not CPM/CPC/CPI.** Roblox Ads Manager uses **automated bidding**: you set a budget and a duration and Roblox's system finds the bid that gets the best performance at the lowest cost. Performance is reported as **Cost-Per-Play (CPP)** — total spend ÷ number of plays. (One older search summary quoted "$0.10–0.50 per click" and "$1–5 CPM" for "Sponsored Experiences" / "Immersive Ads," which may be a third-party estimate rather than Roblox's own billing unit — flagged as lower confidence and possibly describing a different, older product.)
+> - **Budget type:** either a **Daily Budget** (max spend per day) or a **Lifetime Budget** (max spend for the whole campaign) — this matches how this plan's tiers are already structured ("$50–100 over 5–7 days" reads as a Lifetime Budget with a set duration), so **the $0 / $50–100 / $300–500 / $1,000+ tier structure is compatible with how the product actually bills**, no correction needed there.
+> - **Minimum spend is very low:** the docs describe "1 ad credit" as the minimum to run a campaign at all. 1 Ad Credit ≈ 285 Robux (per a separate search result), so roughly $3 at typical Robux pricing — nowhere near a $50–100 floor. This is good news: Tier 1 ($50–100) is a deliberate choice, not a forced minimum, and a smaller test is technically possible if the owner wants to spend even less before committing to Tier 1.
+> - **Payment:** credit/debit card (auto-charges at spending thresholds), Ad Credits bought by converting Robux (any account 13+), or group revenue for group-owned experiences.
+> - **Placements confirmed:** a campaign is shown automatically in **both the Home page and search results** — this directly confirms the "search/home sponsored" line, no longer purely a guess. Separately, a 2026 CES announcement mentions a new **"Homepage Feature"**, described as a premium ad unit placed directly on the Roblox homepage — this looks like a newer, likely higher-tier/higher-cost placement distinct from the standard auto-placement above; not enough detail found to say if or how it fits our budget tiers.
+> - **New-creator ad credits:** search turned up **no evidence of a free ad-credit program for new creators** in 2026. What exists is just the ability for any 13+ account to convert Robux into Ad Credits (i.e., access, not a freebie). Treat the plan's "new-creator ad credits" line as **not confirmed / likely does not exist** rather than merely unverified — I'd remove the assumption unless the owner finds a specific promo in the live Ads Manager UI.
+
 ### TikTok / YouTube Shorts clip ideas (9:16, 10–25 s, hook in the first second, captions on)
 1. **"0.5% chance..."**: the hatch countdown, a slow-mo reveal of a **Prismatic** Sproutling, and the server shout message.
 2. **Last-second bonk:** a thief carrying a Legendary at 2 s left on the timer gets bonked at the gate. Text: "he was SO close 😭".
@@ -552,13 +573,20 @@ The weekly review (Mondays, **live-ops-manager**) reads from CH Analytics plus t
 - [ ] **game-designer:** icons for the 13 store items + experience icon and thumbnails (part of the art brief)
 - [ ] **qa-tester:** event test plan using `EventTimeOffset` (start, Part 2, Witching Hour, end conversion), Starter Pack repeat purchase check, analytics once-only check
 - [ ] **live-ops-manager:** full Frostbloom Festival spec by 21 Nov; weekly KPI reviews from launch
-- [ ] **market-researcher:** check current Roblox ads eligibility, the Ads Manager pricing model and the maturity questionnaire wording before launch
+- [x] **market-researcher:** check current Roblox ads eligibility, the Ads Manager pricing model and the maturity questionnaire wording before launch — done 2026-09-26. Rewarded-ads eligibility bar confirmed plus 3 new criteria found (two-step verification, no free-form user creation, questionnaire must be *approved* not just submitted); one API detail corrected (`ShowAdResult.ShowCompleted`, not `Succeeded`); `ExperienceIneligible` confirmed as a real, apparently still-open bug. Ads Manager confirmed as auto-bid/CPP billing (not CPM/CPC/CPI), tiers in this note are compatible with Lifetime Budget billing, minimum spend is far below Tier 1, "new-creator ad credits" found no evidence and should be treated as not confirmed. Maturity questionnaire: 14 categories confirmed, including Paid Item Trading (relevant to the Trading Booths feature, not just Luck Boost). See section 4 caution box, section 6 note and section 1D note for detail and sources. The 18 Feb 2026 "opened to all eligible creators" date is still only a search-summary claim (devforum.roblox.com is blocked in-sandbox), not independently verified from the primary announcement page.
 - [ ] **app-engineer (optional, owner call):** Clip Studio preset for Roblox hatch and snatch highlights
 
 ## Sources (ads section)
-- [Rewarded video ads, Roblox Creator Hub docs](https://create.roblox.com/docs/production/promotion/rewarded-video-ads)
-- [DevForum: Rewarded Video ads are now available to all ads eligible creators](https://devforum.roblox.com/t/rewarded-video-ads-are-now-available-to-all-ads-eligible-creators/4063278)
-- [DevForum bug report: ExperienceIneligible despite eligibility](https://devforum.roblox.com/t/rewarded-video-ads-cannot-be-shown-in-my-live-experience-the-api-returns-experienceineligible-but-the-creator-hub-says-it-is-eligible/4763102)
-- [GM Market: Roblox Rewarded Video Ads in 2026](https://gmmarket.me/community/post/roblox-rewarded-video-ads-in-2026-who-can-enable-them-how-to-integrate-and-what)
+Re-checked 2026-09-26 (market-researcher). This sandbox blocks direct fetches to roblox.com and devforum.roblox.com; the entries marked "(opened)" were read in full via the GitHub mirror of Roblox's own creator-docs repo (`github.com/Roblox/creator-docs`), which is close to primary since it's the source for create.roblox.com. Everything else is a search-result summary only — the page itself was not opened.
 
-These were read as search-result summaries only; the pages were not opened.
+- [Rewarded video ads, Roblox Creator Hub docs](https://create.roblox.com/docs/production/promotion/rewarded-video-ads) — content opened via [github.com/Roblox/creator-docs mirror](https://github.com/Roblox/creator-docs/blob/main/content/en-us/production/promotion/rewarded-video-ads.md) (opened)
+- [Ads Manager, Roblox Creator Hub docs](https://create.roblox.com/docs/production/promotion/ads-manager) — content opened via [github.com/Roblox/creator-docs mirror](https://github.com/Roblox/creator-docs/blob/main/content/en-us/production/promotion/ads-manager.md) (opened)
+- [Content maturity and compliance, Roblox Creator Hub docs](https://create.roblox.com/docs/production/promotion/content-maturity) — content opened via [github.com/Roblox/creator-docs mirror](https://github.com/Roblox/creator-docs/blob/main/content/en-us/production/promotion/content-maturity.md) (opened)
+- [DevForum: Rewarded Video ads are now available to all ads eligible creators](https://devforum.roblox.com/t/rewarded-video-ads-are-now-available-to-all-ads-eligible-creators/4063278) — search summary only; 18 Feb 2026 date not independently confirmed by opening the thread
+- [DevForum bug report: ExperienceIneligible despite eligibility](https://devforum.roblox.com/t/rewarded-video-ads-cannot-be-shown-in-my-live-experience-the-api-returns-experienceineligible-but-the-creator-hub-says-it-is-eligible/4763102) — search summary only, dated 29 Jul 2026 per the summary
+- [DevForum: GetAdAvailabilityNowAsync() permanently freezes after second call](https://devforum.roblox.com/t/adservicegetadavailabilitynowasync-permanently-freezes-after-second-call/4755444) — search summary only
+- [DevForum: AdService:GetCampaignEligibilityAsync() always returns "Request failed"](https://devforum.roblox.com/t/adservicegetcampaigneligibilityasync-always-returns-with-error-request-failed/4848517) — search summary only
+- [GM Market: Roblox Rewarded Video Ads in 2026](https://gmmarket.me/community/post/roblox-rewarded-video-ads-in-2026-who-can-enable-them-how-to-integrate-and-what) — search summary only, egress to this domain is blocked in-sandbox
+- [BLOXG: Complete Guide to Roblox Advertising (2026)](https://bloxg.com/guides/roblox-ads-guide) — search summary only, egress blocked
+- [Gamebiz Consulting: Roblox Ad Monetization Guide 2026](https://www.gamebizconsulting.com/blog/roblox-ad-monetization-guide-2026) — search summary only, egress blocked
+- [rbxrate: Roblox Ad Credit Calculator](https://rbxrate.com/ad-credit-calculator/) — search summary only, used for the "~285 Robux per Ad Credit" figure
