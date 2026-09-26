@@ -270,3 +270,167 @@ plus which step numbers failed.
 - **Gate lock:** should there be a cooldown after the lock expires, so re-locking isn't instant (m6)?
 - **Pond Dew payout:** is it "minutes of income" or about 30 s (m10)?
 - **Starter Pack:** should repeat purchases be refused, or keep granting 5,000 Dew (m15)?
+
+---
+
+## Hollow Harvest QA pass (2026-09-26)
+Static review only (Studio unavailable in the sandbox). Read `Config.luau`, `Events.luau`, `EventService.luau`,
+`MonetizationService.luau`, `Analytics.luau`, `DataService.luau`, and every `.luau` file under `src/server/`,
+on `claude/roblox-popular-game-trends-6u7sie` (commit `b8b34b4`, current HEAD), via a throwaway git worktree.
+Nothing in this section was run; nothing on that branch was edited.
+
+### 1. `EventTimeOffset` test hook — confirmed missing. This is a real build gap, not a nice-to-have.
+
+**Confirmed:** `Config.luau` has no `EventTimeOffset` field (only `StudioTestPasses` at `:76` and
+`StudioDisableShield` at `:80` exist as Studio-only switches). `Events.luau` has no `Events.now()` helper and
+no `RunService` require — `Events.active`/`Events.part`/`Events.isWitchingHour`/`Events.fogIntervalSeconds`
+all take `now` as a plain parameter, and every call site passes raw `os.time()`. There is currently **no way
+to fast-forward the event clock in Studio**. Hollow Harvest Part 1 starts 17 Oct 2026 15:00 UTC; today is
+26 Sep 2026 — about 21 days out. Until this hook exists, **none of Fog scheduling, lantern
+spawn/pickup, stall gating, Witching Hour, or the end-of-event conversion can be Studio-tested before
+mid-October**, which is also when the owner is supposed to be running the pre-launch play-test per
+[[Sproutling Isles - Launch & Live Ops]] section 1. Flagging as a build-blocking gap for the owner's
+timeline, not just a missing convenience.
+
+**All 11 `os.time()` call sites that gate event phase**, confirmed by reading the files (none of these are
+mutation/weather-visual code — every one decides whether Hollow Harvest content is active/which part/whether
+it's Witching Hour):
+- `src/server/EventService.luau:56` — `onHatch`: `Events.active(cfg, os.time())`
+- `src/server/EventService.luau:96` — `onLanternTriggered`: `local now = os.time()` (used for `utcDay`/daily bonus)
+- `src/server/EventService.luau:184` — `onWeatherStart`: `Events.active(cfg, os.time())`
+- `src/server/EventService.luau:203` — `fogScheduler`'s loop: `local now = os.time()` (drives the Fog scheduler and `Events.fogIntervalSeconds`)
+- `src/server/EventService.luau:228` — `stallBuyCount`: `utcDay(os.time())`
+- `src/server/EventService.luau:235` — `stallRecordBuy`: `utcDay(os.time())`
+- `src/server/EventService.luau:257` — `buyStallItem`: `local now = os.time()` (end/active/part gating for the stall)
+- `src/server/EventService.luau:314` — `refreshStallLabels`: `local now = os.time()`
+- `src/server/EventService.luau:384` — `onJoin`: `local now = os.time()` (the end-of-event conversion trigger)
+- `src/server/PlotService.luau:325` — hatch branch: `Events.active(Events.Halloween2026, os.time())` (gates the Moonberry hatch bonus call into `EventService.onHatch`)
+- `src/server/PondService.luau:61-62` — `hollowispAvailable`: `local now = os.time()` then `Events.part(cfg, now) < 2 or not Events.active(cfg, now)` (gates Hollowisp into the pond loot table)
+
+**Proposed fix (spec only — not implemented, for a roblox-engineer task):**
+1. `src/shared/Config.luau`: add, next to `StudioTestPasses`/`StudioDisableShield` (around `:76-80`):
+   ```lua
+   -- Testing: seconds added to os.time() for Hollow Harvest / Frostbloom phase checks, ONLY inside
+   -- Roblox Studio (RunService:IsStudio()). Live servers ignore this. Lets qa-tester fast-forward to
+   -- Part 2, Witching Hour, or past the event's end without waiting for the real date.
+   Config.EventTimeOffset = 0
+   ```
+2. `src/shared/Events.luau`: add `local RunService = game:GetService("RunService")` and
+   `local Config = require(script.Parent.Config)` (no cycle: `Config.luau` requires nothing), then:
+   ```lua
+   function Events.now(): number
+       return os.time() + (if RunService:IsStudio() then Config.EventTimeOffset else 0)
+   end
+   ```
+   This is the same pattern already used for `StudioDisableShield` (`init.server.luau:102`) and
+   `StudioTestPasses` (`MonetizationService.luau:50`): a `Config` flag gated by `RunService:IsStudio()`, so
+   live servers can never be affected by a forgotten Studio setting.
+3. Replace `os.time()` with `Events.now()` at all 11 call sites listed above. (`Events.luau`'s own
+   `Events.active`/`.part`/`.isWitchingHour`/`.fogIntervalSeconds` stay unchanged — they just take whatever
+   `now` they're given; only the *callers* change.)
+4. No change needed to `DataService.luau`, `Analytics.luau`, or the UTC-day helpers (`utcDay`, daily caps,
+   `lanternDay`) beyond taking `Events.now()` instead of `os.time()` at the two `EventService.luau` call
+   sites already listed (`:228`, `:235`) — the day-rollover logic itself is unaffected.
+
+### Test plan (written assuming the hook above exists — cannot be run until it's built)
+Real UTC timestamps from `Events.luau`, unchanged and re-verified against `date -u`:
+`part1At = 1792249200` (Sat 17 Oct 2026 15:00 UTC), `part2At = 1792854000` (Sat 24 Oct 15:00 UTC),
+`witchingHourAt = 1793404800` (Sat 31 Oct 00:00 UTC), `endAt = 1793577540` (Sun 1 Nov 23:59 UTC).
+
+**Method:** in the Studio command bar (server context), compute `Config.EventTimeOffset = <targetUnixTime> -
+os.time() + <a few seconds slack>` right before pressing Play, so `Events.now()` lands just past the
+boundary you want. As of *today* (26 Sep 2026, `os.time() ≈ 1790423015`), the four offsets work out to
+roughly:
+| Target | Offset (≈, recompute at actual test time) |
+| --- | --- |
+| Part 1 start | `+1,826,190` (≈ 21.1 days) |
+| Part 2 | `+2,430,990` (≈ 28.1 days) |
+| Witching Hour | `+2,981,790` (≈ 34.5 days) |
+| Just past end (`endAt + 60`) | `+3,154,585` (≈ 36.5 days) |
+These drift by however many days pass between this review and the actual test — always recompute
+`targetTime - os.time()` at test time rather than reusing the table above verbatim.
+
+| Phase | Set `EventTimeOffset` to land at | Check |
+| --- | --- | --- |
+| Part 1 start | `part1At + 5s` | Banner/HUD chip shows the Fog countdown (`ReplicatedStorage:GetAttribute("EventActive") == true`). Wait for the next `:00/:20/:40` UTC slot: Fog starts (`WeatherService.start("spookyfog")` fires), sky tints purple, 10 Wisp Lanterns appear on the shared island (never inside a plot). Touch one: `+5 Moonberries` toast, HUD chip updates, the lantern disappears **only for you** (per-player). Touch the same lantern with a 2nd test client: it should still be collectible for them (per-player collection, not first-come). First lantern of the UTC day: `+20 daily bonus!` toast on top of the +5. Hatch during Fog: normal hatch gets `+1` Moonberry; confirm a Haunted hatch (rarer) gets `+5`. Lantern Stall: only Pumpkit (60 🫐, cap 5/day) should be buyable; Gourdgeist and the skin should say "unlocks Part 2". |
+| Part 2 | `part2At + 5s` | Gourdgeist (250 🫐, cap 2/day) and the Haunted Greenhouse skin (400 🫐) become buyable at the stall. Hollowisp becomes possible at the Wishing Pond **only while Spooky Fog is the active weather** (`PondService.hollowispAvailable`) — cast repeatedly during a Fog window and confirm it never appears outside Fog, and never appears before this offset even during Fog (re-test at a Part-1-only offset to confirm the negative case). Buy the skin once, confirm the kiosk becomes an Equip/Unequip toggle rather than re-charging Moonberries on a second visit (`EventService.luau:275-281`). |
+| Witching Hour | `witchingHourAt + 5s` | Fog now starts every **10 min** instead of 20 (`ReplicatedStorage:GetAttribute("NextFogAt")` should advance by 600s slots, not 1200s — confirm via `Events.fogIntervalSeconds`). Stall items already unlocked (Part 1/2) should still be buyable; nothing new unlocks at Witching Hour itself (the spec has no Witching-Hour-only stall item). |
+| Just past end | `endAt + 60s` | **This is the one worth the most attention — re-verify the now-fixed conversion bug (`b8b34b4`) pays out correctly, not just that it fires.** Before jumping the offset, use the Studio command bar to directly set a few different `session.data.event.berries` values on separate test saves/characters (or across 3 separate Play sessions): e.g. `0`, `37`, and a large value like `2000`. Then set the offset past `endAt` and trigger `EventService.onJoin(session)` (either via an actual rejoin, since it only converts "on the first join after the end time" per `EventService.luau:380-397`, or by calling it directly from the command bar for a faster loop). Check: `berries=0` → no conversion, no toast. `berries=37` at a known income (read the HUD Dew/s) → expect `floor(37 * income * 300)` Dew, floored at a 100 Dew minimum; manually recompute and compare to the toast text ("Your 37 Moonberries became N Dew"). Confirm N scales roughly linearly with berries at the same income (e.g. `2000` berries should give ~54x the Dew of `37` berries at the same income, not the same flat amount — this is exactly the bug that was fixed, so a flat/non-scaling result here means the fix regressed). Also test a near-zero-income character with 1 berry: `max(100, floor(1 * ~0 * 300)) = 100`, i.e. the 100 Dew floor should still apply even when the multiplier rounds to ~0. After conversion, confirm `berries` is zeroed and the stall shows "See you next year!" (`refreshStallLabels`, `:318-319`) and further stall purchases are refused with that message (`buyStallItem`, `:261-264`). |
+
+### 2. Starter Pack repeat purchase — confirmed unchanged from the 2026-09-23/26 finding (m15).
+`src/server/MonetizationService.luau:68-76`: the `StarterPack` handler still guards only the one-time seed
+grant (`if not session.data.starterBought then ... State.addSeeds(...) end`, `:69-73`) and unconditionally
+calls `State.addDew(session, 5_000, "IAP:StarterPack")` on every successful receipt (`:74`), same as before.
+The comment at `:65-67` still documents this as a deliberate, undecided behavior ("Refusing repeats instead
+is an owner decision (QA m15)"). Traced today's changes around this file (the `markFirstPurchase`/`onb`
+onboarding wiring at `:27-32`, and the `Analytics.funnel(... "Purchased")` call at `:148`) — neither touches
+the `StarterPack` handler or its Dew grant. **Unchanged. m15 is still open, still an owner decision, not a
+regression.**
+
+### 3. Analytics once-only check.
+
+**All 11 onboarding steps, still correctly guarded** (check-before-set-before-fire, no yield between the
+check and the `Analytics.onboarding` call, so no window for a double dispatch):
+| # | Step | Guard + fire site |
+| --- | --- | --- |
+| 1 | `Joined` | `src/server/init.server.luau:95-97` — additionally gated on `isNewSave` (from `DataService.load`'s 3rd return value), so it can never fire for a returning save even before `data.onb` existed |
+| 2 | `PlotClaimed` | `src/server/PlotService.luau:525-527` |
+| 3 | `FirstPlant` | `src/server/PlotService.luau:296-298` |
+| 4 | `FirstHatch` | `src/server/PlotService.luau:312-314` |
+| 5 | `FirstSeedBought` | `src/server/ShopService.luau:87-89` (buy) **and** `:157-159` (parade crate) — two call sites, both guarded on the same `session.data.onb.FirstSeedBought` flag, matching the spec's own note that this step fires from either place |
+| 6 | `FirstSell` | `src/server/PlotService.luau:353-355` (pad sell) **and** `:389-391` (`sellStorage`) — same dual-site pattern, same shared guard, matches spec |
+| 7 | `FirstWeatherHatch` | `src/server/PlotService.luau:316-318` |
+| 8 | `FirstGateLock` | `src/server/PlotService.luau:432-434` |
+| 9 | `FirstPondCast` | `src/server/PondService.luau:94-96` |
+| 10 | `FirstDailyClaim` | `src/server/ProgressionService.luau:96-98` |
+| 11 | `FirstPurchase` | `src/server/MonetizationService.luau:28-32` (`markFirstPurchase`, called from both `processReceipt` and `PromptGamePassPurchaseFinished`) |
+
+No path found that could double-fire any of the 11 (every guard sets the flag in the same synchronous call
+as the check, before the `Analytics.onboarding` call, and Roblox event handlers run cooperatively — there's
+no yield between the `if not data.onb.X` check and `data.onb.X = true` at any of these sites).
+
+**One pre-existing, non-blocking observation (not new today):** `DataService`'s `reconcile` (`:80-88`) is a
+shallow "fill missing top-level keys" merge — a save that predates the `onb` field gets a fresh `onb = {}`,
+not a backfilled one, so a returning player who already did `FirstPlant` etc. before analytics existed would
+re-fire that step once on their next matching action. `Joined` is explicitly immune to this (gated on
+`isNewSave`, not on `data.onb.Joined` alone), but steps 2-11 aren't. This can't actually happen yet — the
+game hasn't launched and there are no live saves predating this field — so it's not a bug to fix now, just
+worth remembering if a data migration is ever needed later.
+
+**EventShop funnel's `Opened` step (Hollow Harvest, added today) — fires on every stall interaction, and
+this reads as intentional but isn't explicitly commented as such at the call site.** `EventService.luau:257-259`
+(`buyStallItem`) generates a fresh `funnelId` and fires `Analytics.funnel(player, "EventShop", funnelId, 1,
+"Opened")` unconditionally, at the top of the function, on **every** kiosk `ProximityPrompt.Triggered` (i.e.
+every attempted purchase, including ones that then fail every gating check below it — event not active, wrong
+part, daily cap, insufficient berries). `"Bought"` (step 2, `:310`) only fires on an actual successful
+purchase. This does **not** match the spec's own words for this funnel ("a GUID per shop open" —
+`Sproutling Isles - Launch & Live Ops.md` section 3b, implying one session per time the player opens/visits
+the stall), and there's no separate "the player walked up to / opened the stall UI" signal in this codebase
+to hang a true "Opened" step on. What it does match is the **already-documented compromise for the `Store`
+funnel** a few files away (`MonetizationService.luau:145-147`: "steps 1-3 ... need a new remote that doesn't
+exist yet ... a fresh GUID per purchase stands in for it") — same shape, same missing prerequisite (a client
+remote for "the player looked at/opened X"), same workaround. Given that precedent exists verbatim elsewhere
+in this same build, I read this as a deliberate reuse of an established pattern, not a copy-paste oversight
+— but flagging that **the `EventShop:1 Opened` call site itself has no comment saying so** (unlike the
+`Store` funnel's own call site, which does), so a future reader could easily mistake it for a bug. Net effect
+on data quality: `EventShop` funnel `Opened` counts will run noticeably higher than "distinct stall visits"
+(one entry per buy-attempt, not per approach), which inflates the funnel's step-1 count and understates the
+apparent Opened→Bought conversion rate. Not a correctness bug, not blocking — recommend roblox-engineer add
+a one-line comment matching the Store funnel's, or rename the mental model to "attempt" instead of "open" in
+the vault spec next time it's revised. **Owner: game-designer/roblox-engineer, minor.**
+
+**Leaderboard code (added today) — no analytics calls at all** (`grep Analytics\. src/server/LeaderboardService.luau`
+returned nothing), so there is no repeat-fire risk to check there; it doesn't touch the analytics system.
+
+**Rebirth `CanAfford` funnel step (not new today, but re-checked as part of this pass) — guarded correctly for
+what it is.** `init.server.luau:230-236`: `session.rebirthCanAffordTier` is an in-memory (not saved) session
+field, checked-then-set-then-fired with no yield in between, so it can't fire twice for the same tier within
+one session. Because it's a **recurring** funnel (unlike the onboarding steps), not a "once ever" one, it's
+expected and correct that a fresh session (server hop, rejoin) can re-fire `CanAfford` for a tier the player
+already reached in a previous session — that's how the spec's per-tier session id (`"rb" .. tier`) is meant
+to work, not a bug.
+
+**Verdict:** all 11 onboarding once-only guards are correct. No accidental double-fire risk found in today's
+analytics-adjacent Hollow Harvest or leaderboard changes. One documentation nit (`EventShop`'s `Opened` call
+site) and one long-standing, currently-inert edge case (pre-`onb`-field saves) are noted above but neither
+blocks anything.

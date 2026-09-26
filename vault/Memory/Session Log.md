@@ -7,6 +7,31 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Hollow Harvest QA pass finds a real Studio-testing blocker
+**Device:** cloud Routine · **Branch:** `main` (read-only review of `claude/roblox-popular-game-trends-6u7sie`) · **Agents used:** qa-tester
+
+**What was done**
+- Task 2 this run: qa-tester did the 3-part QA pass the Launch & Live Ops task list called for
+  (event test plan, Starter Pack check, analytics once-only check).
+- **Found a real gap, not just a nice-to-have:** `Config.EventTimeOffset` doesn't exist. There's
+  an *older* task (from before Hollow Harvest was even built) that already called for this exact
+  hook — it got missed during today's Halloween build. Without it, every one of the 11 places that
+  gate Hollow Harvest's phase (`EventService.luau` ×9, `PlotService.luau`, `PondService.luau`) uses
+  raw `os.time()`, so **nobody can Studio-test the Fog schedule, lanterns, stall, or the
+  end-of-event conversion before mid-October** — the same month the owner's play-test is due.
+  qa-tester wrote a precise fix (a `Config.EventTimeOffset` + `Events.now()` helper, Studio-only,
+  mirroring the existing `StudioDisableShield` pattern) and a full test plan ready to run the
+  moment it's built, with specific emphasis on re-verifying earlier today's Moonberry-conversion
+  fix actually scales with balance rather than just "fires."
+- Also confirmed: Starter Pack (m15) still grants Dew on every repeat purchase, unchanged by
+  today's other work — not a regression, still an open owner decision. All 11 onboarding
+  analytics once-only guards checked correct, no double-fire risk from today's Hollow Harvest or
+  leaderboard additions; one documentation nit noted (not blocking).
+- I spot-checked several of the file:line claims myself against the actual code (the Starter Pack
+  handler, two of the onboarding guard sites) — all accurate. Merged the new task with the older,
+  now-redundant `Config.Boosts + EventTimeOffset` task line so it's tracked once, not twice.
+  Queued the `EventTimeOffset` build as the new top priority.
+
 ## 2026-09-26: hourly run — confirmed Frostbloom Festival numbers
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly)
 
