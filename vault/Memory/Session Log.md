@@ -7,6 +7,38 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Frostbloom Festival (winter event) spec written
+**Device:** cloud Routine · **Branch:** `main` (vault-only) · **Agents used:** live-ops-manager
+
+**What was done**
+- CI was green on both branches; the only unblocked queue item was the full Frostbloom Festival
+  spec (due 21 Nov, not urgent, but nothing else was available). live-ops-manager expanded the
+  existing one-line outline into a full spec matching Hollow Harvest's level of detail: goal,
+  9-step player flow, a weather/currency rules table (Snowglow + a New Bloom Fireworks weather),
+  3 limited species (Frostfawn/Snowdrake/Aurorelle) with computed payback numbers, a 13-day Advent
+  Gift calendar with an escalating reward schedule, a fully-designed new "Snowman" per-server
+  co-op mechanic (resets daily at 00:00 UTC, with reasoning for why not event-long), the Frosted
+  Greenhouse skin, Robux proposals, save-data shape, edge cases, UI text, KPIs, and a 12-item build
+  list for roblox-engineer that explicitly flags `EventService.luau` likely needing a small
+  refactor to support two concurrent scheduled weathers and two events' worth of save data.
+- I independently re-verified the numbers rather than trusting the report: all 3 species' payback
+  times (price ÷ dewPerSecond) check out exactly against the arithmetic shown, and land correctly
+  relative to the base game's established curve and Hollow Harvest's own precedents. Also checked
+  the Winter Bundle's "≈15% off" claim against the actual existing item prices (Luck Boost 49 +
+  Instant Grow 39 + Dew Pouch 29 = 117, ÷99 ≈ 15.4% off) — it correctly reuses the exact same
+  bundle composition as the already-proposed Week 7 Harvest Bundle rather than inventing new
+  numbers. No bugs found; this is a planning document, not code, so the review focus was
+  correctness of the numbers and internal consistency rather than a runtime failure mode.
+- This is the first hourly-run task since the Hollow Harvest build where the game code branch
+  wasn't touched — live-ops-manager doesn't have shell/git tools and correctly said so rather than
+  guessing at the real `Events.luau`/`EventService.luau` structure; the build list flags this for
+  roblox-engineer to confirm at build time (~Dec).
+- Added the one follow-up the agent flagged but didn't have scope to write (game-designer
+  numbers confirmation) plus 3 more already-unblocked tasks from [[Sproutling Isles - Launch &
+  Live Ops]]'s own task list to [[Work Queue]], since it would otherwise have gone empty next run.
+
+---
+
 ## 2026-09-26: hourly run — Hollow Harvest Halloween event built (and a real economy bug fixed)
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
 

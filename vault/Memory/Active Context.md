@@ -27,6 +27,10 @@ its README/CHANGELOG; blocked on OANDA setup) · [[Gumroad Digital Products]] (d
 lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · [[StarNet Automation]] (plan ready,
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
+Sproutling Isles winter event ("Frostbloom Festival") got its full spec 2026-09-26 (not code — build is closer to
+Dec): 3 limited species with verified payback numbers, a 13-day Advent calendar, a new per-server "Snowman" co-op
+mechanic. Needs game-designer sign-off on the numbers (queued) before roblox-engineer builds it.
+
 ## Waiting on the owner
 - [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).

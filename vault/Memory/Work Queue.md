@@ -8,7 +8,10 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov.
+- [ ] **game-designer:** confirm the Frostbloom Festival numbers against the payback rules (see [[Sproutling Isles - Launch & Live Ops]], note above the winter species table).
+- [ ] **qa-tester:** Hollow Harvest event test plan using `EventTimeOffset` (start, Part 2, Witching Hour, end conversion), Starter Pack repeat purchase check, analytics once-only check (per [[Sproutling Isles - Launch & Live Ops]] task list).
+- [ ] **roblox-engineer:** Codes system (free-tier rewards only) for Week 5, see [[Sproutling Isles - Launch & Live Ops]].
+- [ ] **roblox-engineer:** Founding Gardener badge + Week 8 teaser login tracker, see [[Sproutling Isles - Launch & Live Ops]].
 
 ## Waiting on the owner (runs skip these)
 - [ ] (owner) Play-test Sproutling Isles in Studio; answer [[Decisions]] (Sproutling #1–4 block the next build; #20 product line).
@@ -23,6 +26,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: live-ops-manager wrote the full Frostbloom Festival (winter event) spec — goal, player flow, weather/currency rules, 3 limited species with computed payback numbers, a 13-day Advent Gift calendar, a new "Snowman" per-server co-op mechanic, the Frosted Greenhouse skin, Robux proposals, save shape, edge cases, UI text, KPIs, and a build list flagging that `EventService.luau` likely needs a small refactor for 2 concurrent events. Verified the species' payback arithmetic and the Winter Bundle discount math myself — both check out exactly, and the bundle correctly reuses the existing Harvest Bundle precedent's prices. Written without code-branch access (vault-only), so the exact file shapes are flagged as inferred for roblox-engineer to confirm at build time. Added game-designer confirmation + 3 more unblocked tasks to the queue so it isn't empty next run. 1 task this run; stopping.
 - 2026-09-26: roblox-engineer built the full Hollow Harvest Halloween event (`6f59f2f`) — Spooky Fog, Wisp Lanterns, 3 limited species, Lantern Stall, plot skin, end-of-event conversion, plus the analytics it unlocked (10 files, ~430-line new EventService.luau). Reviewed the whole diff line-by-line myself (dates hand-verified against `date -u`, cross-module calls checked, reconcile-backfill checked) and found one real bug: the Dew conversion formula dropped the berries-count multiplier entirely, so every player got the same flat payout regardless of balance. Fixed directly (`b8b34b4`), re-validated, CI green. 1 task this run (large scope); stopping.
 - 2026-09-26: did the "game-designer: m11 + Halloween numbers" task directly (no agent needed — read-only analysis + a small, well-understood code fix). Confirmed the Halloween species' payback numbers against the base game's curve (all consistent). Diagnosed and fixed QA m11 (pond Rim walkable under the water surface) myself: `Rim.CanCollide = false`, `397cc4e`, validated clean, CI green. Only unblocked item was Halloween-event-adjacent, so did just this 1 task and stopped rather than jump to the bigger, deadline-sensitive Hollow Harvest build without more runway.
 - 2026-09-26: roblox-engineer wired Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth) + custom events (Hatch, Snatch*, GateLock, Weather*, Rebirth, DailyClaim, PondCatch, StorageFull/NoSeeds, SessionEnd), `e432cfd`. EventShop/Ad funnels and Store steps 1-3 deliberately skipped (dependencies don't exist yet). I reviewed the full diff before recording — no bugs found this time (unlike last run's leaderboard bug). 2 tasks this run (CI port + funnels/events); stopping.

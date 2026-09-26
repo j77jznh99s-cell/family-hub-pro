@@ -493,16 +493,138 @@ Every week also includes: a Monday KPI review (**live-ops-manager**), bug fixes 
 ---
 
 ### Winter event outline "Frostbloom Festival"
-*An outline only. A full spec is due by **Sat 21 Nov** (**live-ops-manager** + **game-designer**).*
-- **Dates:** Sat 12 Dec → Part 2 Sat 19 Dec → "New Bloom" finale Thu 31 Dec → end Sun 3 Jan 23:59 UTC.
-- **Weather:** **Snowglow** (the **Frosted** mutation x3.5; plants grow ×1.25) on a 20-min schedule, and a **Fireworks** weather on 31 Dec (the **Sparkling** mutation x4, every 10 min for 24 h).
-- **Currency:** **Snowdrops**, from snow-globe pickups (the same system as the lanterns, reused) and from hatches.
-- **Limited species:** **Frostfawn** (Epic; also the free Week 8 teaser seed), **Snowdrake** (Legendary, Part 2) and **Aurorelle** (Mythic, pond during Snowglow).
-- **Advent Gifts (days 2–7 and 8–28 lever):** one free gift per UTC day from 12 to 24 Dec (Dew, seeds, Snowdrops, Luck minutes). A missed day can be recovered once with the streak-saver ad, if ads are live.
-- **Co-op goal:** a server "Snowman" is built by everyone's hatches, and each tier gives the whole server a boost. Social, not PvP.
-- **Cosmetic:** the **Frosted Greenhouse** plot skin (earn-only, 500 Snowdrops).
-- **Robux:** *proposal:* **Summon Snowglow** at 149 R$ (server-wide) and a **Winter Bundle** (time items only). *Owner decides.*
-- **KPIs:** holiday day-1 cohort D1 ≥ 30%; days 8–28 play days ≥ 4 for October cohorts; event participation ≥ 65% DAU.
+*Spec format: goal · player flow · rules and numbers · limited species · Advent Gifts · Snowman co-op · plot skin · Robux items · data/save · edge cases · UI text · KPIs · build list — matching [[#Halloween event spec "Hollow Harvest"]]'s level of detail. The species, stall and Advent numbers below are proposals for **game-designer to confirm** against payback-time rules, the same way Hollow Harvest's were (new task added at the bottom of this note).*
+
+**Goal:** give the launch cohort's days 8–28 window a long (23-day), escalating reason to return daily through the holidays (Advent Gifts) and to cooperate server-wide without any PvP pressure (the Snowman), while giving December newcomers — the seasonal traffic spike Roblox sees every year — the same kind of strong day-1 hook that worked for Hollow Harvest (a free Epic species, handed out immediately). Ties to: days 8–28 play days ≥ 4 for the October cohorts, and the holiday-newcomer D1 target below.
+
+**Dates (UTC):** Part 1 Sat 12 Dec 15:00 → Part 2 Sat 19 Dec 15:00 → "New Bloom" finale Thu 31 Dec 00:00 → end Sun 3 Jan 23:59. *The 15:00 start times for Part 1 and Part 2 are an assumption (the outline only gave dates) — copied from Hollow Harvest's own 15:00 UTC convention for consistency; flag for game-designer/owner if a different hour is wanted.* All times are driven by `os.time()` against config, same as Hollow Harvest, so no redeploy is needed to start or stop it.
+
+**Player flow**
+1. On join during the event, a banner shows "❄️ Frostbloom Festival" with a countdown to the next Snowglow, plus a separate Fireworks countdown once New Bloom begins.
+2. Snowglow arrives: the sky pales to icy blue-white, snow effects thicken, and **Snow Globes** appear around the shared island.
+3. The player runs around touching globes to earn **Snowdrops**, while their seeds keep growing. Hatches during Snowglow can come out **Frosted** (x3.5).
+4. Once per UTC day (12–24 Dec), the player claims that day's **Advent Gift** from a 13-box calendar UI — escalating from small Dew grants up to seeds, Snowdrops and Luck minutes.
+5. The player spends Snowdrops at the **Snowdrop Stall** (a new booth near spawn, reusing the Lantern Stall's kiosk pattern) on the limited seeds (Frostfawn from day 1, Snowdrake from Part 2) and the Frosted Greenhouse skin.
+6. Server-wide, every hatch (anyone's, while the event is active) fills the shared **Snowman** meter. Hitting a tier gives everyone online in that server a free, fair boost and visibly builds the Snowman near spawn. The meter resets at 00:00 UTC.
+7. On 31 Dec, **Fireworks** weather runs every 10 minutes for 24 hours (**Sparkling** x4) as the New Bloom finale.
+8. The limited Sproutlings earn Dew like any other and **can be snatched** — the same high-drama, clip-worthy moments as Hollow Harvest. Gates work as usual.
+9. After the event ends (Sun 3 Jan 23:59 UTC), leftover Snowdrops convert to Dew, the Stall closes and the Snowman stops accumulating; already-hatched limited species and the skin stay forever.
+
+**Rules and numbers**
+| Thing | Value |
+| --- | --- |
+| New weather `snowglow` | name "Snowglow", `growthSpeed = 1.25`, `mutation = "frosted"`, `mutationChance = 0.2`, `naturalWeight = 0`, sky `Color3.fromRGB(210, 235, 255)`, announce "Snowglow drifts in... hatches may turn FROSTED (x3.5)! Grab the Snow Globes!" |
+| New weather `fireworks` | name "Fireworks", `growthSpeed = 1.5`, `mutation = "sparkling"`, `mutationChance = 0.25`, `naturalWeight = 0`, sky `Color3.fromRGB(20, 20, 45)` (client also tweens in firework particle bursts — cosmetic only, a client build item), announce "Fireworks light up the sky! Hatches may turn SPARKLING (x4) — New Bloom day only!" |
+| New mutation `frosted` | name "Frosted", `multiplier = 3.5`, color `Color3.fromRGB(190, 230, 255)` |
+| New mutation `sparkling` | name "Sparkling", `multiplier = 4`, color `Color3.fromRGB(255, 215, 120)` |
+| Snowglow schedule | Every **20 min** on the UTC clock (:00, :20, :40), 120 s duration (`Config.WeatherDurationSeconds`), from Part 1 start through the event end — **paused** during the 24 h Fireworks window (see below) and resuming its normal schedule right after. Replaces whatever weather is running, same stacking rule as Spooky Fog. |
+| Fireworks schedule | Every **10 min**, **31 Dec 00:00 UTC → 31 Dec 23:59 UTC only** (24 h). For that day, Fireworks fully takes Snowglow's scheduled slots (both keep `naturalWeight = 0` outside their own windows); Snowglow resumes at 1 Jan 00:00 UTC. |
+| Snow Globes | **10 per Snowglow cycle**, spawned at random `SnowGlobeSpawn` points on the shared island (never inside plots — reuses the Wisp Lantern spawn pattern and per-player, once-per-cycle collection rule). **+5 Snowdrops** each. Despawn when Snowglow ends. |
+| Hatch bonus | +1 Snowdrop per hatch during Snowglow or Fireworks, **+5** for a Frosted hatch, **+8** for a Sparkling hatch (New Bloom day only — a bigger one-day bonus to make the finale feel special) |
+| Daily first-Snowglow bonus | **+20 Snowdrops** for the first globe collected each UTC day (a days 2–7 and 8–28 lever, mirrors Hollow Harvest's daily first-Fog bonus) |
+| Expected earn rate | about **60–90 Snowdrops per 20 min** of active play (**estimate, unverified**; qa-tester measures it live) — same derivation as Hollow Harvest: 10 globes × 5 = 50 from globes alone, plus roughly 2–8 hatches' worth of bonus in that window |
+| Summon Snowglow (Robux) | Starts Snowglow right away for the whole server, spawns globes for **everyone**. Proposed **149 R$**, *owner decides*. Never gives the buyer extra globes — same fairness rule as Summon Spooky Fog. |
+
+**Limited species** (add to `Species.luau` with `stockChance = 0` and `limited = "winter2026"`; `price` is the Dew reference value used for sell value, same convention as Hollow Harvest)
+| id | Name | Rarity | Price (Dew ref) | growSeconds | dewPerSecond | Payback | How to get | Look (placeholder parts) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `frostfawn` | Frostfawn | Epic | 180,000 | 420 (7 min) | 500 | 360 s | **Free:** Advent Day 1 (Sat 12 Dec) for everyone who claims that day's gift, including Week-8 teaser qualifiers (see Advent Gifts below — this *is* the teaser payoff, not a second grant). Also in the **Snowdrop Stall** from day 1: **60 Snowdrops**, max 5/day | pale blue-white body, dark navy eyes, topper `Antler` (a small forked icy-blue crystal — new topper part, art-brief task) |
+| `snowdrake` | Snowdrake | Legendary | 1,500,000 | 720 (12 min) | 1,800 | ≈ 833 s | **Snowdrop Stall from Part 2 (Sat 19 Dec):** **250 Snowdrops**, max 2/day | deep teal body with a frost-white belly stripe, glowing cyan eyes, topper `Wing` (a pair of translucent pale-blue crystal shard wings — new topper part) |
+| `aurorelle` | Aurorelle | Mythic | 11,000,000 | 1,500 (25 min) | 7,000 | ≈ 1,571 s | **Pond only, during Snowglow, from event start** (not Part-2 gated, unlike Hollowisp): 0.6% per cast (1.1% with Lucky Rod, PvE only) | near-white pearlescent body, faint lavender-pink tint, glowing violet eyes, topper `Halo` (a thin rotating ring of light — new topper part) |
+
+> [!note] Frostbloom payback math (live-ops-manager, 2026-09-26) — pending game-designer confirmation, same process as Hollow Harvest's
+> **Payback math (price ÷ dewPerSecond), checked against [[Sproutling Isles - Design Doc]]'s base curve and against the two Hollow Harvest reference points already on the books:**
+> - **Frostfawn (Epic, 180,000 ÷ 500 = 360 s)** — sits inside the base Epic range (Thornix 60,000÷220 ≈ 273 s to Bloomingo 180,000÷450 = 400 s) and next to Pumpkit's 395 s. Fits cleanly.
+> - **Snowdrake (Legendary, 1,500,000 ÷ 1,800 ≈ 833.3 s)** — sits inside the base Legendary range (Sunfloof 600,000÷1,000 = 600 s to Orchidragon 2,000,000÷2,200 ≈ 909.1 s) and close to Gourdgeist's 800 s. Fits cleanly.
+> - **Aurorelle (Mythic, 11,000,000 ÷ 7,000 ≈ 1,571.4 s)** — the base game has only one Mythic reference point (Moonpetal Wisp, 7,500,000÷5,000 = 1,500 s), and Hollow Harvest set a second, above-curve one (Hollowisp, ≈ 1,667 s, justified there by much rarer acquisition). Aurorelle's ≈ 1,571 s lands **between those two existing Mythic points**, which fits its acquisition: rarer than Moonpetal Wisp (pond-only during a scheduled weather, not shop/parade odds) but less rare than Hollowisp (available from event start, not gated to Part 2, and at slightly better odds — 0.6%/1.1% vs. 0.5%/1%). No change needed on this reasoning, but **not yet confirmed by game-designer** — flagged as a new task below, the same way Hollow Harvest's numbers were confirmed after the fact.
+> - Arithmetic re-checked: 180,000÷500=360; 1,500,000÷1,800=833.33; 11,000,000÷7,000=1,571.43.
+> **Stall pacing looks affordable at the stated caps**, by the same math Hollow Harvest used: ~2 h of active daily play (≈ 6 Snowglow cycles) at 60–90 Snowdrops each is roughly 360–540/day — enough for the 5/day Frostfawn cap (300) or most of the 2/day Snowdrake cap (500), and the 500-Snowdrop Frosted Greenhouse skin within a day or two of dedicated play. Given the event runs 23 days (much longer than Hollow Harvest's), this is if anything more comfortable, not less. No cap changes recommended, pending the same live measurement caveat as Hollow Harvest's earn-rate estimate.
+
+**Advent Gifts** (free-tier only, no paid-only items — house rule against pay-to-win)
+One gift claimable per UTC calendar day, 12–24 Dec. Missing a day loses it by default; it can be recovered **once** with the streak-saver rewarded ad (placement 5 in section 4), if ads are live by then — no other catch-up, so the calendar stays a genuine daily-return lever.
+| Day | Date (UTC) | Reward |
+| --- | --- | --- |
+| 1 | Sat 12 Dec | **Free Frostfawn seed** (Epic) — the Week-8 teaser payoff for everyone who logs in that day |
+| 2 | Sun 13 Dec | 500 Dew |
+| 3 | Mon 14 Dec | 5-min Luck Boost |
+| 4 | Tue 15 Dec | 1 free **Lilypadger** seed (Rare, base roster) |
+| 5 | Wed 16 Dec | 20 Snowdrops |
+| 6 | Thu 17 Dec | 1,500 Dew |
+| 7 | Fri 18 Dec | 10-min Luck Boost |
+| 8 | Sat 19 Dec (Part 2) | 40 Snowdrops |
+| 9 | Sun 20 Dec | 1 free **Thornix** seed (Epic, base roster) |
+| 10 | Mon 21 Dec | 5,000 Dew |
+| 11 | Tue 22 Dec | 15-min Luck Boost |
+| 12 | Wed 23 Dec | 60 Snowdrops |
+| 13 | Thu 24 Dec | 10,000 Dew + 25 Snowdrops (capstone) |
+
+Design note: Days 4 and 9 deliberately gift **base-roster** seeds (already Dew-purchasable, so no new power), not Snowdrake or Aurorelle — this keeps those two limited species' own earn paths (Stall, pond) meaningful instead of diluting them with free copies.
+
+**The Snowman co-op mechanic** (new — not covered by Hollow Harvest)
+- **Accumulation:** every hatch, by any player, on any server, while the event is active, adds 1 point to that **server's own** Snowman meter (a simple server-memory counter — no DataStore, same pattern as the Week 6 Bloom Rush "500 hatches" milestone).
+- **Tiers and boosts** (all time/flair, never power over another player — per [[Sproutling Isles - Design Doc]] pillar 5, "Pay for time and flair, never for power over others," which applies just as much to free server rewards):
+  | Tier | Threshold (hatches, that server that day) | Boost for everyone online in that server |
+  | --- | --- | --- |
+  | 1 — Snowball | 100 | Free 5-min Luck Boost |
+  | 2 — Body | 250 | Free 10-min Luck Boost, Snowman visibly grows a body |
+  | 3 — Scarf & face | 450 | A free Snowglow starts immediately in that server (a mini, no-cost weather window for everyone) |
+  | 4 — Frosty (finished) | 700 | +15 Snowdrops each, Snowman is fully built (decorative only) for the rest of that UTC day |
+- **Reset:** **per server, daily at 00:00 UTC.** Chosen over "for the whole event" because Roblox server instances don't reliably survive 23 days (servers recycle as players come and go), so a single persistent meter would make some servers hit Tier 4 early and others never reach it — inconsistent and unfair-feeling. A daily reset instead gives every server, every day, the same repeatable co-op goal — a stronger days 8–28 lever, and matches the ephemeral, session-scoped precedent Bloom Rush already set. Thresholds above are sized for a single 8-player server (`Config.PlotCount = 8`) in one UTC day, not a full weekend like Bloom Rush's 500.
+- Not saved per player; a `SnowmanTierUp` analytics custom event (server id / tier / hatches-that-day) records each tier-up for KPI tracking, since there's no per-player field for it.
+- Progress shows as a bar near the top of the screen (same UI pattern as Bloom Rush), plus the physical Snowman model near spawn/the plaza gaining accessory parts per tier.
+
+**Plot skin: "Frosted Greenhouse"** (cosmetic only, parallel to Hollow Harvest's Haunted Greenhouse)
+- Costs **500 Snowdrops**, in the Snowdrop Stall. **Earn-only**, never sold for Robux.
+- Look: icy pale-blue tinted glass, a snowflake decal on the sign, icicles hanging from the gate posts, a faint white-blue glow on the soil. Only a recolor/swap of the same named plot parts as the base and Haunted skins — the collision shape stays identical, so it can't hide Sproutlings or block thieves.
+- Saved as `data.skins.frosted = true` (extends the existing `data.skins` table from Hollow Harvest — no new top-level save field needed) and `data.skin = "frosted"`. Same Equip/Unequip toggle. Stays forever after the event.
+
+**Robux items** (*proposals, real money → owner decides*)
+| Item | Contents | Price | Notes |
+| --- | --- | --- | --- |
+| Summon Snowglow | Starts Snowglow for the whole server right now, spawns globes for everyone | **149 R$** (proposed) | Same fairness rule as Summon Spooky Fog — never extra pickups for the buyer alone |
+| Winter Bundle | **Luck Boost 15 min + Instant Grow (1 tile) + Dew Pouch** — time items only, no gamepass, no exclusive cosmetic | **99 R$** (proposed) | List value of the 3 items separately is 117 R$ (49+39+29), so ≈ 15% off — same discount pattern as the Week 7 Harvest Bundle proposal, for consistency |
+
+**Data and save changes** (`DataService.defaultData` + `reconcile`)
+- `data.winterEvent = { id = "winter2026", snowdrops = 0, globeDay = 0, stallBuys = { [itemId] = { day, n } }, advent = { claimedDays = {} } }`
+- `data.skins.frosted = false` (extends the existing `data.skins` table added for Hollow Harvest — do not create a second top-level skins table)
+- The Snowman counter/tier state is **not saved** (server-memory only — see above).
+- At the end: on the first join after the end time, convert `snowdrops` to Dew (1 = 5 min of income, min 100 Dew — same formula as Hollow Harvest's Moonberry conversion) and notify, e.g. "Frostbloom Festival is over! Your 84 Snowdrops became 25,200 Dew." Then zero `snowdrops`. Any Advent day not claimed by the event's end is lost — no late claims.
+
+**Edge cases**
+- A player joins mid-Snowglow: they get the globes still standing, not the ones others took (per-player collection, same as Wisp Lanterns).
+- A snatch during the event: existing `SnatchService.onLeaving` logic applies to Frostfawn/Snowdrake/Aurorelle like any other Sproutling — the drama is intended, same rule as Hollow Harvest.
+- Fireworks' 24 h window (31 Dec 00:00–23:59 UTC) fully replaces Snowglow's scheduled slots for that day only; Snowglow resumes its normal 20-min schedule from 1 Jan 00:00 UTC. Both windows sit inside the overall event window (ends 3 Jan 23:59 UTC), so there's no overlap with the event's own end.
+- Summoning Snowglow during a scheduled Snowglow: extends it, no second globe wave (same anti-farm rule as Hollow Harvest's Fog summons). **Summoning Snowglow during Fireworks is a new interaction Hollow Harvest never had** (it never ran two limited weathers in the same event) — flagged for roblox-engineer to decide against the actual stacking code: most likely it should simply extend Fireworks with no globe wave, matching the existing "special weather beats a summon of a different type" precedent (Aurora over Fog), rather than replacing Fireworks with Snowglow.
+- Daily Stall caps and the Advent Gift both reset/advance at 00:00 UTC. An Advent day's gift is claimable only from its calendar date onward; if missed, it's lost unless recovered once with the streak-saver ad, per the outline — no other catch-up.
+- Storage full when claiming a Stall seed or an Advent seed day: seeds go to the seed inventory, not pads, so there's no issue (same as Hollow Harvest).
+- Clock skew across servers: the schedule and all resets use `os.time()` UTC, same tolerance as Hollow Harvest.
+- After the event: winter weather weights go back to 0, the Snowdrop Stall closes ("Frostbloom is over — see you next winter!"), the Snowman stops accumulating, and already-obtained limited seeds/skins can still be planted/worn forever, same rule as Hollow Harvest.
+- Exploit check: Snowdrop grants happen only on the server; globe touch is validated by the same ≤ 12-stud server distance check as Wisp Lanterns.
+
+**UI text**
+- HUD chip: "❄️ Snowdrops: 140 · Next Snowglow in 08:15"
+- Globe pickup: "+5 Snowdrops" (floating text); first globe of the day: "+20 daily bonus!"
+- Advent Gift claim toast: "🎄 Day 6: +1,500 Dew! Come back tomorrow for Day 7."
+- Snowman tier-up announcement (server-wide), e.g. Tier 2: "⛄ The server Snowman grew a body! Free 10-min Luck Boost for everyone online!"; Tier 4: "⛄ FROSTY IS COMPLETE! Everyone online gets +15 Snowdrops!"
+- Stall: title "Snowdrop Stall", buttons "Adopt Frostfawn (60 ❄️)", "Adopt Snowdrake (250 ❄️)" (Part 2), "Frosted Greenhouse (500 ❄️)", cap message "Come back tomorrow for more (5/5 today)".
+- Frosted hatch shout: "{name} hatched a FROSTED {species}!"; Sparkling hatch shout (New Bloom): "{name} hatched a SPARKLING {species}!"
+
+**KPIs:** event participation (collected ≥ 1 globe) ≥ 65% of DAU; Advent Gift claim rate ≥ 50% of DAU claim at least 5 of the 13 days; Snowman reaches at least Tier 2 on ≥ 70% of server-days during the event (new custom event `SnowmanTierUp`); days 8–28 play days ≥ 4 for the October launch cohort (joined 10–31 Oct); holiday-newcomer D1 ≥ 30% (joined 12 Dec–3 Jan); ≥ 30% of event players buy at least one Stall item; ≥ 15% own the Frosted Greenhouse skin by event end (higher bar than Hollow Harvest's 10%, since the event is longer and the skin costs more); spend days (payers with 2+ purchase days ≥ 25% of payers) over the event; `SnatchVictimLeft` rate not higher than baseline.
+
+**Build list for roblox-engineer** (planning only — build closer to 12 Dec; qa-tester reviews after)
+> Note: this session has no shell/git access to the `claude/roblox-popular-game-trends-6u7sie` branch where the code lives (only this vault note was read/edited), so the exact shape of `Events.luau` and `EventService.luau` below is **inferred**, not verified, from this doc's own earlier wording ("a new `Events.luau` entry alongside `Events.Halloween2026`") and from the Halloween build's description in [[Sproutling Isles]]'s task log. **roblox-engineer must confirm the real file structure before coding.**
+1. `src/shared/Weather.luau`: add the `snowglow` and `fireworks` weather types and the `frosted`/`sparkling` mutations.
+2. `src/shared/Species.luau`: add Frostfawn/Snowdrake/Aurorelle with `limited = "winter2026"`, `stockChance = 0`. Confirm the `rollByRarity` limited-species exclusion fixed during the Hollow Harvest build generalizes to a second `limited` value and isn't hardcoded to `"halloween2026"`.
+3. `src/shared/Events.luau`: add a second event config alongside the existing Halloween entry (event id, all 4 phase UTC timestamps, the Snowglow **and** Fireworks schedules/mutation config, snow-globe count/value, the 13-entry Advent Gift table, Snowman tier thresholds, Stall items/prices/caps).
+4. `src/server/EventService.luau`: **this likely needs a small refactor, not just a second copy-pasted block** — reasoning: Hollow Harvest's build hard-codes a single scheduled weather and a single `data.event`/Moonberries shape; winter needs **two** scheduled weathers running in the same event (Snowglow + Fireworks), a different currency (Snowdrops) with its own save shape, and two entirely new subsystems Halloween never had (the Advent calendar and the Snowman). Recommend: (a) generalize the weather scheduler to accept a *list* of scheduled weathers per event, (b) key event save data by event id (e.g. `data.events[eventId]`) rather than a single hardcoded `data.event`, so Halloween's and winter's data don't collide, and (c) decide whether Advent/Snowman logic lives in `EventService.luau` or new sibling files (`AdventService.luau` / `SnowmanService.luau`) if the file would otherwise grow too large — a code-architecture call for roblox-engineer, not decided here.
+5. `src/server/WeatherService.luau`: extend the existing start/stop hook to support two scheduled event weathers in parallel (Snowglow 20-min + Fireworks 10-min on 31 Dec only), not just the single-weather scheduler Hollow Harvest used.
+6. `src/server/PondService.luau`: add Aurorelle to the loot table whenever Snowglow is active (available from event start, unlike Hollowisp's Part-2 gate).
+7. `src/server/PlotService.luau`: apply/equip the Frosted skin (extends `data.skins`), grant Snowdrops on hatch, feed the Snowman counter.
+8. `src/shared/MapBuilder.luau`: the Snowdrop Stall booth, 25–30 `SnowGlobeSpawn` marker parts, and a Snowman model near spawn/the plaza with swappable accessory parts for its 4 tiers (keep it free of Roblox services, per the existing gotcha).
+9. `src/client/init.client.luau`: Snowglow/Fireworks visuals, the HUD chip, the Stall UI, the 13-box Advent calendar UI (claimed/claimable/locked states), the Snowman progress bar and tier-up announcement, and the skin toggle.
+10. `src/server/MonetizationService.luau` + `src/shared/Products.luau`: `SummonSnowglow` and `WinterBundle` handlers (only after the owner approves and creates the products).
+11. Studio test hook: extend `Config.EventTimeOffset` to also jump to Part 2 / New Bloom / the Fireworks window / the end for winter, and to fast-forward UTC-day rollovers for Advent Gift and Snowman-reset testing.
+12. Analytics (section 3): add a `SnowmanTierUp` custom event and an `AdventClaim` custom/economy event, following the existing pattern — the `EventShop` funnel and `Event`/`EventShop` economy events from Hollow Harvest should be directly reusable for the Snowdrop Stall.
 
 ---
 
@@ -600,9 +722,10 @@ The weekly review (Mondays, **live-ops-manager**) reads from CH Analytics plus t
 - [ ] **roblox-engineer:** rewarded ads `Ads.luau`, after the owner approves and eligibility is confirmed
 - [ ] **roblox-engineer:** Founding Gardener badge + Week 8 teaser login tracker
 - [x] **game-designer:** confirm the Halloween numbers against the payback rules — done 2026-09-26, see the note above the limited-species table. All 3 species check out against the base game's payback curve (Hollowisp runs ~11% above the single existing Mythic reference point, judged defensible given its much rarer acquisition). Stall caps look affordable at the earn-rate estimate. Earn rate itself stays unverified (needs live measurement, as already flagged).
+- [ ] **game-designer:** confirm the Frostbloom Festival numbers against the payback rules (species payback times, Advent/Stall pacing) — same process as the Halloween confirmation above; see the note above the winter limited-species table in [[#Winter event outline "Frostbloom Festival"]].
 - [ ] **game-designer:** icons for the 13 store items + experience icon and thumbnails (part of the art brief)
 - [ ] **qa-tester:** event test plan using `EventTimeOffset` (start, Part 2, Witching Hour, end conversion), Starter Pack repeat purchase check, analytics once-only check
-- [ ] **live-ops-manager:** full Frostbloom Festival spec by 21 Nov; weekly KPI reviews from launch
+- [x] **live-ops-manager:** full Frostbloom Festival spec — done 2026-09-26, well ahead of the 21 Nov deadline. Full spec in [[#Winter event outline "Frostbloom Festival"]]: goal, 9-step player flow, weather/currency rules table, 3 limited species with computed payback numbers (Frostfawn ≈360s, Snowdrake ≈833s, Aurorelle ≈1,571s — all land inside or between the existing tier ranges; game-designer confirmation still needed, new task below), the 13-day Advent Gift schedule, a fully-designed new "Snowman" server co-op mechanic (per-server, resets daily at 00:00 UTC), the Frosted Greenhouse skin, Robux proposals (Summon Snowglow 149 R$, a Winter Bundle spelled out at 99 R$ for time items only), save shape, edge cases, UI text, KPIs and a 12-item build list for roblox-engineer (flags that `EventService.luau` likely needs a small refactor to support 2 events, not just a copy-pasted block — reasoning given). Live-ops-manager could not access the code branch this session (no shell/git tool, code lives on `claude/roblox-popular-game-trends-6u7sie`), so the exact `Events.luau`/`EventService.luau` shape is flagged as inferred, not verified. Weekly KPI reviews from launch: still open, starts once the game is live.
 - [x] **market-researcher:** check current Roblox ads eligibility, the Ads Manager pricing model and the maturity questionnaire wording before launch — done 2026-09-26. Rewarded-ads eligibility bar confirmed plus 3 new criteria found (two-step verification, no free-form user creation, questionnaire must be *approved* not just submitted); one API detail corrected (`ShowAdResult.ShowCompleted`, not `Succeeded`); `ExperienceIneligible` confirmed as a real, apparently still-open bug. Ads Manager confirmed as auto-bid/CPP billing (not CPM/CPC/CPI), tiers in this note are compatible with Lifetime Budget billing, minimum spend is far below Tier 1, "new-creator ad credits" found no evidence and should be treated as not confirmed. Maturity questionnaire: 14 categories confirmed, including Paid Item Trading (relevant to the Trading Booths feature, not just Luck Boost). See section 4 caution box, section 6 note and section 1D note for detail and sources. The 18 Feb 2026 "opened to all eligible creators" date is still only a search-summary claim (devforum.roblox.com is blocked in-sandbox), not independently verified from the primary announcement page.
 - [ ] **app-engineer (optional, owner call):** Clip Studio preset for Roblox hatch and snatch highlights
 
