@@ -7,6 +7,28 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — confirmed Frostbloom Festival numbers
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly)
+
+**What was done**
+- CI was green on both branches. Top queue item was the game-designer confirmation of last
+  run's Frostbloom Festival numbers — read-only verification, handled directly rather than
+  spinning up an agent.
+- Independently re-checked all 3 species' payback arithmetic (180,000÷500=360,
+  1,500,000÷1,800=833.33, 11,000,000÷7,000=1,571.43 — all correct) and their placement against
+  the game's established curve — agreed with the reasoning, no changes needed.
+- Checked two things the original payback note hadn't covered: confirmed the Day-1-free-Frostfawn
+  vs. Stall-sells-the-same-species-from-day-1 isn't a design contradiction (the free grant only
+  reaches players who claim that specific Advent day; the Stall covers latecomers); verified
+  `Config.PlotCount = 8` and `SoilTilesPerPlot = 12` in the actual code to sanity-check the Snowman
+  co-op tier thresholds are the right order of magnitude — left flagged for live tuning, same
+  treatment as the earn-rate estimates, since a server's actual 24h hatch rate can't be confirmed
+  without live population data.
+- Recorded the confirmation in [[Sproutling Isles - Launch & Live Ops]] and ticked the task in
+  both that note and [[Sproutling Isles]].
+
+---
+
 ## 2026-09-26: hourly run — Frostbloom Festival (winter event) spec written
 **Device:** cloud Routine · **Branch:** `main` (vault-only) · **Agents used:** live-ops-manager
 

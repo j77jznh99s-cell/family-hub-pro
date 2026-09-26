@@ -532,13 +532,34 @@ Every week also includes: a Monday KPI review (**live-ops-manager**), bug fixes 
 | `snowdrake` | Snowdrake | Legendary | 1,500,000 | 720 (12 min) | 1,800 | ≈ 833 s | **Snowdrop Stall from Part 2 (Sat 19 Dec):** **250 Snowdrops**, max 2/day | deep teal body with a frost-white belly stripe, glowing cyan eyes, topper `Wing` (a pair of translucent pale-blue crystal shard wings — new topper part) |
 | `aurorelle` | Aurorelle | Mythic | 11,000,000 | 1,500 (25 min) | 7,000 | ≈ 1,571 s | **Pond only, during Snowglow, from event start** (not Part-2 gated, unlike Hollowisp): 0.6% per cast (1.1% with Lucky Rod, PvE only) | near-white pearlescent body, faint lavender-pink tint, glowing violet eyes, topper `Halo` (a thin rotating ring of light — new topper part) |
 
-> [!note] Frostbloom payback math (live-ops-manager, 2026-09-26) — pending game-designer confirmation, same process as Hollow Harvest's
+> [!note] Frostbloom payback math (live-ops-manager, 2026-09-26) — confirmed by game-designer 2026-09-26, see the confirmation note right below this one.
 > **Payback math (price ÷ dewPerSecond), checked against [[Sproutling Isles - Design Doc]]'s base curve and against the two Hollow Harvest reference points already on the books:**
 > - **Frostfawn (Epic, 180,000 ÷ 500 = 360 s)** — sits inside the base Epic range (Thornix 60,000÷220 ≈ 273 s to Bloomingo 180,000÷450 = 400 s) and next to Pumpkit's 395 s. Fits cleanly.
 > - **Snowdrake (Legendary, 1,500,000 ÷ 1,800 ≈ 833.3 s)** — sits inside the base Legendary range (Sunfloof 600,000÷1,000 = 600 s to Orchidragon 2,000,000÷2,200 ≈ 909.1 s) and close to Gourdgeist's 800 s. Fits cleanly.
 > - **Aurorelle (Mythic, 11,000,000 ÷ 7,000 ≈ 1,571.4 s)** — the base game has only one Mythic reference point (Moonpetal Wisp, 7,500,000÷5,000 = 1,500 s), and Hollow Harvest set a second, above-curve one (Hollowisp, ≈ 1,667 s, justified there by much rarer acquisition). Aurorelle's ≈ 1,571 s lands **between those two existing Mythic points**, which fits its acquisition: rarer than Moonpetal Wisp (pond-only during a scheduled weather, not shop/parade odds) but less rare than Hollowisp (available from event start, not gated to Part 2, and at slightly better odds — 0.6%/1.1% vs. 0.5%/1%). No change needed on this reasoning, but **not yet confirmed by game-designer** — flagged as a new task below, the same way Hollow Harvest's numbers were confirmed after the fact.
 > - Arithmetic re-checked: 180,000÷500=360; 1,500,000÷1,800=833.33; 11,000,000÷7,000=1,571.43.
 > **Stall pacing looks affordable at the stated caps**, by the same math Hollow Harvest used: ~2 h of active daily play (≈ 6 Snowglow cycles) at 60–90 Snowdrops each is roughly 360–540/day — enough for the 5/day Frostfawn cap (300) or most of the 2/day Snowdrake cap (500), and the 500-Snowdrop Frosted Greenhouse skin within a day or two of dedicated play. Given the event runs 23 days (much longer than Hollow Harvest's), this is if anything more comfortable, not less. No cap changes recommended, pending the same live measurement caveat as Hollow Harvest's earn-rate estimate.
+
+> [!note] Frostbloom numbers confirmed 2026-09-26 (game-designer)
+> Re-checked the arithmetic above independently (180,000÷500=360, 1,500,000÷1,800=833.33,
+> 11,000,000÷7,000=1,571.43 — all correct) and the reasoning for where each species sits relative to
+> the established curve and to Hollow Harvest's own precedents — agree with all three placements,
+> no changes needed. Also checked two things the payback note didn't cover:
+> - **The Day-1 free Frostfawn vs. the Stall selling the same species from day 1 (60 Snowdrops) is
+>   intentional, not a redundancy bug:** the free grant only reaches players who actually claim
+>   the Day 1 Advent gift (i.e. log in 12 Dec); the Stall listing exists for anyone who joins the
+>   event late, or who was offline that specific day. Both paths coexist correctly.
+> - **Snowman tier thresholds (100/250/450/700 hatches/server/day) are the right order of magnitude**
+>   for 8 plots × 12 soil tiles (`Config.PlotCount = 8`, `Config.SoilTilesPerPlot = 12`, both verified
+>   in code) sustaining that hatch rate over a 24 h UTC day — a server with even moderate turnover
+>   easily clears Tier 1-2, and Tier 4 (700) is a meaningful stretch goal, not a guarantee. This
+>   still can't be fully confirmed without live population data (a server's hatch rate depends on
+>   how many different players cycle through it over 24 h, not just 8 concurrent ones) — **left
+>   flagged as an estimate needing live tuning**, the same treatment Hollow Harvest's own earn-rate
+>   estimate got. If early live data shows Tier 4 never clears (or clears trivially), lower (or
+>   raise) all 4 thresholds proportionally rather than redesigning the curve.
+> Stall pacing and payback math: no changes. Snowman thresholds: keep as proposed, watch live data
+> once the event is closer to build.
 
 **Advent Gifts** (free-tier only, no paid-only items — house rule against pay-to-win)
 One gift claimable per UTC calendar day, 12–24 Dec. Missing a day loses it by default; it can be recovered **once** with the streak-saver rewarded ad (placement 5 in section 4), if ads are live by then — no other catch-up, so the calendar stays a genuine daily-return lever.
@@ -722,7 +743,7 @@ The weekly review (Mondays, **live-ops-manager**) reads from CH Analytics plus t
 - [ ] **roblox-engineer:** rewarded ads `Ads.luau`, after the owner approves and eligibility is confirmed
 - [ ] **roblox-engineer:** Founding Gardener badge + Week 8 teaser login tracker
 - [x] **game-designer:** confirm the Halloween numbers against the payback rules — done 2026-09-26, see the note above the limited-species table. All 3 species check out against the base game's payback curve (Hollowisp runs ~11% above the single existing Mythic reference point, judged defensible given its much rarer acquisition). Stall caps look affordable at the earn-rate estimate. Earn rate itself stays unverified (needs live measurement, as already flagged).
-- [ ] **game-designer:** confirm the Frostbloom Festival numbers against the payback rules (species payback times, Advent/Stall pacing) — same process as the Halloween confirmation above; see the note above the winter limited-species table in [[#Winter event outline "Frostbloom Festival"]].
+- [x] **game-designer:** confirm the Frostbloom Festival numbers against the payback rules — done 2026-09-26, see the confirmation note above. All 3 species' payback times confirmed correct and well-placed; Snowman tier thresholds are the right order of magnitude for `Config.PlotCount = 8` × `SoilTilesPerPlot = 12` but left flagged for live tuning, same treatment as the earn-rate estimates.
 - [ ] **game-designer:** icons for the 13 store items + experience icon and thumbnails (part of the art brief)
 - [ ] **qa-tester:** event test plan using `EventTimeOffset` (start, Part 2, Witching Hour, end conversion), Starter Pack repeat purchase check, analytics once-only check
 - [x] **live-ops-manager:** full Frostbloom Festival spec — done 2026-09-26, well ahead of the 21 Nov deadline. Full spec in [[#Winter event outline "Frostbloom Festival"]]: goal, 9-step player flow, weather/currency rules table, 3 limited species with computed payback numbers (Frostfawn ≈360s, Snowdrake ≈833s, Aurorelle ≈1,571s — all land inside or between the existing tier ranges; game-designer confirmation still needed, new task below), the 13-day Advent Gift schedule, a fully-designed new "Snowman" server co-op mechanic (per-server, resets daily at 00:00 UTC), the Frosted Greenhouse skin, Robux proposals (Summon Snowglow 149 R$, a Winter Bundle spelled out at 99 R$ for time items only), save shape, edge cases, UI text, KPIs and a 12-item build list for roblox-engineer (flags that `EventService.luau` likely needs a small refactor to support 2 events, not just a copy-pasted block — reasoning given). Live-ops-manager could not access the code branch this session (no shell/git tool, code lives on `claude/roblox-popular-game-trends-6u7sie`), so the exact `Events.luau`/`EventService.luau` shape is flagged as inferred, not verified. Weekly KPI reviews from launch: still open, starts once the game is live.
