@@ -93,6 +93,19 @@ except the final Docker build (see above) and got the same pass results CI shoul
 `src/presenter/weekly.js`, `src/presenter/usage.js`, `docs/ai-presenter.md` posting/disclosure guidance — these
 have passing unit tests but weren't independently read line-by-line for logic bugs.
 
+## CI fix on `main` (2026-09-26)
+`main`'s CI (`.github/workflows/ci.yml`) had been red since 2026-09-23 — every push failed on
+`tests/storage.test.js`'s `getServeInfo() returns a redirect with a presigned URL` test.
+Root cause: `src/services/storage/s3.js` on `main` destructured `getSignedUrl` from
+`@aws-sdk/s3-request-presigner` at require time; the test mocks `getSignedUrl` on the module
+object, but the destructured reference had already captured the real function (module caching
+meant this happened on the very first `require('../src/services/storage/s3')`, in an earlier
+test) — so the real AWS SDK function ran and failed with `CredentialsProviderError` (no AWS
+creds in CI). `claude/hourly-project-processing-ejbqs4` already carries the fix (`require` the
+module as a namespace object, call `presigner.getSignedUrl(...)` instead of a destructured
+const). Ported that exact fix to `main` (commit `fd327a0`); confirmed 30/30 tests pass locally
+before pushing.
+
 ## Tasks
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
 - [ ] **owner:** decide whether to merge `claude/hourly-project-processing-ejbqs4` into `claude/video-clip-detection-mvp-g18ggk` (all automated checks this session could run passed; Docker build step still unverified — see QA Review).

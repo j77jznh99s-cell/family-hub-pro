@@ -7,6 +7,26 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — fixed red CI on main (CI-first task)
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly)
+
+**What was done**
+- On load, checked CI on branches this session had pushed to (per [[Hourly Workflow]]'s "CI first"
+  rule) and found `main` itself red: the last 3 vault-only pushes this session made had all failed
+  CI, unnoticed until now. Root cause: `src/services/storage/s3.js` destructured `getSignedUrl`
+  from `@aws-sdk/s3-request-presigner` at require time; `tests/storage.test.js` mocks it on the
+  module object, but the destructured reference had already captured the real function (module
+  caching — `s3.js` gets `require`d once, in an earlier test), so the real AWS SDK function ran
+  and failed with `CredentialsProviderError` (no AWS creds in CI). This has been failing on every
+  push to `main` since 2026-09-23, unrelated to anything this session did.
+- `claude/hourly-project-processing-ejbqs4` already carries the fix (require the presigner module
+  as a namespace object, call `presigner.getSignedUrl(...)`). Ported that exact fix to `main`
+  rather than re-deriving one. Ran `npm ci && npm test` locally first: 30/30 pass (test 26 is the
+  one that was failing) — pushed only after confirming green locally (commit `fd327a0`).
+- Recorded the root cause and fix in [[Clip Studio]] and the run log in [[Work Queue]].
+
+---
+
 ## 2026-09-26: hourly run — verified Roblox ads eligibility & pricing (3/3, run complete)
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** market-researcher
 
