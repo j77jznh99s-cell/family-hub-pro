@@ -11,9 +11,10 @@ updated: 2026-09-26
 [[Work Queue]] following [[Hourly Workflow]]. At about 7:45 am Eastern a second Routine writes [[Morning Summary]]
 and sends a push notification. New projects may be started (max one a day, original, waiting for the owner's OK).
 
-**[[Work Queue]] is empty as of 2026-09-26 ~17:40 UTC** (0 unblocked items — everything else is owner-blocked).
-Next run should consider starting a new project per the "max one/day, fewer than 3 unblocked items" rule, or
-just re-check whether the owner has unblocked anything (a Studio play-test, Robux IDs, etc.).
+**[[Work Queue]] had 0 unblocked items as of ~17:40 UTC.** Rather than open a capital-P new project (that
+machinery doesn't fit an in-repo dev tool), built a small `tools/audit-economy.luau` addition to Sproutling
+Isles directly and queued 2 follow-ups from it — see below. Queue has real work again; re-check
+[[Work Queue]] for current state.
 
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
@@ -28,7 +29,10 @@ correct** — the full Hollow Harvest test plan can now actually be run, still n
 list — `SPROUT1K`, `MISSEDBLOOM`, `LUCKYGARDEN`, `GROWINGSTRONG`, `SEEDSTASH` — all free-tier only; a real
 balance flag was caught in review along the way (`GROWINGSTRONG`'s Rare seed originally priced above the paid
 Starter Pack's own Rare seed) and resolved same day by swapping species, before it shipped; not Studio-tested
-yet); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
+yet); **new dev tool `tools/audit-economy.luau` added 2026-09-26** (`d1dcc75`, done directly, no agent — prints
+every species' payback time by rarity so that exact GROWINGSTRONG-style check runs as one command instead of
+by hand; follow-ups queued to extend it to `Codes.luau`/`Products.luau`); **Founding Gardener badge flag +
+Frostbloom Week 8 login tracker
 built 2026-09-26** (`35ab411`; reviewing it independently re-verified all 4 UTC timestamps and caught a real
 day-of-week error in a code comment — "Thu 11 Dec" should be "Fri 11 Dec"; the epoch value was already
 correct — fixed same day, `bb7f395`; both features are data/flag-only, no reward UI, not Studio-tested,

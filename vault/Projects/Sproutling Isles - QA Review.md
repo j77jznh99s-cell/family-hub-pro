@@ -443,3 +443,34 @@ to work, not a bug.
 analytics-adjacent Hollow Harvest or leaderboard changes. One documentation nit (`EventShop`'s `Opened` call
 site) and one long-standing, currently-inert edge case (pre-`onb`-field saves) are noted above but neither
 blocks anything.
+
+---
+
+## New tool: `tools/audit-economy.luau` (2026-09-26)
+
+**Why this exists:** reviewing the Week 5 Codes proposal the same day (see [[Sproutling Isles - Launch & Live
+Ops]]'s "Week 5 code list" section) required hand-computing payback times (price ÷ dewPerSecond) for two
+species to catch a real balance bug — a proposed free code's Rare seed turned out to be priced *above* the
+paid Starter Pack's own Rare seed. That's the same hand-calculation this note has done by eye several times
+already (Halloween and Frostbloom species numbers, both confirmed correct on inspection). Doing it by hand
+works, but it only catches what a reviewer thinks to check.
+
+**What it does (first step, small on purpose):** `roblox/sproutling-isles/tools/audit-economy.luau`, run with
+`lune run tools/audit-economy` from `roblox/sproutling-isles/`, requires `src/shared/Species.luau` directly
+(no Studio needed — it works around Lune not having `Color3` as a real global by setting it from `@lune/roblox`
+before the require, confirmed working by testing) and prints every species' price, dewPerSecond and payback
+time, grouped and sorted by rarity. Output as of 2026-09-26 (16 species, all in the base roster plus the 3
+Hollow Harvest limiteds): Common 10–30s → Uncommon 50–75s → Rare 120–180s → Epic 273–400s → Legendary 600–909s
+→ Mythic 1500–1667s → Secret 2083s. A clean, monotonic curve with no gaps — matches every prior manual check
+in this note, and would have caught the `GROWINGSTRONG` issue immediately (it originally proposed a free
+`lilypadger` at 180s payback — visibly above `mushroomph`'s 120s, the Starter Pack's own paid grant, in the
+same Rare row).
+
+**Validated:** `selene src tools` → 0 errors/warnings; `rojo build` + `lune run tools/bake-map` unaffected
+(1241 parts, this tool doesn't touch map geometry, lives outside the Rojo-synced tree).
+
+**Deliberately not built yet** (queued as follow-up tasks, [[Work Queue]]): checking `Codes.luau`'s reward
+table, the Frostbloom Advent Gift list, or `Products.luau`'s Robux catalogue against this curve automatically
+— today's fix still needed a human to notice the comparison. Extending the tool to do that check itself is the
+natural next step, so a future GROWINGSTRONG-shaped bug gets caught by running one command instead of by a
+reviewer happening to think to check.

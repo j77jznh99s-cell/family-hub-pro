@@ -23,6 +23,35 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
   (Owner Profile, Decisions, Active Context, project notes); saved as [[AI Memory Export]]. No name,
   pronouns or personal details are recorded anywhere in the vault, so those sections were omitted.
 
+## 2026-09-26: hourly run — the queue ran dry, added a small economy-audit tool instead of a "new project"
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (isolated worktree) · **Agents used:** none (done directly)
+
+**What was done**
+- CI green on both branches. [[Work Queue]] had 0 unblocked items (everything remaining is
+  owner-blocked) — the trigger [[Hourly Workflow]] sets for considering a new project.
+- Decided **not** to formalize a capital-P new project (a `CLAUDE.md`/[[00 Home]] entry, its own
+  branch from `main`) — that machinery is built for a genuinely separate product, and doesn't fit
+  an in-repo dev tool that has to live inside `roblox/sproutling-isles/tools/` to work (it needs a
+  relative `require` of `Species.luau`, so a fresh branch from `main` would just fork away from the
+  code it depends on). Chose the smaller, more honest framing: a well-scoped addition to the
+  existing Sproutling Isles project, matching this session's established pattern of doing simple,
+  well-understood work directly rather than through an agent.
+- Built `tools/audit-economy.luau`: prints every species' payback time (price ÷ dewPerSecond)
+  grouped by rarity — the exact hand-calculation that caught the `GROWINGSTRONG` balance bug two
+  runs ago, now runnable as one command instead of relying on a reviewer to think to check. Had to
+  work around Lune not exposing `Color3` as a real global (confirmed by testing: setting a bare
+  global before `require`ing a module works, since Lune shares one global environment across
+  required scripts) — `Species.luau` evaluates `Color3.fromRGB(...)` at module load time, so this
+  was necessary just to get the require to succeed outside Roblox Studio.
+- Ran it: output is a clean, monotonic curve (Common 10s through Secret 2083s, all 16 species
+  including the 3 Hollow Harvest limiteds) that matches every payback-time claim this session has
+  hand-verified so far. `selene` clean; `rojo build` + `lune bake-map` unaffected (1241 parts, the
+  tool lives outside the Rojo-synced tree). Pushed `d1dcc75`; CI confirmed green (run #100).
+- Documented it in [[Sproutling Isles - QA Review]] and added 2 follow-up tasks to [[Work Queue]]
+  (extend the tool to auto-check `Codes.luau` and `Products.luau` against the curve) so future runs
+  have real, unblocked, low-risk work instead of an empty queue again next hour.
+- 1 task this run; stopping.
+
 ## 2026-09-26: hourly run — GROWINGSTRONG balance flag resolved, code list handed to roblox-engineer
 **Device:** cloud Routine · **Branch:** `main` (vault-only resolution) + `claude/roblox-popular-game-trends-6u7sie` (implementation, in progress) · **Agents used:** roblox-engineer (implementation)
 
