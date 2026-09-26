@@ -75,6 +75,16 @@ Check out the project branch in a second folder (for example `git worktree add .
 add that folder as a second project, and add a Build Bay (roblox-engineer) and a QA Deck (qa-tester)
 with a WORKBENCH. **Leave out the trading bot completely.**
 
+## One-click settings file (2026-09-26)
+Claude can't reach the laptop, so the settings StarNet can import are in **`starnet/station-settings.json`** in this repo.
+After installing: **SETTINGS → APP & BACKUP → IMPORT STATION…** → pick that file (it's in the cloned repo folder).
+It sets **$5 per day** and **$1 per run**. Format checked against StarNet's importer (`sidecar/configexport.js`); not tested in the app.
+
+StarNet's import can't set these, so do them by hand once (about 2 minutes):
+1. SETTINGS → APP & BACKUP → runtime limits: **maxIters = 25**, **maxConcurrentAgents = 2**, then restart StarNet.
+2. When creating each agent, set its MODEL card: knowledge-keeper **Haiku 4.5**; market-researcher **Sonnet 5, effort medium**;
+   game-designer and live-ops-manager **Opus 5, effort medium**.
+
 ## Keep it lean (owner: "don't overwork it", 2026-09-26)
 Checked in StarNet's code. The AI runs on Anthropic's servers, so the laptop only runs the app itself.
 | Setting | Where | Set to | Why |

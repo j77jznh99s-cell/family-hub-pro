@@ -16,6 +16,7 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 - Chose per agent/job: Haiku 4.5 (knowledge-keeper summaries), Sonnet 5 (market research), Opus 5 (design, on demand only).
 - Applied the safety defaults: $1 per run, Night Shift off for week 1. Recorded in [[Decisions]] and [[StarNet Automation]].
 - Owner then asked not to overwork it: added a "Keep it lean" section (medium effort, 25-step and 2-agent limits, caching on), checked in StarNet's code.
+- Owner asked Claude to set them: added `starnet/station-settings.json` (a StarNet import file with the $5/day and $1/run caps). The step and agent limits and each agent's model can't be imported, so they stay a 2-minute manual step.
 
 **Next:** see [[Active Context]].
 

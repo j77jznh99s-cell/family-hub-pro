@@ -1,0 +1,11 @@
+{
+  "starnetExport": 1,
+  "exportedAt": null,
+  "app": "StarNet",
+  "sections": {
+    "budget": {
+      "perRun": 1,
+      "perDay": 5
+    }
+  }
+}
