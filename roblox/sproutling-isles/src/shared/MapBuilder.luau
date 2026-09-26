@@ -492,7 +492,16 @@ local function buildPond(map: Instance)
 	local pond = Instance.new("Model")
 	pond.Name = "Pond"
 	pond.Parent = map
-	cylinder(pond, "Rim", 1.2, 98, 0, 0.2, -300, rgb(170, 160, 150), Enum.Material.Slate)
+	local rim = cylinder(pond, "Rim", 1.2, 98, 0, 0.2, -300, rgb(170, 160, 150), Enum.Material.Slate)
+	-- QA m11: Rim is a full disc reaching under the whole pond, not just its edge, and its top
+	-- (y 0.8) sits just under the water surface (y 1.05) -- with default CanCollide=true, players
+	-- could walk across the entire pond as if it were solid ground barely covered by water.
+	-- Fix (game-designer decision, 2026-09-26): CanCollide=false, same as Water below. Anyone who
+	-- goes in now sinks to PondBed (top y -1.5, about 2.5 studs under the surface) instead -- a
+	-- shallow wade, which fits a fishing pond you're meant to cast into from the Dock, not a floor
+	-- you walk across. Not a ring/annulus (the QA note's other option): that needs a part shape
+	-- this codebase's helpers don't build, for a purely cosmetic fix.
+	rim.CanCollide = false
 	local water = cylinder(pond, "Water", 1.4, 90, 0, 0.35, -300, rgb(70, 170, 200), Enum.Material.Glass)
 	water.Transparency = 0.2
 	water.CanCollide = false
