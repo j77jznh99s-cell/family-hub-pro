@@ -7,6 +7,21 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — re-reviewed Sproutling Isles fixes (3/3 tasks, run complete)
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** qa-tester
+
+**What was done**
+- Task 3 from [[Work Queue]]: qa-tester re-reviewed the 2026-09-23 fix commit on `claude/roblox-popular-game-trends-6u7sie`
+  in an isolated worktree, installing rojo/lune/selene fresh (not preinstalled). Tooling still clean: `selene` 0
+  errors/warnings, `rojo build` succeeds, `lune bake-map` still 1,209 parts, fresh build+bake matches the committed
+  `.rbxlx` with no diff.
+- Checked every claimed fix against the actual code (not just the commit message): blocker B1 and majors M1-M6, plus
+  all 14 claimed-fixed minors (more than the 5 requested). **All confirmed genuinely fixed**, no new bugs spotted.
+  Still-open items (m6, m11, m15, m18) confirmed still open, as expected (owner/design decisions or need a phone/Studio).
+- Updated [[Sproutling Isles - QA Review]] with a dated re-review section and a test-plan note that the shield Config
+  edit is now redundant (M6 handles it automatically) and Bonk is R, not E. Ticked the task in [[Sproutling Isles]].
+- This was the 3rd task this run — stopping per [[Hourly Workflow]]'s 3-tasks-per-run cap.
+
 ## 2026-09-26: hourly run — QA'd Clip Studio's hourly branch
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** qa-tester
 

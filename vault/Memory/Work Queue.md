@@ -8,7 +8,6 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **qa-tester:** re-review the 2026-09-23 [[Sproutling Isles]] fixes and update the test plan in [[Sproutling Isles - QA Review]].
 - [ ] **roblox-engineer:** Sproutling Isles analytics wrapper + events (spec in [[Sproutling Isles - Launch & Live Ops]]), needed before the beta.
 - [ ] **market-researcher:** demand brief comparing the 3 Gumroad product lines (family printables, Roblox game-making guides, spreadsheet/Notion templates) with sources, so the owner can answer [[Decisions]] #20.
 - [ ] **market-researcher:** verify Roblox rewarded-ads eligibility and Ads Manager pricing.
@@ -28,6 +27,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: qa-tester re-reviewed the 2026-09-23 Sproutling Isles fixes in an isolated worktree (installed rojo/lune/selene fresh): tooling still clean (0 lint issues, build/bake unchanged), every claimed fix (B1, M1-M6, 14 minors) confirmed present and correct in code, still-open items confirmed still open. Updated [[Sproutling Isles - QA Review]] and ticked the task. 3/3 tasks done this run, stopping.
 - 2026-09-26: qa-tester reviewed `claude/hourly-project-processing-ejbqs4` (Clip Studio) in an isolated worktree: 101+6+1 tests passed, CI steps reproduced except Docker build (sandbox limitation). 2 minor bugs found (no blockers). Added owner (merge decision) + app-engineer (fix) follow-ups in [[Clip Studio]].
 - 2026-09-26: knowledge-keeper filled in [[Trading Agent]] from the repo's README/CHANGELOG (read-only, GitHub API, no clone). Added two owner follow-ups (OANDA setup; enable/skip the daily-paper.yml schedule).
 - 2026-09-26 (setup test): worker session can clone and push to main.
