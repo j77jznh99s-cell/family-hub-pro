@@ -42,6 +42,7 @@ local TRANSACTION_TYPE_BY_REASON_PREFIX: { [string]: string } = {
 	Seed = "Shop",
 	Rebirth = "Gameplay",
 	EventShop = "Shop",
+	Code = "Gameplay", -- Week 5 Codes system (CodesService.luau); not in the section 3 spec table, chosen to match the closest existing free-grant precedent (Daily uses TimedReward, but a one-off redeemable code reads closer to a plain Gameplay grant)
 }
 
 local CUSTOM_FIELD_KEYS = {

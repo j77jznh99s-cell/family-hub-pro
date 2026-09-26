@@ -74,6 +74,7 @@ function DataService.defaultData()
 		event = { id = "halloween2026", berries = 0, lanternDay = 0, stallBuys = {} },
 		skins = {}, -- [skinId] = true once earned, e.g. skins.haunted; kept forever, earn-only
 		skin = "", -- currently equipped cosmetic plot skin id ("" = none)
+		codes = {}, -- [code] = true once redeemed, ever (Week 5 Codes system, see CodesService.luau)
 	}
 end
 

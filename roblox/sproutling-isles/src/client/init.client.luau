@@ -388,6 +388,68 @@ end)
 local homeButton = button({ Size = UDim2.new(0, 120, 0, 50), Position = UDim2.new(1, -132, 0, 70), Text = "Home", BackgroundColor3 = Color3.fromRGB(90, 190, 110), Parent = screen })
 
 ----------------------------------------------------------------------------------------------
+-- Codes (Week 5 live-ops): a top-left button + box, matching the announcement copy ("Codes
+-- button, top left"). The server (CodesService.luau) does all validation and always replies
+-- through the shared Notify toast, so this UI just needs to open, submit and close.
+
+local redeemCode = Remotes:WaitForChild("RedeemCode")
+
+local codesFrame = make("Frame", {
+	Name = "Codes",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Size = UDim2.new(0, 360, 0, 168),
+	Position = UDim2.new(0.5, 0, 0.5, 0),
+	BackgroundColor3 = Color3.fromRGB(60, 45, 90),
+	Visible = false,
+	Parent = screen,
+}, { corner(16), stroke(3) })
+text({ Size = UDim2.new(1, -60, 0, 36), Position = UDim2.new(0, 14, 0, 6), Text = "Redeem Code", TextXAlignment = Enum.TextXAlignment.Left, Parent = codesFrame })
+local codesClose = button({ Size = UDim2.new(0, 36, 0, 36), Position = UDim2.new(1, -46, 0, 6), Text = "X", BackgroundColor3 = Color3.fromRGB(200, 70, 70), Parent = codesFrame })
+local codeBox = make("TextBox", {
+	Size = UDim2.new(1, -28, 0, 46),
+	Position = UDim2.new(0, 14, 0, 54),
+	BackgroundColor3 = Color3.fromRGB(30, 25, 45),
+	Text = "",
+	PlaceholderText = "Enter code",
+	Font = FONT,
+	TextScaled = true,
+	TextColor3 = WHITE,
+	ClearTextOnFocus = false,
+	Parent = codesFrame,
+}, { corner(10), stroke(2) })
+local redeemButton = button({ Size = UDim2.new(1, -28, 0, 46), Position = UDim2.new(0, 14, 0, 110), Text = "Redeem", BackgroundColor3 = Color3.fromRGB(120, 210, 120), Parent = codesFrame })
+
+local function submitCode()
+	local code = codeBox.Text
+	if code == "" then
+		return
+	end
+	redeemCode:FireServer(code)
+	codeBox.Text = ""
+end
+redeemButton.Activated:Connect(submitCode)
+codeBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		submitCode()
+	end
+end)
+
+local function closeCodes()
+	codesFrame.Visible = false
+end
+codesClose.Activated:Connect(closeCodes)
+
+local codesButton = button({ Size = UDim2.new(0, 120, 0, 44), Position = UDim2.new(0, 12, 0, 150), Text = "Codes", BackgroundColor3 = Color3.fromRGB(170, 110, 230), Parent = screen })
+codesButton.Activated:Connect(function()
+	if codesFrame.Visible then
+		closeCodes()
+	else
+		codesFrame.Visible = true
+		codeBox:CaptureFocus()
+	end
+end)
+
+----------------------------------------------------------------------------------------------
 -- per-player prompt visibility (see server Prompts module)
 
 local function refreshPrompt(prompt: ProximityPrompt)

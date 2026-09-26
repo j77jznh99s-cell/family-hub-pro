@@ -18,6 +18,7 @@ end
 Net.Notify = remote("Notify") -- server -> client: (text, colorHex?)
 Net.SelectSeed = remote("SelectSeed") -- client -> server: (speciesId)
 Net.Effect = remote("Effect") -- server -> client: (kind, data) for hatch/snatch fanfare
+Net.RedeemCode = remote("RedeemCode") -- client -> server: (code); reply is always a Notify toast
 
 folder.Parent = ReplicatedStorage
 

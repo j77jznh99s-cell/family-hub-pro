@@ -33,6 +33,7 @@ export type Session = {
 	rebirthCanAffordTier: number?, -- 3b Rebirth funnel: last rebirths tier "CanAfford" already fired for
 	lastStolenAt: number?, -- os.time() this player was last snatched from (3d SnatchVictimLeft, 120s window)
 	lastStolenRarity: string?, -- rarity of the Sproutling taken in that snatch
+	codeReadyAt: number?, -- os.clock() a Codes redemption attempt is next allowed (CodesService anti-spam)
 }
 
 local State = {}

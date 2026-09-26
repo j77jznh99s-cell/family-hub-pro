@@ -23,6 +23,7 @@ local ProgressionService = require(script.ProgressionService)
 local MonetizationService = require(script.MonetizationService)
 local LeaderboardService = require(script.LeaderboardService)
 local EventService = require(script.EventService)
+local CodesService = require(script.CodesService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 
@@ -35,6 +36,7 @@ ProgressionService.init(map)
 MonetizationService.init()
 LeaderboardService.init(map)
 EventService.init(map) -- after WeatherService.init so the Fog scheduler's onStart/onStop hooks are live
+CodesService.init() -- Week 5 live-ops: the in-world Codes box (client HUD), see CodesService.luau
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle
