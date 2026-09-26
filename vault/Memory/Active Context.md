@@ -12,12 +12,13 @@ updated: 2026-09-26
 and sends a push notification. New projects may be started (max one a day, original, waiting for the owner's OK).
 
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
-built 2026-09-26 across two passes (`a136cba`, `e432cfd` — Store steps 1-3/EventShop/Ad funnels deliberately
-skipped, no system to hook into yet); leaderboards built 2026-09-26 (`21c68c3`, a display bug caught in review and
-fixed same day, `6aece41`); QA m11 (pond walkable) fixed 2026-09-26 (`397cc4e`); Halloween species numbers checked
-against the game's payback curve, all consistent; ads eligibility & Ads Manager pricing re-verified 2026-09-26
-with real corrections found; lint/build/bake clean throughout; still waiting on the owner's first Studio
-play-test — next big build is the Hollow Harvest Halloween event, due ~15 Oct, not started yet) · [[Clip Studio]]
+built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
+caught in review and fixed same day, `6aece41`); QA m11 (pond walkable) fixed 2026-09-26 (`397cc4e`); Halloween
+species numbers checked against the game's payback curve, all consistent; **Hollow Harvest Halloween event fully
+built 2026-09-26** (`6f59f2f`, well ahead of the 15 Oct deadline — a real economy bug caught in review and fixed
+same day, `b8b34b4`: the end-of-event Dew conversion ignored the berries count); ads eligibility & Ads Manager
+pricing re-verified 2026-09-26 with real corrections found; lint/build/bake clean throughout; still waiting on the
+owner's first Studio play-test, which should now also cover Hollow Harvest before 17 Oct) · [[Clip Studio]]
 (hourly branch QA'd 2026-09-26: 101+6+1 tests pass, 2 minor non-blocking bugs, owner decides merge; `main`'s CI was
 separately found red since 2026-09-23 — unrelated pre-existing bug — fixed 2026-09-26 on `main` (`fd327a0`) and,
 once found still red there too, on the Sproutling Isles branch (`c5e7884`) — any other branch forked from `main`
@@ -27,8 +28,8 @@ lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · 
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
-- [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]).
-- [ ] Create the 13 Robux items and share the IDs.
+- [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct.
+- [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
 - [ ] Install StarNet on the laptop; then the Gumroad account.
 - [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).

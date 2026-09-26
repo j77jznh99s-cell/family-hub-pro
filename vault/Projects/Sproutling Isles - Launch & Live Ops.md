@@ -593,7 +593,9 @@ The weekly review (Mondays, **live-ops-manager**) reads from CH Analytics plus t
 ## Tasks created by this note
 - [ ] **roblox-engineer:** analytics wrapper + all events in section 3 (a prerequisite for the beta)
 - [ ] **roblox-engineer:** `Config.Boosts` time-boxed boosts (launch weekend, Bloom Rush) + `Config.EventTimeOffset` test hook
-- [ ] **roblox-engineer:** Hollow Harvest build list (section 5), due **Thu 15 Oct** for a 17 Oct start
+- [x] **roblox-engineer:** Hollow Harvest build list (section 5) — done 2026-09-26, well ahead of the 15 Oct deadline. Full build (weather/mutation, 3 species, Fog scheduler, lanterns, Lantern Stall, plot skin, end-of-event conversion, HUD, analytics) — see [[Sproutling Isles]] for detail and the one bug found and fixed in review (`6f59f2f` + `b8b34b4`). **Not Studio-tested.**
+- [ ] **owner:** create a "Summon Spooky Fog" dev product (proposed 149 R$) and give roblox-engineer the ID to wire in — not built yet since the ID doesn't exist.
+- [ ] **owner:** Studio playtest of the Hollow Harvest event before 17 Oct (not possible from the sandbox) — fast-forward time to confirm the Fog schedule, lantern collection/despawn, stall purchases and caps, the Haunted Greenhouse skin equip, and the end-of-event Moonberry conversion (now fixed to scale with balance).
 - [ ] **roblox-engineer:** Codes system (free-tier rewards only) for Week 5
 - [ ] **roblox-engineer:** rewarded ads `Ads.luau`, after the owner approves and eligibility is confirmed
 - [ ] **roblox-engineer:** Founding Gardener badge + Week 8 teaser login tracker

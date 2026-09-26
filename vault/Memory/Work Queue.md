@@ -8,12 +8,13 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **roblox-engineer:** Hollow Harvest Halloween event (build by about 15 Oct; skip if launch slips past 24 Oct).
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov.
 
 ## Waiting on the owner (runs skip these)
 - [ ] (owner) Play-test Sproutling Isles in Studio; answer [[Decisions]] (Sproutling #1–4 block the next build; #20 product line).
 - [ ] (owner) Create the 13 Robux items and share the IDs.
+- [ ] (owner) Create a "Summon Spooky Fog" dev product (proposed 149 R$) and share the ID for the Hollow Harvest event.
+- [ ] (owner) Studio playtest of the Hollow Harvest Halloween event before 17 Oct (fast-forward time to check the Fog schedule, lanterns, stall, skin, and end-of-event conversion) — Studio isn't available in the sandbox, so this needs the owner.
 - [ ] (owner) Trading agent: OANDA setup (add `api-fxpractice.oanda.com` / `api-fxtrade.oanda.com` to network access, set `OANDA_ENV` and `OANDA_ACCOUNT_ID`).
 - [ ] (owner) Clip Studio, Family Hub: say what's next (deploy? more features?).
 - [ ] (owner) StarNet install and Gumroad account (see [[StarNet Automation]], [[Gumroad Digital Products]]).
@@ -22,6 +23,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: roblox-engineer built the full Hollow Harvest Halloween event (`6f59f2f`) — Spooky Fog, Wisp Lanterns, 3 limited species, Lantern Stall, plot skin, end-of-event conversion, plus the analytics it unlocked (10 files, ~430-line new EventService.luau). Reviewed the whole diff line-by-line myself (dates hand-verified against `date -u`, cross-module calls checked, reconcile-backfill checked) and found one real bug: the Dew conversion formula dropped the berries-count multiplier entirely, so every player got the same flat payout regardless of balance. Fixed directly (`b8b34b4`), re-validated, CI green. 1 task this run (large scope); stopping.
 - 2026-09-26: did the "game-designer: m11 + Halloween numbers" task directly (no agent needed — read-only analysis + a small, well-understood code fix). Confirmed the Halloween species' payback numbers against the base game's curve (all consistent). Diagnosed and fixed QA m11 (pond Rim walkable under the water surface) myself: `Rim.CanCollide = false`, `397cc4e`, validated clean, CI green. Only unblocked item was Halloween-event-adjacent, so did just this 1 task and stopped rather than jump to the bigger, deadline-sensitive Hollow Harvest build without more runway.
 - 2026-09-26: roblox-engineer wired Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth) + custom events (Hatch, Snatch*, GateLock, Weather*, Rebirth, DailyClaim, PondCatch, StorageFull/NoSeeds, SessionEnd), `e432cfd`. EventShop/Ad funnels and Store steps 1-3 deliberately skipped (dependencies don't exist yet). I reviewed the full diff before recording — no bugs found this time (unlike last run's leaderboard bug). 2 tasks this run (CI port + funnels/events); stopping.
 - 2026-09-26: **CI-first task.** The same pre-existing S3-mocking CI bug fixed on `main` last run was still red on `claude/roblox-popular-game-trends-6u7sie` (that branch forked before the fix, and also carries the Clip Studio code). Ported the identical fix (`c5e7884`); 30/30 tests pass locally. See [[Clip Studio]].

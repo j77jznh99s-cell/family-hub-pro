@@ -7,6 +7,47 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Hollow Harvest Halloween event built (and a real economy bug fixed)
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
+
+**What was done**
+- CI was green on both `main` and the roblox branch, so went straight to the top queue item: the
+  full Hollow Harvest Halloween event, well ahead of its ~15 Oct deadline. This was a big,
+  fully-specced build — briefed it as one task rather than splitting it, since the spec (goal,
+  player flow, numbers, edge cases, UI text, a numbered build list) left little open to
+  interpretation.
+- roblox-engineer delivered: `spookyfog` weather + `haunted` mutation, 3 limited species
+  (Pumpkit/Gourdgeist/Hollowisp — plus a legitimate side-fix: `Species.rollByRarity` now excludes
+  `limited` species from its rarity-share math, closing a real leak risk), a UTC-clock Fog
+  scheduler, Wisp Lantern spawn/pickup/despawn, the 3-kiosk Lantern Stall (reusing the Seed Shop's
+  established pattern), the Haunted Greenhouse plot skin, end-of-event Moonberry→Dew conversion, a
+  HUD chip, and the `EventShop`/`Event` analytics that an earlier task had deliberately deferred
+  (commit `6f59f2f`).
+- **Given the size (10 files, a new ~430-line `EventService.luau`), I read the entire diff myself
+  before recording it** rather than trusting the agent's own report — this is the same discipline
+  that caught the leaderboard bug two runs ago. Independently re-verified the 4 event UTC
+  timestamps against `date -u` (all exact), traced every cross-module call
+  (`EventService.onHatch`/`.onSkinChange`, the new `WeatherService.onStart`/`.onStop` hooks) to
+  confirm the functions they call actually exist with the right signature, and confirmed
+  `DataService.reconcile`'s generic backfill covers the new `data.event`/`skins`/`skin` fields for
+  existing saves.
+- **Found one real bug:** the end-of-event Dew conversion (`EventService.onJoin`) computed
+  `math.max(100, floor(income * 5 * 60))` — completely independent of the player's actual
+  Moonberry balance. Every player would have gotten the same flat ~5-minutes-of-income payout
+  whether they had 1 berry or 10,000, defeating the entire point of the event currency. Confirmed
+  against the spec's own worked example (37 berries → 12,400 Dew, which only holds with a
+  `berries *` multiplier). Fixed directly (`b8b34b4`): added the missing multiplier, re-validated
+  (`selene`/`rojo build`/`lune bake-map` clean, 1241 parts unchanged), pushed, confirmed green on
+  GitHub Actions.
+- Noted a few lower-severity items for the owner rather than blocking on them: Hollowisp reads
+  "Pond only" as literally the Wishing Pond, not the Sky Well (an interpretation call); the sign's
+  "cobweb decal" is a color-tint placeholder (no texture asset available offline); the Summon
+  Spooky Fog Robux dev product isn't wired in (no product ID exists yet — queued for the owner).
+- Recorded everything in [[Sproutling Isles]] and [[Sproutling Isles - Launch & Live Ops]]. Only 1
+  task this run given its size; **not Studio-tested** — queued for the owner before 17 Oct.
+
+---
+
 ## 2026-09-26: hourly run — pond fix (QA m11) + Halloween numbers confirmed
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none (done directly)
 
