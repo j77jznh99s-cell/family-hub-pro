@@ -7,6 +7,14 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: AI memory export for migrating to another assistant
+**Device:** phone (Claude app) · **Branch:** `claude/ai-memory-migration-bukuro` + `main` · **Agents used:** none
+
+**What was done**
+- Owner asked for a portable memory snapshot to paste into another AI. Built it from the vault only
+  (Owner Profile, Decisions, Active Context, project notes); saved as [[AI Memory Export]]. No name,
+  pronouns or personal details are recorded anywhere in the vault, so those sections were omitted.
+
 ## 2026-09-26: hourly run — GROWINGSTRONG balance flag resolved, code list handed to roblox-engineer
 **Device:** cloud Routine · **Branch:** `main` (vault-only resolution) + `claude/roblox-popular-game-trends-6u7sie` (implementation, in progress) · **Agents used:** roblox-engineer (implementation)
 
