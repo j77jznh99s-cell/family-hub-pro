@@ -99,7 +99,7 @@ Events.FrostbloomTeaserWindow = {
 	-- Sat 28 Nov 2026 00:00 UTC (Week 8 start). Hand-checked:
 	-- `date -u -d "2026-11-28 00:00:00" +%s` -> 1795824000.
 	startAt = 1795824000,
-	-- Thu 11 Dec 2026 23:59 UTC (the day before Frostbloom Festival Day 1, Sat 12 Dec; end is
+	-- Fri 11 Dec 2026 23:59 UTC (the day before Frostbloom Festival Day 1, Sat 12 Dec; end is
 	-- inclusive of this minute, per the spec's "through 11 Dec"). Hand-checked:
 	-- `date -u -d "2026-12-11 23:59:00" +%s` -> 1797033540.
 	endAt = 1797033540,
