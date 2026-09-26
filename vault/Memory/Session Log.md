@@ -7,6 +7,18 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — documented Trading Agent
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly; task was read-only research)
+
+**What was done**
+- Task 1 from [[Work Queue]]: added the `trading-agent` repo to this session read-only (`add_repo`), read its
+  `README.md` and `CHANGELOG.md` via the GitHub API (no clone needed), and rewrote [[Trading Agent]] with how to
+  run it, its risk controls, the daily alert, and test/CI status (191 tests; CI on Python 3.10/3.12/3.13 + ruff).
+- Added two owner follow-ups: OANDA setup (already tracked) and whether to enable the `daily-paper.yml` schedule.
+- Ticked the item in [[Work Queue]] and logged it.
+
+---
+
 ## 2026-09-26 (evening): hourly workflow restarted
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 

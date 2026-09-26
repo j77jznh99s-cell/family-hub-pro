@@ -8,7 +8,6 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **knowledge-keeper:** document the `trading-agent` repo (github `j77jznh99s-cell/trading-agent`, branch `claude/hourly-project-processing-ejbqs4`): read its README and fill in [[Trading Agent]] (what it does, how to run it, tests, open tasks). Read only; never place trades.
 - [ ] **qa-tester:** review Clip Studio's newest code on branch `claude/hourly-project-processing-ejbqs4` (AI presenter, calendar, security pass): run the tests, check CI, list bugs in [[Clip Studio]]. Don't merge; the owner decides.
 - [ ] **qa-tester:** re-review the 2026-09-23 [[Sproutling Isles]] fixes and update the test plan in [[Sproutling Isles - QA Review]].
 - [ ] **roblox-engineer:** Sproutling Isles analytics wrapper + events (spec in [[Sproutling Isles - Launch & Live Ops]]), needed before the beta.
@@ -30,5 +29,6 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: knowledge-keeper filled in [[Trading Agent]] from the repo's README/CHANGELOG (read-only, GitHub API, no clone). Added two owner follow-ups (OANDA setup; enable/skip the daily-paper.yml schedule).
 - 2026-09-26 (setup test): worker session can clone and push to main.
 - 2026-09-26: queue created from the project task lists (setup session).
