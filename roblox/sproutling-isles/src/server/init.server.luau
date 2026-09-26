@@ -12,6 +12,7 @@ local MapBuilder = require(Shared.MapBuilder)
 
 local Net = require(script.Net)
 local State = require(script.State)
+local Analytics = require(script.Analytics)
 local DataService = require(script.DataService)
 local WeatherService = require(script.WeatherService)
 local PlotService = require(script.PlotService)
@@ -77,12 +78,19 @@ local function onPlayerAdded(player: Player)
 	seeds.Name = "Seeds"
 	seeds.Parent = player
 
-	local data, persist = DataService.load(player)
+	local data, persist, isNewSave = DataService.load(player)
 	if not player.Parent then
 		if persist then
 			DataService.save(player, data, true)
 		end
 		return
+	end
+
+	-- 3a step 1 "Joined": only for a save that never existed before, so this never re-fires for a
+	-- returning player (including ones who joined before the `onb` field existed).
+	if isNewSave and not data.onb.Joined then
+		data.onb.Joined = true
+		Analytics.onboarding(player, "Joined")
 	end
 
 	local now = os.time()
@@ -106,6 +114,7 @@ local function onPlayerAdded(player: Player)
 		passes = {},
 		joinedAt = now,
 		dewRemainder = 0,
+		incomeSinceLog = 0,
 	}
 	State.sessions[player] = session
 
@@ -134,12 +143,22 @@ local function onPlayerAdded(player: Player)
 	end
 end
 
+-- 3c Income Source event: batched, never per-tick (per-server analytics rate limits).
+local function flushIncome(session: State.Session)
+	local amount = session.incomeSinceLog or 0
+	if amount > 0 then
+		Analytics.source(session.player, "Income", amount, session.data.dew)
+		session.incomeSinceLog = 0
+	end
+end
+
 local function onPlayerRemoving(player: Player)
 	local session = State.get(player)
 	if not session or session.leaving then
 		return -- m1: PlayerRemoving and BindToClose both call this on shutdown; save once
 	end
 	session.leaving = true
+	flushIncome(session)
 	SnatchService.onLeaving(player)
 	session.data.playSeconds += os.time() - session.joinedAt
 	session.joinedAt = os.time()
@@ -174,8 +193,19 @@ task.spawn(function()
 			local whole = math.floor(total)
 			session.dewRemainder = total - whole
 			if whole > 0 then
-				State.addDew(session, whole)
+				State.addDew(session, whole) -- no reason: logged in the 5-min batch below, not per-tick
+				session.incomeSinceLog = (session.incomeSinceLog or 0) + whole
 			end
+		end
+	end
+end)
+
+-- batched income analytics: one Source event every 5 min (also flushed on leave, see flushIncome)
+task.spawn(function()
+	while true do
+		task.wait(5 * 60)
+		for _, session in State.sessions do
+			flushIncome(session)
 		end
 	end
 end)

@@ -10,6 +10,7 @@ local Format = require(Shared.Format)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 
 local PondService = {}
@@ -74,6 +75,10 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 		return
 	end
 	session.pondReadyAt = now + Config.PondCooldownSeconds
+	if not session.data.onb.FirstPondCast then
+		session.data.onb.FirstPondCast = true
+		Analytics.onboarding(player, "FirstPondCast")
+	end
 	bobber(where + Vector3.new((State.rng:NextNumber() - 0.5) * 20, 0, -8 - State.rng:NextNumber() * 20))
 	State.notify(session, "You make a wish at the " .. label .. "...", "#a0e0ff")
 	task.wait(Config.PondBiteSeconds)
@@ -83,7 +88,7 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 	local entry = roll(lootTable, session.passes.LuckyRod == true)
 	if entry.kind == "dew" then
 		local amount = math.max(25, State.income(session) * 30 * (0.5 + State.rng:NextNumber()))
-		State.addDew(session, amount)
+		State.addDew(session, amount, "Pond")
 		State.notify(session, "The " .. label .. " gave you " .. Format.number(amount) .. " Dew!", "#a0e0ff")
 	else
 		local species = Species.rollByRarity(entry.rarities, State.rng)

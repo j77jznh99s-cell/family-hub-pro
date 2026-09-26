@@ -11,6 +11,7 @@ local Products = require(Shared.Products)
 local Config = require(Shared.Config)
 
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local DataService = require(script.Parent.DataService)
 local PlotService = require(script.Parent.PlotService)
 local WeatherService = require(script.Parent.WeatherService)
@@ -19,6 +20,15 @@ local ShopService = require(script.Parent.ShopService)
 local MonetizationService = {}
 
 local MAX_RECEIPTS = 50
+
+-- 3a step 11 "FirstPurchase": fires once, ever, for either a dev product grant or a game pass
+-- purchase (whichever a player buys first).
+local function markFirstPurchase(session: State.Session)
+	if not session.data.onb.FirstPurchase then
+		session.data.onb.FirstPurchase = true
+		Analytics.onboarding(session.player, "FirstPurchase")
+	end
+end
 
 local function applyPass(session: State.Session, key: string)
 	if session.passes[key] then
@@ -60,15 +70,15 @@ local handlers: { [string]: (State.Session) -> boolean } = {
 			session.player:SetAttribute("StarterBought", true)
 			State.addSeeds(session, "mushroomph", 2)
 		end
-		State.addDew(session, 5_000)
+		State.addDew(session, 5_000, "IAP:StarterPack")
 		return true
 	end,
 	DewSmall = function(session)
-		State.addDew(session, math.max(500, State.income(session) * 15 * 60))
+		State.addDew(session, math.max(500, State.income(session) * 15 * 60), "IAP:DewSmall")
 		return true
 	end,
 	DewLarge = function(session)
-		State.addDew(session, math.max(20_000, State.income(session) * 3 * 3600))
+		State.addDew(session, math.max(20_000, State.income(session) * 3 * 3600), "IAP:DewLarge")
 		return true
 	end,
 	InstantGrow = function(session)
@@ -121,6 +131,7 @@ local function processReceipt(receipt)
 	if not handler or not handler(session) then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
+	markFirstPurchase(session)
 	table.insert(receipts, receipt.PurchaseId)
 	while #receipts > MAX_RECEIPTS do
 		table.remove(receipts, 1)
@@ -143,6 +154,7 @@ function MonetizationService.init()
 		for _, pass in Products.Passes do
 			if pass.id == passId then
 				applyPass(session, pass.key)
+				markFirstPurchase(session)
 				State.notify(session, "You unlocked " .. pass.name .. "!", "#ffe070")
 			end
 		end

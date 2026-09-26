@@ -8,6 +8,7 @@ local SproutModel = require(Shared.SproutModel)
 local Format = require(Shared.Format)
 
 local Net = require(script.Parent.Net)
+local Analytics = require(script.Parent.Analytics)
 
 export type Session = {
 	player: Player,
@@ -28,6 +29,7 @@ export type Session = {
 	leaving: boolean?, -- set once the player starts leaving; stops autosaves and double saves
 	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
 	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)
+	incomeSinceLog: number?, -- Dew earned from the income tick since the last batched analytics Source event
 }
 
 local State = {}
@@ -138,21 +140,30 @@ end
 ----------------------------------------------------------------------------------------------
 -- economy
 
-function State.addDew(session: Session, amount: number)
+-- `reason` is the analytics economy sku (e.g. "Sell:mossbun", "Daily:3"); pass nil to skip logging
+-- (used by the per-second income tick, which batches its own Source event instead -- see
+-- init.server.luau -- so we don't blow the per-server analytics rate limit).
+function State.addDew(session: Session, amount: number, reason: string?)
 	amount = math.floor(amount)
 	session.data.dew += amount
 	if amount > 0 then
 		session.data.totalDew += amount
 	end
 	State.syncDew(session)
+	if reason then
+		Analytics.source(session.player, reason, amount, session.data.dew)
+	end
 end
 
-function State.spendDew(session: Session, amount: number): boolean
+function State.spendDew(session: Session, amount: number, reason: string?): boolean
 	if session.data.dew < amount then
 		return false
 	end
 	session.data.dew -= amount
 	State.syncDew(session)
+	if reason then
+		Analytics.sink(session.player, reason, amount, session.data.dew)
+	end
 	return true
 end
 

@@ -9,6 +9,7 @@ local Format = require(Shared.Format)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
 local SnatchService = require(script.Parent.SnatchService)
@@ -39,8 +40,14 @@ local function rebirth(player: Player)
 	-- reborn garden. See SnatchService.forfeitCarriesFrom for why we void instead of refusing.
 	SnatchService.forfeitCarriesFrom(player)
 	local data = session.data
+	local dewBefore = data.dew
 	data.rebirths += 1
 	data.dew = Config.StartingDew
+	if dewBefore > Config.StartingDew then
+		-- 3c sink "Rebirth": the Dew reset isn't a plain State.spendDew (it's a hard reset to the
+		-- starting amount, not a subtraction), so log it directly.
+		Analytics.sink(player, "Rebirth", dewBefore - Config.StartingDew, data.dew)
+	end
 	data.seeds = table.clone(Config.StartingSeeds)
 	data.soil = {}
 	data.pads = {}
@@ -77,8 +84,12 @@ local function claimDaily(player: Player)
 		text = reward.count .. "x " .. (species and species.name or reward.seed) .. " seed"
 	else
 		local amount = reward.dew * (1 + data.rebirths)
-		State.addDew(session, amount)
+		State.addDew(session, amount, "Daily:" .. data.streak)
 		text = Format.number(amount) .. " Dew"
+	end
+	if not data.onb.FirstDailyClaim then
+		data.onb.FirstDailyClaim = true
+		Analytics.onboarding(player, "FirstDailyClaim")
 	end
 	player:SetAttribute("Streak", data.streak)
 	player:SetAttribute("LastDaily", data.lastDaily)

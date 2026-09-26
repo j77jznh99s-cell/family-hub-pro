@@ -11,6 +11,7 @@ local Format = require(Shared.Format)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
 
@@ -79,9 +80,13 @@ local function buySeed(species: Species.Species, player: Player)
 		State.notify(session, species.name .. " is sold out. Restock in " .. Format.time(ShopService.nextRestockAt() - os.time()), "#ffb070")
 		return
 	end
-	if not State.spendDew(session, species.price) then
+	if not State.spendDew(session, species.price, "Seed:" .. species.id) then
 		State.notify(session, "Not enough Dew for " .. species.name .. " (" .. Format.number(species.price) .. ")", "#ff8080")
 		return
+	end
+	if not session.data.onb.FirstSeedBought then
+		session.data.onb.FirstSeedBought = true
+		Analytics.onboarding(player, "FirstSeedBought")
 	end
 	session.stock[species.id] = left - 1
 	player:SetAttribute("Stock", HttpService:JSONEncode(session.stock))
@@ -144,11 +149,15 @@ local function spawnParadeCrate(parade: Model)
 		if sold or not session then
 			return
 		end
-		if not State.spendDew(session, species.price) then
+		if not State.spendDew(session, species.price, "Seed:" .. species.id) then
 			State.notify(session, "Not enough Dew for " .. species.name .. " (" .. Format.number(species.price) .. ")", "#ff8080")
 			return
 		end
 		sold = true
+		if not session.data.onb.FirstSeedBought then
+			session.data.onb.FirstSeedBought = true
+			Analytics.onboarding(player, "FirstSeedBought")
+		end
 		State.addSeeds(session, species.id, 1)
 		State.notify(session, "Got a " .. species.name .. " seed from the Pollen Parade!", "#ffe070")
 		if table.find({ "Legendary", "Mythic", "Secret" }, species.rarity) then

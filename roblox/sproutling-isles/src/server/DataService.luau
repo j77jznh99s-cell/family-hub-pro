@@ -65,6 +65,7 @@ function DataService.defaultData()
 		stockEpoch = 0, -- the restock time (ShopService.nextRestockAt) the saved stock belongs to
 		luckUntil = 0, -- Luck Boost end, absolute Unix time so it survives server hops
 		shieldForfeited = false, -- true once the player has snatched (no new-player shield after that)
+		onb = {}, -- [stepName] = true once that onboarding funnel step has been logged, ever
 	}
 end
 
@@ -82,10 +83,12 @@ local function key(player: Player): string
 	return "p_" .. player.UserId
 end
 
--- Returns data table and whether it is backed by the DataStore.
-function DataService.load(player: Player): ({ [string]: any }, boolean)
+-- Returns data table, whether it is backed by the DataStore, and whether this is a brand-new
+-- save (no profile existed for this player before this load) -- used to fire the "Joined"
+-- onboarding step exactly once, ever, even after this field is added to already-existing saves.
+function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 	if not store then
-		return DataService.defaultData(), false
+		return DataService.defaultData(), false, true
 	end
 	-- a fast rejoin to this same server must not read data older than the leave-save still in flight
 	waitIdle(player.UserId, 30)
@@ -93,6 +96,7 @@ function DataService.load(player: Player): ({ [string]: any }, boolean)
 	for attempt = 1, 6 do
 		local loaded = nil
 		local locked = false
+		local isNew = false
 		local ok, err = pcall(function()
 			store:UpdateAsync(key(player), function(old)
 				old = old or {}
@@ -102,17 +106,18 @@ function DataService.load(player: Player): ({ [string]: any }, boolean)
 					return nil -- cancel write, another server still owns this profile
 				end
 				old.lock = { job = jobId, t = os.time() }
+				isNew = old.data == nil
 				loaded = old.data
 				return old
 			end)
 		end)
 		if ok and not locked then
-			return reconcile(loaded or DataService.defaultData()), true
+			return reconcile(loaded or DataService.defaultData()), true, isNew
 		end
 		if not ok then
 			warn("[Sproutling] load failed for", player.Name, err)
 			if RunService:IsStudio() then
-				return DataService.defaultData(), false
+				return DataService.defaultData(), false, true
 			end
 		end
 		if not player.Parent then
@@ -120,7 +125,7 @@ function DataService.load(player: Player): ({ [string]: any }, boolean)
 		end
 		task.wait(5)
 	end
-	return DataService.defaultData(), false
+	return DataService.defaultData(), false, true
 end
 
 function DataService.save(player: Player, data, release: boolean): boolean

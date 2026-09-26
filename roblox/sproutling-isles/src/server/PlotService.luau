@@ -12,6 +12,7 @@ local MapBuilder = require(Shared.MapBuilder)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local WeatherService = require(script.Parent.WeatherService)
 
@@ -286,7 +287,12 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		State.addSeeds(session, seedId, -1)
 		session.data.soil[key] = { s = seedId, ready = os.time() + species.growSeconds, total = species.growSeconds }
 		updateSoil(info, session)
+		if not session.data.onb.FirstPlant then
+			session.data.onb.FirstPlant = true
+			Analytics.onboarding(player, "FirstPlant")
+		end
 	elseif plant.ready <= os.time() then
+		local wasWeather = WeatherService.current() ~= nil
 		local sprout = { s = plant.s, m = WeatherService.rollMutation(session), z = WeatherService.rollSize(), u = State.newUid() }
 		if not PlotService.placeSprout(session, sprout) then
 			State.notify(session, "Your greenhouse and storage are full! Sell some Sproutlings first.", "#ff8080")
@@ -294,6 +300,14 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		end
 		session.data.soil[key] = nil
 		updateSoil(info, session)
+		if not session.data.onb.FirstHatch then
+			session.data.onb.FirstHatch = true
+			Analytics.onboarding(player, "FirstHatch")
+		end
+		if wasWeather and not session.data.onb.FirstWeatherHatch then
+			session.data.onb.FirstWeatherHatch = true
+			Analytics.onboarding(player, "FirstWeatherHatch")
+		end
 		local species = Species.get(sprout.s) :: Species.Species
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
 		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
@@ -314,7 +328,11 @@ local function onSell(info: PlotInfo, pad: number, player: Player)
 	end
 	session.data.pads[tostring(pad)] = nil
 	local value = State.sellValue(sprout)
-	State.addDew(session, value)
+	State.addDew(session, value, "Sell:" .. sprout.s)
+	if not session.data.onb.FirstSell then
+		session.data.onb.FirstSell = true
+		Analytics.onboarding(player, "FirstSell")
+	end
 	State.notify(session, "Sold " .. SproutModel.displayName(sprout) .. " for " .. Format.number(value) .. " Dew", "#a0ffa0")
 	PlotService.renderPads(session)
 	PlotService.refillPads(session)
@@ -346,7 +364,11 @@ function PlotService.sellStorage(session: State.Session)
 	end
 	sellConfirmUntil[player] = nil
 	table.clear(session.data.storage)
-	State.addDew(session, total)
+	State.addDew(session, total, "SellStorage")
+	if not session.data.onb.FirstSell then
+		session.data.onb.FirstSell = true
+		Analytics.onboarding(player, "FirstSell")
+	end
 	session.player:SetAttribute("Stored", 0)
 	State.notify(session, "Sold " .. count .. " stored Sproutlings for " .. Format.number(total) .. " Dew", "#a0ffa0")
 end
@@ -368,6 +390,10 @@ local function onLock(info: PlotInfo, player: Player)
 	end
 	local seconds = if session.passes.SturdyGate then Config.LockSecondsWithPass else Config.LockSeconds
 	session.lockUntil = os.time() + seconds
+	if not session.data.onb.FirstGateLock then
+		session.data.onb.FirstGateLock = true
+		Analytics.onboarding(player, "FirstGateLock")
+	end
 	info.lockPrompt:SetAttribute("Active", false)
 	PlotService.refreshSnatchable(session)
 	setGateVisual(info, true)
@@ -407,6 +433,10 @@ function PlotService.claim(session: State.Session): boolean
 			PlotService.renderPads(session)
 			PlotService.refillPads(session)
 			updateSoil(info, session)
+			if not session.data.onb.PlotClaimed then
+				session.data.onb.PlotClaimed = true
+				Analytics.onboarding(session.player, "PlotClaimed")
+			end
 			return true
 		end
 	end
