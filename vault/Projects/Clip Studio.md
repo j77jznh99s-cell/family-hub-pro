@@ -106,6 +106,13 @@ module as a namespace object, call `presigner.getSignedUrl(...)` instead of a de
 const). Ported that exact fix to `main` (commit `fd327a0`); confirmed 30/30 tests pass locally
 before pushing.
 
+Same bug, same fix needed separately on **`claude/roblox-popular-game-trends-6u7sie`** (2026-09-26):
+that branch forked from `main` before the fix and also carries this repo's Clip Studio code at
+its root, so it inherited the identical red CI on every push this session made to it today
+(`a136cba`, `21c68c3`, `6aece41`). Ported the same fix there too (commit `c5e7884`); 30/30 tests
+pass locally. Any other branch forked from `main` before `fd327a0` likely needs the same port —
+check CI before pushing to one.
+
 ## Tasks
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
 - [ ] **owner:** decide whether to merge `claude/hourly-project-processing-ejbqs4` into `claude/video-clip-detection-mvp-g18ggk` (all automated checks this session could run passed; Docker build step still unverified — see QA Review).

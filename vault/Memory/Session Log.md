@@ -7,6 +7,22 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — ported the S3/CI fix to the roblox branch (CI-first task)
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none (done directly)
+
+**What was done**
+- On load, checked CI on branches pushed today (per [[Hourly Workflow]]'s "CI first" rule) and
+  found `claude/roblox-popular-game-trends-6u7sie` still red on its 3 most recent pushes
+  (`a136cba`, `21c68c3`, `6aece41`) — the same `s3.js`/`getSignedUrl` mocking bug fixed on `main`
+  last run (`fd327a0`), inherited because this branch forked from `main` before that fix and also
+  carries the Clip Studio code at repo root.
+- Ported the identical fix in an isolated worktree, ran `npm ci && npm test` locally first (30/30
+  pass), then pushed (`c5e7884`) — verified green on GitHub Actions before moving on.
+- Recorded it in [[Clip Studio]] and [[Work Queue]], with a note that any other branch forked
+  from `main` before `fd327a0` likely needs the same port.
+
+---
+
 ## 2026-09-26: hourly run — Sproutling Isles leaderboards (+ a bug I caught in review)
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
 
