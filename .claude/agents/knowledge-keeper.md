@@ -1,6 +1,7 @@
 ---
 name: knowledge-keeper
 description: "Maintains the vault (the team's long-term memory): session log, decisions, active context, project notes and links. Use at the end of a work session or when memory looks stale or inconsistent."
+model: haiku
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

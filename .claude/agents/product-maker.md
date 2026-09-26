@@ -1,6 +1,7 @@
 ---
 name: product-maker
 description: "Drafts original digital products (printables, templates, guides) and their Gumroad listings from a research brief. Use for making or revising products for sale."
+model: sonnet
 tools: WebSearch, Read, Write, Edit, Glob, Grep
 ---
 

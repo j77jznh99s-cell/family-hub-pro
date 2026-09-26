@@ -23,6 +23,10 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 - [[Trading Agent]] is written from Routine records, not the code (first queue item fixes that).
 - The first hourly run hasn't happened yet.
 
+- Owner then asked for the cheapest setup, no direct charges, payment alerts, and a 20-minute pace. Routines can't run more often than hourly,
+  so each hourly run now does up to 3 tasks (~20 min each). Added "Keep it cheap" and "costs money → notify" rules, set cheaper models
+  for knowledge-keeper (Haiku) and market-researcher, live-ops-manager, product-maker (Sonnet), and test-fired the hourly Routine.
+
 **Next:** see [[Active Context]].
 
 ---

@@ -4,7 +4,7 @@ updated: 2026-09-26
 ---
 # Work Queue
 
-The hourly Routine works the **top unchecked item that isn't marked (owner)**, one per run. See [[Hourly Workflow]].
+The hourly Routine works the **top unchecked items that aren't marked (owner)**, up to 3 per run (about one every 20 minutes). See [[Hourly Workflow]].
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
@@ -25,6 +25,9 @@ Add new items with an owner role. Keep the list in priority order.
 - [ ] (owner) Trading agent: OANDA setup (add `api-fxpractice.oanda.com` / `api-fxtrade.oanda.com` to network access, set `OANDA_ENV` and `OANDA_ACCOUNT_ID`).
 - [ ] (owner) Clip Studio, Family Hub: say what's next (deploy? more features?).
 - [ ] (owner) StarNet install and Gumroad account (see [[StarNet Automation]], [[Gumroad Digital Products]]).
+
+## Needs you: costs money (runs add items here and send a push notification)
+- (none yet)
 
 ## Run log (newest first; one line per hourly run)
 - 2026-09-26: queue created from the project task lists (setup session).

@@ -1,6 +1,7 @@
 ---
 name: live-ops-manager
 description: "Plans live operations for launched games: event calendar, weekly updates, monetization tuning, analytics/KPIs, launch checklist. Use for events, pricing, and post-launch planning."
+model: sonnet
 tools: Read, Write, Edit, Glob, Grep, WebSearch
 ---
 

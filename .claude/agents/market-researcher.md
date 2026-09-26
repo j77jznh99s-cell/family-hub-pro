@@ -1,6 +1,7 @@
 ---
 name: market-researcher
 description: "Researches Roblox and app-market trends, competitors, genre performance and revenue benchmarks. Use for 'what's trending', competitor teardowns, or checking market numbers."
+model: sonnet
 tools: WebSearch, WebFetch, Read, Write, Edit, Glob, Grep
 ---
 
