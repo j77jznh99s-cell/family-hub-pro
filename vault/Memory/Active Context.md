@@ -22,7 +22,11 @@ older task called for it, got missed); **built and pushed 2026-09-26 (`04a3211`)
 correct** — the full Hollow Harvest test plan can now actually be run, still needs the owner's Studio access;
 **Week 5 Codes redemption system built 2026-09-26** (`63c3100`, reviewed and confirmed correct — one-time
 per-player, free-tier rewards only, one placeholder demo code so far; live-ops-manager still needs to write
-the real Week 5 code list before 7 Nov); Frostbloom
+the real Week 5 code list before 7 Nov); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
+built 2026-09-26** (`35ab411`; reviewing it independently re-verified all 4 UTC timestamps and caught a real
+day-of-week error in a code comment — "Thu 11 Dec" should be "Fri 11 Dec"; the epoch value was already
+correct — fixed same day, `bb7f395`; both features are data/flag-only, no reward UI, not Studio-tested,
+months from their real dates); Frostbloom
 Festival (winter event) got its full spec + game-designer number confirmation 2026-09-26 too (build closer to
 Dec); ads eligibility & Ads Manager pricing re-verified 2026-09-26 with real corrections found; lint/build/bake
 clean throughout; still waiting on the owner's first Studio play-test, which should now also cover Hollow Harvest

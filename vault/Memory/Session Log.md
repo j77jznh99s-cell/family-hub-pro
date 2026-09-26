@@ -7,6 +7,36 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Founding Gardener badge + Frostbloom Week 8 login tracker built
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree; comment fix via a second isolated worktree) · **Agents used:** roblox-engineer
+
+**What was done**
+- Delegated the next queue item to roblox-engineer: two small live-ops features from
+  [[Sproutling Isles - Launch & Live Ops]] — the Week 1 "Founding Gardener" badge/flag, and a
+  data-only login-day tracker for the Week 8 "Frostbloom Seedling" teaser. Explicitly scoped the
+  brief to exclude the full (not-yet-built, not-yet-queued) Frostbloom Advent Gift system.
+- Pushed `35ab411`: `Config.FoundingGardenerBadgeId = 0` placeholder (same "id=0 until created"
+  convention as `Products.luau`), a new pcall-wrapped `Badges.luau` facade, two new UTC event
+  windows in `Events.luau`, and two new save fields (`data.foundingGardener`,
+  `data.frostbloomTeaser`) set on join in `init.server.luau`.
+- Reviewing the diff myself, I re-verified all 4 hand-checked UTC timestamps independently with
+  `date -u` (the same discipline used for Hollow Harvest's dates) and **found a real error the
+  agent's own report didn't catch**: the code comment for the Frostbloom teaser window's end time
+  said "Thu 11 Dec 2026 23:59 UTC", but 11 Dec 2026 is actually a **Friday** — confirmed with
+  `date -u -d "2026-12-11 23:59:00"`. The epoch value itself (1797033540) was already correct, so
+  this was a documentation-only bug (a wrong day-of-week label), not a functional one, but exactly
+  the kind of detail that's easy to trust without checking. Fixed directly in a second isolated
+  worktree, `bb7f395`, pushed. selene clean on both commits; rojo/lune unchanged (1241 parts, no
+  map geometry or logic touched by the comment fix).
+- Also confirmed: the reconcile-on-load path correctly backfills the new `frostbloomTeaser` field
+  wholesale for any save that predates it (top-level key, so no partial-merge risk); the
+  Founding Gardener flag is correctly gated on `isNewSave` (first-ever join only, matching the
+  spec's "anyone who joins in Week 1", not "anyone who plays during Week 1").
+- Neither feature is Studio-tested — both real windows are months away. Added a follow-up task
+  (unscheduled, for whoever eventually builds Frostbloom) noting the Frostfawn-seed grant still
+  needs to check `data.frostbloomTeaser.qualified` on Day 1.
+- 1 task this run; stopping.
+
 ## 2026-09-26: hourly run — Week 5 Codes redemption system built
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
 
