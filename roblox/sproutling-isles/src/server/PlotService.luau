@@ -15,6 +15,7 @@ local State = require(script.Parent.State)
 local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local WeatherService = require(script.Parent.WeatherService)
+local LeaderboardService = require(script.Parent.LeaderboardService)
 
 local PlotService = {}
 
@@ -309,6 +310,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 			Analytics.onboarding(player, "FirstWeatherHatch")
 		end
 		local species = Species.get(sprout.s) :: Species.Species
+		LeaderboardService.reportHatch(player, session, species)
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
 		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
 		if (sprout.m and ANNOUNCE_MUTATIONS[sprout.m]) or sprout.z >= 2 or ANNOUNCE_RARITIES[species.rarity] then

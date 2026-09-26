@@ -21,6 +21,7 @@ local ShopService = require(script.ShopService)
 local PondService = require(script.PondService)
 local ProgressionService = require(script.ProgressionService)
 local MonetizationService = require(script.MonetizationService)
+local LeaderboardService = require(script.LeaderboardService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 
@@ -31,6 +32,7 @@ ShopService.init(map)
 PondService.init(map)
 ProgressionService.init(map)
 MonetizationService.init()
+LeaderboardService.init(map)
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle
@@ -143,12 +145,14 @@ local function onPlayerAdded(player: Player)
 	end
 end
 
--- 3c Income Source event: batched, never per-tick (per-server analytics rate limits).
+-- 3c Income Source event: batched, never per-tick (per-server analytics rate limits). Also
+-- reports totalDew to the income leaderboard on the same batch, so that never writes per-tick either.
 local function flushIncome(session: State.Session)
 	local amount = session.incomeSinceLog or 0
 	if amount > 0 then
 		Analytics.source(session.player, "Income", amount, session.data.dew)
 		session.incomeSinceLog = 0
+		LeaderboardService.reportIncome(session.player, session.data.totalDew)
 	end
 end
 

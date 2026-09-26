@@ -241,6 +241,64 @@ local function buildIsland(map: Instance)
 	return n
 end
 
+-- Two physical boards (Top Income, Rarest Hatch) just north-west of the Rebirth Shrine, in the
+-- gap between it and the Seed Shop. LeaderboardService.luau fills in the BillboardGui text and
+-- refreshes it periodically; this function only builds the geometry (no Roblox services, so Lune
+-- can still bake it offline).
+local function buildLeaderboards(plaza: Instance)
+	local model = Instance.new("Model")
+	model.Name = "Leaderboards"
+	model.Parent = plaza
+
+	local x, z = -48, -33
+	local facing = Vector3.new(0, 0, 1) -- faces south, back towards the Rebirth Shrine / spawn
+	local base = CFrame.lookAt(Vector3.new(x, 0, z), Vector3.new(x, 0, z) + facing)
+	local function rel(u: number, y: number, v: number): CFrame
+		return base * CFrame.new(u, y, -v)
+	end
+
+	for _, side in { -1, 1 } do
+		part(model, "Post", Vector3.new(0.8, 16, 0.8), rel(side * 13, 8, 0), rgb(90, 75, 60), Enum.Material.Wood)
+	end
+	local header = part(model, "Header", Vector3.new(26, 3, 0.6), rel(0, 16.5, 0), rgb(90, 190, 110), Enum.Material.SmoothPlastic)
+	label(header, "Leaderboards", 0, UDim2.fromOffset(320, 60), rgb(255, 250, 220))
+
+	local function board(name: string, u: number)
+		local backing = part(model, name, Vector3.new(11, 13, 0.6), rel(u, 8.5, 0), rgb(60, 50, 45), Enum.Material.WoodPlanks)
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "Label" -- matches the MapBuilder convention: BillboardGui "Label" > TextLabel "Text"
+		gui.Size = UDim2.fromOffset(260, 300)
+		gui.StudsOffset = Vector3.new(0, 0, 0.4)
+		gui.LightInfluence = 0
+		gui.MaxDistance = 100
+		gui.Parent = backing
+		local background = Instance.new("Frame")
+		background.Name = "Background"
+		background.Size = UDim2.fromScale(1, 1)
+		background.BackgroundColor3 = rgb(20, 30, 25)
+		background.BackgroundTransparency = 0.1
+		background.BorderSizePixel = 0
+		background.Parent = gui
+		local text = Instance.new("TextLabel")
+		text.Name = "Text"
+		text.BackgroundTransparency = 1
+		text.Size = UDim2.fromScale(0.94, 0.94)
+		text.Position = UDim2.fromScale(0.03, 0.03)
+		text.Font = Enum.Font.FredokaOne
+		text.TextScaled = true
+		text.TextXAlignment = Enum.TextXAlignment.Left
+		text.TextYAlignment = Enum.TextYAlignment.Top
+		text.TextColor3 = rgb(255, 255, 255)
+		text.TextStrokeTransparency = 0.4
+		text.TextWrapped = true
+		text.Text = "Loading..."
+		text.Parent = background
+	end
+
+	board("IncomeBoard", -6)
+	board("RarityBoard", 6)
+end
+
 local function buildPlaza(map: Instance)
 	local plaza = Instance.new("Folder")
 	plaza.Name = "Plaza"
@@ -307,6 +365,8 @@ local function buildPlaza(map: Instance)
 
 	local supply = stall(plaza, "Sprout Supply", 32, 44, Vector3.new(-0.6, 0, -0.8).Unit, 14, rgb(90, 160, 255))
 	part(supply, "Anchor", Vector3.new(3, 3, 3), at(31, 5, 42.5), rgb(120, 190, 255), Enum.Material.Neon)
+
+	buildLeaderboards(plaza)
 
 	for i = 0, 7 do
 		local a = (i + 0.5) / 8 * math.pi * 2

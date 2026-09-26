@@ -84,4 +84,11 @@ Config.DataStoreName = "SproutlingIsles_v1"
 Config.AutosaveSeconds = 60
 Config.SessionLockSeconds = 90
 
+-- Leaderboards (Week 5 live-ops: cross-server income + rarest-hatch boards in the Plaza).
+-- See vault/Projects/Sproutling Isles - Launch & Live Ops.md, Week 5 -- the spec is just one
+-- line ("in-world leaderboards: income, rarest hatch"), so these two numbers are design calls,
+-- not sourced requirements; game-designer/owner can revise them.
+Config.LeaderboardSize = 10 -- top N shown on the physical board
+Config.LeaderboardRefreshSeconds = 180 -- how often the board re-queries the OrderedDataStores
+
 return Config

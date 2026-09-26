@@ -66,6 +66,8 @@ function DataService.defaultData()
 		luckUntil = 0, -- Luck Boost end, absolute Unix time so it survives server hops
 		shieldForfeited = false, -- true once the player has snatched (no new-player shield after that)
 		onb = {}, -- [stepName] = true once that onboarding funnel step has been logged, ever
+		bestHatch = { rarityIndex = 0, order = 0, species = "" }, -- highest rarity/species ever
+		-- hatched (0 = none yet); backs the rarest-hatch leaderboard, see LeaderboardService.
 	}
 end
 
