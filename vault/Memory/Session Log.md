@@ -7,6 +7,29 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — audit-economy's 4th section, steady-state Dew/hour
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
+
+**What was done**
+- Work Queue still empty, still genuinely blocked (re-checked; nothing changed since last run).
+  Rather than log another empty "nothing to do" run back-to-back, extended `tools/audit-economy.
+  luau` with a genuinely distinct metric: steady-state Dew/hour per species (income rate once
+  Sproutlings are placed on pads), separate from the existing payback-time section (value per Dew
+  spent on the seed). Grounded the brief myself first — read `State.income`, `SproutModel.income`
+  and `State.padCapacity` in the actual current code so the delegated brief specified the real
+  mechanic instead of guessing.
+- Pushed `b3ffc86`: `Dew/hour = Config.BasePads (8) × dewPerSecond × 3600`, explicitly caveated as
+  a floor for an average no-boosts player (excludes BigGreenhouse's extra pads, rebirths, DoubleDew,
+  VIP and mutation multipliers — all of which only increase the real rate) and as not modeling how
+  long it takes to actually grow/hatch that many Sproutlings in the first place.
+- Reviewed the diff and hand-verified several printed values myself (Sunfloof 8×1000×3600=
+  28,800,000; Starseed Sprite 8×12000×3600=345,600,000 — both correct), and confirmed the new
+  section's in-place re-sort of the shared rarity buckets happens only after the first section
+  already printed, so it can't retroactively reorder that section's own output. selene/rojo/lune
+  clean, 1241 parts unchanged, CI green (run #111).
+- Documented the addition in [[Sproutling Isles - QA Review]].
+- 1 task this run; stopping.
+
 ## 2026-09-26: hourly run — whole-day QA re-review finds a real interaction bug, fixed same run
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (qa-tester + roblox-engineer, isolated worktrees) · **Agents used:** qa-tester, roblox-engineer
 

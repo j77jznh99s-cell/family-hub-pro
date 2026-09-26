@@ -498,6 +498,19 @@ clean. `DewSmall`'s much lower rate (17.2 vs. 80-100+ for the others) is flagged
 worth a look once real income data exists, but not changed — pricing decisions are game-designer/live-ops-
 manager territory, not this tool's or this task's call.
 
+**Update (2026-09-26, `b3ffc86`): a fourth section, steady-state Dew/hour per species, is now built too** —
+a genuinely different metric from the payback-time section (income rate once Sproutlings are placed, vs.
+value per Dew spent on the seed). Baseline: `Config.BasePads (8) × species.dewPerSecond × 3600`, assuming a
+fresh player with no rebirths/passes/mutations has filled all base pads with one species — explicitly a floor
+for an average player, not a ceiling, and explicitly doesn't model how long it actually takes to grow/hatch
+that many Sproutlings in the first place (that needs live data, same as every other "needs live tuning" flag
+in this note). I grounded the brief myself by reading the actual income mechanic (`State.income`,
+`SproutModel.income`, `State.padCapacity` in the current code) before delegating, then hand-verified several
+printed values myself (Sunfloof 8×1000×3600=28,800,000; Starseed Sprite 8×12000×3600=345,600,000 — both
+correct) and confirmed the section's in-place re-sort of the shared rarity buckets only happens after the
+first section already printed, so it can't silently reorder that section's own output. selene/rojo/lune
+clean, CI green.
+
 ---
 
 ## Whole-day re-review (2026-09-26, after all of today's Sproutling Isles work)
