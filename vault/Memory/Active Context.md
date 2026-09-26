@@ -16,9 +16,11 @@ built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 20
 caught in review and fixed same day, `6aece41`); QA m11 (pond walkable) fixed 2026-09-26 (`397cc4e`); Halloween
 species numbers checked against the game's payback curve, all consistent; **Hollow Harvest Halloween event fully
 built 2026-09-26** (`6f59f2f`, well ahead of the 15 Oct deadline — a real economy bug caught in review and fixed
-same day, `b8b34b4`: the end-of-event Dew conversion ignored the berries count); **but a QA pass found `Config.
-EventTimeOffset` — needed to Studio-test the event before its real 17 Oct start — was never actually built**
-(an older task called for it, got missed); fix is precisely specced and queued as the top task; Frostbloom
+same day, `b8b34b4`: the end-of-event Dew conversion ignored the berries count); a QA pass then found `Config.
+EventTimeOffset` — needed to Studio-test the event before its real 17 Oct start — had never been built (an
+older task called for it, got missed); **built and pushed 2026-09-26 (`04a3211`), reviewed and confirmed
+correct** — the full Hollow Harvest test plan can now actually be run, still needs the owner's Studio access;
+Frostbloom
 Festival (winter event) got its full spec + game-designer number confirmation 2026-09-26 too (build closer to
 Dec); ads eligibility & Ads Manager pricing re-verified 2026-09-26 with real corrections found; lint/build/bake
 clean throughout; still waiting on the owner's first Studio play-test, which should now also cover Hollow Harvest
@@ -32,7 +34,7 @@ lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · 
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
-- [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct (full event testing needs `Config.EventTimeOffset` built first — queued).
+- [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct — `Config.EventTimeOffset` is built (`04a3211`), so the full test plan in the QA note is ready to run.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
 - [ ] Install StarNet on the laptop; then the Gumroad account.

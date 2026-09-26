@@ -281,6 +281,15 @@ Nothing in this section was run; nothing on that branch was edited.
 
 ### 1. `EventTimeOffset` test hook — confirmed missing. This is a real build gap, not a nice-to-have.
 
+**Built 2026-09-26, `04a3211` (branch `claude/roblox-popular-game-trends-6u7sie`).** roblox-engineer implemented
+this fix spec exactly as written below: `Config.EventTimeOffset = 0` added, `Events.now()` helper added, and
+all 11 call sites listed below swapped to call it. I reviewed the actual diff (not just the report) — all 11
+sites confirmed swapped, no other `os.time()` calls in those 3 files touched (verified 0 `os.time()` remain in
+`EventService.luau`; the untouched sites in `PlotService.luau`/`PondService.luau` are unrelated shield/lock/
+growth timers, correctly left alone). `selene`/`rojo build`/`lune bake-map` all clean, 1241 parts unchanged.
+CI green on the pushed commit (run #87). **The test plan below can now actually be run** — still needs Studio,
+which isn't available in this sandbox, so still unverified end-to-end.
+
 **Confirmed:** `Config.luau` has no `EventTimeOffset` field (only `StudioTestPasses` at `:76` and
 `StudioDisableShield` at `:80` exist as Studio-only switches). `Events.luau` has no `Events.now()` helper and
 no `RunService` require — `Events.active`/`Events.part`/`Events.isWitchingHour`/`Events.fogIntervalSeconds`

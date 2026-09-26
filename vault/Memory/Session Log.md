@@ -7,6 +7,27 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Config.EventTimeOffset Studio test hook built
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
+
+**What was done**
+- Delegated the top queue item to roblox-engineer, following the exact spec last run's qa-tester pass
+  wrote (in [[Sproutling Isles - QA Review]]'s "Hollow Harvest QA pass" section): add
+  `Config.EventTimeOffset = 0`, add an `Events.now()` helper gated on `RunService:IsStudio()`, and
+  swap all 11 real-time call sites that gate Hollow Harvest's phase from raw `os.time()` to
+  `Events.now()` (9 in `EventService.luau`, 1 each in `PlotService.luau` and `PondService.luau`).
+- Pushed `04a3211`. Before recording this done I read the actual diff myself (not just the agent's
+  report): all 11 sites confirmed swapped correctly, `EventService.luau` has zero `os.time()` calls
+  left, and the other `os.time()` calls left untouched in `PlotService.luau`/`PondService.luau` are
+  genuinely unrelated (shield/lock/growth timers) — not a missed site. No require cycle
+  (`Config.luau` requires nothing). `selene`/`rojo build`/`lune bake-map` all clean, 1241 parts
+  unchanged from baseline. Confirmed CI green on the pushed commit (run #87) via a follow-up check.
+- This closes the gap flagged last run as a build-blocker: nobody could Studio-test any part of
+  Hollow Harvest before its real 17 Oct start until this hook existed. The full phase-by-phase test
+  plan already written in the QA note can now actually be run — still needs the owner's Studio
+  access, which this sandbox doesn't have.
+- 1 task this run (build + my own review + CI check took most of the run); stopping.
+
 ## 2026-09-26: hourly run — Hollow Harvest QA pass finds a real Studio-testing blocker
 **Device:** cloud Routine · **Branch:** `main` (read-only review of `claude/roblox-popular-game-trends-6u7sie`) · **Agents used:** qa-tester
 
