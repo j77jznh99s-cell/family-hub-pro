@@ -7,6 +7,14 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: agent platform comparison (StarNet alternatives)
+**Device:** phone (Claude app) · **Branch:** `claude/ai-memory-migration-bukuro` + `main` · **Agents used:** none
+
+**What was done**
+- Owner asked for platforms like StarNet that do everything we do. Web-researched and wrote
+  [[Agent Platform Comparison]]. Recommendation: put StarNet on hold and stay on the current cloud setup;
+  maybe add self-hosted n8n later. Added as pending [[Decisions]] #21 and updated [[StarNet Automation]] and [[Active Context]].
+
 ## 2026-09-26: AI memory export for migrating to another assistant
 **Device:** phone (Claude app) · **Branch:** `claude/ai-memory-migration-bukuro` + `main` · **Agents used:** none
 
