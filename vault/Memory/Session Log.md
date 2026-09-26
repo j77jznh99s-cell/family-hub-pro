@@ -7,6 +7,31 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Week 5 code list proposed, a real balance flag caught in review
+**Device:** cloud Routine · **Branch:** `main` (vault-only) · **Agents used:** live-ops-manager
+
+**What was done**
+- Delegated the last remaining queue item to live-ops-manager: propose the real Week 5 code list
+  to replace the `SPROUT1K`-only placeholder in `Codes.luau`. It read the store/economy tables and
+  proposed 5 codes (`SPROUT1K`, `MISSEDBLOOM`, `LUCKYGARDEN`, `GROWINGSTRONG`, `SEEDSTASH`), all
+  claimed free-tier only, written into [[Sproutling Isles - Launch & Live Ops]] as a new subsection.
+- Reviewing it before recording done — same discipline applied to code diffs all session, extended
+  here to a vault-only design proposal — I checked the actual species data in `Species.luau` on the
+  roblox branch rather than trust the proposal's own sizing claims, and found a real issue:
+  `GROWINGSTRONG` proposes a free, evergreen, one-time **Rare** seed (`lilypadger`, 180s payback:
+  18,000 price ÷ 100 dewPerSecond) that's priced *above* the paid Starter Pack's own Rare seed
+  (`mushroomph`, 120s payback: 6,000 ÷ 50). Every other code on the list is comfortably below any
+  paid item, as intended; this one code is bigger than the cheapest paid pack, not smaller — the
+  opposite of what a free code should be. The design does have a partial precedent (the Frostbloom
+  Advent Day 4 gift also gives a free `lilypadger`), but that's a one-day event grant, not an
+  evergreen code redeemable by every player forever.
+- Didn't override the design myself — added a reviewer-flag callout directly in the vault note with
+  the numbers and two concrete fix options (swap to `mushroomph`, or make the code time-boxed
+  instead of evergreen), and split the queue task in two: a new game-designer task to resolve just
+  `GROWINGSTRONG`, and a roblox-engineer implementation task that can go ahead now for the other 4
+  unflagged codes.
+- 1 task this run; stopping.
+
 ## 2026-09-26: hourly run — Founding Gardener badge + Frostbloom Week 8 login tracker built
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree; comment fix via a second isolated worktree) · **Agents used:** roblox-engineer
 

@@ -21,8 +21,11 @@ EventTimeOffset` — needed to Studio-test the event before its real 17 Oct star
 older task called for it, got missed); **built and pushed 2026-09-26 (`04a3211`), reviewed and confirmed
 correct** — the full Hollow Harvest test plan can now actually be run, still needs the owner's Studio access;
 **Week 5 Codes redemption system built 2026-09-26** (`63c3100`, reviewed and confirmed correct — one-time
-per-player, free-tier rewards only, one placeholder demo code so far; live-ops-manager still needs to write
-the real Week 5 code list before 7 Nov); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
+per-player, free-tier rewards only, one placeholder demo code so far); **real Week 5 code list proposed
+2026-09-26** (5 codes; reviewing it caught a real balance flag — one code, `GROWINGSTRONG`, proposed a free
+evergreen Rare seed priced *above* the paid Starter Pack's own Rare seed; flagged in the vault with the exact
+numbers and 2 fix options, queued as a game-designer task; the other 4 codes are clean and ready to implement
+now); **Founding Gardener badge flag + Frostbloom Week 8 login tracker
 built 2026-09-26** (`35ab411`; reviewing it independently re-verified all 4 UTC timestamps and caught a real
 day-of-week error in a code comment — "Thu 11 Dec" should be "Fri 11 Dec"; the epoch value was already
 correct — fixed same day, `bb7f395`; both features are data/flag-only, no reward UI, not Studio-tested,
