@@ -1284,6 +1284,21 @@ local function flushIncome(session: State.Session)
 	end
 end
 
+-- 3d SessionEnd's income bucket: the player's current Dew/s rate, not their balance.
+local function incomeBucket(income: number): string
+	if income < 10 then
+		return "<10"
+	elseif income < 100 then
+		return "<100"
+	elseif income < 1000 then
+		return "<1k"
+	elseif income < 10000 then
+		return "<10k"
+	else
+		return "10k+"
+	end
+end
+
 local function onPlayerRemoving(player: Player)
 	local session = State.get(player)
 	if not session or session.leaving then
@@ -1292,8 +1307,17 @@ local function onPlayerRemoving(player: Player)
 	session.leaving = true
 	flushIncome(session)
 	SnatchService.onLeaving(player)
+	-- 3d SnatchVictimLeft: this player left within 120s of being snatched from
+	if session.lastStolenAt and os.time() - session.lastStolenAt <= 120 then
+		Analytics.custom(player, "SnatchVictimLeft", os.time() - session.lastStolenAt, { session.lastStolenRarity or "unknown" })
+	end
 	session.data.playSeconds += os.time() - session.joinedAt
 	session.joinedAt = os.time()
+	-- 3d SessionEnd
+	Analytics.custom(player, "SessionEnd", math.floor(session.data.playSeconds / 60), {
+		tostring(session.data.rebirths),
+		incomeBucket(State.income(session)),
+	})
 	PlotService.release(session)
 	if session.persist then
 		DataService.save(player, session.data, true)
@@ -1327,6 +1351,13 @@ task.spawn(function()
 			if whole > 0 then
 				State.addDew(session, whole) -- no reason: logged in the 5-min batch below, not per-tick
 				session.incomeSinceLog = (session.incomeSinceLog or 0) + whole
+			end
+			-- 3b Rebirth funnel step 1 "CanAfford": fires once per rebirth tier, the first time this
+			-- tick sees enough Dew for it (not every tick after that).
+			local tier = session.data.rebirths
+			if session.rebirthCanAffordTier ~= tier and session.data.dew >= ProgressionService.rebirthCost(session) then
+				session.rebirthCanAffordTier = tier
+				Analytics.funnel(session.player, "Rebirth", "rb" .. tier, 1, "CanAfford")
 			end
 		end
 	end
@@ -1961,6 +1992,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Products = require(Shared.Products)
@@ -2097,6 +2129,10 @@ local function processReceipt(receipt)
 		-- the grant is recorded in memory, so a retry will not double-grant it
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
+	-- 3b Store funnel step 4 only: steps 1-3 (StoreOpened/ItemViewed/PromptShown) need a new
+	-- client->server remote (Net.StoreEvent) that doesn't exist yet, so there's no "store opened"
+	-- step to anchor a shared session id to. A fresh GUID per purchase stands in for it.
+	Analytics.funnel(player, "Store", HttpService:GenerateGUID(false), 4, "Purchased")
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
@@ -2112,6 +2148,8 @@ function MonetizationService.init()
 				applyPass(session, pass.key)
 				markFirstPurchase(session)
 				State.notify(session, "You unlocked " .. pass.name .. "!", "#ffe070")
+				-- 3b Store funnel step 4 (see processReceipt for why steps 1-3 are unwired)
+				Analytics.funnel(player, "Store", HttpService:GenerateGUID(false), 4, "Purchased")
 			end
 		end
 	end)
@@ -2446,6 +2484,8 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		local seedId = chooseSeed(session)
 		if not seedId then
 			State.notify(session, "You have no seeds! Buy some at the Seed Shop or the Pollen Parade.", "#ffb070")
+			-- 3d NoSeeds: a friction signal (this can mean a soft-lock); value is the Dew balance
+			Analytics.custom(player, "NoSeeds", session.data.dew)
 			return
 		end
 		local species = Species.get(seedId) :: Species.Species
@@ -2457,10 +2497,13 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 			Analytics.onboarding(player, "FirstPlant")
 		end
 	elseif plant.ready <= os.time() then
-		local wasWeather = WeatherService.current() ~= nil
+		local activeWeather = WeatherService.current()
+		local wasWeather = activeWeather ~= nil
 		local sprout = { s = plant.s, m = WeatherService.rollMutation(session), z = WeatherService.rollSize(), u = State.newUid() }
 		if not PlotService.placeSprout(session, sprout) then
 			State.notify(session, "Your greenhouse and storage are full! Sell some Sproutlings first.", "#ff8080")
+			-- 3d StorageFull: a friction signal
+			Analytics.custom(player, "StorageFull", 1)
 			return
 		end
 		session.data.soil[key] = nil
@@ -2475,6 +2518,12 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		end
 		local species = Species.get(sprout.s) :: Species.Species
 		LeaderboardService.reportHatch(player, session, species)
+		WeatherService.registerHatch()
+		-- 3d Hatch / HugeHatch. species order comes from Species.luau's load-order index.
+		Analytics.custom(player, "Hatch", (species :: any).order, { species.rarity, sprout.m or "none", if activeWeather then activeWeather.id else "clear" })
+		if sprout.z >= 2 then
+			Analytics.custom(player, "HugeHatch", sprout.z, { species.rarity, sprout.m or "none" })
+		end
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
 		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
 		if (sprout.m and ANNOUNCE_MUTATIONS[sprout.m]) or sprout.z >= 2 or ANNOUNCE_RARITIES[species.rarity] then
@@ -2546,6 +2595,23 @@ local function setGateVisual(info: PlotInfo, locked: boolean)
 	button.Color = if locked then Color3.fromRGB(80, 220, 120) else Color3.fromRGB(255, 80, 80)
 end
 
+-- 3d GateLock's "had a thief nearby?" field: any other online player within roughly one plot's
+-- width of this plot's centre, at the moment of locking. Not an exact definition from the spec
+-- (there's no existing "nearby" concept to reuse); documented as an interpretation.
+local NEARBY_THIEF_RADIUS = MapBuilder.PlotSize / 2 + 20
+
+local function hasNearbyThief(info: PlotInfo, owner: Player): boolean
+	for _, other in Players:GetPlayers() do
+		if other ~= owner then
+			local root = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root and (Vector3.new(root.Position.X, 0, root.Position.Z) - Vector3.new(info.cx, 0, info.cz)).Magnitude <= NEARBY_THIEF_RADIUS then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function onLock(info: PlotInfo, player: Player)
 	local session = State.get(player)
 	if not session or info.owner ~= player then
@@ -2556,6 +2622,7 @@ local function onLock(info: PlotInfo, player: Player)
 	end
 	local seconds = if session.passes.SturdyGate then Config.LockSecondsWithPass else Config.LockSeconds
 	session.lockUntil = os.time() + seconds
+	Analytics.custom(player, "GateLock", seconds, { if hasNearbyThief(info, player) then "y" else "n" })
 	if not session.data.onb.FirstGateLock then
 		session.data.onb.FirstGateLock = true
 		Analytics.onboarding(player, "FirstGateLock")
@@ -2874,15 +2941,18 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 	if not player.Parent then
 		return
 	end
-	local entry = roll(lootTable, session.passes.LuckyRod == true)
+	local luckyRod = session.passes.LuckyRod == true
+	local entry = roll(lootTable, luckyRod)
 	if entry.kind == "dew" then
 		local amount = math.max(25, State.income(session) * 30 * (0.5 + State.rng:NextNumber()))
 		State.addDew(session, amount, "Pond")
 		State.notify(session, "The " .. label .. " gave you " .. Format.number(amount) .. " Dew!", "#a0e0ff")
+		Analytics.custom(player, "PondCatch", 1, { "dew", "none", if luckyRod then "y" else "n" })
 	else
 		local species = Species.rollByRarity(entry.rarities, State.rng)
 		State.addSeeds(session, species.id, 1)
 		State.notify(session, "You fished up a " .. species.name .. " seed (" .. species.rarity .. ")!", "#ffe070")
+		Analytics.custom(player, "PondCatch", 1, { "seed", species.rarity, if luckyRod then "y" else "n" })
 		if table.find({ "Legendary", "Mythic", "Secret" }, species.rarity) then
 			Net.announce(player.DisplayName .. " fished a " .. species.rarity .. " " .. species.name .. " seed from the " .. label .. "!", "#ffe070")
 		end
@@ -2960,6 +3030,9 @@ local function rebirth(player: Player)
 	-- reborn garden. See SnatchService.forfeitCarriesFrom for why we void instead of refusing.
 	SnatchService.forfeitCarriesFrom(player)
 	local data = session.data
+	-- 3b Rebirth funnel: same session id as step 1 "CanAfford" (fired in the income tick for this
+	-- same tier), so Roblox can join the two steps into one funnel instance.
+	local funnelSessionId = "rb" .. data.rebirths
 	local dewBefore = data.dew
 	data.rebirths += 1
 	data.dew = Config.StartingDew
@@ -2968,6 +3041,9 @@ local function rebirth(player: Player)
 		-- starting amount, not a subtraction), so log it directly.
 		Analytics.sink(player, "Rebirth", dewBefore - Config.StartingDew, data.dew)
 	end
+	-- 3d custom "Rebirth" (distinct from the sink above and the funnel step below)
+	Analytics.custom(player, "Rebirth", data.rebirths)
+	Analytics.funnel(player, "Rebirth", funnelSessionId, 2, "Rebirthed")
 	data.seeds = table.clone(Config.StartingSeeds)
 	data.soil = {}
 	data.pads = {}
@@ -3011,6 +3087,7 @@ local function claimDaily(player: Player)
 		data.onb.FirstDailyClaim = true
 		Analytics.onboarding(player, "FirstDailyClaim")
 	end
+	Analytics.custom(player, "DailyClaim", data.streak)
 	player:SetAttribute("Streak", data.streak)
 	player:SetAttribute("LastDaily", data.lastDaily)
 	State.notify(session, "Day " .. data.streak .. " gift: " .. text .. "! Come back tomorrow to keep your streak.", "#ffb0d0")
@@ -3370,14 +3447,17 @@ return ShopService
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Species = require(Shared.Species)
 local SproutModel = require(Shared.SproutModel)
 
 local DataService = require(script.Parent.DataService)
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
 
@@ -3398,6 +3478,8 @@ type Carry = {
 	-- does NOT return the Sproutling to them (it would survive the rebirth); it is simply lost.
 	-- A successful carry still pays the thief. Either way exactly one copy exists: no dupe.
 	forfeited: boolean,
+	id: string, -- 3b Snatch funnel session id, one GUID per carry
+	startedAt: number, -- os.clock() the carry began (3d SnatchResult's "seconds carried")
 }
 
 local function maxCarrySpeed(): number
@@ -3438,6 +3520,20 @@ local function finish(thief: Player, success: boolean, reason: string?)
 	carry.bonkPrompt:Destroy()
 	restoreWalkSpeed(thief)
 
+	-- 3d SnatchResult: fires exactly once per carry (guarded by `reported`) with a low-cardinality
+	-- result bucket. The spec's fixed list is success/bonked/fell/timeout/full; "other" covers edge
+	-- cases it doesn't name (moved too fast, the thief vanished, either player left).
+	local secondsCarried = os.clock() - carry.startedAt
+	local carrySpecies = Species.get(carry.sprout.s)
+	local carryRarity = carrySpecies and carrySpecies.rarity or "unknown"
+	local reported = false
+	local function reportResult(result: string)
+		if not reported then
+			reported = true
+			Analytics.custom(thief, "SnatchResult", secondsCarried, { result, carryRarity })
+		end
+	end
+
 	local victimSession = State.get(carry.victim)
 	if success then
 		if PlotService.placeSprout(thiefSession, carry.sprout) then
@@ -3447,14 +3543,18 @@ local function finish(thief: Player, success: boolean, reason: string?)
 				PlotService.refillPads(victimSession) -- m4: fill the emptied pad from storage
 			end
 			saveBoth(thiefSession, victimSession)
+			Analytics.funnel(thief, "Snatch", carry.id, 2, "ReachedHome")
+			reportResult("success")
 			return
 		end
 		State.notify(thiefSession, "Your garden is full, so the Sproutling ran home!", "#ff8080")
+		reportResult("full")
 	end
 
 	if carry.forfeited then
 		-- the victim rebirthed mid-carry (see Carry.forfeited)
 		State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or "") .. ". The Sproutling faded away.", "#ff8080")
+		reportResult("other")
 		return
 	end
 
@@ -3469,6 +3569,12 @@ local function finish(thief: Player, success: boolean, reason: string?)
 		State.notify(victimSession, "Your " .. SproutModel.displayName(carry.sprout) .. " came back" .. (reason and (" (" .. reason .. ")") or "") .. "!", "#80ff80")
 	end
 	State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or ""), "#ff8080")
+	reportResult(
+		if reason and reason:match("^bonked") then "bonked"
+		elseif reason == "the thief fell" or reason == "the thief vanished" then "fell"
+		elseif reason == "too slow" then "timeout"
+		else "other"
+	)
 end
 
 local function onSnatch(plot: Model, pad: number, thief: Player, prompt: ProximityPrompt)
@@ -3510,9 +3616,14 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 	if not sprout then
 		return
 	end
+	local species = Species.get(sprout.s)
+	local rarity = species and species.rarity or "unknown"
 
 	victimSession.data.pads[key] = nil
 	PlotService.renderPads(victimSession)
+	-- 3d SnatchVictimLeft: checked in init.server.luau's onPlayerRemoving within 120s of this
+	victimSession.lastStolenAt = os.time()
+	victimSession.lastStolenRarity = rarity
 
 	local model = SproutModel.build(sprout, true)
 	SproutModel.weldTo(model, root, CFrame.new(0, 4.5, 0))
@@ -3530,6 +3641,7 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 		end
 	end)
 
+	local carryId = HttpService:GenerateGUID(false)
 	thiefSession.carrying = {
 		sprout = sprout,
 		victim = victim,
@@ -3541,7 +3653,11 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 		lastClock = os.clock(),
 		budget = maxCarrySpeed() * Config.CarryBurstSeconds,
 		forfeited = false,
+		id = carryId,
+		startedAt = os.clock(),
 	} :: Carry
+	Analytics.funnel(thief, "Snatch", carryId, 1, "Grabbed")
+	Analytics.custom(thief, "SnatchStart", 1, { rarity, if victimSession.passes.SturdyGate then "y" else "n" })
 	thiefSession.snatchReadyAt = now + Config.SnatchCooldownSeconds
 	thiefSession.shieldUntil = 0 -- snatching gives up your own new-player shield
 	thiefSession.data.shieldForfeited = true -- m7: for good, not just until you rejoin
@@ -3675,6 +3791,9 @@ export type Session = {
 	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
 	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)
 	incomeSinceLog: number?, -- Dew earned from the income tick since the last batched analytics Source event
+	rebirthCanAffordTier: number?, -- 3b Rebirth funnel: last rebirths tier "CanAfford" already fired for
+	lastStolenAt: number?, -- os.time() this player was last snatched from (3d SnatchVictimLeft, 120s window)
+	lastStolenRarity: string?, -- rarity of the Sproutling taken in that snatch
 }
 
 local State = {}
@@ -3834,6 +3953,7 @@ return State
           <string name="Source"><![CDATA[-- Natural weather cycle, Robux-summoned weather, sky tinting and mutation rolls.
 
 local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -3843,6 +3963,7 @@ local Weather = require(Shared.Weather)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 
 local WeatherService = {}
 
@@ -3850,6 +3971,9 @@ local current: Weather.WeatherType? = nil
 local endsAt = 0
 local defaultAmbient = Lighting.OutdoorAmbient
 local defaultFog = Lighting.FogColor
+-- 3d WeatherStart / WeatherSummonHatches
+local summonedBy: Player? = nil -- set by start()'s byPlayer arg; nil for natural weather
+local hatchesThisWeather = 0 -- reset every start(), read (and only reported) at stop() if summoned
 
 local function tweenSky(color: Color3?)
 	local goal = if color
@@ -3882,6 +4006,8 @@ function WeatherService.start(id: string, byPlayer: Player?)
 		current = w
 		endsAt = os.clock() + Config.WeatherDurationSeconds
 	end
+	summonedBy = byPlayer
+	hatchesThisWeather = 0
 	ReplicatedStorage:SetAttribute("Weather", w.id)
 	ReplicatedStorage:SetAttribute("WeatherEndsIn", endsAt - os.clock())
 	tweenSky(w.sky)
@@ -3890,9 +4016,29 @@ function WeatherService.start(id: string, byPlayer: Player?)
 		text = byPlayer.DisplayName .. " summoned " .. w.name .. "! " .. text
 	end
 	Net.announce(text, "#b4a0ff")
+	-- 3d WeatherStart: LogCustomEvent needs a player. A summon attributes to the summoner; natural
+	-- weather has no player to anchor it to, so it's logged against any online player as a
+	-- representative sample (documented interpretation, not in the spec).
+	local target = byPlayer or Players:GetPlayers()[1]
+	if target then
+		Analytics.custom(target, "WeatherStart", 1, { w.id, if byPlayer then "summon" else "natural" })
+	end
+end
+
+-- 3d hook: PlotService calls this whenever a Sproutling hatches, so the counter below can prove
+-- summoned weather (Robux purchases) benefits everyone on the server, not just the buyer.
+function WeatherService.registerHatch()
+	if WeatherService.current() then
+		hatchesThisWeather += 1
+	end
 end
 
 local function stop()
+	local weatherId = if current then current.id else "clear"
+	if summonedBy then
+		Analytics.custom(summonedBy, "WeatherSummonHatches", hatchesThisWeather, { weatherId })
+	end
+	summonedBy = nil
 	current = nil
 	ReplicatedStorage:SetAttribute("Weather", "")
 	tweenSky(nil)

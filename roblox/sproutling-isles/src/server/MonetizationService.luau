@@ -5,6 +5,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Products = require(Shared.Products)
@@ -141,6 +142,10 @@ local function processReceipt(receipt)
 		-- the grant is recorded in memory, so a retry will not double-grant it
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
+	-- 3b Store funnel step 4 only: steps 1-3 (StoreOpened/ItemViewed/PromptShown) need a new
+	-- client->server remote (Net.StoreEvent) that doesn't exist yet, so there's no "store opened"
+	-- step to anchor a shared session id to. A fresh GUID per purchase stands in for it.
+	Analytics.funnel(player, "Store", HttpService:GenerateGUID(false), 4, "Purchased")
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
@@ -156,6 +161,8 @@ function MonetizationService.init()
 				applyPass(session, pass.key)
 				markFirstPurchase(session)
 				State.notify(session, "You unlocked " .. pass.name .. "!", "#ffe070")
+				-- 3b Store funnel step 4 (see processReceipt for why steps 1-3 are unwired)
+				Analytics.funnel(player, "Store", HttpService:GenerateGUID(false), 4, "Purchased")
 			end
 		end
 	end)

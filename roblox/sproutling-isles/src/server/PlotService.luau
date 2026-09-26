@@ -282,6 +282,8 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		local seedId = chooseSeed(session)
 		if not seedId then
 			State.notify(session, "You have no seeds! Buy some at the Seed Shop or the Pollen Parade.", "#ffb070")
+			-- 3d NoSeeds: a friction signal (this can mean a soft-lock); value is the Dew balance
+			Analytics.custom(player, "NoSeeds", session.data.dew)
 			return
 		end
 		local species = Species.get(seedId) :: Species.Species
@@ -293,10 +295,13 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 			Analytics.onboarding(player, "FirstPlant")
 		end
 	elseif plant.ready <= os.time() then
-		local wasWeather = WeatherService.current() ~= nil
+		local activeWeather = WeatherService.current()
+		local wasWeather = activeWeather ~= nil
 		local sprout = { s = plant.s, m = WeatherService.rollMutation(session), z = WeatherService.rollSize(), u = State.newUid() }
 		if not PlotService.placeSprout(session, sprout) then
 			State.notify(session, "Your greenhouse and storage are full! Sell some Sproutlings first.", "#ff8080")
+			-- 3d StorageFull: a friction signal
+			Analytics.custom(player, "StorageFull", 1)
 			return
 		end
 		session.data.soil[key] = nil
@@ -311,6 +316,12 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		end
 		local species = Species.get(sprout.s) :: Species.Species
 		LeaderboardService.reportHatch(player, session, species)
+		WeatherService.registerHatch()
+		-- 3d Hatch / HugeHatch. species order comes from Species.luau's load-order index.
+		Analytics.custom(player, "Hatch", (species :: any).order, { species.rarity, sprout.m or "none", if activeWeather then activeWeather.id else "clear" })
+		if sprout.z >= 2 then
+			Analytics.custom(player, "HugeHatch", sprout.z, { species.rarity, sprout.m or "none" })
+		end
 		Net.Effect:FireClient(player, "Hatch", { name = SproutModel.displayName(sprout), rarity = species.rarity, mutation = sprout.m, size = sprout.z })
 		-- only the exciting ones go server-wide (Dewy/Charged are common during weather)
 		if (sprout.m and ANNOUNCE_MUTATIONS[sprout.m]) or sprout.z >= 2 or ANNOUNCE_RARITIES[species.rarity] then
@@ -382,6 +393,23 @@ local function setGateVisual(info: PlotInfo, locked: boolean)
 	button.Color = if locked then Color3.fromRGB(80, 220, 120) else Color3.fromRGB(255, 80, 80)
 end
 
+-- 3d GateLock's "had a thief nearby?" field: any other online player within roughly one plot's
+-- width of this plot's centre, at the moment of locking. Not an exact definition from the spec
+-- (there's no existing "nearby" concept to reuse); documented as an interpretation.
+local NEARBY_THIEF_RADIUS = MapBuilder.PlotSize / 2 + 20
+
+local function hasNearbyThief(info: PlotInfo, owner: Player): boolean
+	for _, other in Players:GetPlayers() do
+		if other ~= owner then
+			local root = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root and (Vector3.new(root.Position.X, 0, root.Position.Z) - Vector3.new(info.cx, 0, info.cz)).Magnitude <= NEARBY_THIEF_RADIUS then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function onLock(info: PlotInfo, player: Player)
 	local session = State.get(player)
 	if not session or info.owner ~= player then
@@ -392,6 +420,7 @@ local function onLock(info: PlotInfo, player: Player)
 	end
 	local seconds = if session.passes.SturdyGate then Config.LockSecondsWithPass else Config.LockSeconds
 	session.lockUntil = os.time() + seconds
+	Analytics.custom(player, "GateLock", seconds, { if hasNearbyThief(info, player) then "y" else "n" })
 	if not session.data.onb.FirstGateLock then
 		session.data.onb.FirstGateLock = true
 		Analytics.onboarding(player, "FirstGateLock")

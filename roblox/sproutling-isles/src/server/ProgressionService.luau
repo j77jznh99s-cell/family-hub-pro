@@ -40,6 +40,9 @@ local function rebirth(player: Player)
 	-- reborn garden. See SnatchService.forfeitCarriesFrom for why we void instead of refusing.
 	SnatchService.forfeitCarriesFrom(player)
 	local data = session.data
+	-- 3b Rebirth funnel: same session id as step 1 "CanAfford" (fired in the income tick for this
+	-- same tier), so Roblox can join the two steps into one funnel instance.
+	local funnelSessionId = "rb" .. data.rebirths
 	local dewBefore = data.dew
 	data.rebirths += 1
 	data.dew = Config.StartingDew
@@ -48,6 +51,9 @@ local function rebirth(player: Player)
 		-- starting amount, not a subtraction), so log it directly.
 		Analytics.sink(player, "Rebirth", dewBefore - Config.StartingDew, data.dew)
 	end
+	-- 3d custom "Rebirth" (distinct from the sink above and the funnel step below)
+	Analytics.custom(player, "Rebirth", data.rebirths)
+	Analytics.funnel(player, "Rebirth", funnelSessionId, 2, "Rebirthed")
 	data.seeds = table.clone(Config.StartingSeeds)
 	data.soil = {}
 	data.pads = {}
@@ -91,6 +97,7 @@ local function claimDaily(player: Player)
 		data.onb.FirstDailyClaim = true
 		Analytics.onboarding(player, "FirstDailyClaim")
 	end
+	Analytics.custom(player, "DailyClaim", data.streak)
 	player:SetAttribute("Streak", data.streak)
 	player:SetAttribute("LastDaily", data.lastDaily)
 	State.notify(session, "Day " .. data.streak .. " gift: " .. text .. "! Come back tomorrow to keep your streak.", "#ffb0d0")

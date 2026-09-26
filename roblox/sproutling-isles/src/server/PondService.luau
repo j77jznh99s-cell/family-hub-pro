@@ -85,15 +85,18 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 	if not player.Parent then
 		return
 	end
-	local entry = roll(lootTable, session.passes.LuckyRod == true)
+	local luckyRod = session.passes.LuckyRod == true
+	local entry = roll(lootTable, luckyRod)
 	if entry.kind == "dew" then
 		local amount = math.max(25, State.income(session) * 30 * (0.5 + State.rng:NextNumber()))
 		State.addDew(session, amount, "Pond")
 		State.notify(session, "The " .. label .. " gave you " .. Format.number(amount) .. " Dew!", "#a0e0ff")
+		Analytics.custom(player, "PondCatch", 1, { "dew", "none", if luckyRod then "y" else "n" })
 	else
 		local species = Species.rollByRarity(entry.rarities, State.rng)
 		State.addSeeds(session, species.id, 1)
 		State.notify(session, "You fished up a " .. species.name .. " seed (" .. species.rarity .. ")!", "#ffe070")
+		Analytics.custom(player, "PondCatch", 1, { "seed", species.rarity, if luckyRod then "y" else "n" })
 		if table.find({ "Legendary", "Mythic", "Secret" }, species.rarity) then
 			Net.announce(player.DisplayName .. " fished a " .. species.rarity .. " " .. species.name .. " seed from the " .. label .. "!", "#ffe070")
 		end

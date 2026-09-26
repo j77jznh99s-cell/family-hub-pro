@@ -156,6 +156,21 @@ local function flushIncome(session: State.Session)
 	end
 end
 
+-- 3d SessionEnd's income bucket: the player's current Dew/s rate, not their balance.
+local function incomeBucket(income: number): string
+	if income < 10 then
+		return "<10"
+	elseif income < 100 then
+		return "<100"
+	elseif income < 1000 then
+		return "<1k"
+	elseif income < 10000 then
+		return "<10k"
+	else
+		return "10k+"
+	end
+end
+
 local function onPlayerRemoving(player: Player)
 	local session = State.get(player)
 	if not session or session.leaving then
@@ -164,8 +179,17 @@ local function onPlayerRemoving(player: Player)
 	session.leaving = true
 	flushIncome(session)
 	SnatchService.onLeaving(player)
+	-- 3d SnatchVictimLeft: this player left within 120s of being snatched from
+	if session.lastStolenAt and os.time() - session.lastStolenAt <= 120 then
+		Analytics.custom(player, "SnatchVictimLeft", os.time() - session.lastStolenAt, { session.lastStolenRarity or "unknown" })
+	end
 	session.data.playSeconds += os.time() - session.joinedAt
 	session.joinedAt = os.time()
+	-- 3d SessionEnd
+	Analytics.custom(player, "SessionEnd", math.floor(session.data.playSeconds / 60), {
+		tostring(session.data.rebirths),
+		incomeBucket(State.income(session)),
+	})
 	PlotService.release(session)
 	if session.persist then
 		DataService.save(player, session.data, true)
@@ -199,6 +223,13 @@ task.spawn(function()
 			if whole > 0 then
 				State.addDew(session, whole) -- no reason: logged in the 5-min batch below, not per-tick
 				session.incomeSinceLog = (session.incomeSinceLog or 0) + whole
+			end
+			-- 3b Rebirth funnel step 1 "CanAfford": fires once per rebirth tier, the first time this
+			-- tick sees enough Dew for it (not every tick after that).
+			local tier = session.data.rebirths
+			if session.rebirthCanAffordTier ~= tier and session.data.dew >= ProgressionService.rebirthCost(session) then
+				session.rebirthCanAffordTier = tier
+				Analytics.funnel(session.player, "Rebirth", "rb" .. tier, 1, "CanAfford")
 			end
 		end
 	end

@@ -30,6 +30,9 @@ export type Session = {
 	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
 	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)
 	incomeSinceLog: number?, -- Dew earned from the income tick since the last batched analytics Source event
+	rebirthCanAffordTier: number?, -- 3b Rebirth funnel: last rebirths tier "CanAfford" already fired for
+	lastStolenAt: number?, -- os.time() this player was last snatched from (3d SnatchVictimLeft, 120s window)
+	lastStolenRarity: string?, -- rarity of the Sproutling taken in that snatch
 }
 
 local State = {}

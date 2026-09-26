@@ -1,6 +1,7 @@
 -- Natural weather cycle, Robux-summoned weather, sky tinting and mutation rolls.
 
 local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -10,6 +11,7 @@ local Weather = require(Shared.Weather)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 
 local WeatherService = {}
 
@@ -17,6 +19,9 @@ local current: Weather.WeatherType? = nil
 local endsAt = 0
 local defaultAmbient = Lighting.OutdoorAmbient
 local defaultFog = Lighting.FogColor
+-- 3d WeatherStart / WeatherSummonHatches
+local summonedBy: Player? = nil -- set by start()'s byPlayer arg; nil for natural weather
+local hatchesThisWeather = 0 -- reset every start(), read (and only reported) at stop() if summoned
 
 local function tweenSky(color: Color3?)
 	local goal = if color
@@ -49,6 +54,8 @@ function WeatherService.start(id: string, byPlayer: Player?)
 		current = w
 		endsAt = os.clock() + Config.WeatherDurationSeconds
 	end
+	summonedBy = byPlayer
+	hatchesThisWeather = 0
 	ReplicatedStorage:SetAttribute("Weather", w.id)
 	ReplicatedStorage:SetAttribute("WeatherEndsIn", endsAt - os.clock())
 	tweenSky(w.sky)
@@ -57,9 +64,29 @@ function WeatherService.start(id: string, byPlayer: Player?)
 		text = byPlayer.DisplayName .. " summoned " .. w.name .. "! " .. text
 	end
 	Net.announce(text, "#b4a0ff")
+	-- 3d WeatherStart: LogCustomEvent needs a player. A summon attributes to the summoner; natural
+	-- weather has no player to anchor it to, so it's logged against any online player as a
+	-- representative sample (documented interpretation, not in the spec).
+	local target = byPlayer or Players:GetPlayers()[1]
+	if target then
+		Analytics.custom(target, "WeatherStart", 1, { w.id, if byPlayer then "summon" else "natural" })
+	end
+end
+
+-- 3d hook: PlotService calls this whenever a Sproutling hatches, so the counter below can prove
+-- summoned weather (Robux purchases) benefits everyone on the server, not just the buyer.
+function WeatherService.registerHatch()
+	if WeatherService.current() then
+		hatchesThisWeather += 1
+	end
 end
 
 local function stop()
+	local weatherId = if current then current.id else "clear"
+	if summonedBy then
+		Analytics.custom(summonedBy, "WeatherSummonHatches", hatchesThisWeather, { weatherId })
+	end
+	summonedBy = nil
 	current = nil
 	ReplicatedStorage:SetAttribute("Weather", "")
 	tweenSky(nil)

@@ -2,14 +2,17 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Species = require(Shared.Species)
 local SproutModel = require(Shared.SproutModel)
 
 local DataService = require(script.Parent.DataService)
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
+local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local PlotService = require(script.Parent.PlotService)
 
@@ -30,6 +33,8 @@ type Carry = {
 	-- does NOT return the Sproutling to them (it would survive the rebirth); it is simply lost.
 	-- A successful carry still pays the thief. Either way exactly one copy exists: no dupe.
 	forfeited: boolean,
+	id: string, -- 3b Snatch funnel session id, one GUID per carry
+	startedAt: number, -- os.clock() the carry began (3d SnatchResult's "seconds carried")
 }
 
 local function maxCarrySpeed(): number
@@ -70,6 +75,20 @@ local function finish(thief: Player, success: boolean, reason: string?)
 	carry.bonkPrompt:Destroy()
 	restoreWalkSpeed(thief)
 
+	-- 3d SnatchResult: fires exactly once per carry (guarded by `reported`) with a low-cardinality
+	-- result bucket. The spec's fixed list is success/bonked/fell/timeout/full; "other" covers edge
+	-- cases it doesn't name (moved too fast, the thief vanished, either player left).
+	local secondsCarried = os.clock() - carry.startedAt
+	local carrySpecies = Species.get(carry.sprout.s)
+	local carryRarity = carrySpecies and carrySpecies.rarity or "unknown"
+	local reported = false
+	local function reportResult(result: string)
+		if not reported then
+			reported = true
+			Analytics.custom(thief, "SnatchResult", secondsCarried, { result, carryRarity })
+		end
+	end
+
 	local victimSession = State.get(carry.victim)
 	if success then
 		if PlotService.placeSprout(thiefSession, carry.sprout) then
@@ -79,14 +98,18 @@ local function finish(thief: Player, success: boolean, reason: string?)
 				PlotService.refillPads(victimSession) -- m4: fill the emptied pad from storage
 			end
 			saveBoth(thiefSession, victimSession)
+			Analytics.funnel(thief, "Snatch", carry.id, 2, "ReachedHome")
+			reportResult("success")
 			return
 		end
 		State.notify(thiefSession, "Your garden is full, so the Sproutling ran home!", "#ff8080")
+		reportResult("full")
 	end
 
 	if carry.forfeited then
 		-- the victim rebirthed mid-carry (see Carry.forfeited)
 		State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or "") .. ". The Sproutling faded away.", "#ff8080")
+		reportResult("other")
 		return
 	end
 
@@ -101,6 +124,12 @@ local function finish(thief: Player, success: boolean, reason: string?)
 		State.notify(victimSession, "Your " .. SproutModel.displayName(carry.sprout) .. " came back" .. (reason and (" (" .. reason .. ")") or "") .. "!", "#80ff80")
 	end
 	State.notify(thiefSession, "Snatch failed" .. (reason and (": " .. reason) or ""), "#ff8080")
+	reportResult(
+		if reason and reason:match("^bonked") then "bonked"
+		elseif reason == "the thief fell" or reason == "the thief vanished" then "fell"
+		elseif reason == "too slow" then "timeout"
+		else "other"
+	)
 end
 
 local function onSnatch(plot: Model, pad: number, thief: Player, prompt: ProximityPrompt)
@@ -142,9 +171,14 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 	if not sprout then
 		return
 	end
+	local species = Species.get(sprout.s)
+	local rarity = species and species.rarity or "unknown"
 
 	victimSession.data.pads[key] = nil
 	PlotService.renderPads(victimSession)
+	-- 3d SnatchVictimLeft: checked in init.server.luau's onPlayerRemoving within 120s of this
+	victimSession.lastStolenAt = os.time()
+	victimSession.lastStolenRarity = rarity
 
 	local model = SproutModel.build(sprout, true)
 	SproutModel.weldTo(model, root, CFrame.new(0, 4.5, 0))
@@ -162,6 +196,7 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 		end
 	end)
 
+	local carryId = HttpService:GenerateGUID(false)
 	thiefSession.carrying = {
 		sprout = sprout,
 		victim = victim,
@@ -173,7 +208,11 @@ local function onSnatch(plot: Model, pad: number, thief: Player, prompt: Proximi
 		lastClock = os.clock(),
 		budget = maxCarrySpeed() * Config.CarryBurstSeconds,
 		forfeited = false,
+		id = carryId,
+		startedAt = os.clock(),
 	} :: Carry
+	Analytics.funnel(thief, "Snatch", carryId, 1, "Grabbed")
+	Analytics.custom(thief, "SnatchStart", 1, { rarity, if victimSession.passes.SturdyGate then "y" else "n" })
 	thiefSession.snatchReadyAt = now + Config.SnatchCooldownSeconds
 	thiefSession.shieldUntil = 0 -- snatching gives up your own new-player shield
 	thiefSession.data.shieldForfeited = true -- m7: for good, not just until you rejoin
