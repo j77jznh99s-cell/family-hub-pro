@@ -483,5 +483,17 @@ text-parse ever finds nothing, so the check can't silently go blind) and prints 
 automatic. Verified both directions: it reports clean on the current (already-fixed) `Codes.list`, and
 correctly flagged the old `lilypadger` value when temporarily reintroduced for a sanity check (never
 committed — confirmed zero diff on `Codes.luau` before pushing). selene/rojo/lune clean, CI green.
-Still not built: the Frostbloom Advent Gift list and `Products.luau`'s own Robux pricing check (the second
-follow-up task, still queued).
+Still not built: the Frostbloom Advent Gift list.
+
+**Update (2026-09-26, `e10e86b`): the `Products.luau` Robux pricing check is now built too**, closing the
+second follow-up. A third report section parses each dev product's description for a flat or minimum-floor
+Dew amount and prints Dew-per-Robux, sorted best-to-worst, so future pricing proposals can be eyeballed for
+consistency before the owner is asked to create real Robux IDs: `StarterPack` 102.0 Dew/Robux, `DewLarge`
+80.3, `DewSmall` 17.2 (a stated floor, not an income estimate — explicitly caveated in the tool's own
+comments, since actual payout scales with the buyer's real income rate at redemption time, which an offline
+script can't know). Products/passes with no lump Dew amount (`InstantGrow`, `LuckBoost`, `RestockNow`,
+`SummonStarfall`, `SummonAurora`, and all 5 Robux game passes) are explicitly listed as skipped with a reason,
+not silently omitted. I hand-verified all 3 rated products' arithmetic myself — all correct. selene/rojo/lune
+clean. `DewSmall`'s much lower rate (17.2 vs. 80-100+ for the others) is flagged in the tool's own output as
+worth a look once real income data exists, but not changed — pricing decisions are game-designer/live-ops-
+manager territory, not this tool's or this task's call.
