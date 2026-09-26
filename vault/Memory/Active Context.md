@@ -20,7 +20,9 @@ same day, `b8b34b4`: the end-of-event Dew conversion ignored the berries count);
 EventTimeOffset` — needed to Studio-test the event before its real 17 Oct start — had never been built (an
 older task called for it, got missed); **built and pushed 2026-09-26 (`04a3211`), reviewed and confirmed
 correct** — the full Hollow Harvest test plan can now actually be run, still needs the owner's Studio access;
-Frostbloom
+**Week 5 Codes redemption system built 2026-09-26** (`63c3100`, reviewed and confirmed correct — one-time
+per-player, free-tier rewards only, one placeholder demo code so far; live-ops-manager still needs to write
+the real Week 5 code list before 7 Nov); Frostbloom
 Festival (winter event) got its full spec + game-designer number confirmation 2026-09-26 too (build closer to
 Dec); ads eligibility & Ads Manager pricing re-verified 2026-09-26 with real corrections found; lint/build/bake
 clean throughout; still waiting on the owner's first Studio play-test, which should now also cover Hollow Harvest

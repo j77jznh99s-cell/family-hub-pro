@@ -7,6 +7,34 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Week 5 Codes redemption system built
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
+
+**What was done**
+- Delegated the next queue item to roblox-engineer: a Codes redemption system for the Week 5
+  live-ops update (7 Nov), per [[Sproutling Isles - Launch & Live Ops]]'s Week 5 section. The
+  vault spec was light on implementation detail (just "a Codes box, free-tier rewards only"), so
+  the brief asked the agent to follow existing codebase conventions for one-time state, reward
+  granting and toasts, and use engineering judgement for the rest.
+- Pushed `63c3100`: new `Codes.luau` (reward table; `SPROUT1K` = 1000 Dew as the placeholder demo
+  code from the announcement copy, clearly commented as a placeholder) and `CodesService.luau`
+  (validation, per-player one-time redemption, reward granting, toasts, a 1s anti-spam cooldown),
+  plus a client-side Codes button/panel and small wiring (a new RemoteEvent, a session field, a
+  DataService default, an Analytics reason-prefix entry).
+- Reviewed the full diff myself before recording done: Dew/seed rewards reuse the existing
+  `State.addDew`/`addSeeds` helpers exactly as other systems do; the Luck Boost reward path
+  matches the QA-confirmed M5 fix pattern (sets both the in-memory `session.luckUntil` and the
+  saved `data.luckUntil`, so a boost survives a rejoin); one-time redemption is marked *before*
+  granting so a mid-grant crash can't be exploited for a re-redeem; the cooldown reuses
+  `PondService`'s exact `os.clock()` pattern; the Analytics call matches `Analytics.custom`'s
+  actual signature; and the new UI button's position doesn't overlap the existing event panel
+  above it. No bugs found this time. selene/rojo/lune all clean, 1241 parts unchanged, CI green
+  (run #89).
+- Only the placeholder code exists so far (by design — the real Week 5 list wasn't specced).
+  Added a follow-up task for live-ops-manager to write the real code list before 7 Nov; not
+  urgent, about 6 weeks out.
+- 1 task this run; stopping.
+
 ## 2026-09-26: hourly run — Config.EventTimeOffset Studio test hook built
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (via roblox-engineer, isolated worktree) · **Agents used:** roblox-engineer
 
