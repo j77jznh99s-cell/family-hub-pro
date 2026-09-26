@@ -474,3 +474,14 @@ table, the Frostbloom Advent Gift list, or `Products.luau`'s Robux catalogue aga
 — today's fix still needed a human to notice the comparison. Extending the tool to do that check itself is the
 natural next step, so a future GROWINGSTRONG-shaped bug gets caught by running one command instead of by a
 reviewer happening to think to check.
+
+**Update (2026-09-26, `f9e0031`): the `Codes.luau` check is now built.** The tool finds the cheapest Rare+
+seed grantable by any paid dev product in `Products.luau` (parsed from the free-text `description` field —
+currently matches "Mushroomph" via the Starter Pack, 120s payback, with a small hardcoded fallback if the
+text-parse ever finds nothing, so the check can't silently go blind) and prints a `WARNING:` line for any
+`Codes.list` seed reward that pays back slower than that floor — the exact GROWINGSTRONG comparison, now
+automatic. Verified both directions: it reports clean on the current (already-fixed) `Codes.list`, and
+correctly flagged the old `lilypadger` value when temporarily reintroduced for a sanity check (never
+committed — confirmed zero diff on `Codes.luau` before pushing). selene/rojo/lune clean, CI green.
+Still not built: the Frostbloom Advent Gift list and `Products.luau`'s own Robux pricing check (the second
+follow-up task, still queued).
