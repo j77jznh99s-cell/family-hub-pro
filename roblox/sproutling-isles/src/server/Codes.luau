@@ -21,10 +21,28 @@ export type Reward = {
 local Codes = {}
 
 Codes.list = {
-	-- Demo/placeholder code from the Week 5 announcement copy ("Redeem code SPROUT1K for free
-	-- Dew"). This is NOT a real launch code -- swap in the actual Week 5 code list (live-ops-manager
-	-- / owner) before 7 Nov.
+	-- Real Week 5 code list (live-ops-manager proposal, 2026-09-26; GROWINGSTRONG's seed reward
+	-- reviewed/swapped by game-designer same day -- see the vault note's "Week 5 code list" section
+	-- for the full table, rationale and retention window per code). Goes live 7 Nov.
+
+	-- The announcement copy already promises this exact code -- evergreen "thank you for finding
+	-- the Codes button" grant.
 	SPROUT1K = { dew = 1000 } :: Reward,
+
+	-- Catch-up code for players who joined during Weeks 2-4 and missed the Week 1 Founding
+	-- Gardener window.
+	MISSEDBLOOM = { dew = 500, seeds = { mossbun = 1 } } :: Reward,
+
+	-- Matches the shortest ad-tier Luck reward (5 min) so a code never beats the free ad path.
+	LUCKYGARDEN = { luckSeconds = 300 } :: Reward,
+
+	-- Community milestone/thank-you code. Reward uses mushroomph (not lilypadger -- swapped
+	-- 2026-09-26 after a balance review found lilypadger priced above the paid Starter Pack's own
+	-- Rare seed; mushroomph matches the Starter Pack's grant instead).
+	GROWINGSTRONG = { dew = 250, seeds = { mushroomph = 1 } } :: Reward,
+
+	-- Dew-free code: pure seed variety for new or alt accounts still Dew-poor.
+	SEEDSTASH = { seeds = { mossbun = 2 } } :: Reward,
 } :: { [string]: Reward }
 
 return Codes
