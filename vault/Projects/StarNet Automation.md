@@ -98,6 +98,14 @@ StarNet's import can't set these, so do them by hand once (about 2 minutes):
 | **Etsy** | Partly: StarNet marks it "manual only" (its logins expire hourly) | **No** |
 | **eBay, Amazon, Facebook Marketplace, Poshmark, Mercari** | **No integration.** Only by an agent clicking a web browser, which asks you before every click | **No**, and these sites often forbid bots |
 
+**Recommendation (2026-09-26; owner said "anything on the available platforms"):**
+1. **Start: digital products on Gumroad** (templates, guides, printables). $0 up front, no stock, no shipping, and
+   StarNet can run it unattended. Gumroad takes a cut per sale (check its current fee).
+2. **Later: print-on-demand** (Printify + a Shopify store): physical items made only when ordered. Shopify has a monthly fee.
+3. **Skip for now:** Etsy (manual only) and eBay/Amazon/Facebook/Poshmark/Mercari (no integration).
+Crew: market-researcher (Sonnet 5) finds product ideas with demand; a product maker drafts the product and listing;
+the owner approves before anything goes live. Products must be original, and no earnings are guaranteed.
+
 Rule if we build this: agents **draft** listings, prices and replies; the owner approves anything that publishes, changes
 prices, refunds or spends. Needs the owner to say what they sell and where.
 

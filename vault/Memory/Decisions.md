@@ -47,4 +47,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 | 14 | Rewarded video ads plan + ad-reward products | Yes, once eligible |
 | 15 | Gate look: glowing vine curtain instead of a laser? | Yes (fits the art style) |
 
-
+**Selling agents ([[StarNet Automation]])**
+| # | Decision | Recommendation |
+| --- | --- | --- |
+| 19 | Start selling digital products on Gumroad first, then print-on-demand later? | Yes |
