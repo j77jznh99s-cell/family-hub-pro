@@ -9,10 +9,12 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Species = require(Shared.Species)
 local MapBuilder = require(Shared.MapBuilder)
+local Events = require(Shared.Events)
 
 local Net = require(script.Net)
 local State = require(script.State)
 local Analytics = require(script.Analytics)
+local Badges = require(script.Badges)
 local DataService = require(script.DataService)
 local WeatherService = require(script.WeatherService)
 local PlotService = require(script.PlotService)
@@ -100,6 +102,40 @@ local function onPlayerAdded(player: Player)
 	end
 
 	local now = os.time()
+
+	-- Week 1 launch incentive: "Founding Gardener" badge + flag, granted once, ever, on a player's
+	-- first-ever join, if that join falls inside Week 1. See Events.FoundingGardenerWindow and
+	-- vault/Projects/Sproutling Isles - Launch & Live Ops.md, Week 1 section.
+	if isNewSave and not data.foundingGardener then
+		if now >= Events.FoundingGardenerWindow.startAt and now < Events.FoundingGardenerWindow.endAt then
+			data.foundingGardener = true
+			Badges.award(player, Config.FoundingGardenerBadgeId)
+		end
+	end
+
+	-- Week 8 "Frostbloom Seedling" login-day teaser: record today's UTC calendar day if this join
+	-- falls inside the teaser window and today isn't already recorded; once 3 distinct days are
+	-- recorded, mark qualified and stop recording further days. Data-only -- the actual Frostfawn
+	-- seed grant is a future task for whatever builds the Frostbloom Advent Gift system, which
+	-- should check data.frostbloomTeaser.qualified on Day 1 (Sat 12 Dec). See
+	-- Events.FrostbloomTeaserWindow and the Week 8 section of the same note.
+	if not data.frostbloomTeaser.qualified and now >= Events.FrostbloomTeaserWindow.startAt and now <= Events.FrostbloomTeaserWindow.endAt then
+		local today = now // 86400
+		local alreadyRecorded = false
+		for _, day in data.frostbloomTeaser.days do
+			if day == today then
+				alreadyRecorded = true
+				break
+			end
+		end
+		if not alreadyRecorded then
+			table.insert(data.frostbloomTeaser.days, today)
+			if #data.frostbloomTeaser.days >= Events.FrostbloomTeaserDaysNeeded then
+				data.frostbloomTeaser.qualified = true
+			end
+		end
+	end
+
 	local shield = if data.playSeconds < Config.NewPlayerShieldSeconds then now + (Config.NewPlayerShieldSeconds - data.playSeconds) else 0
 	if data.shieldForfeited or (Config.StudioDisableShield and RunService:IsStudio()) then
 		shield = 0 -- m7: snatching gives the shield up for good; M6: Studio test switch

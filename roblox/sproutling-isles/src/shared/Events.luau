@@ -79,6 +79,33 @@ Events.Halloween2026 = {
 	stallOrder = { "pumpkit", "gourdgeist", "skin" },
 } :: EventConfig
 
+-- Week 1 launch incentive: "Founding Gardener" badge + flag for anyone whose first-ever join
+-- falls in Week 1. See vault/Projects/Sproutling Isles - Launch & Live Ops.md, Week 1 section,
+-- and the launch calendar table ("Week 2 starts 17 Oct").
+Events.FoundingGardenerWindow = {
+	-- Sat 10 Oct 2026 00:00 UTC (public launch = Week 1 start). Hand-checked:
+	-- `date -u -d "2026-10-10 00:00:00" +%s` -> 1791590400.
+	startAt = 1791590400,
+	-- Sat 17 Oct 2026 00:00 UTC (Week 2 starts, per the launch calendar table; end is exclusive,
+	-- i.e. a join at exactly this instant counts as Week 2). Hand-checked:
+	-- `date -u -d "2026-10-17 00:00:00" +%s` -> 1792195200.
+	endAt = 1792195200,
+}
+
+-- Week 8 "Frostbloom Seedling" login-day teaser: a data-only tracker (no reward is granted here --
+-- see init.server.luau's comment for why). See vault/Projects/Sproutling Isles - Launch &
+-- Live Ops.md, Week 8 section.
+Events.FrostbloomTeaserWindow = {
+	-- Sat 28 Nov 2026 00:00 UTC (Week 8 start). Hand-checked:
+	-- `date -u -d "2026-11-28 00:00:00" +%s` -> 1795824000.
+	startAt = 1795824000,
+	-- Thu 11 Dec 2026 23:59 UTC (the day before Frostbloom Festival Day 1, Sat 12 Dec; end is
+	-- inclusive of this minute, per the spec's "through 11 Dec"). Hand-checked:
+	-- `date -u -d "2026-12-11 23:59:00" +%s` -> 1797033540.
+	endAt = 1797033540,
+}
+Events.FrostbloomTeaserDaysNeeded = 3
+
 -- True from Part 1's start up to (not including) the end time.
 function Events.active(config: EventConfig, now: number): boolean
 	return now >= config.part1At and now < config.endAt

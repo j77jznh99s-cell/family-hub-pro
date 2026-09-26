@@ -75,6 +75,17 @@ function DataService.defaultData()
 		skins = {}, -- [skinId] = true once earned, e.g. skins.haunted; kept forever, earn-only
 		skin = "", -- currently equipped cosmetic plot skin id ("" = none)
 		codes = {}, -- [code] = true once redeemed, ever (Week 5 Codes system, see CodesService.luau)
+		-- Week 1 launch incentive: true once earned (first-ever join fell inside Week 1), independent
+		-- of whether the real Roblox badge could be awarded yet (Config.FoundingGardenerBadgeId may
+		-- still be 0). Backs the title/cosmetic-greenhouse-flag part of the spec later; see
+		-- init.server.luau and Events.FoundingGardenerWindow.
+		foundingGardener = false,
+		-- Week 8 "Frostbloom Seedling" teaser: a login-day tracker only, no reward yet. `days` is the
+		-- set of distinct UTC calendar days (os.time() // 86400) recorded inside
+		-- Events.FrostbloomTeaserWindow; `qualified` flips true once 3 distinct days are recorded (see
+		-- Events.FrostbloomTeaserDaysNeeded). The Frostfawn seed grant is a future task for whatever
+		-- builds the Frostbloom Advent Gift system, which should check this flag on Day 1 (Sat 12 Dec).
+		frostbloomTeaser = { days = {}, qualified = false },
 	}
 end
 

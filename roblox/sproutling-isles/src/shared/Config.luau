@@ -83,6 +83,11 @@ Config.StudioDisableShield = true
 -- Part 2, Witching Hour, or past the event's end without waiting for the real date.
 Config.EventTimeOffset = 0
 
+-- Week 1 launch incentive: "Founding Gardener" badge. 0 until the badge is created on the Creator
+-- Dashboard -- same "IDs are 0 until you create..." convention as Products.luau. Badges.award()
+-- no-ops (skips, no error) while this is 0. See Events.FoundingGardenerWindow for the join window.
+Config.FoundingGardenerBadgeId = 0
+
 -- Saving
 Config.DataStoreName = "SproutlingIsles_v1"
 Config.AutosaveSeconds = 60
