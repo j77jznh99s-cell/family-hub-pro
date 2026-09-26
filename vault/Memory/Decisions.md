@@ -56,4 +56,5 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
+| 21 | StarNet: put on hold and stay on the cloud setup (Claude Code + Routines + vault)? See [[Agent Platform Comparison]] | Yes; add self-hosted n8n later only if Gumroad needs it |
 | 20 | Which product line first: family printables, Roblox game-making guides, or spreadsheet/Notion templates? | Family printables (easiest to make well and check for originality) |

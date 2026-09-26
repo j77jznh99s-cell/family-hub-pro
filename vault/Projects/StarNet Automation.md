@@ -1,9 +1,12 @@
 ---
 tags: [project, automation]
-status: setup (waiting on the owner's laptop install)
-updated: 2026-09-25
+status: recommended on hold (2026-09-26), waiting on the owner
+updated: 2026-09-26
 ---
 # StarNet Automation
+
+> **2026-09-26 recommendation: put StarNet on hold.** The current cloud setup (Claude Code + hourly Routine
+> + vault) already does most of this without the laptop. See [[Agent Platform Comparison]] and [[Decisions]] #21.
 
 The owner wants to run the agent team as a **working automation system**, like the StarNet
 Reel by `androo.agi` ("AI Agent Business Factory").
