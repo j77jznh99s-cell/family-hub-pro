@@ -171,3 +171,86 @@ end
 if not anyFlagged then
 	print("No free-tier code rewards exceed the paid catalogue's Rare-seed floor.")
 end
+
+-- ---------------------------------------------------------------------------------------------
+-- Dev product Dew-per-Robux rates
+-- ---------------------------------------------------------------------------------------------
+-- Robux dev products don't carry a structured "grants this much Dew" field either -- same
+-- situation as the Codes/Products check above, so this is another free-text heuristic parse of
+-- each product's `description`, not a real data link. Two shapes show up in the current copy:
+--   * a flat one-time amount, e.g. "5,000 Dew" (Starter Pack)
+--   * a time-based income multiplier with a stated floor, e.g. "15 minutes of your current
+--     income (min 500 Dew)" (Dew Pouch/Dew Barrel) -- for these we use the stated minimum,
+--     since that's the only fixed number the description gives us. This is NOT an estimate of
+--     what the product actually pays out at redemption time (that depends on the buyer's real
+--     income rate, which this offline script has no way to know) -- it's a floor, so the real
+--     rate for these two is >= what's printed here.
+-- Several products have no parseable Dew number at all: InstantGrow, RestockNow (Restock Shop),
+-- LuckBoost, SummonStarfall and SummonAurora all grant an instant action, a re-roll, a temporary
+-- multiplier or a server-wide event rather than a lump Dew amount, and every Products.Passes
+-- entry (DoubleDew, BigGreenhouse, SturdyGate, LuckyRod, VIP) grants a permanent passive effect,
+-- not Dew. Those are skipped from the rate table below rather than guessed at, and listed
+-- separately with a reason so nothing is silently omitted.
+
+local function parseDewAmount(description: string): (number?, string?)
+	local minAmount = string.match(description, "%(min ([%d,]+) Dew%)")
+	if minAmount then
+		return tonumber((string.gsub(minAmount, ",", ""))),
+			"stated minimum floor (time-based income -- not an estimate of actual payout)"
+	end
+	local flatAmount = string.match(description, "([%d][%d,]*) Dew")
+	if flatAmount then
+		return tonumber((string.gsub(flatAmount, ",", ""))), "flat one-time amount"
+	end
+	return nil, nil
+end
+
+local rated: { { key: string, price: number, dew: number, ratePerRobux: number, basis: string } } = {}
+local unrated: { { key: string, reason: string } } = {}
+
+for _, product in Products.DevProducts do
+	local dew, basis = parseDewAmount(product.description)
+	if dew then
+		table.insert(rated, {
+			key = product.key,
+			price = product.price,
+			dew = dew,
+			ratePerRobux = dew / product.price,
+			basis = basis :: string,
+		})
+	else
+		table.insert(unrated, {
+			key = product.key,
+			reason = "no parseable Dew amount (instant action / re-roll / temporary multiplier / server-wide event)",
+		})
+	end
+end
+
+for _, pass in Products.Passes do
+	table.insert(unrated, { key = pass.key, reason = "game pass: permanent passive effect, not a lump Dew amount" })
+end
+
+table.sort(rated, function(a, b)
+	return a.ratePerRobux > b.ratePerRobux
+end)
+
+print("")
+print("Dev product Dew-per-Robux rates (heuristic parse of description text; see comment above)")
+print(string.rep("-", 70))
+print(string.format("%-14s %8s %10s %12s  %s", "Product", "Price", "Dew", "Dew/Robux", "Basis"))
+for _, entry in rated do
+	print(string.format(
+		"%-14s %8d %10d %12.1f  %s",
+		entry.key,
+		entry.price,
+		entry.dew,
+		entry.ratePerRobux,
+		entry.basis
+	))
+end
+
+print("")
+print("No flat Dew amount to rate:")
+for _, entry in unrated do
+	print(string.format("  %-14s -- %s", entry.key, entry.reason))
+end
