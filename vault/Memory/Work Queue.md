@@ -9,7 +9,6 @@ Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
 - [ ] **roblox-engineer:** Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth/EventShop/Ad) + custom events (Hatch/SnatchStart/WeatherStart/etc.), spec sections 3b/3d in [[Sproutling Isles - Launch & Live Ops]] — follow-up to the onboarding/economy wrapper built 2026-09-26.
-- [ ] **roblox-engineer:** Sproutling Isles leaderboards (income, rarest hatch).
 - [ ] **game-designer:** m11 pond water surface (map art) and check the Halloween numbers.
 - [ ] **roblox-engineer:** Hollow Harvest Halloween event (build by about 15 Oct; skip if launch slips past 24 Oct).
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov.
@@ -25,6 +24,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: roblox-engineer built Sproutling Isles leaderboards (cross-server income + rarest hatch, `21c68c3`). Reviewing the diff myself before recording found a real display bug (TextLabel nested wrong for the lookup code to ever find it — boards would have stayed on "Loading..." forever); fixed and re-validated directly (`6aece41`). 2 tasks this run (CI fix + leaderboards); stopping given the CI investigation's extra time.
 - 2026-09-26: **CI-first task.** `main`'s CI had been red since 2026-09-23 (every push failing `storage.test.js`'s presigned-URL test — a mocking bug in `src/services/storage/s3.js`, unrelated to any of this session's vault-only pushes). Found the exact fix already on `claude/hourly-project-processing-ejbqs4` and ported it to `main` (`fd327a0`); 30/30 tests pass locally. See [[Clip Studio]] for detail.
 - 2026-09-26: market-researcher re-checked Roblox rewarded-ads eligibility, Ads Manager pricing and the maturity questionnaire against Roblox's creator-docs GitHub mirror (direct create.roblox.com/devforum fetches are blocked in-sandbox). Found real corrections, not just re-confirmations: `ShowAdResult.ShowCompleted` not `Succeeded`, 3 extra eligibility requirements, Ads Manager bills as auto-bid/CPP not CPM/CPC, "new-creator ad credits" likely doesn't exist. Updated [[Sproutling Isles - Launch & Live Ops]] sections 1D/4/6 and ticked both tasks. 3/3 tasks done this run, stopping.
 - 2026-09-26: market-researcher wrote the demand brief for all 3 Gumroad product lines (family printables, Roblox guides, spreadsheet/Notion templates) into [[Gumroad Digital Products]], with sources and an unverified-figures flag on anything from a blocked direct fetch. Deliberately did not pick one — [[Decisions]] #20 stays owner-pending.

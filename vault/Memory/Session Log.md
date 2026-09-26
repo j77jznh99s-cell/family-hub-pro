@@ -7,6 +7,28 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Sproutling Isles leaderboards (+ a bug I caught in review)
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
+
+**What was done**
+- Task 2 from [[Work Queue]] (after the CI fix below): roblox-engineer built cross-server income
+  and rarest-hatch leaderboards (`21c68c3`) — `OrderedDataStoreService`-backed, a physical board
+  in the Plaza, income piggybacking the existing 5-min analytics batch, hatch score written only
+  on a new personal best. Only a one-line spec existed ([[Sproutling Isles - Launch & Live Ops]]
+  Week 5), so every placement/scoring/refresh-rate choice was the agent's own documented call.
+- Before recording this as done, I read the actual diff (not just the report) and found a real
+  bug: `MapBuilder.luau`'s new board-building code nested the TextLabel inside an extra
+  "Background" Frame, but `LeaderboardService.init` looks up the label with a **non-recursive**
+  `FindFirstChild` chain that assumes the TextLabel is a *direct* child of the BillboardGui — the
+  established convention everywhere else in that file. As shipped, both boards would have shown
+  their baked-in "Loading..." text forever, no matter how the data refreshed underneath.
+- Fixed it myself directly (small, well-understood, no need for another agent round-trip):
+  dropped the Frame, moved the background color/transparency onto the TextLabel itself (`6aece41`,
+  pushed to the same branch). Re-ran `selene`/`rojo build`/`lune bake-map` — all clean, same part
+  count (1214).
+- Recorded both the feature and the fix in [[Sproutling Isles]]. Not Studio-tested (not available
+  in this sandbox) — flagged for the owner's play-test.
+
 ## 2026-09-26: hourly run — fixed red CI on main (CI-first task)
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** none (done directly)
 
