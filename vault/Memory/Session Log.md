@@ -7,6 +7,30 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — built Sproutling Isles analytics wrapper
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault stays on `main`) · **Agents used:** roblox-engineer
+
+**What was done**
+- Task 1 from [[Work Queue]]: roblox-engineer built build notes 1-4 of the analytics spec
+  ([[Sproutling Isles - Launch & Live Ops]] section 3) — a pcall-wrapped `Analytics.luau` facade over
+  `AnalyticsService`, the 11-step onboarding funnel fired once per player ever (`data.onb` +
+  a new `DataService.load` `isNew` flag), an optional `reason` param on `State.addDew`/`spendDew`,
+  and economy Source/Sink logging wired at every listed call site (income batched every 5 min and
+  on leave, sells, daily gift, pond casts, IAP, rebirth, seed purchases).
+- Worked in an isolated worktree, validated with `selene`/`rojo build`/`lune bake-map` (all clean,
+  1,209 parts unchanged), then pushed directly to the project branch (commit `a136cba`) — vault's
+  `main` was untouched by the agent.
+- I reviewed the diff myself (Analytics.luau, DataService's isNew logic, the income batching) before
+  recording it: guards look correct (Joined can't re-fire for returning players, even ones who
+  joined before the `onb` field existed; income truly batched, not per-tick).
+- Recurring funnels (3b) and custom events (3d) were explicitly left out of scope — added as a
+  follow-up task in [[Work Queue]]. **Not Studio-tested** (not available in this sandbox); the
+  `AnalyticsService` signatures are unverified against live Creator Docs, but every call is
+  pcall-guarded so a wrong signature can't break gameplay, only fail to log.
+- Ticked the task and updated the Status table in [[Sproutling Isles]].
+
+---
+
 ## 2026-09-26: hourly run — re-reviewed Sproutling Isles fixes (3/3 tasks, run complete)
 **Device:** cloud Routine · **Branch:** `main` · **Agents used:** qa-tester
 

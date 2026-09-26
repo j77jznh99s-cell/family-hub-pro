@@ -20,7 +20,8 @@ Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch in
 | Core systems | Coded; QA review done and blocker + 6 majors fixed; lint clean; **not play-tested in Studio** |
 | Robux items | Coded; IDs are 0 until created on the Creator Dashboard |
 | Art | Placeholder; brief ready in [[Sproutling Isles - Art Brief]] |
-| Trading, analytics, events, ads | Specs written ([[Sproutling Isles - Trading Spec]], [[Sproutling Isles - Launch & Live Ops]]); not built |
+| Trading, events, ads | Specs written ([[Sproutling Isles - Trading Spec]], [[Sproutling Isles - Launch & Live Ops]]); not built |
+| Analytics | Wrapper + onboarding funnel + economy events built 2026-09-26 (commit `a136cba`); lint/build/bake clean; **not Studio-tested**; recurring funnels + custom events still to build |
 
 ## Key numbers (full tables in the design doc and `src/shared/*.luau`)
 - 13 species, Common → Secret; the Mossbun seed costs 10 Dew, pays 1 Dew/s and grows in 30 s.
@@ -38,7 +39,9 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **game-designer:** art brief, see [[Sproutling Isles - Art Brief]]
 - [x] **game-designer:** Trading Booths spec, see [[Sproutling Isles - Trading Spec]]
 - [ ] **roblox-engineer:** build Trading Booths (spec section 10 checklist), after the owner's trading decisions
-- [ ] **roblox-engineer:** analytics wrapper + events (spec in [[Sproutling Isles - Launch & Live Ops]]), needed before the beta
+- [x] **roblox-engineer:** analytics wrapper + onboarding funnel + economy events (spec section 3, build notes 1-4) — done 2026-09-26, commit `a136cba` on `claude/roblox-popular-game-trends-6u7sie`. `Analytics.luau` (pcall-wrapped), 11-step onboarding funnel (once per player ever), `reason` param on `State.addDew`/`spendDew` wired at every listed call site, income batched every 5 min + on leave. `selene`/`rojo build`/`lune bake-map` all clean. **Not Studio-tested**; `AnalyticsService` signatures unverified against live Creator Docs (no internet in sandbox) but every call is pcall-guarded.
+- [ ] **roblox-engineer:** analytics recurring funnels (Store/Snatch/Rebirth/EventShop/Ad, spec section 3b) and custom events (Hatch/SnatchStart/WeatherStart/etc., spec section 3d) — follow-up to the above, deliberately scoped out.
+- [ ] **owner:** when you play-test in Studio, also check the Output window for `[Analytics] ... failed:` warnings (expected if a signature is wrong — logged, not fatal) and confirm no gameplay errors from the new code.
 - [ ] **roblox-engineer:** leaderboards (income, rarest hatch)
 - [ ] **roblox-engineer:** Hollow Harvest Halloween event (needs to be built by about 15 Oct; skip it if launch slips past 24 Oct)
 - [x] **live-ops-manager:** launch checklist, beta plan, week 1–8 calendar, Halloween spec, ads plan, see [[Sproutling Isles - Launch & Live Ops]]
