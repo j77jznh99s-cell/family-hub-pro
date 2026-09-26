@@ -1444,7 +1444,7 @@ local function onPlayerAdded(player: Player)
 		Analytics.onboarding(player, "Joined")
 	end
 
-	local now = os.time()
+	local now = Events.now()
 
 	-- Week 1 launch incentive: "Founding Gardener" badge + flag, granted once, ever, on a player's
 	-- first-ever join, if that join falls inside Week 1. See Events.FoundingGardenerWindow and
