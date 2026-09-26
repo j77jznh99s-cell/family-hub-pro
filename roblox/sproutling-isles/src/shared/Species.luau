@@ -16,6 +16,9 @@ export type Species = {
 	body: Color3,
 	leaf: Color3,
 	topper: "Leaf" | "Petals" | "Cap" | "Spikes" | "Pad" | "Flame" | "Crystal",
+	limited: string?, -- event id (e.g. "halloween2026") for limited species; nil for the base roster.
+	-- Limited species always have stockChance = 0 (Species.ShopList excludes them automatically) and
+	-- are earned only through the matching event's own systems (EventService, PondService).
 }
 
 local Species = {}
@@ -46,6 +49,13 @@ local list: { Species } = {
 	{ id = "orchidragon", name = "Orchidragon", rarity = "Legendary", price = 2_000_000, growSeconds = 900, dewPerSecond = 2_200, stockChance = 0.03, stockRange = { 1, 1 }, body = Color3.fromRGB(170, 120, 220), leaf = Color3.fromRGB(250, 250, 255), topper = "Petals" },
 	{ id = "moonpetal", name = "Moonpetal Wisp", rarity = "Mythic", price = 7_500_000, growSeconds = 1_500, dewPerSecond = 5_000, stockChance = 0, stockRange = { 0, 0 }, body = Color3.fromRGB(200, 220, 255), leaf = Color3.fromRGB(120, 140, 255), topper = "Crystal" },
 	{ id = "starseed", name = "Starseed Sprite", rarity = "Secret", price = 25_000_000, growSeconds = 1_800, dewPerSecond = 12_000, stockChance = 0, stockRange = { 0, 0 }, body = Color3.fromRGB(30, 30, 60), leaf = Color3.fromRGB(80, 255, 230), topper = "Crystal" },
+	-- Halloween "Hollow Harvest" limited species (appended after the base 13 so their `order` never
+	-- shifts an existing species' analytics order). stockChance = 0 keeps them out of Species.ShopList;
+	-- they're earned only via the Lantern Stall (pumpkit, gourdgeist) or the Wishing Pond during Spooky
+	-- Fog from Part 2 (hollowisp). See EventService.luau and PondService.luau.
+	{ id = "pumpkit", name = "Pumpkit", rarity = "Epic", price = 150_000, growSeconds = 420, dewPerSecond = 380, stockChance = 0, stockRange = { 0, 0 }, body = Color3.fromRGB(235, 140, 40), leaf = Color3.fromRGB(40, 110, 50), topper = "Cap", limited = "halloween2026" },
+	{ id = "gourdgeist", name = "Gourdgeist", rarity = "Legendary", price = 1_200_000, growSeconds = 780, dewPerSecond = 1_500, stockChance = 0, stockRange = { 0, 0 }, body = Color3.fromRGB(225, 235, 215), leaf = Color3.fromRGB(150, 90, 255), topper = "Flame", limited = "halloween2026" },
+	{ id = "hollowisp", name = "Hollowisp", rarity = "Mythic", price = 10_000_000, growSeconds = 1_500, dewPerSecond = 6_000, stockChance = 0, stockRange = { 0, 0 }, body = Color3.fromRGB(30, 30, 40), leaf = Color3.fromRGB(170, 90, 255), topper = "Crystal", limited = "halloween2026" },
 }
 
 Species.List = list
@@ -59,13 +69,19 @@ function Species.get(id: string): Species?
 	return Species.ById[id]
 end
 
+-- Limited species (Halloween etc.) are excluded here on purpose: Species.rollByRarity backs the
+-- Pollen Parade and the Wishing Pond/Sky Well, and a limited species must only ever come from its
+-- own event system (the Lantern Stall, or the Pond during Spooky Fog for hollowisp) -- never leak
+-- out through an unrelated random-rarity roll just because it shares a rarity tier.
 local countByRarity: { [string]: number } = {}
 for _, species in list do
-	countByRarity[species.rarity] = (countByRarity[species.rarity] or 0) + 1
+	if not species.limited then
+		countByRarity[species.rarity] = (countByRarity[species.rarity] or 0) + 1
+	end
 end
 
 -- Weighted random species pick. `weights` maps rarity -> total weight for that rarity,
--- shared evenly between the species of that rarity.
+-- shared evenly between the (non-limited) species of that rarity.
 function Species.rollByRarity(weights: { [string]: number }, rng: Random): Species
 	local total = 0
 	for rarity, weight in weights do
@@ -75,9 +91,11 @@ function Species.rollByRarity(weights: { [string]: number }, rng: Random): Speci
 	end
 	local roll = rng:NextNumber() * total
 	for _, species in list do
-		roll -= (weights[species.rarity] or 0) / countByRarity[species.rarity]
-		if roll <= 0 then
-			return species
+		if not species.limited then
+			roll -= (weights[species.rarity] or 0) / countByRarity[species.rarity]
+			if roll <= 0 then
+				return species
+			end
 		end
 	end
 	return list[1]

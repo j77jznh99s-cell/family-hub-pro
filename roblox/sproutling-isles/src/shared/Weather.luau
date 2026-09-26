@@ -27,6 +27,8 @@ Weather.Mutations = {
 	charged = { id = "charged", name = "Charged", multiplier = 2, color = Color3.fromRGB(255, 255, 110) },
 	starry = { id = "starry", name = "Starry", multiplier = 3, color = Color3.fromRGB(190, 170, 255) },
 	prismatic = { id = "prismatic", name = "Prismatic", multiplier = 6, color = Color3.fromRGB(255, 120, 230) },
+	-- Halloween "Hollow Harvest": Spooky Fog's mutation.
+	haunted = { id = "haunted", name = "Haunted", multiplier = 3, color = Color3.fromRGB(150, 90, 255) },
 } :: { [string]: Mutation }
 
 Weather.Types = {
@@ -34,6 +36,10 @@ Weather.Types = {
 	thunder = { id = "thunder", name = "Thunderbloom", growthSpeed = 1.5, mutation = "charged", mutationChance = 0.2, naturalWeight = 30, sky = Color3.fromRGB(90, 90, 120), announce = "Thunderbloom! Hatches may come out Charged (x2)!" },
 	starfall = { id = "starfall", name = "Starfall", growthSpeed = 1, mutation = "starry", mutationChance = 0.15, naturalWeight = 15, sky = Color3.fromRGB(40, 40, 90), announce = "Stars are falling! Hatches may turn Starry (x3)!" },
 	aurora = { id = "aurora", name = "Aurora", growthSpeed = 1.5, mutation = "prismatic", mutationChance = 0.1, naturalWeight = 5, sky = Color3.fromRGB(80, 200, 170), announce = "AURORA! Prismatic (x6) hatches are possible!" },
+	-- Halloween "Hollow Harvest" (see vault/Projects/Sproutling Isles - Launch & Live Ops.md).
+	-- naturalWeight = 0: never rolled by pickNatural(), only ever started by EventService's schedule
+	-- or a Robux summon (see WeatherService.pickNatural's explicit weight > 0 filter).
+	spookyfog = { id = "spookyfog", name = "Spooky Fog", growthSpeed = 1.5, mutation = "haunted", mutationChance = 0.2, naturalWeight = 0, sky = Color3.fromRGB(70, 40, 100), announce = "Spooky Fog creeps in... hatches may turn HAUNTED (x3)! Catch the Wisp Lanterns!" },
 } :: { [string]: WeatherType }
 
 return Weather

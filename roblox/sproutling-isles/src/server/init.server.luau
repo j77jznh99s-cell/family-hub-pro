@@ -22,6 +22,7 @@ local PondService = require(script.PondService)
 local ProgressionService = require(script.ProgressionService)
 local MonetizationService = require(script.MonetizationService)
 local LeaderboardService = require(script.LeaderboardService)
+local EventService = require(script.EventService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 
@@ -33,6 +34,7 @@ PondService.init(map)
 ProgressionService.init(map)
 MonetizationService.init()
 LeaderboardService.init(map)
+EventService.init(map) -- after WeatherService.init so the Fog scheduler's onStart/onStop hooks are live
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle
@@ -129,6 +131,7 @@ local function onPlayerAdded(player: Player)
 	ShopService.loadStock(session)
 	State.syncAll(session)
 	PlotService.renderPads(session)
+	EventService.onJoin(session) -- Hollow Harvest: sync the Moonberries/skin attributes, convert leftovers if the event has ended
 
 	player.CharacterAdded:Connect(function(character)
 		onCharacter(session, character)

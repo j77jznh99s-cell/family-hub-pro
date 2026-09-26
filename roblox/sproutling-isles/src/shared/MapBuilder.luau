@@ -207,6 +207,28 @@ end
 ----------------------------------------------------------------------------------------------
 -- areas
 
+-- Hollow Harvest: 14 marker points for Wisp Lanterns to spawn at (EventService picks 10 of them
+-- at random each Fog). Placed along the avenue north of the Plaza (towards the Pond) and south of
+-- the Parade (towards the Sky Garden's ground footprint), well clear of the Plaza's ~65-stud
+-- radius, the Pond (centred z = -300), the Parade belt (z 79.5-90.5) and every plot's footprint
+-- (plots sit at |x| = 105-205; these markers stay within |x| <= 12, so they never overlap a plot
+-- regardless of z). Doubles as a squashed-pumpkin decoration so the avenue looks intentional even
+-- outside Fog.
+local LANTERN_SPAWN_POINTS = {
+	{ -12, -90 }, { 12, -110 }, { -12, -130 }, { 12, -150 }, { -12, -170 }, { 12, -190 }, { -12, -210 },
+	{ 12, 100 }, { -12, 130 }, { 12, 160 }, { -12, 190 }, { 12, 220 }, { -12, 250 }, { 12, 280 },
+}
+
+local function buildLanternSpawns(island: Instance)
+	local folder = Instance.new("Folder")
+	folder.Name = "LanternSpawns"
+	folder.Parent = island
+	for i, xz in LANTERN_SPAWN_POINTS do
+		local pumpkin = part(folder, "LanternSpawn" .. i, Vector3.new(2.6, 2, 2.6), at(xz[1], 1.5, xz[2]), rgb(230, 130, 40), Enum.Material.Neon, { Shape = Enum.PartType.Ball, CanCollide = false, CanQuery = false })
+		pumpkin:SetAttribute("Spot", i)
+	end
+end
+
 local function buildIsland(map: Instance)
 	local island = Instance.new("Folder")
 	island.Name = "Island"
@@ -238,6 +260,8 @@ local function buildIsland(map: Instance)
 			tree(island, x, z, 0.9 + hash(i + 9) * 0.6, i)
 		end
 	end
+
+	buildLanternSpawns(island)
 	return n
 end
 
@@ -365,6 +389,19 @@ local function buildPlaza(map: Instance)
 
 	local supply = stall(plaza, "Sprout Supply", 32, 44, Vector3.new(-0.6, 0, -0.8).Unit, 14, rgb(90, 160, 255))
 	part(supply, "Anchor", Vector3.new(3, 3, 3), at(31, 5, 42.5), rgb(120, 190, 255), Enum.Material.Neon)
+
+	-- Hollow Harvest Lantern Stall: reuses the Seed Shop kiosk pattern (see EventService.luau, which
+	-- adds the ProximityPrompts and BillboardGui price labels at runtime, same as ShopService does
+	-- for the Seed Shop kiosks below).
+	local lanternStall = stall(plaza, "Lantern Stall", 0, 58, Vector3.new(0, 0, -1), 20, rgb(255, 140, 40))
+	local eventKiosks = Instance.new("Folder")
+	eventKiosks.Name = "Kiosks"
+	eventKiosks.Parent = lanternStall
+	for i, slot in { "pumpkit", "gourdgeist", "skin" } do
+		local x = -7 + (i - 1) * 7
+		local k = part(eventKiosks, "Kiosk" .. i, Vector3.new(5, 1, 2.4), at(x, 4, 57), rgb(255, 250, 235), Enum.Material.SmoothPlastic)
+		k:SetAttribute("Slot", slot)
+	end
 
 	buildLeaderboards(plaza)
 

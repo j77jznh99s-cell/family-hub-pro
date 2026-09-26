@@ -68,6 +68,12 @@ function DataService.defaultData()
 		onb = {}, -- [stepName] = true once that onboarding funnel step has been logged, ever
 		bestHatch = { rarityIndex = 0, order = 0, species = "" }, -- highest rarity/species ever
 		-- hatched (0 = none yet); backs the rarest-hatch leaderboard, see LeaderboardService.
+		-- Halloween "Hollow Harvest" (EventService.luau). berries = Moonberries balance;
+		-- lanternDay = UTC day (os.time() // 86400) the +20 daily-first-lantern bonus was last paid;
+		-- stallBuys = { [itemId] = { day = utcDay, n = count } } per-item daily purchase caps.
+		event = { id = "halloween2026", berries = 0, lanternDay = 0, stallBuys = {} },
+		skins = {}, -- [skinId] = true once earned, e.g. skins.haunted; kept forever, earn-only
+		skin = "", -- currently equipped cosmetic plot skin id ("" = none)
 	}
 end
 

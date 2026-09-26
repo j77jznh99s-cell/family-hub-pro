@@ -7,11 +7,13 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Species = require(Shared.Species)
 local Format = require(Shared.Format)
+local Events = require(Shared.Events)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
+local WeatherService = require(script.Parent.WeatherService)
 
 local PondService = {}
 
@@ -50,6 +52,20 @@ local function roll(lootTable, luckyRod: boolean)
 	return lootTable[1]
 end
 
+-- 6. Hollowisp is a bonus roll layered on top of the Wishing Pond's normal table (not folded into
+-- the existing Mythic weight, which is shared with Moonpetal Wisp) so the tuned base odds don't
+-- change: "Pond only" per the spec is read literally as the free Wishing Pond, not the Sky Well
+-- (interpretation, not spelled out explicitly in the spec).
+local function hollowispAvailable(): boolean
+	local cfg = Events.Halloween2026
+	local now = os.time()
+	if Events.part(cfg, now) < 2 or not Events.active(cfg, now) then
+		return false
+	end
+	local w = WeatherService.current()
+	return w ~= nil and w.id == cfg.weatherId
+end
+
 local function bobber(position: Vector3)
 	local p = Instance.new("Part")
 	p.Name = "Bobber"
@@ -86,6 +102,16 @@ local function cast(player: Player, lootTable, where: Vector3, label: string)
 		return
 	end
 	local luckyRod = session.passes.LuckyRod == true
+	if lootTable == POND_TABLE and hollowispAvailable() then
+		local chance = if luckyRod then 0.01 else 0.005
+		if State.rng:NextNumber() < chance then
+			State.addSeeds(session, "hollowisp", 1)
+			State.notify(session, "You fished up a Hollowisp seed (Mythic)!", "#ffe070")
+			Analytics.custom(player, "PondCatch", 1, { "seed", "Mythic", if luckyRod then "y" else "n" })
+			Net.announce(player.DisplayName .. " fished a Mythic Hollowisp seed from the " .. label .. "!", "#ffe070")
+			return
+		end
+	end
 	local entry = roll(lootTable, luckyRod)
 	if entry.kind == "dew" then
 		local amount = math.max(25, State.income(session) * 30 * (0.5 + State.rng:NextNumber()))

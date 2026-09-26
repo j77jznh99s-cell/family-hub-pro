@@ -98,6 +98,37 @@ refreshDew()
 local statusLabel = text({ Size = UDim2.new(0, 330, 0, 24), Position = UDim2.new(0, 12, 0, 88), TextXAlignment = Enum.TextXAlignment.Left, Text = "", Parent = screen })
 
 ----------------------------------------------------------------------------------------------
+-- Hollow Harvest: Moonberries + next Spooky Fog countdown (mirrors the Dew panel / Stock-label
+-- pattern above -- read a server-set player Attribute, format it, show it; nothing more)
+
+local eventPanel = make("Frame", {
+	Name = "Event",
+	Size = UDim2.new(0, 330, 0, 28),
+	Position = UDim2.new(0, 12, 0, 116),
+	BackgroundColor3 = Color3.fromRGB(70, 40, 100),
+	BackgroundTransparency = 0.1,
+	Visible = false,
+	Parent = screen,
+}, { corner(10), stroke(2) })
+local eventLabel = text({ Size = UDim2.new(1, -12, 1, -6), Position = UDim2.new(0, 6, 0, 3), TextXAlignment = Enum.TextXAlignment.Left, Text = "", TextColor3 = Color3.fromRGB(230, 190, 255), Parent = eventPanel })
+
+local function refreshEvent()
+	local active = ReplicatedStorage:GetAttribute("EventActive") == true
+	eventPanel.Visible = active
+	if not active then
+		return
+	end
+	local berries = player:GetAttribute("Moonberries") or 0
+	local nextFogAt = ReplicatedStorage:GetAttribute("NextFogAt") or 0
+	local remaining = nextFogAt - workspace:GetServerTimeNow()
+	local fogText = if remaining > 0 then ("Next Fog in " .. Format.time(remaining)) else "Fog is here!"
+	eventLabel.Text = "🎃 Moonberries: " .. Format.number(berries) .. " · " .. fogText
+end
+player:GetAttributeChangedSignal("Moonberries"):Connect(refreshEvent)
+ReplicatedStorage:GetAttributeChangedSignal("EventActive"):Connect(refreshEvent)
+refreshEvent()
+
+----------------------------------------------------------------------------------------------
 -- top-centre: weather banner
 
 local weatherBanner = make("Frame", {
@@ -184,6 +215,26 @@ Remotes:WaitForChild("Effect").OnClientEvent:Connect(function(kind: string, data
 		showPopup("Snatched " .. data.name .. "!", Color3.fromRGB(255, 170, 80))
 	elseif kind == "Rebirth" then
 		showPopup("REBIRTH " .. data.rebirths .. "!", Color3.fromRGB(210, 160, 255))
+	elseif kind == "LanternGone" then
+		-- Hollow Harvest: hides this one Wisp Lantern for just this client (everyone else can still
+		-- take it -- lanterns are collectible once per player, not once total). Purely a local
+		-- rendering change: it never replicates back to the server or to other players.
+		if typeof(data) == "Instance" and data:IsA("BasePart") then
+			data.Transparency = 1
+			data.CanCollide = false
+			local light = data:FindFirstChildOfClass("PointLight")
+			if light then
+				light.Enabled = false
+			end
+			local gui = data:FindFirstChild("Label")
+			if gui and gui:IsA("BillboardGui") then
+				gui.Enabled = false
+			end
+			local prompt = data:FindFirstChildOfClass("ProximityPrompt")
+			if prompt then
+				prompt.Enabled = false
+			end
+		end
 	end
 end)
 
@@ -521,4 +572,6 @@ RunService.RenderStepped:Connect(function()
 		table.insert(parts, stored .. " in storage")
 	end
 	statusLabel.Text = table.concat(parts, "  |  ")
+
+	refreshEvent()
 end)

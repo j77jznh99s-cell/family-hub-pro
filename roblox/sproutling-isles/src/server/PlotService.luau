@@ -16,6 +16,8 @@ local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
 local WeatherService = require(script.Parent.WeatherService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
+local EventService = require(script.Parent.EventService)
+local Events = require(Shared.Events)
 
 local PlotService = {}
 
@@ -40,6 +42,7 @@ type PlotInfo = {
 	lockPrompt: ProximityPrompt,
 	plantVisuals: { [number]: BasePart },
 	padVisuals: { [number]: Model },
+	accentColor: Color3, -- this plot's own colour (from the Border part), used to revert the skin
 }
 
 local plots: { PlotInfo } = {}
@@ -317,6 +320,11 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		local species = Species.get(sprout.s) :: Species.Species
 		LeaderboardService.reportHatch(player, session, species)
 		WeatherService.registerHatch()
+		-- 7. Hollow Harvest hatch bonus: +1 Moonberry per hatch during the event, +5 if this hatch
+		-- came out Haunted (the event's own weather mutation, distinct from other mutations).
+		if Events.active(Events.Halloween2026, os.time()) then
+			EventService.onHatch(player, sprout.m == "haunted")
+		end
 		-- 3d Hatch / HugeHatch. species order comes from Species.luau's load-order index.
 		Analytics.custom(player, "Hatch", (species :: any).order, { species.rarity, sprout.m or "none", if activeWeather then activeWeather.id else "clear" })
 		if sprout.z >= 2 then
@@ -436,6 +444,55 @@ function PlotService.isLocked(session: State.Session): boolean
 end
 
 ----------------------------------------------------------------------------------------------
+-- Hollow Harvest plot skin (cosmetic only, per the spec: a recolor/swap of already-named parts,
+-- same collision shape as unskinned -- so it can't hide Sproutlings or block thieves). Only the
+-- "haunted" skin exists so far; a future event's skin would just add another branch here.
+
+local SKIN_DEFAULT_ROOF = Color3.fromRGB(200, 240, 255)
+local SKIN_DEFAULT_SIGN = Color3.fromRGB(250, 245, 230)
+local SKIN_DEFAULT_SOIL = Color3.fromRGB(110, 75, 50)
+
+local function applySkin(info: PlotInfo, skinId: string?)
+	local haunted = skinId == "haunted"
+	local greenhouse = info.model:FindFirstChild("Greenhouse")
+	local roof = greenhouse and greenhouse:FindFirstChild("Roof") :: BasePart?
+	if roof then
+		roof.Color = if haunted then Color3.fromRGB(150, 90, 255) else SKIN_DEFAULT_ROOF
+	end
+	local gate = info.model:FindFirstChild("Gate")
+	if gate then
+		for _, child in gate:GetChildren() do
+			if child.Name == "PillarCap" and child:IsA("BasePart") then
+				child.Color = if haunted then Color3.fromRGB(255, 150, 40) else info.accentColor
+			end
+		end
+	end
+	local sign = info.model:FindFirstChild("Sign") :: BasePart?
+	if sign then
+		-- placeholder for the spec's "cobweb decal over the sign": no cobweb texture asset exists
+		-- in this offline sandbox, so this is a colour tint stand-in (game-designer/art pass can
+		-- swap in a real Decal later without touching this code path).
+		sign.Color = if haunted then Color3.fromRGB(140, 100, 150) else SKIN_DEFAULT_SIGN
+	end
+	for tile = 1, Config.SoilTilesPerPlot do
+		local soilPart = info.model.Soil:FindFirstChild("Soil" .. tile) :: BasePart?
+		if soilPart then
+			soilPart.Color = if haunted then Color3.fromRGB(90, 150, 90) else SKIN_DEFAULT_SOIL
+			soilPart.Material = if haunted then Enum.Material.Neon else Enum.Material.Ground
+		end
+	end
+end
+
+-- Public so EventService's Lantern Stall equip/unequip toggle can re-apply it without EventService
+-- needing to require PlotService back (see EventService.onSkinChange for the hook that calls this).
+function PlotService.applySkin(session: State.Session)
+	local info = session.plot and plotByModel[session.plot]
+	if info then
+		applySkin(info, session.data.skin)
+	end
+end
+
+----------------------------------------------------------------------------------------------
 -- ownership
 
 function PlotService.claim(session: State.Session): boolean
@@ -460,6 +517,7 @@ function PlotService.claim(session: State.Session): boolean
 			info.lockPrompt:SetAttribute("Active", true)
 			setSign(info)
 			setGateVisual(info, false)
+			applySkin(info, session.data.skin)
 			session.player:SetAttribute("PlotColor", info.model:GetAttribute("ColorName"))
 			PlotService.renderPads(session)
 			PlotService.refillPads(session)
@@ -500,6 +558,7 @@ function PlotService.release(session: State.Session)
 	clearPads(info)
 	updateSoil(info, nil)
 	setGateVisual(info, false)
+	applySkin(info, nil) -- back to unskinned for the next claimant; the owner's skin re-applies on their next claim
 	for pad = 9, 12 do
 		(info.model.Pads:FindFirstChild("Pad" .. pad) :: BasePart).Transparency = 0.7
 	end
@@ -524,6 +583,10 @@ end
 ----------------------------------------------------------------------------------------------
 
 function PlotService.init(map: Instance)
+	-- so the Lantern Stall's equip/unequip toggle can re-apply the skin without EventService
+	-- requiring PlotService back (see PlotService.applySkin above)
+	EventService.onSkinChange(PlotService.applySkin)
+
 	for _, model in map.Plots:GetChildren() do
 		local index = model:GetAttribute("Index")
 		local cx, cz, inward = MapBuilder.plotPlacement(index)
@@ -540,6 +603,7 @@ function PlotService.init(map: Instance)
 			lockPrompt = nil :: any,
 			plantVisuals = {},
 			padVisuals = {},
+			accentColor = (model:FindFirstChild("Border") :: BasePart).Color,
 		}
 		for tile = 1, Config.SoilTilesPerPlot do
 			local prompt = Prompts.create(model.Soil:FindFirstChild("Soil" .. tile), "Plant seed", "Soil")
