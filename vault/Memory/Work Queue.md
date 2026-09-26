@@ -8,7 +8,6 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- [ ] **game-designer:** m11 pond water surface (map art) and check the Halloween numbers.
 - [ ] **roblox-engineer:** Hollow Harvest Halloween event (build by about 15 Oct; skip if launch slips past 24 Oct).
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov.
 
@@ -23,6 +22,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26: did the "game-designer: m11 + Halloween numbers" task directly (no agent needed — read-only analysis + a small, well-understood code fix). Confirmed the Halloween species' payback numbers against the base game's curve (all consistent). Diagnosed and fixed QA m11 (pond Rim walkable under the water surface) myself: `Rim.CanCollide = false`, `397cc4e`, validated clean, CI green. Only unblocked item was Halloween-event-adjacent, so did just this 1 task and stopped rather than jump to the bigger, deadline-sensitive Hollow Harvest build without more runway.
 - 2026-09-26: roblox-engineer wired Sproutling Isles analytics recurring funnels (Store/Snatch/Rebirth) + custom events (Hatch, Snatch*, GateLock, Weather*, Rebirth, DailyClaim, PondCatch, StorageFull/NoSeeds, SessionEnd), `e432cfd`. EventShop/Ad funnels and Store steps 1-3 deliberately skipped (dependencies don't exist yet). I reviewed the full diff before recording — no bugs found this time (unlike last run's leaderboard bug). 2 tasks this run (CI port + funnels/events); stopping.
 - 2026-09-26: **CI-first task.** The same pre-existing S3-mocking CI bug fixed on `main` last run was still red on `claude/roblox-popular-game-trends-6u7sie` (that branch forked before the fix, and also carries the Clip Studio code). Ported the identical fix (`c5e7884`); 30/30 tests pass locally. See [[Clip Studio]].
 - 2026-09-26: roblox-engineer built Sproutling Isles leaderboards (cross-server income + rarest hatch, `21c68c3`). Reviewing the diff myself before recording found a real display bug (TextLabel nested wrong for the lookup code to ever find it — boards would have stayed on "Loading..." forever); fixed and re-validated directly (`6aece41`). 2 tasks this run (CI fix + leaderboards); stopping given the CI investigation's extra time.

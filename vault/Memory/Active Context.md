@@ -14,8 +14,10 @@ and sends a push notification. New projects may be started (max one a day, origi
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd` — Store steps 1-3/EventShop/Ad funnels deliberately
 skipped, no system to hook into yet); leaderboards built 2026-09-26 (`21c68c3`, a display bug caught in review and
-fixed same day, `6aece41`); ads eligibility & Ads Manager pricing re-verified 2026-09-26 with real corrections
-found; lint/build/bake clean throughout; still waiting on the owner's first Studio play-test) · [[Clip Studio]]
+fixed same day, `6aece41`); QA m11 (pond walkable) fixed 2026-09-26 (`397cc4e`); Halloween species numbers checked
+against the game's payback curve, all consistent; ads eligibility & Ads Manager pricing re-verified 2026-09-26
+with real corrections found; lint/build/bake clean throughout; still waiting on the owner's first Studio
+play-test — next big build is the Hollow Harvest Halloween event, due ~15 Oct, not started yet) · [[Clip Studio]]
 (hourly branch QA'd 2026-09-26: 101+6+1 tests pass, 2 minor non-blocking bugs, owner decides merge; `main`'s CI was
 separately found red since 2026-09-23 — unrelated pre-existing bug — fixed 2026-09-26 on `main` (`fd327a0`) and,
 once found still red there too, on the Sproutling Isles branch (`c5e7884`) — any other branch forked from `main`

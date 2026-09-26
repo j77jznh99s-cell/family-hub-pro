@@ -420,6 +420,34 @@ Every week also includes: a Monday KPI review (**live-ops-manager**), bug fixes 
 | `gourdgeist` | Gourdgeist | Legendary | 1,200,000 | 780 | 1,500 | 800 s | Lantern Stall from Part 2: **250 Moonberries**, max 2/day | pale green-white body, purple leaf, topper `Flame` (ghost wisp) |
 | `hollowisp` | Hollowisp | Mythic | 10,000,000 | 1,500 | 6,000 | about 1,667 s | **Pond only, during Spooky Fog, from Part 2:** 0.5% per cast (1% with Lucky Rod, which is PvE only) | near-black body, glowing violet leaf, topper `Crystal` |
 
+> [!note] Halloween numbers confirmed 2026-09-26 (game-designer)
+> **Payback math (price ÷ dewPerSecond) checks against the base game's curve.** [[Sproutling Isles - Design Doc]]'s
+> species table gives payback times of 10 s (Mossbun, Common) up to 25 min = 1,500 s (Moonpetal Wisp, Mythic), with
+> the two existing Epic species at 273–400 s and the two existing Legendary species at 600–909 s. All three
+> Halloween species land inside or right at the edge of their tier's existing range:
+> - **Pumpkit (Epic, ~395 s)** — sits inside the existing Epic range (273–400 s). Fits cleanly.
+> - **Gourdgeist (Legendary, 800 s)** — sits inside the existing Legendary range (600–909 s). Fits cleanly.
+> - **Hollowisp (Mythic, ~1,667 s)** — about 11% above the only existing Mythic reference point (Moonpetal Wisp,
+>   1,500 s), rather than inside a range (there's just one prior data point at this tier). Given Hollowisp's
+>   acquisition is far rarer than Moonpetal Wisp's (0.5%/cast, pond-only, Part 2+, vs. Moonpetal Wisp's already-rare
+>   parade/pond odds) and its price is a Dew *reference* value, not a real purchase, an above-curve payback for the
+>   hardest-to-get item is defensible. **No change needed** — leaving as proposed.
+> - The three stated paybacks (395 s / 800 s / 1,667 s) are themselves arithmetically correct for the listed
+>   price/dewPerSecond pairs (checked: 150,000÷380, 1,200,000÷1,500, 10,000,000÷6,000).
+>
+> **Moonberry earn rate (60–90 per 20-min Fog) is a plausible estimate, still unverified as labelled.** At most 10
+> lanterns × 5 = 50 Moonberries per Fog from lanterns alone, plus 1 (or 5 for Haunted) per hatch during that window
+> — reaching 60–90 needs roughly 2–8 hatches in 20 min of active play, which is achievable given Mossbun's 30 s
+> grow time. Left as an estimate for qa-tester to measure live, per the existing note — not something a design
+> review alone can confirm.
+> **Stall pacing looks affordable at the stated caps.** ~2 hours of active daily play (≈6 Fog cycles) at 60–90
+> Moonberries each is roughly 360–540/day — enough for the 5/day Pumpkit cap (300) or a chunk of the 2/day
+> Gourdgeist cap (500), and the 400-Moonberry Haunted Greenhouse skin within a day or two of dedicated play. No
+> cap changes recommended.
+>
+> **Separately (not a number, a bug):** while checking the pond area for QA m11 (below), found and fixed a real
+> walkability bug — see the [[Sproutling Isles - QA Review]] m11 entry and commit `397cc4e`.
+
 **Plot skin: "Haunted Greenhouse"** (cosmetic only)
 - Costs **400 Moonberries**, in the Lantern Stall from Part 2. It is **earn-only**, never sold for Robux.
 - Look: purple-tinted glass, pumpkin lanterns on the gate posts, a cobweb decal over the sign, and a green glow on the soil. It is only a recolor or swap of named plot parts; the collision shape stays the same (so it can't hide Sproutlings or block thieves).
@@ -569,7 +597,7 @@ The weekly review (Mondays, **live-ops-manager**) reads from CH Analytics plus t
 - [ ] **roblox-engineer:** Codes system (free-tier rewards only) for Week 5
 - [ ] **roblox-engineer:** rewarded ads `Ads.luau`, after the owner approves and eligibility is confirmed
 - [ ] **roblox-engineer:** Founding Gardener badge + Week 8 teaser login tracker
-- [ ] **game-designer:** confirm the Halloween numbers (species stats, Moonberry prices and earn rate) against the payback rules
+- [x] **game-designer:** confirm the Halloween numbers against the payback rules — done 2026-09-26, see the note above the limited-species table. All 3 species check out against the base game's payback curve (Hollowisp runs ~11% above the single existing Mythic reference point, judged defensible given its much rarer acquisition). Stall caps look affordable at the earn-rate estimate. Earn rate itself stays unverified (needs live measurement, as already flagged).
 - [ ] **game-designer:** icons for the 13 store items + experience icon and thumbnails (part of the art brief)
 - [ ] **qa-tester:** event test plan using `EventTimeOffset` (start, Part 2, Witching Hour, end conversion), Starter Pack repeat purchase check, analytics once-only check
 - [ ] **live-ops-manager:** full Frostbloom Festival spec by 21 Nov; weekly KPI reviews from launch

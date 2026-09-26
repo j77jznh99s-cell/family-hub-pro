@@ -7,6 +7,35 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — pond fix (QA m11) + Halloween numbers confirmed
+**Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none (done directly)
+
+**What was done**
+- Checked CI on branches pushed today first (both green, no CI-first work needed), then took the
+  top queue item: "game-designer: m11 pond water surface, and check the Halloween numbers."
+  Handled it directly — read-only geometry analysis plus a one-line, well-understood code fix, not
+  worth spinning up an agent for.
+- **QA m11 (pond walkable):** traced the exact geometry in `MapBuilder.luau`'s `buildPond` — the
+  Rim is a full 98-stud disc (not an actual ring), and with default `CanCollide=true` its top
+  (y 0.8) sits just 0.25 studs under the visible water surface (y 1.05), so players could walk
+  across the whole pond as if it were barely-covered solid ground. Chose `Rim.CanCollide = false`
+  (matching `Water`) over the QA note's other option (reshape into a ring) since a ring needs a
+  part shape the codebase's helpers don't build, for a cosmetic fix. Implemented, validated
+  (`selene`/`rojo build`/`lune bake-map` clean, 1214 parts unchanged), pushed (`397cc4e`),
+  confirmed green on GitHub Actions.
+- **Halloween numbers:** checked the 3 limited species' payback times (price ÷ dewPerSecond)
+  against [[Sproutling Isles - Design Doc]]'s existing payback curve by rarity tier. Pumpkit and
+  Gourdgeist land cleanly inside their tier's existing range; Hollowisp runs ~11% above the single
+  existing Mythic data point, judged acceptable given its much rarer acquisition method. Sanity-
+  checked the Moonberry earn-rate estimate and stall-purchase pacing — both plausible, earn rate
+  itself stays unverified (needs live measurement, as the note already flagged) rather than
+  something a design review alone can confirm.
+- Recorded both in [[Sproutling Isles - Launch & Live Ops]], [[Sproutling Isles - QA Review]] and
+  [[Sproutling Isles]]. Only 1 task this run — the next queue item (Hollow Harvest, a large
+  multi-file build not due until mid-October) is better started fresh with full runway.
+
+---
+
 ## 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete)
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** roblox-engineer
 

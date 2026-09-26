@@ -48,7 +48,7 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [ ] **roblox-engineer:** Hollow Harvest Halloween event (needs to be built by about 15 Oct; skip it if launch slips past 24 Oct)
 - [x] **live-ops-manager:** launch checklist, beta plan, week 1–8 calendar, Halloween spec, ads plan, see [[Sproutling Isles - Launch & Live Ops]]
 - [ ] **live-ops-manager:** full winter (Frostbloom) spec by 21 Nov
-- [ ] **game-designer:** m11 pond water surface (map art), and check the Halloween numbers
+- [x] **game-designer:** m11 pond water surface, and check the Halloween numbers — done 2026-09-26. m11 fixed (`397cc4e`, `Rim.CanCollide = false` so players wade in the pond instead of walking across it dry — see [[Sproutling Isles - QA Review]]). Halloween species/Moonberry numbers checked against the game's payback curve, all consistent (Hollowisp runs ~11% above the one existing Mythic reference point, judged fine given its rarer acquisition); earn-rate estimate stays unverified pending live measurement — see [[Sproutling Isles - Launch & Live Ops]].
 - [x] **market-researcher:** verify rewarded-ads eligibility and Ads Manager pricing — done 2026-09-26, see [[Sproutling Isles - Launch & Live Ops]] section 4 caution box and section 6 note (corrections found, not just re-confirmed; sources listed there)
 - [ ] **market-researcher:** monthly trend refresh (not part of the 2026-09-26 ads-verification pass; still open)
 
@@ -62,11 +62,10 @@ Full details, file:line references and the Studio test plan are in [[Sproutling 
   - M4: shop stock and its restock window are saved.
   - M5: live non-saving sessions return `NotProcessedYet`, and `luckUntil` is saved.
   - M6: `Config.StudioDisableShield` (Studio only).
-- [x] **Minor, fixed:** m1, m2, m3, m4, m5, m7, m8, m9, m12, m13, m14, m16, m17, and m10 (toasts only).
+- [x] **Minor, fixed:** m1, m2, m3, m4, m5, m7, m8, m9, m11 (2026-09-26, `397cc4e`), m12, m13, m14, m16, m17, and m10 (toasts only).
 - [ ] **Minor, open:**
   - m6: gate cooldown (owner/game-designer decision). The re-lock guard is added.
   - m10: pond payout amount (owner decision).
-  - m11: walking on the pond (cosmetic; needs a hole in the grass slab or Terrain water).
   - m15: Starter Pack repeat purchases (owner decision).
   - m18: HUD overlap on iPhone (check on the phone).
 

@@ -52,7 +52,7 @@ still not available in the sandbox, so this is still a static review — nothing
 
 **Still open, confirmed still open (not fixed, as expected — owner/design decisions):**
 - m6 gate re-lock cooldown: `PlotService.onLock` still only guards `PlotService.isLocked(session)` (`:366-367`), no cooldown added — matches "open."
-- m11 pond walkable: `MapBuilder.luau:435` still bakes the Rim as a solid `CanCollide` disc (confirmed unchanged in the fresh bake) — matches "open."
+- m11 pond walkable: `MapBuilder.luau:435` still bakes the Rim as a solid `CanCollide` disc (confirmed unchanged in the fresh bake) — matched "open" at the time of this re-review. **Fixed later the same day, `397cc4e`** — see the m11 entry above.
 - m15 Starter Pack repeat purchases: `MonetizationService.luau:57-65` still grants 5,000 Dew on every purchase with a comment noting it's an owner decision — matches "open."
 - m18 iPhone HUD overlap: unverified, needs the phone — correctly left open.
 
@@ -181,10 +181,10 @@ still not available in the sandbox, so this is still a static review — nothing
 - Also, the comment at `:17` says Dew pays "minutes of income", but `:83` pays about 15-45 s.
 - Fix: add toasts. Fix the comment or the number (game-designer to decide which).
 
-**m11. Players can walk across the pond**
-- Where: `MapBuilder.luau:435`. The pond Rim is a solid 98-stud disc whose top (y 0.8) sits under the water surface (y 1.05). This was checked in the baked map: Rim `CanCollide=true`, size 1.2x98x98.
+**m11. Players can walk across the pond — fixed 2026-09-26 (`397cc4e`)**
+- Where: `MapBuilder.luau` `buildPond`. The pond Rim is a solid 98-stud disc whose top (y 0.8) sits under the water surface (y 1.05). This was checked in the baked map: Rim `CanCollide=true`, size 1.2x98x98.
 - Cosmetic.
-- Fix: make the rim a ring, or set the Rim to `CanCollide=false` and let players stand on the PondBed.
+- Fix chosen (game-designer decision): `Rim.CanCollide = false`, matching `Water`. A player who goes in now sinks to `PondBed` (top y -1.5, ~2.5 studs under the surface) for a shallow wade, rather than the ring option — building an actual ring/annulus needs a part shape this codebase's `part()`/`cylinder()` helpers don't support, for a purely cosmetic bug. `selene`/`rojo build`/`lune bake-map` clean, part count unchanged (1214). **Not Studio-tested** (visual result unconfirmed).
 
 **m12. Hatch announcements will spam everyone during Drizzle**
 - Where: `PlotService.luau:277`. *Any* mutation is announced to the whole server, and Drizzle gives Dewy on 30% of hatches.
@@ -243,7 +243,7 @@ Owner for m1-m5 and m7-m18: roblox-engineer. For m6: game-designer, then roblox-
 | 8 | Stand by the Pollen Parade belt (south of the plaza) | Crates move west to east and disappear at the end. Buying one gives a seed, and the crate vanishes for everyone. |
 | 9 | Press **Lock gate** at the button just inside your gate | The laser curtain shows, the button turns green, and the label counts "LOCKED 90s" (with the test passes on). At 0: toast "Your gate is OPEN again" and the prompt returns. |
 | 10 | Daily Gift stall (south-west of the plaza) | The first claim gives "Day 1 gift". A second claim says "Next gift in 20h 00m". |
-| 11 | Wishing Pond (far north on the avenue) | A bobber appears, and 3 s later a Dew or seed toast. Casting again within 8 s does nothing (m10). You can walk on the pond (m11). |
+| 11 | Wishing Pond (far north on the avenue) | A bobber appears, and 3 s later a Dew or seed toast. Casting again within 8 s does nothing (m10). Walking toward the pond's centre should now make you sink into the water (wade on the PondBed) rather than walk across it dry (m11, fixed 2026-09-26 — confirm this actually looks right in Studio). |
 | 12 | Rebirth Shrine (west side of the plaza), hold 1.5 s with 300K Dew | "REBIRTH 1!". Pads and soil clear, Dew resets to the starting amount, and the shrine label shows 1M. |
 | 13 | Launch pad on the avenue at z = 240 (south) | Takes you to the Sky Garden. The Sky Well works. The white pad brings you back. Before rebirth it should show "opens after your first Rebirth". |
 | 14 | Store button, Home button, and on iPhone if possible | The store lists 8 products and 5 passes marked "Set ID" (or "Owned" with test passes). Home draws a green beam to your plot. On the phone: check whether the hotbar or toasts block the thumbstick or jump button (m18). |
