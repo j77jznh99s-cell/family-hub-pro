@@ -7,6 +7,21 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: hourly run — Gumroad product-line demand brief
+**Device:** cloud Routine · **Branch:** `main` · **Agents used:** market-researcher
+
+**What was done**
+- Task 2 from [[Work Queue]]: market-researcher wrote a sourced demand brief comparing the 3 candidate
+  Gumroad product lines (family printables, Roblox game-making guides, spreadsheet/Notion templates) into
+  [[Gumroad Digital Products]] (`## Demand brief (2026-09-26)`), for the owner to weigh against the tentative
+  recommendation in [[Decisions]] #20. Correctly declined to re-decide it — flagged every unverified figure
+  (most direct marketplace fetches were blocked by the sandbox's egress proxy; used WebSearch summaries instead)
+  and checked the vault for actual team experience in each line (found: Family Hub streak concepts for
+  printables, a full Sproutling Isles build/QA log for guides, nothing for spreadsheets/Notion).
+- I reviewed the diff before committing — well-sourced, appropriately hedged, doesn't overstate confidence.
+- Ticked the market-researcher task in [[Gumroad Digital Products]]; the product-line pick itself stays
+  under "Waiting on the owner".
+
 ## 2026-09-26: hourly run — built Sproutling Isles analytics wrapper
 **Device:** cloud Routine · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault stays on `main`) · **Agents used:** roblox-engineer
 
