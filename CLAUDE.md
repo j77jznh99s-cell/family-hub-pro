@@ -33,6 +33,7 @@ Before you finish, update memory so the next session can pick up where you left 
 | Clip Studio (AI video clipper) | `claude/video-clip-detection-mvp-g18ggk` → repo root (`src/`) | `vault/Projects/Clip Studio.md` |
 | Family Hub (iPhone app + widgets) | `claude/family-hub-widget-1w7cv9` → `FamilyHub/` | `vault/Projects/Family Hub.md` |
 | Bybit trading bot (risk-gated) | `claude/bybit-trading-bot-risk-gate-r7apfr` → repo root | `vault/Projects/Bybit Trading Bot.md` |
+| Gumroad digital products (selling agents) | No code; run by StarNet agents | `vault/Projects/Gumroad Digital Products.md` |
 
 ## Branches
 
@@ -49,6 +50,7 @@ to read), then checks the result and writes memory. See `vault/Playbooks/How Age
 
 - The owner often works from a phone. Keep chat replies short and put detail in the vault or a doc.
 - Games must be **original**: borrow genre conventions, never names, art or code from other games.
+- Products for sale must be **original**: made from scratch, no copied or resold content, no other people's brands or characters. See section 1 of `vault/Projects/Gumroad Digital Products.md`.
 - Never commit secrets (`.env`, API keys, Roblox cookies). Use `.env.example` for placeholders.
 - Trading bot: never weaken or bypass the risk gate, and never place live orders without the owner's explicit go-ahead.
 - Flag anything you could not verify (for example, Roblox code not play-tested in Studio).

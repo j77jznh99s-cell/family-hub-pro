@@ -14,8 +14,10 @@ Each role is a Claude Code subagent defined in `.claude/agents/<name>.md`. The m
 | `qa-tester` | Reviews, lint and build checks, test plans, bug lists | Project note, the diff or PR, open tasks | Bug reports and test plans in the vault | Mark something verified that wasn't run |
 | `live-ops-manager` | Events calendar, monetization tuning, analytics, launch checklist | Project note, design doc (Economy + Retention) | Live-ops plans, event specs, KPI reviews | Add pay-to-win items |
 | `app-engineer` | Non-Roblox code: [[Clip Studio]], [[Family Hub]], [[Bybit Trading Bot]] | That project's note and README | Code on that project's branch | Touch the trading bot's risk gate or live trading without explicit owner approval |
+| `product-maker` | Original digital products and Gumroad listings (drafts only) | [[Gumroad Digital Products]] (section 1 first), the research brief | Product drafts and listings as files | Copy anyone's product, use brands/characters, or publish, price, refund or contact buyers |
 | `knowledge-keeper` | Vault hygiene: logs, decisions, active context, links | [[Active Context]], [[Session Log]], git log | Memory notes | Invent decisions or facts |
 
 ## Hand-offs that work well
+- Product brief (**market-researcher**) → draft (**product-maker**) → originality check (**qa-tester**) → owner publishes
 - Design spec (**game-designer**) → build (**roblox-engineer**) → review (**qa-tester**) → memory update (**knowledge-keeper**)
 - Trend refresh (**market-researcher**) → roadmap proposal (**live-ops-manager**) → owner decides → [[Decisions]]

@@ -7,6 +7,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-09-26 | Selling | Sell digital products on Gumroad first; print-on-demand later | $0 up front, no stock, StarNet supports it | Owner |
+| 2026-09-26 | Selling | **All products must be original** (rule is section 1 of [[Gumroad Digital Products]] and a house rule in `CLAUDE.md`) | Owner: "make all products original" | Owner |
 | 2026-09-26 | StarNet | Run lean: medium effort, max 25 steps per task, max 2 agents at once, only 2 scheduled jobs, caching on | Owner: "without overworking it or using more processing power than needed" | Owner asked, Claude chose |
 | 2026-09-26 | StarNet | Models per job: Haiku 4.5 for summaries, Sonnet 5 for research, Opus 5 for design (on demand only) | Owner: "pick the most effective for the job"; cheapest model that does each job well | Owner asked, Claude chose |
 | 2026-09-26 | StarNet | Cap each run at $1; Night Shift off for the first week | Safety defaults, owner accepted | Owner asked, Claude chose |
@@ -50,4 +52,4 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| 19 | Start selling digital products on Gumroad first, then print-on-demand later? | Yes |
+| 20 | Which product line first: family printables, Roblox game-making guides, or spreadsheet/Notion templates? | Family printables (easiest to make well and check for originality) |

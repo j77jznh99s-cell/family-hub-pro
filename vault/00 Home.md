@@ -1,6 +1,6 @@
 ---
 tags: [index]
-updated: 2026-09-25
+updated: 2026-09-26
 ---
 # Home
 
@@ -24,6 +24,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Family Hub]]: iPhone family app with widgets
 - [[Bybit Trading Bot]]: risk-gated perpetuals bot
 - [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
+- [[Gumroad Digital Products]]: original digital products sold by the agent crew (planning)
 
 ## Team
 - [[Team Roster]]: agent job titles, what each one reads, writes and owns

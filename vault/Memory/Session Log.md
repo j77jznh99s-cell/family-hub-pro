@@ -7,6 +7,25 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26 (later): Gumroad selling plan
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner asked:** go ahead with Gumroad; make all products original and put that at the start.
+
+**What was done**
+- Wrote [[Gumroad Digital Products]] with the **originality rule as section 1**, then costs, starter product lines, setup, crew workflow with an originality checklist, and guardrails.
+- Added the rule to the `CLAUDE.md` house rules (StarNet agents load `CLAUDE.md`), a new `product-maker` agent, and a row in [[Team Roster]].
+- Checked Gumroad fees (10% + $0.50 direct, 30% via Discover) and API product creation (recent, docs conflicting, so the owner publishes by hand).
+
+**Not verified**
+- Gumroad's own API docs were blocked from the sandbox; API facts come from search results and GitHub.
+
+**Decisions:** Gumroad first; all products original. Pending: #20 first product line.
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-26: StarNet models and safety caps chosen
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 
