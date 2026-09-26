@@ -7,6 +7,19 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-26: StarNet models and safety caps chosen
+**Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
+
+**Owner asked:** pick the model that's most effective for each job.
+
+**What was done**
+- Chose per agent/job: Haiku 4.5 (knowledge-keeper summaries), Sonnet 5 (market research), Opus 5 (design, on demand only).
+- Applied the safety defaults: $1 per run, Night Shift off for week 1. Recorded in [[Decisions]] and [[StarNet Automation]].
+
+**Next:** see [[Active Context]].
+
+---
+
 ## 2026-09-25 (latest): StarNet brain and budget decided
 **Device:** phone · **Branch:** `claude/working-automation-system-al8rz1` → synced to `main` · **Agents used:** none
 

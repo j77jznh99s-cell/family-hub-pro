@@ -60,11 +60,15 @@ Your laptop copy of the repo is on `main`, which has the vault but **not** the R
 the other projects' code (those live on their own branches). So phase 1 is vault-only work.
 
 **Phase 1: research and planning (works on `main`)**
-| Room | Crew (paste text from `.claude/agents/<name>.md` into INSTRUCTIONS) | Place |
-| --- | --- | --- |
-| Bridge | knowledge-keeper | WORKSTATION, SHELF, CORE |
-| Research Lab | market-researcher | WORKSTATION, DISH, SHELF |
-| Design Bay | game-designer, live-ops-manager | WORKSTATION, SHELF, CORE |
+| Room | Crew (paste text from `.claude/agents/<name>.md` into INSTRUCTIONS) | Place | MODEL (per agent) |
+| --- | --- | --- | --- |
+| Bridge | knowledge-keeper | WORKSTATION, SHELF, CORE | Claude Haiku 4.5 (simple summaries, cheapest) |
+| Research Lab | market-researcher | WORKSTATION, DISH, SHELF | Claude Sonnet 5 (web research with judgment) |
+| Design Bay | game-designer, live-ops-manager | WORKSTATION, SHELF, CORE | Claude Opus 5 (hard design thinking; on demand only, never scheduled) |
+
+Model rule (owner: "pick the most effective for the job", 2026-09-26): use the cheapest model that does the job
+well, and Opus only where quality matters most. Set it in each agent's MODEL card. If a Haiku summary misses
+things, switch that agent to Sonnet 5.
 
 **Phase 2: building (later, after phase 1 works)**
 Check out the project branch in a second folder (for example `git worktree add ../sproutling claude/roblox-popular-game-trends-6u7sie`),
@@ -72,10 +76,10 @@ add that folder as a second project, and add a Build Bay (roblox-engineer) and a
 with a WORKBENCH. **Leave out the trading bot completely.**
 
 ## First jobs to schedule
-| Job | Agent | When | Send result to |
-| --- | --- | --- | --- |
-| Summarize [[Active Context]] and open tasks | knowledge-keeper | Weekdays, 8 am | Your Telegram chat |
-| Refresh [[Roblox Market Research 2026]] with sources | market-researcher | Mondays | The station (local) |
+| Job | Agent | Model | When | Send result to |
+| --- | --- | --- | --- | --- |
+| Summarize [[Active Context]] and open tasks | knowledge-keeper | Haiku 4.5 | Weekdays, 8 am | Your Telegram chat |
+| Refresh [[Roblox Market Research 2026]] with sources | market-researcher | Sonnet 5 | Mondays | The station (local) |
 
 When creating each job: set its **working folder** to the repo, and **connect Telegram first** (a job
 can only send to a chat that's already connected; otherwise it fails its pre-check).
@@ -91,7 +95,7 @@ Anything they'd change comes back to you as a result. You (or a Claude session) 
 
 ## Tasks
 - [x] **Owner:** brain = Anthropic API, $5/day from the deposit (2026-09-25).
-- [ ] **Owner:** answer [[Decisions]] #17–18 (per-run cap, Night Shift, which Claude model).
+- [x] **Owner:** models per job, $1/run cap, Night Shift off for week 1 (2026-09-26).
 - [ ] **Owner:** clone the repo, install StarNet, pick the brain, set the caps, add the repo folder (steps above).
 - [ ] **Owner + Claude:** build the phase 1 rooms and run the morning summary once by hand before scheduling it.
 - [ ] **knowledge-keeper:** after the first week, record what worked here and decide on phase 2.
