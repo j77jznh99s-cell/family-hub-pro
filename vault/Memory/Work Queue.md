@@ -30,4 +30,5 @@ Add new items with an owner role. Keep the list in priority order.
 - (none yet)
 
 ## Run log (newest first; one line per hourly run)
+- 2026-09-26 (setup test): worker session can clone and push to main.
 - 2026-09-26: queue created from the project task lists (setup session).
