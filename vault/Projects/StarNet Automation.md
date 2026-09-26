@@ -78,12 +78,28 @@ with a WORKBENCH. **Leave out the trading bot completely.**
 ## One-click settings file (2026-09-26)
 Claude can't reach the laptop, so the settings StarNet can import are in **`starnet/station-settings.json`** in this repo.
 After installing: **SETTINGS → APP & BACKUP → IMPORT STATION…** → pick that file (it's in the cloned repo folder).
-It sets **$5 per day** and **$1 per run**. Format checked against StarNet's importer (`sidecar/configexport.js`); not tested in the app.
+It sets **$5 per day** and **$1 per run**. **Verified 2026-09-26** against the importer (`sidecar/configexport.js` `parseImport`,
+`index.js` `handleConfigImport`, the IMPORT STATION button): valid; StarNet should say **"✓ imported 1 section"**. Not tested in the app.
+Note: the **per-run cap is a hard stop**; the **per-day cap is soft** (it ends the running task, but a "resume" click overrides it
+for that session). Don't click resume. The real hard stop is the Anthropic deposit with auto-reload off.
 
 StarNet's import can't set these, so do them by hand once (about 2 minutes):
 1. SETTINGS → APP & BACKUP → runtime limits: **maxIters = 25**, **maxConcurrentAgents = 2**, then restart StarNet.
 2. When creating each agent, set its MODEL card: knowledge-keeper **Haiku 4.5**; market-researcher **Sonnet 5, effort medium**;
    game-designer and live-ops-manager **Opus 5, effort medium**.
+
+## Online selling agents (checked in StarNet's code, 2026-09-26)
+| Where you sell | Supported? | Can it run unattended? |
+| --- | --- | --- |
+| **Shopify** (your own store) | Yes: built-in API key (products, orders, customers, inventory) | Yes, if you approve that key for unattended use (TOOLSETS & CONNECTORS → KEYS) |
+| **Gumroad, Lemon Squeezy** (digital products) | Yes: built-in keys | Yes, same key approval |
+| **Printify, Printful, Gelato, etc.** (print on demand) | Yes: built-in keys | Yes, same key approval |
+| **Stripe, PayPal, Square** (payments, invoices) | Yes: one-click connectors | Only with a per-job connector grant |
+| **Etsy** | Partly: StarNet marks it "manual only" (its logins expire hourly) | **No** |
+| **eBay, Amazon, Facebook Marketplace, Poshmark, Mercari** | **No integration.** Only by an agent clicking a web browser, which asks you before every click | **No**, and these sites often forbid bots |
+
+Rule if we build this: agents **draft** listings, prices and replies; the owner approves anything that publishes, changes
+prices, refunds or spends. Needs the owner to say what they sell and where.
 
 ## Keep it lean (owner: "don't overwork it", 2026-09-26)
 Checked in StarNet's code. The AI runs on Anthropic's servers, so the laptop only runs the app itself.

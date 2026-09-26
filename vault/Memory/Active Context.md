@@ -16,6 +16,7 @@ StarNet is a desktop app, so it needs the laptop. The plan was checked against S
 
 ## Waiting on the owner
 - [ ] Install StarNet on the laptop (steps in [[StarNet Automation]]). Decided: Anthropic API key, $5/day from the existing deposit. Models chosen per job (Haiku/Sonnet/Opus), $1/run cap, Night Shift off for week 1.
+- [ ] Owner wants online selling agents: say what you sell and where (see the selling table in [[StarNet Automation]]).
 - [ ] Play-test `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio, following the test plan in [[Sproutling Isles - QA Review]]. Paste any Output errors.
 - [ ] Answer the 15 pending decisions in [[Decisions]]. #1–4 block the next build.
 - [ ] Create the 13 Robux items (steps in [[Sproutling Isles - Launch & Live Ops]]) and share their IDs.

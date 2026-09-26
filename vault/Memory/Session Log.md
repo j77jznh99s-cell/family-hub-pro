@@ -17,6 +17,7 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 - Applied the safety defaults: $1 per run, Night Shift off for week 1. Recorded in [[Decisions]] and [[StarNet Automation]].
 - Owner then asked not to overwork it: added a "Keep it lean" section (medium effort, 25-step and 2-agent limits, caching on), checked in StarNet's code.
 - Owner asked Claude to set them: added `starnet/station-settings.json` (a StarNet import file with the $5/day and $1/run caps). The step and agent limits and each agent's model can't be imported, so they stay a 2-minute manual step.
+- Verified the import file against StarNet's importer (valid; per-day cap is soft, per-run cap is hard). Checked online selling: Shopify, Gumroad, Lemon Squeezy, print-on-demand, Stripe/PayPal/Square are supported; Etsy is manual only; eBay, Amazon, Facebook Marketplace, Poshmark and Mercari have no integration. Waiting on the owner: what they sell and where.
 
 **Next:** see [[Active Context]].
 
