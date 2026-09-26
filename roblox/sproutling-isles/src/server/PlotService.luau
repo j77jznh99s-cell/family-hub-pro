@@ -322,7 +322,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		WeatherService.registerHatch()
 		-- 7. Hollow Harvest hatch bonus: +1 Moonberry per hatch during the event, +5 if this hatch
 		-- came out Haunted (the event's own weather mutation, distinct from other mutations).
-		if Events.active(Events.Halloween2026, os.time()) then
+		if Events.active(Events.Halloween2026, Events.now()) then
 			EventService.onHatch(player, sprout.m == "haunted")
 		end
 		-- 3d Hatch / HugeHatch. species order comes from Species.luau's load-order index.

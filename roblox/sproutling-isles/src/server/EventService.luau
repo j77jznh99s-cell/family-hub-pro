@@ -53,7 +53,7 @@ end
 -- hatch bonus (called from PlotService's hatch branch, item 7)
 
 function EventService.onHatch(player: Player, wasHaunted: boolean)
-	if not Events.active(cfg, os.time()) then
+	if not Events.active(cfg, Events.now()) then
 		return
 	end
 	local session = State.get(player)
@@ -93,7 +93,7 @@ local function onLanternTriggered(entry: LanternEntry, player: Player)
 		return
 	end
 	entry.collected[player.UserId] = true
-	local now = os.time()
+	local now = Events.now()
 	local day = utcDay(now)
 	local amount = cfg.lanternValue
 	local dailyBonus = false
@@ -181,7 +181,7 @@ local function despawnLanterns()
 end
 
 local function onWeatherStart(w, _byPlayer: Player?)
-	if w.id == cfg.weatherId and Events.active(cfg, os.time()) then
+	if w.id == cfg.weatherId and Events.active(cfg, Events.now()) then
 		spawnLanterns()
 	end
 end
@@ -200,7 +200,7 @@ local function fogScheduler()
 	local lastSlot: number? = nil
 	while true do
 		task.wait(1)
-		local now = os.time()
+		local now = Events.now()
 		if Events.active(cfg, now) then
 			local interval = Events.fogIntervalSeconds(cfg, now)
 			local slot = now // interval
@@ -225,14 +225,14 @@ local kioskLabels: { [string]: TextLabel } = {}
 
 local function stallBuyCount(session: State.Session, itemId: string): number
 	local rec = session.data.event.stallBuys[itemId]
-	if not rec or rec.day ~= utcDay(os.time()) then
+	if not rec or rec.day ~= utcDay(Events.now()) then
 		return 0
 	end
 	return rec.n
 end
 
 local function stallRecordBuy(session: State.Session, itemId: string)
-	local day = utcDay(os.time())
+	local day = utcDay(Events.now())
 	local rec = session.data.event.stallBuys[itemId]
 	if not rec or rec.day ~= day then
 		rec = { day = day, n = 0 }
@@ -254,7 +254,7 @@ local function buyStallItem(item, player: Player)
 	if not session then
 		return
 	end
-	local now = os.time()
+	local now = Events.now()
 	local funnelId = HttpService:GenerateGUID(false)
 	Analytics.funnel(player, "EventShop", funnelId, 1, "Opened")
 
@@ -311,7 +311,7 @@ local function buyStallItem(item, player: Player)
 end
 
 local function refreshStallLabels()
-	local now = os.time()
+	local now = Events.now()
 	for id, item in cfg.stall do
 		local text = kioskLabels[id]
 		if text then
@@ -381,7 +381,7 @@ function EventService.onJoin(session: State.Session)
 	local player = session.player
 	player:SetAttribute("Moonberries", session.data.event.berries)
 	player:SetAttribute("Skin", session.data.skin or "")
-	local now = os.time()
+	local now = Events.now()
 	if now >= cfg.endAt and session.data.event.berries > 0 then
 		local berries = session.data.event.berries
 		-- spec: "1 [berry] = 5 min of income" -- each berry converts independently, not the whole

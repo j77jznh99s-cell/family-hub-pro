@@ -78,6 +78,10 @@ Config.StudioTestPasses = false
 -- Studio sessions never save playtime, so without this every test player is shielded for 15 min.
 -- Live servers ignore this flag.
 Config.StudioDisableShield = true
+-- Testing: seconds added to os.time() for Hollow Harvest / Frostbloom phase checks, ONLY inside
+-- Roblox Studio (RunService:IsStudio()). Live servers ignore this. Lets qa-tester fast-forward to
+-- Part 2, Witching Hour, or past the event's end without waiting for the real date.
+Config.EventTimeOffset = 0
 
 -- Saving
 Config.DataStoreName = "SproutlingIsles_v1"

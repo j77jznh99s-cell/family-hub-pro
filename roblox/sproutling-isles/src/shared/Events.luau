@@ -6,6 +6,8 @@
 -- All times are Unix UTC seconds, checked against os.time() (UTC on Roblox servers), so the event
 -- starts and stops itself with no redeploy needed.
 
+local RunService = game:GetService("RunService")
+
 export type StallItem = {
 	id: string,
 	kind: "seed" | "skin",
@@ -34,7 +36,16 @@ export type EventConfig = {
 	stallOrder: { string },
 }
 
+local Config = require(script.Parent.Config)
+
 local Events = {}
+
+-- The real clock everywhere but Studio. Inside Studio, `Config.EventTimeOffset` (default 0) lets a
+-- tester fast-forward past the event's real-world start/part/Witching-Hour/end boundaries without
+-- waiting for the calendar. Live servers always ignore the offset.
+function Events.now(): number
+	return os.time() + (if RunService:IsStudio() then Config.EventTimeOffset else 0)
+end
 
 Events.Halloween2026 = {
 	id = "halloween2026",

@@ -58,7 +58,7 @@ end
 -- (interpretation, not spelled out explicitly in the spec).
 local function hollowispAvailable(): boolean
 	local cfg = Events.Halloween2026
-	local now = os.time()
+	local now = Events.now()
 	if Events.part(cfg, now) < 2 or not Events.active(cfg, now) then
 		return false
 	end

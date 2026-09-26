@@ -114,6 +114,10 @@ Config.StudioTestPasses = false
 -- Studio sessions never save playtime, so without this every test player is shielded for 15 min.
 -- Live servers ignore this flag.
 Config.StudioDisableShield = true
+-- Testing: seconds added to os.time() for Hollow Harvest / Frostbloom phase checks, ONLY inside
+-- Roblox Studio (RunService:IsStudio()). Live servers ignore this. Lets qa-tester fast-forward to
+-- Part 2, Witching Hour, or past the event's end without waiting for the real date.
+Config.EventTimeOffset = 0
 
 -- Saving
 Config.DataStoreName = "SproutlingIsles_v1"
@@ -141,6 +145,8 @@ return Config
 --
 -- All times are Unix UTC seconds, checked against os.time() (UTC on Roblox servers), so the event
 -- starts and stops itself with no redeploy needed.
+
+local RunService = game:GetService("RunService")
 
 export type StallItem = {
 	id: string,
@@ -170,7 +176,16 @@ export type EventConfig = {
 	stallOrder: { string },
 }
 
+local Config = require(script.Parent.Config)
+
 local Events = {}
+
+-- The real clock everywhere but Studio. Inside Studio, `Config.EventTimeOffset` (default 0) lets a
+-- tester fast-forward past the event's real-world start/part/Witching-Hour/end boundaries without
+-- waiting for the calendar. Live servers always ignore the offset.
+function Events.now(): number
+	return os.time() + (if RunService:IsStudio() then Config.EventTimeOffset else 0)
+end
 
 Events.Halloween2026 = {
 	id = "halloween2026",
@@ -1991,7 +2006,7 @@ end
 -- hatch bonus (called from PlotService's hatch branch, item 7)
 
 function EventService.onHatch(player: Player, wasHaunted: boolean)
-	if not Events.active(cfg, os.time()) then
+	if not Events.active(cfg, Events.now()) then
 		return
 	end
 	local session = State.get(player)
@@ -2031,7 +2046,7 @@ local function onLanternTriggered(entry: LanternEntry, player: Player)
 		return
 	end
 	entry.collected[player.UserId] = true
-	local now = os.time()
+	local now = Events.now()
 	local day = utcDay(now)
 	local amount = cfg.lanternValue
 	local dailyBonus = false
@@ -2119,7 +2134,7 @@ local function despawnLanterns()
 end
 
 local function onWeatherStart(w, _byPlayer: Player?)
-	if w.id == cfg.weatherId and Events.active(cfg, os.time()) then
+	if w.id == cfg.weatherId and Events.active(cfg, Events.now()) then
 		spawnLanterns()
 	end
 end
@@ -2138,7 +2153,7 @@ local function fogScheduler()
 	local lastSlot: number? = nil
 	while true do
 		task.wait(1)
-		local now = os.time()
+		local now = Events.now()
 		if Events.active(cfg, now) then
 			local interval = Events.fogIntervalSeconds(cfg, now)
 			local slot = now // interval
@@ -2163,14 +2178,14 @@ local kioskLabels: { [string]: TextLabel } = {}
 
 local function stallBuyCount(session: State.Session, itemId: string): number
 	local rec = session.data.event.stallBuys[itemId]
-	if not rec or rec.day ~= utcDay(os.time()) then
+	if not rec or rec.day ~= utcDay(Events.now()) then
 		return 0
 	end
 	return rec.n
 end
 
 local function stallRecordBuy(session: State.Session, itemId: string)
-	local day = utcDay(os.time())
+	local day = utcDay(Events.now())
 	local rec = session.data.event.stallBuys[itemId]
 	if not rec or rec.day ~= day then
 		rec = { day = day, n = 0 }
@@ -2192,7 +2207,7 @@ local function buyStallItem(item, player: Player)
 	if not session then
 		return
 	end
-	local now = os.time()
+	local now = Events.now()
 	local funnelId = HttpService:GenerateGUID(false)
 	Analytics.funnel(player, "EventShop", funnelId, 1, "Opened")
 
@@ -2249,7 +2264,7 @@ local function buyStallItem(item, player: Player)
 end
 
 local function refreshStallLabels()
-	local now = os.time()
+	local now = Events.now()
 	for id, item in cfg.stall do
 		local text = kioskLabels[id]
 		if text then
@@ -2319,7 +2334,7 @@ function EventService.onJoin(session: State.Session)
 	local player = session.player
 	player:SetAttribute("Moonberries", session.data.event.berries)
 	player:SetAttribute("Skin", session.data.skin or "")
-	local now = os.time()
+	local now = Events.now()
 	if now >= cfg.endAt and session.data.event.berries > 0 then
 		local berries = session.data.event.berries
 		-- spec: "1 [berry] = 5 min of income" -- each berry converts independently, not the whole
@@ -3140,7 +3155,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		WeatherService.registerHatch()
 		-- 7. Hollow Harvest hatch bonus: +1 Moonberry per hatch during the event, +5 if this hatch
 		-- came out Haunted (the event's own weather mutation, distinct from other mutations).
-		if Events.active(Events.Halloween2026, os.time()) then
+		if Events.active(Events.Halloween2026, Events.now()) then
 			EventService.onHatch(player, sprout.m == "haunted")
 		end
 		-- 3d Hatch / HugeHatch. species order comes from Species.luau's load-order index.
@@ -3594,7 +3609,7 @@ end
 -- (interpretation, not spelled out explicitly in the spec).
 local function hollowispAvailable(): boolean
 	local cfg = Events.Halloween2026
-	local now = os.time()
+	local now = Events.now()
 	if Events.part(cfg, now) < 2 or not Events.active(cfg, now) then
 		return false
 	end
