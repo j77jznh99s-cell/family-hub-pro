@@ -16,6 +16,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Session Log]]: dated log of every working session, newest first
 - [[Decisions]]: decisions the owner made, and why
 - [[Owner Profile]]: goals, preferences and how the owner likes to work
+- [[AI Memory Export]]: portable snapshot of the owner for another AI assistant
 
 ## Projects
 - [[Sproutling Isles]]: Roblox grow-and-snatch game (active)
