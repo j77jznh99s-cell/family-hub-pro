@@ -7,9 +7,11 @@ updated: 2026-09-27
 > Rewrite this note at the end of every session so it's true *now*. Keep it short.
 
 ## Current focus
-**Hourly workflow is on (from 2026-09-26).** A cloud Routine runs every hour, 24/7, and works one task from
-[[Work Queue]] following [[Hourly Workflow]]. At about 7:45 am Eastern a second Routine writes [[Morning Summary]]
-and sends a push notification. New projects may be started (max one a day, original, waiting for the owner's OK).
+**Hourly workflow is PAUSED (owner, 2026-09-27 ~15:04 UTC).** The "Hourly project work (worker)" Routine
+(`trig_012vmVxmbAkxxY59wCnKaG1J`) is disabled — it will not fire until the owner re-enables it. The morning-summary
+Routine (~7:45 am Eastern, writes [[Morning Summary]] + one push notification) is untouched and still runs.
+When resumed: works one task from [[Work Queue]] following [[Hourly Workflow]]; new projects may be started
+(max one a day, original, waiting for the owner's OK).
 
 **[[Work Queue]] has been empty since ~21:45 UTC on 2026-09-26**, still empty as of this morning summary
 (0 unblocked items; every dormant project checked and confirmed owner-gated). Each empty hour just re-checks

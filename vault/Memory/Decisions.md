@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-09-27 | Workspace | Paused the "Hourly project work (worker)" Routine (`trig_012vmVxmbAkxxY59wCnKaG1J`) — disabled, not deleted, so it keeps its run history and can be turned back on | Owner: "Pause the hourly queue" | Owner |
 | 2026-09-26 | Workspace | Cheapest way that still gets work done: up to 3 tasks per hourly run (~20 min each, since Routines can't fire more than hourly), quick exit when blocked, cheaper models for routine agents, no paid services | Owner: "cheapest way possible", "20 minutes if you can" | Owner asked, Claude chose |
 | 2026-09-26 | Workspace | Anything that costs money: never pay; push-notify the owner and list it in [[Work Queue]] | Owner: "notified if anything needs to be paid for beforehand" | Owner |
 | 2026-09-26 | Workspace | Hourly workflow 24/7 (fresh cloud session each hour, one task from [[Work Queue]]) + morning summary at ~7:45 am Eastern; new projects allowed (max one a day, owner OKs before real building) | Owner: "continue working on projects, make new projects, summary in the morning" | Owner |
