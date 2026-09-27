@@ -7,6 +7,29 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 ---
 
+## 2026-09-27: owner request — new "Video Analyst" agent
+**Device:** phone/cloud (Claude app) · **Branch:** `main` (config only, no product code) · **Agents used:** none
+
+**What was done**
+- Owner asked for "a video analysis agent that can break down videos and then implement the
+  tutorial/series into AI" with a ~5-minute video+audio output. Clarified with the owner first
+  (ambiguous whether the output was a doc, a short video, or a runnable skill, and which project
+  it belonged to) — owner picked: an AI skill/agent that replicates a tutorial, sourced from
+  either owner-uploaded files or YouTube links.
+- Added a new subagent role, `video-analyst` (`.claude/agents/video-analyst.md`), following the
+  existing role-card pattern: reads/transcribes the source video, writes a structured breakdown
+  (topics, steps, timestamps), then uses the Descript MCP tools (`import_media` for files/YouTube
+  URLs, `prompt_project_agent`/Agent Underlord to compose, `export_transcript`/`publish_project`)
+  to produce a condensed ~5-minute video+audio recap. Registered in [[Team Roster]] with its
+  own row and a hand-off line.
+- Deliberately did not touch Clip Studio's code — this is a distinct capability (analyze an
+  *external* tutorial and replicate it), not the AI Presenter's own script-to-HeyGen-video path,
+  so it's its own agent rather than an extension of `app-engineer`.
+- No actual video was analyzed this session — the owner hasn't supplied a source file or YouTube
+  link yet. Nothing to run until they do.
+
+**Needs the owner:** send a tutorial video/series (file or YouTube link) to actually run this agent on.
+
 ## 2026-09-27: owner request — "Command Deck" hub artifact
 **Device:** phone (Claude app) · **Branch:** none (Artifact only, no repo changes) · **Agents used:** none
 

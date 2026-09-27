@@ -55,6 +55,7 @@ lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · 
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
+- [ ] Send a tutorial video/series (file upload or YouTube link) for the new `video-analyst` agent to actually run on — built 2026-09-27 on request, nothing to analyze yet.
 - [ ] Say whether to wire the new [[#Key links|Command Deck]] hub artifact (built 2026-09-27 on request) into the hourly routine for periodic refresh, or leave it as refresh-on-request.
 - [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct — `Config.EventTimeOffset` is built (`04a3211`), so the full test plan in the QA note is ready to run.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
