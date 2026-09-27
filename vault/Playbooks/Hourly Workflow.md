@@ -28,6 +28,9 @@ file and is gone. The queue now lives in the vault: [[Work Queue]].
 8. **Push:** the project branch, then the vault to `main` (`git pull --rebase` first; retry once on conflict).
 
 ## Keep it cheap (owner: "cheapest way possible, but get things done", 2026-09-26)
+- **Lesson (2026-09-27):** once the queue was empty, each "nothing to do" run still cost ~$1–2 because the worker session
+  carries ~150k tokens of context, and the plan hit a 7-day usage warning. Keep the hourly Routine **paused while the queue is
+  empty**; turn it back on only when there are unblocked items.
 - **Quick exit:** if nothing is unblocked, write one run-log line and stop. Don't re-read the whole vault; read only the notes the task needs.
 - **Cheaper helpers:** routine work goes to the cheaper agents (`knowledge-keeper` runs on Haiku; `market-researcher`,
   `live-ops-manager` and `product-maker` run on Sonnet; set in `.claude/agents/`). Code and QA agents keep the main model.

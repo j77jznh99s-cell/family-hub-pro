@@ -1,6 +1,16 @@
 ---
 tags: [memory, log]
 ---
+## 2026-09-27: OANDA re-check and hourly cost check
+**Device:** phone · **Branch:** `main` · **Agents used:** none
+
+- OANDA re-tested in a fresh session: token set, but `OANDA_ENV` and `OANDA_ACCOUNT_ID` still missing and both OANDA hosts still blocked.
+- Found the hourly worker Routine paused by the owner (15:04 UTC). The queue has been empty since 26 Sep evening; idle runs still cost
+  ~$1–2 each (worker context ~150k), worker total ~$113 (API-equivalent), and the plan shows a 7-day usage warning. Added this lesson to [[Hourly Workflow]].
+
+**Next:** see [[Active Context]].
+
+---
 # Session Log
 
 Newest first. One entry per working session. Use [[Session Log Entry]] as the template.
