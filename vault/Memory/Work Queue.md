@@ -11,7 +11,7 @@ Add new items with an owner role. Keep the list in priority order.
 - (empty — see [[Active Context]] for what's waiting on the owner)
 
 ## Waiting on the owner (runs skip these)
-- [ ] (owner) Send a tutorial video/series (file or YouTube link) for the new `video-analyst` agent to run on — nothing to analyze yet.
+- [ ] (owner) video-analyst: the YouTube link tried 2026-09-27 (`youtu.be/FwOTs4UxQS4`) failed Descript's server-side import ("URL returned an HTML page instead of a media file"). Either confirm the video is public and retry, or send the file as a direct upload instead — see [[Video Analyst Runs]].
 - [ ] (owner) Play-test Sproutling Isles in Studio; answer [[Decisions]] (Sproutling #1–4 block the next build; #20 product line).
 - [ ] (owner) Create the 13 Robux items and share the IDs.
 - [ ] (owner) Create a "Summon Spooky Fog" dev product (proposed 149 R$) and share the ID for the Hollow Harvest event.

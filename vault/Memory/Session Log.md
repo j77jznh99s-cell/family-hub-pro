@@ -30,6 +30,16 @@ Newest first. One entry per working session. Use [[Session Log Entry]] as the te
 
 **Needs the owner:** send a tutorial video/series (file or YouTube link) to actually run this agent on.
 
+**Follow-up, same day:** owner sent a real link, `https://youtu.be/FwOTs4UxQS4`. Ran `video-analyst`
+on it — import failed both as the short and expanded YouTube URL form; Descript's `import_media`
+returned "The URL returned an HTML page instead of a media file" both times (no project/job was
+created, confirmed via `list_projects`/`list_jobs`). A separate `WebFetch` check of the same URL
+hit this environment's own egress block on `youtube.com` (unrelated error, doesn't explain
+Descript's side). No transcript was pulled and no breakdown written, per the "never summarize
+without reading the source" standard. Logged verbatim in the new [[Video Analyst Runs]] note.
+**Needs the owner:** confirm the video is public/reachable and retry, or send the file as a direct
+upload instead (`import_media` supports that path too).
+
 ## 2026-09-27: owner request — "Command Deck" hub artifact
 **Device:** phone (Claude app) · **Branch:** none (Artifact only, no repo changes) · **Agents used:** none
 
