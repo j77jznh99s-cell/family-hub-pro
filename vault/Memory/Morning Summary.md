@@ -8,6 +8,60 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-09-27
+
+**Done overnight/today**
+- Sproutling Isles: built the `Config.EventTimeOffset` Studio test hook (the gap found yesterday),
+  so Hollow Harvest can finally be fast-forwarded and tested before its real 17 Oct start.
+- Built and populated the **Week 5 Codes redemption system** with 5 real codes (free Dew, seeds,
+  a Luck Boost). Caught and fixed a real balance bug before it shipped: one code's free seed
+  reward was priced *above* what the paid Starter Pack gives — swapped the seed species to fix it.
+- Built the **Founding Gardener** badge (Week 1 launch incentive) and a **Frostbloom Week 8**
+  login-day tracker (a data-only piece — the winter event itself is still a December build).
+- Built a new dev tool, `tools/audit-economy.luau` — automates 4 balance checks that used to be
+  done by hand: species payback time, free codes vs. the paid store, Robux pricing consistency,
+  and real income rate. Already caught one bug (the Codes one above) doing this by hand; now runs
+  as one command.
+- A full re-review of everything built yesterday found and fixed **one more real bug**: the
+  Founding Gardener/Frostbloom checks weren't wired into the new Studio test hook, so that
+  fast-forward trick wouldn't have worked on them. Fixed the same day.
+- Built you a **"Command Deck"** status page on request — a real-time-feeling dashboard of every
+  project and agent, pulled from actual vault data, with links straight to the code and notes:
+  https://claude.ai/artifact/DJDjGkTBnytfu5eUoV8TnP (it's a snapshot, not auto-updating yet — see
+  "Needs you" below).
+- Separately (your own phone session, not the hourly worker): research comparing StarNet to other
+  agent platforms, recommending StarNet stay on hold since the current cloud setup already covers
+  it — logged as pending Decision #21. Also built a portable memory export for another AI assistant.
+- Everything shipped today is lint/build clean and CI-green. **Nothing has been play-tested in
+  Roblox Studio** — that's still only possible on your end.
+
+**New projects waiting for your OK**
+- None started — the queue had real work most of the day; once it ran dry, extending the new
+  audit tool was more useful than a speculative new project.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items as yesterday (Summon Spooky Fog ~149 R$,
+  Winter Bundle ~99 R$, both need your OK before anything is created or charged).
+
+**Needs you**
+- **Play-test Sproutling Isles in Studio** — now fully possible to fast-forward Hollow Harvest,
+  Founding Gardener and the Frostbloom teaser for testing. [[Sproutling Isles - QA Review]] has
+  the test plan.
+- **Create the 13 Robux items** (including the 2 proposed above).
+- **Answer pending decisions**: #1–4 (block the next build), #20 (Gumroad product line), #21
+  (StarNet — recommend: put on hold).
+- **Command Deck**: say whether to wire it into the hourly routine so it refreshes itself
+  periodically, or leave it as refresh-on-request.
+- Trading agent: still blocked on OANDA setup.
+- Say what's next for Clip Studio and Family Hub (both QA'd/built, just waiting on direction).
+- StarNet + Gumroad account setup, still needs the laptop.
+
+**Next up**
+- Work Queue is empty right now — everything left needs you. Hourly runs will keep checking for
+  newly-unblocked work each hour and flag anything real that comes up.
+
+---
+
 ## 2026-09-26 (first morning summary)
 
 **Done overnight/today**
