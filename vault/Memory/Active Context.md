@@ -53,6 +53,7 @@ lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · 
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
+- [ ] Say whether to wire the new [[#Key links|Command Deck]] hub artifact (built 2026-09-27 on request) into the hourly routine for periodic refresh, or leave it as refresh-on-request.
 - [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct — `Config.EventTimeOffset` is built (`04a3211`), so the full test plan in the QA note is ready to run.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
@@ -65,3 +66,4 @@ Beta 2–8 Oct and launch 10 Oct need a clean play-test by about 1 Oct. If launc
 ## Key links
 - Queue: [[Work Queue]] · Rule: [[Hourly Workflow]] · Summary: [[Morning Summary]]
 - Laptop setup: [[Start Here - Laptop]]
+- Command Deck (owner-facing status hub, built 2026-09-27, snapshot not live): https://claude.ai/artifact/DJDjGkTBnytfu5eUoV8TnP
