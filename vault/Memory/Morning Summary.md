@@ -8,6 +8,48 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-09-28
+
+**Done overnight/today**
+- Built a new **video-analyst** agent on request: give it a tutorial video/series (uploaded file
+  or YouTube link) and it breaks it down into a written brief, then uses Descript to assemble a
+  condensed ~5-minute video with matching audio that replicates the tutorial's core steps.
+- Tried it on the YouTube link you sent (`youtu.be/FwOTs4UxQS4`) — **it didn't work**. Descript's
+  importer got back a webpage instead of the actual video, so nothing was transcribed or edited.
+  See "Needs you" below for the fix.
+- You asked to **pause the hourly worker** — done (disabled, not deleted, so it keeps its history
+  and I can turn it back on the moment you say so). The morning summary keeps running either way.
+- Separately (your own session, not the hourly worker): re-checked OANDA — still blocked
+  (`OANDA_ENV`/`OANDA_ACCOUNT_ID` missing, both hosts still network-blocked) — and found that even
+  an empty "nothing to do" hourly run was costing ~$1–2 (the worker session carries a lot of
+  context) with the account nearing a 7-day usage warning. Good timing on the pause — logged as a
+  standing lesson so a future resume knows to only run while there's real work queued.
+- Everything else is unchanged from yesterday's summary (Sproutling Isles' full build-out,
+  Clip Studio's CI fix, the Command Deck hub, etc. — nothing new happened there this window).
+
+**New projects waiting for your OK**
+- None — the video-analyst agent was your own request, not a speculative new project, and the
+  queue's been empty/paused the rest of the time.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items as before (Summon Spooky Fog ~149 R$,
+  Winter Bundle ~99 R$).
+
+**Needs you**
+- **video-analyst:** either confirm `youtu.be/FwOTs4UxQS4` is public and I'll retry, or send the
+  video as a direct file upload instead — that path doesn't hit the same import error.
+- **Hourly worker is paused** — say when to turn it back on (or leave it off; nothing runs
+  automatically until you do).
+- Everything from yesterday still stands: Sproutling Isles Studio play-test, the 13 Robux items,
+  [[Decisions]] #1–4/#20/#21, OANDA network setup, Clip Studio/Family Hub direction, and whether to
+  wire the Command Deck hub into a periodic refresh.
+
+**Next up**
+- Nothing will run on its own until you resume the hourly worker — this morning summary will keep
+  firing daily either way and will flag anything new.
+
+---
+
 ## 2026-09-27
 
 **Done overnight/today**
