@@ -8,6 +8,32 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-09-29
+
+**Done overnight/today**
+- Nothing — the hourly worker is still paused (your call on 2026-09-27), so no automated work ran.
+  Only other activity was a chat question about rearranging iPhone home-screen apps (no vault/code
+  changes, handled directly in chat).
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items as before (Summon Spooky Fog ~149 R$,
+  Winter Bundle ~99 R$).
+
+**Needs you**
+- Everything from the last two summaries still stands, unchanged: video-analyst's failed YouTube
+  import (confirm the link is public, or send the file directly), whether/when to resume the
+  hourly worker, Sproutling Isles Studio play-test, the 13 Robux items, [[Decisions]] #1–4/#20/#21,
+  OANDA network setup, Clip Studio/Family Hub direction, and the Command Deck wiring question.
+
+**Next up**
+- Still nothing automatic until you resume the hourly worker. This summary will keep firing daily
+  regardless and will flag anything new.
+
+---
+
 ## 2026-09-28
 
 **Done overnight/today**
