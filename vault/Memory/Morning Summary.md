@@ -8,6 +8,30 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-09-30
+
+**Done overnight/today**
+- Nothing — hourly worker still paused, no new commits from any session. Only chat activity was
+  you asking "what needs me" (answered directly, no vault/code changes).
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- Unchanged from the last two summaries: video-analyst's failed YouTube import, whether to resume
+  the hourly worker, Sproutling Isles Studio play-test, the 13 Robux items, [[Decisions]]
+  #1–4/#20/#21, OANDA setup, Clip Studio/Family Hub direction, Command Deck wiring.
+- **Sproutling Isles timeline note:** beta (2–8 Oct) needs a clean play-test by ~1 Oct — that's
+  about a day away and no play-test has happened yet.
+
+**Next up**
+- Still nothing automatic until you resume the hourly worker.
+
+---
+
 ## 2026-09-29
 
 **Done overnight/today**
