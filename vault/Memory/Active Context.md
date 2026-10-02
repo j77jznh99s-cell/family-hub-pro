@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-01
+updated: 2026-10-02
 ---
 # Active Context
 
@@ -66,7 +66,10 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 - [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
 
 ## Timeline at risk
-Beta 2–8 Oct and launch 10 Oct need a clean play-test by about 1 Oct. If launch slips past 24 Oct, skip Halloween.
+**The ~1 Oct play-test target has passed with no play-test done** (as of 2026-10-02) — the owner is the only
+one who can run it (Roblox Studio access). Beta 2–8 Oct and launch 10 Oct now need either an urgent play-test
+or a pushed-back date; this is the owner's call, not something a session can resolve on its own. If launch
+slips past 24 Oct, skip Halloween.
 
 ## Key links
 - Queue: [[Work Queue]] · Rule: [[Hourly Workflow]] · Summary: [[Morning Summary]]
