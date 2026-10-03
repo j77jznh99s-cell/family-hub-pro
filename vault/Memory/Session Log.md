@@ -1,6 +1,21 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03 15:05: local hourly run — Sproutling Isles market trend refresh
+**Device:** PC (desktop app) · **Branch:** `main` · **Agents used:** market-researcher
+
+- Rotation started at Clip Studio: the cloud branch `claude/hourly-project-processing-ejbqs4` is still at
+  `965a4a3`, already QA'd on 2026-09-26, and the two minor fixes belong on that branch (and Node isn't on the PC
+  to run tests), so moved on.
+- Sproutling Isles: did the open market-researcher monthly trend refresh. Results in [[Roblox Market Research 2026]]
+  (new "Refresh 2026-10-03" section, 14 sources; tracker numbers are third-party, some items snippet-only).
+- I reviewed the edit and corrected one implication (it suggested "adding" snatching, which the game already has).
+- Added two follow-up tasks (live-ops-manager: weekly Hollow Harvest drops + Spotlight dates; roblox-engineer:
+  outside-game purchases / refund webhook).
+
+**Next:** owner play-test is still the blocker. See [[Active Context]].
+
+---
 ## 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop
 **Device:** phone/cloud · **Branch:** `main` · **Agents used:** qa-tester
 

@@ -56,6 +56,10 @@ its README/CHANGELOG; blocked on OANDA setup) · [[Gumroad Digital Products]] (d
 lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · [[StarNet Automation]] (plan ready,
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
+**2026-10-03 market refresh** ([[Roblox Market Research 2026]]): Grow a Garden 2 lost ~95% of its players; the
+new #1 is a steal/collect-pets game; big games' Halloween events began 2–9 Oct. Suggests leading with collecting/
+trading/snatching, weekly Hollow Harvest drops, and checking outside-game purchases before launch (tasks added).
+
 ## Waiting on the owner
 - [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
