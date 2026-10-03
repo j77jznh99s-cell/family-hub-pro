@@ -3,7 +3,7 @@
 // Problems block posting; warnings are worth a look.
 const fs = require('fs/promises');
 const path = require('path');
-const { NICHES } = require('./niches');
+const { NICHES, hasSpokenDisclaimer } = require('./niches');
 const { AI_DISCLOSURE, wordCount } = require('./writer');
 
 async function readText(file) {
@@ -52,7 +52,7 @@ async function checkRun(runDir) {
   const niche = NICHES[script.niche];
   if (!niche) warnings.push(`unknown lane "${script.niche}"`);
   if (niche && niche.disclaimer) {
-    if (!/not financial advice/i.test(script.script || '')) problems.push('spoken script is missing the financial disclaimer');
+    if (!hasSpokenDisclaimer(script.script, niche)) problems.push('spoken script is missing the financial disclaimer');
     if (!(script.description || '').includes(niche.disclaimer)) problems.push('description is missing the disclaimer');
   }
   if (!(script.description || '').includes(AI_DISCLOSURE)) problems.push('description is missing the AI disclosure');

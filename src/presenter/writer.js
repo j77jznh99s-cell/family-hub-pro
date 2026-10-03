@@ -3,7 +3,7 @@
 // JSON against a schema. Kept separate so the script step works only from facts the
 // research step actually found (and cited), not from the model's memory.
 const Anthropic = require('@anthropic-ai/sdk');
-const { NICHES } = require('./niches');
+const { NICHES, hasSpokenDisclaimer } = require('./niches');
 
 const MODEL = process.env.PRESENTER_MODEL || 'claude-opus-5';
 // Server-side refusal fallback: a policy decline is retried on Anthropic's recommended
@@ -171,10 +171,14 @@ function finalizeScript(raw, nicheKey, searchedUrls) {
   const niche = NICHES[nicheKey];
   const problems = [];
   const script = { ...raw, niche: nicheKey };
+  // A malformed model reply may omit the script; report it rather than crash.
+  const text = typeof script.script === 'string' ? script.script : '';
+  if (!text.trim()) problems.push('script text is missing');
+  script.script = text;
 
-  const words = wordCount(script.script || '');
+  const words = wordCount(text);
   if (words < 90 || words > 200) problems.push(`script is ${words} words (want 110-170)`);
-  if (/https?:\/\//i.test(script.script || '')) problems.push('script contains a URL');
+  if (/https?:\/\//i.test(text)) problems.push('script contains a URL');
 
   // Sources must come from this run's web search, not from the model's memory.
   script.sources = (script.sources || []).filter(
@@ -182,8 +186,8 @@ function finalizeScript(raw, nicheKey, searchedUrls) {
   );
   if (script.sources.length === 0) problems.push('no sources that match the web search results');
 
-  if (niche.disclaimer && !script.script.toLowerCase().includes('not financial advice')) {
-    script.script = `${script.script.trim()} ${niche.disclaimer}`;
+  if (!hasSpokenDisclaimer(text, niche)) {
+    script.script = `${text.trim()} ${niche.disclaimer}`.trim();
   }
 
   script.hashtags = (script.hashtags || []).map((h) => h.replace(/^#/, '').replace(/\s+/g, ''));

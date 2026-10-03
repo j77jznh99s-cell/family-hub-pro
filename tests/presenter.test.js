@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const tmpOut = fs.mkdtempSync(path.join(os.tmpdir(), 'presenter-test-'));
 process.env.PRESENTER_OUTPUT_DIR = tmpOut;
 
-const { NICHES, ORDER, nicheForDate, resolveNiche } = require('../src/presenter/niches');
+const { NICHES, ORDER, nicheForDate, resolveNiche, hasSpokenDisclaimer } = require('../src/presenter/niches');
 const writer = require('../src/presenter/writer');
 const heygen = require('../src/presenter/heygen');
 const presenter = require('../src/presenter');
@@ -54,6 +54,50 @@ test('finalizeScript does not double a disclaimer the model already spoke', () =
   const raw = rawScript({ script: `${WORDS_130} This is general education, not financial advice.` });
   const { script } = writer.finalizeScript(raw, 'money', new Set(['https://reuters.com/a']));
   assert.equal(script.script.match(/not financial advice/gi).length, 1);
+});
+
+test('finalizeScript does not double a disclaimer spoken word-for-word', () => {
+  const searched = new Set(['https://reuters.com/a']);
+  for (const key of ['money', 'markets']) {
+    const spoken = `${WORDS_130} ${NICHES[key].disclaimer}`;
+    const { script } = writer.finalizeScript(rawScript({ script: spoken }), key, searched);
+    assert.equal(script.script, spoken, key);
+  }
+});
+
+test('finalizeScript reports a missing script instead of throwing', () => {
+  const searched = new Set(['https://reuters.com/a']);
+  for (const key of ['ai', 'markets']) {
+    let result;
+    assert.doesNotThrow(() => { result = writer.finalizeScript(rawScript({ script: undefined }), key, searched); });
+    assert.ok(result.problems.includes('script text is missing'), key);
+    assert.ok(result.problems.some((p) => /words/.test(p)), key);
+  }
+});
+
+test('every disclaimer has a key phrase that appears in its own text', () => {
+  for (const [key, niche] of Object.entries(NICHES)) {
+    if (!niche.disclaimer) {
+      assert.equal(niche.disclaimerKeyPhrase, null, key);
+      continue;
+    }
+    assert.ok(niche.disclaimerKeyPhrase, `${key} has no disclaimerKeyPhrase`);
+    assert.ok(niche.disclaimer.toLowerCase().includes(niche.disclaimerKeyPhrase.toLowerCase()), key);
+  }
+});
+
+test('hasSpokenDisclaimer accepts the full disclaimer or its key phrase', () => {
+  const { money, markets, ai } = NICHES;
+  assert.equal(hasSpokenDisclaimer(`Intro. ${money.disclaimer}`, money), true);
+  assert.equal(hasSpokenDisclaimer('Intro.  NOT   financial\nadvice, folks.', markets), true); // paraphrase, odd spacing
+  assert.equal(hasSpokenDisclaimer('Do your own research before you trade.', markets), false);
+  assert.equal(hasSpokenDisclaimer('', money), false);
+  assert.equal(hasSpokenDisclaimer(undefined, money), false);
+  assert.equal(hasSpokenDisclaimer('Anything at all.', ai), true); // lane needs no disclaimer
+  // A reworded disclaimer is still recognised when spoken in full, even without the key phrase.
+  const custom = { disclaimer: 'Educational only.', disclaimerKeyPhrase: null };
+  assert.equal(hasSpokenDisclaimer('That was educational   only.', custom), true);
+  assert.equal(hasSpokenDisclaimer('That was it.', custom), false);
 });
 
 test('finalizeScript rejects sources that the web search never returned', () => {
