@@ -7,6 +7,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-03 | Starling Heist | Build a brand-new Roblox game from scratch that follows what's popular now (steal-and-collect, weekly drops, Halloween event) and Roblox's current rules; Sproutling Isles is kept as it is, not deleted | Owner: "start from the beginning and build it completely fresh… follows what's popular right now and the rules and regulations that Roblox set" | Owner (Claude chose the concept from the 2026-10-03 market refresh) |
+| 2026-10-03 | Starling Heist | No paid random items, no trading, nothing sold for Robux protects from thieves or changes odds | Avoids the paid-random-items odds/PolicyService rules entirely and keeps it fair | Claude (design pillar) |
 | 2026-09-27 | Workspace | Paused the "Hourly project work (worker)" Routine (`trig_012vmVxmbAkxxY59wCnKaG1J`) — disabled, not deleted, so it keeps its run history and can be turned back on | Owner: "Pause the hourly queue" | Owner |
 | 2026-09-26 | Workspace | Cheapest way that still gets work done: up to 3 tasks per hourly run (~20 min each, since Routines can't fire more than hourly), quick exit when blocked, cheaper models for routine agents, no paid services | Owner: "cheapest way possible", "20 minutes if you can" | Owner asked, Claude chose |
 | 2026-09-26 | Workspace | Anything that costs money: never pay; push-notify the owner and list it in [[Work Queue]] | Owner: "notified if anything needs to be paid for beforehand" | Owner |
@@ -30,6 +32,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Top priority (blocks the next build)**
 | # | Decision | Recommendation |
 | --- | --- | --- |
+| 22 | Starling Heist vs. Sproutling Isles: launch Starling Heist first, keep both, or shelve Sproutling Isles? | Launch Starling Heist first (it matches today's #1 genre; Sproutling's garden genre is fading), keep Sproutling for later |
 | 1 | Snatching: core, or opt-in PvP toggle? | Core, with the shield + gate lock |
 | 2 | Launch plan: closed beta 2–8 Oct, public launch Sat 10 Oct? | Yes, if the Studio play-test is clean by about 1 Oct |
 | 3 | Game owned by your personal account or a Roblox group? | A group (easier to add collaborators later) |

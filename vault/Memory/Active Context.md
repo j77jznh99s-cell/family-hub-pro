@@ -56,11 +56,17 @@ its README/CHANGELOG; blocked on OANDA setup) · [[Gumroad Digital Products]] (d
 lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · [[StarNet Automation]] (plan ready,
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
+**NEW 2026-10-03: [[Starling Heist]]**, a brand-new Roblox steal-and-collect game, built from scratch on request
+(branch `claude/starling-heist`, folder `roblox/starling-heist/`). Complete code, tests, CI and docs, but **not yet
+run in Studio or CI** (no Roblox tools on the PC, pushes failing). Owner: pick launch priority ([[Decisions]] #22).
+
 **2026-10-03 market refresh** ([[Roblox Market Research 2026]]): Grow a Garden 2 lost ~95% of its players; the
 new #1 is a steal/collect-pets game; big games' Halloween events began 2–9 Oct. Suggests leading with collecting/
 trading/snatching, weekly Hollow Harvest drops, and checking outside-game purchases before launch (tasks added).
 
 ## Waiting on the owner
+- [ ] **Starling Heist:** `gh auth login --web` on the PC so the branch pushes and CI runs; then play-test with
+  `roblox/starling-heist/docs/TEST_PLAN.md`; then the publishing checklist in its README.
 - [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
   table fixed), ready to pull on the laptop and run with no known blockers left on this end.

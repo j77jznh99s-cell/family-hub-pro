@@ -1,6 +1,25 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03: owner request — build a brand-new Roblox game from scratch
+**Device:** PC (desktop app) · **Branch:** `claude/starling-heist` · **Agents used:** none (built directly)
+
+- Owner asked for a completely fresh game that follows what's popular now and Roblox's rules.
+  Chose the steal-and-collect genre (today's #1, per the same-day market refresh) with an original
+  theme: **[[Starling Heist]]**.
+- Checked current Roblox rules on the web first: paid random items (May 2026 clarification),
+  Store-tab purchases outside the game needing ProcessReceipt (Sep 2026), and the maturity
+  questionnaire and 2026 publishing requirements. Designed so no Robux item is random or protective.
+- Built the full game in `roblox/starling-heist/`: 12 shared modules, 15 server modules, a code-built
+  HUD, Lune tests, a CI workflow, and README/DESIGN/COMPLIANCE/TEST_PLAN docs.
+- Verification: reading-only review (no Rojo/Selene/Lune on the PC, can't install). It caught one
+  real bug (models positioned before their welds were live), fixed before commit. Event dates
+  checked with PowerShell. **Not run in Studio or CI yet.**
+- Sproutling Isles untouched. Added [[Decisions]] #22 (which game to launch first).
+
+**Next:** owner signs in to GitHub so CI runs, then plays the Studio test plan. See [[Starling Heist]].
+
+---
 ## 2026-10-03 15:05: local hourly run — Sproutling Isles market trend refresh
 **Device:** PC (desktop app) · **Branch:** `main` · **Agents used:** market-researcher
 

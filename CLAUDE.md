@@ -29,6 +29,7 @@ Before you finish, update memory so the next session can pick up where you left 
 
 | Project | Where the code lives (branch → folder) | Vault note |
 | --- | --- | --- |
+| Starling Heist (Roblox game) | `claude/starling-heist` → `roblox/starling-heist/` | `vault/Projects/Starling Heist.md` |
 | Sproutling Isles (Roblox game) | `claude/roblox-popular-game-trends-6u7sie` → `roblox/sproutling-isles/` | `vault/Projects/Sproutling Isles.md` |
 | Clip Studio (AI video clipper) | `claude/video-clip-detection-mvp-g18ggk` → repo root (`src/`); newest work on `claude/hourly-project-processing-ejbqs4` | `vault/Projects/Clip Studio.md` |
 | Family Hub (iPhone app + widgets) | `claude/family-hub-widget-1w7cv9` → `FamilyHub/` | `vault/Projects/Family Hub.md` |

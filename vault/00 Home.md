@@ -19,6 +19,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[AI Memory Export]]: portable snapshot of the owner for another AI assistant
 
 ## Projects
+- [[Starling Heist]]: brand-new Roblox steal-and-collect game, built 2026-10-03 (not play-tested yet)
 - [[Sproutling Isles]]: Roblox grow-and-snatch game (active)
   - [[Sproutling Isles - Design Doc]]: the full design (working copy)
 - [[Roblox Market Research 2026]]: the research behind the game choice
