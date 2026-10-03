@@ -119,10 +119,26 @@ public final class Store: @unchecked Sendable {
         }
     }
 
+    /// Where an unreadable data file is copied before anything can overwrite it.
+    public var unreadableBackupURL: URL {
+        url.deletingLastPathComponent()
+            .appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".unreadable.json")
+    }
+
     public func load() -> AppData {
         lock.lock(); defer { lock.unlock() }
-        guard let data = try? Data(contentsOf: url) else { return AppData() }
-        return (try? Self.decoder.decode(AppData.self, from: data)) ?? AppData()
+        guard FileManager.default.fileExists(atPath: url.path) else { return AppData() }
+        do {
+            let data = try Data(contentsOf: url)
+            return try Self.decoder.decode(AppData.self, from: data)
+        } catch {
+            // The caller gets empty data and its next save would replace the file, so keep a copy first.
+            // Only the first bad file is kept: it's the one most likely to still hold the real data.
+            if !FileManager.default.fileExists(atPath: unreadableBackupURL.path) {
+                try? FileManager.default.copyItem(at: url, to: unreadableBackupURL)
+            }
+            return AppData()
+        }
     }
 
     public func save(_ appData: AppData) throws {

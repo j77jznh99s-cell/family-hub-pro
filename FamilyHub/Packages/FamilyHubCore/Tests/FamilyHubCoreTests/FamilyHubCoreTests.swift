@@ -39,6 +39,53 @@ final class SuggestionEngineTests: XCTestCase {
         XCTAssertEqual(s.map(\.person.name), ["Beth", "Aaron"])
     }
 
+    func testFavoriteNeverOutranksAHigherUrgency() {
+        let a = Person(name: "Aaron", cadenceDays: 7, lastContacted: daysAgo(14))                  // 2.0 → overdue
+        let b = Person(name: "Beth", cadenceDays: 7, lastContacted: daysAgo(7), isFavorite: true)  // 1.0 → due
+        let s = SuggestionEngine.suggestions(people: [b, a], openers: [:], context: .init(), now: now, calendar: cal)
+        XCTAssertEqual(s.map(\.person.name), ["Aaron", "Beth"])
+    }
+
+    func testEqualScoresSortByNameIgnoringCase() {
+        let bob = Person(name: "bob", cadenceDays: 7, lastContacted: daysAgo(14))
+        let alice = Person(name: "Alice", cadenceDays: 7, lastContacted: daysAgo(14))
+        let s = SuggestionEngine.suggestions(people: [bob, alice], openers: [:], context: .init(), now: now, calendar: cal)
+        XCTAssertEqual(s.map(\.person.name), ["Alice", "bob"])
+    }
+
+    func testUrgencyThresholds() {
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 0), .upToDate)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 0.74), .upToDate)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 0.75), .dueSoon)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 0.99), .dueSoon)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 1.0), .due)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 1.49), .due)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 1.5), .overdue)
+        XCTAssertEqual(SuggestionEngine.urgency(forScore: 10), .overdue)
+    }
+
+    func testFutureLastContactedCountsAsToday() {
+        let p = Person(name: "Dad", cadenceDays: 7, lastContacted: cal.date(byAdding: .day, value: 2, to: now)!)
+        XCTAssertTrue(SuggestionEngine.suggestions(people: [p], openers: [:], context: .init(), now: now, calendar: cal).isEmpty)
+        let all = SuggestionEngine.suggestions(people: [p], openers: [:], context: .init(), now: now, calendar: cal, includeUpToDate: true)
+        XCTAssertEqual(all.first?.daysSince, 0)
+        XCTAssertEqual(all.first?.score, 0)
+        XCTAssertEqual(all.first?.urgency, .upToDate)
+        XCTAssertEqual(all.first?.sinceLabel, "Today")
+    }
+
+    func testDaysSinceAcrossAMidnightDSTChange() {
+        // Chile: 2026-09-06 has no 00:00 (starts at 01:00), so the next day is only 23 hours after its start.
+        var santiago = Calendar(identifier: .gregorian)
+        santiago.timeZone = TimeZone(identifier: "America/Santiago")!
+        let sunday = santiago.date(from: DateComponents(year: 2026, month: 9, day: 6, hour: 12))!
+        let monday = santiago.date(from: DateComponents(year: 2026, month: 9, day: 7, hour: 15))!
+        let p = Person(name: "Mom", cadenceDays: 1, lastContacted: sunday)
+        let s = SuggestionEngine.suggestions(people: [p], openers: [:], context: .init(), now: monday, calendar: santiago)
+        XCTAssertEqual(s.first?.daysSince, 1)
+        XCTAssertEqual(s.first?.urgency, .due)
+    }
+
     func testSnoozedPeopleAreHiddenUntilSnoozeEnds() {
         var p = Person(name: "Dad", cadenceDays: 2, lastContacted: daysAgo(10))
         p.snoozedUntil = cal.date(byAdding: .day, value: 1, to: now)
@@ -99,6 +146,25 @@ final class AppDataTests: XCTestCase {
         )
         try store.save(data)
         XCTAssertEqual(store.load(), data)
+    }
+
+    func testUnreadableFileIsBackedUpBeforeASaveCanOverwriteIt() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = Store(url: dir.appendingPathComponent("familyhub.json"))
+
+        XCTAssertEqual(store.load(), AppData()) // no file yet: fresh data, no backup
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.unreadableBackupURL.path))
+
+        let bad = Data(#"{"people":[{"name":42}]}"#.utf8)
+        try bad.write(to: store.url)
+        XCTAssertEqual(store.load(), AppData())
+        XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad)
+
+        try store.save(AppData(people: [Person(name: "Mom")]))
+        XCTAssertEqual(store.load().people.first?.name, "Mom")
+        XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad, "the backup is never overwritten")
     }
 }
 

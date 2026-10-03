@@ -63,6 +63,56 @@ final class EngagementTests: XCTestCase {
         XCTAssertFalse(s.atRisk)
     }
 
+    func testFreezesCapAtTwo() {
+        // 21 days earns a freeze at day 7, 14 and 21, but only two can be banked.
+        let s = Engagement.streak(log: (-20...0).map { reach($0) }, goal: 1, now: now, calendar: cal)
+        XCTAssertEqual(s.current, 21)
+        XCTAssertEqual(s.freezes, 2)
+    }
+
+    func testTwoBankedFreezesSaveTwoMissedDaysAndTheThirdResets() {
+        let run = (-24...(-4)).map { reach($0) } // 21 days → 2 freezes (capped)
+        // Miss -3 and -2, then keep going: both freezes are spent and the streak survives.
+        let saved = Engagement.streak(log: run + [reach(-1), reach(0)], goal: 1, now: now, calendar: cal)
+        XCTAssertEqual(saved.current, 23)
+        XCTAssertEqual(saved.longest, 23)
+        XCTAssertEqual(saved.freezes, 0)
+        XCTAssertEqual(saved.frozenDays, [cal.startOfDay(for: day(-3)), cal.startOfDay(for: day(-2))])
+
+        // Miss -3, -2 and -1: a third freeze would have been needed, so the streak restarts today.
+        let lost = Engagement.streak(log: run + [reach(0)], goal: 1, now: now, calendar: cal)
+        XCTAssertEqual(lost.current, 1)
+        XCTAssertEqual(lost.longest, 21)
+        XCTAssertEqual(lost.freezes, 0)
+    }
+
+    // MARK: DST (Chile starts DST at midnight: 2026-09-06 has no 00:00 and starts at 01:00)
+
+    let santiago: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "America/Santiago")!
+        return c
+    }()
+
+    func september(_ day: Int, hour: Int = 12) -> Date {
+        santiago.date(from: DateComponents(year: 2026, month: 9, day: day, hour: hour))!
+    }
+
+    func testStreakSurvivesAMidnightDSTChange() {
+        let log = (1...10).map { ReachOut(personID: mom.id, date: september($0), kind: .onTime, points: 15) }
+        let s = Engagement.streak(log: log, goal: 1, now: september(10, hour: 15), calendar: santiago)
+        XCTAssertEqual(s.current, 10)
+        XCTAssertEqual(s.longest, 10)
+        XCTAssertEqual(s.freezes, 1)
+        XCTAssertTrue(s.frozenDays.isEmpty)
+    }
+
+    func testActivityOnTheDayDSTStartsAtOneAM() {
+        let log = [5, 6].map { ReachOut(personID: mom.id, date: september($0), kind: .onTime, points: 15) }
+        let a = Engagement.activity(log: log, days: 3, now: september(6, hour: 15), calendar: santiago)
+        XCTAssertEqual(a.map(\.count), [0, 1, 1])
+    }
+
     // MARK: Per-person streaks
 
     func testPersonStreakCountsOnTimeCheckInsAndDiesWhenOverdue() {
@@ -100,6 +150,29 @@ final class EngagementTests: XCTestCase {
         XCTAssertEqual(Engagement.level(xp: 2500).number, 10)
         XCTAssertEqual(Engagement.level(xp: 3300).number, 11)
         XCTAssertEqual(Engagement.level(xp: 3300).title, "Hall of Famer")
+    }
+
+    func testLevelBoundariesAndLargeXP() {
+        XCTAssertEqual(Engagement.level(xp: 49).number, 1)
+        XCTAssertEqual(Engagement.level(xp: 49).toNext, 1)
+        XCTAssertEqual(Engagement.level(xp: 50).number, 2)
+        XCTAssertEqual(Engagement.level(xp: 50).floor, 50)
+        XCTAssertEqual(Engagement.level(xp: 50).next, 125)
+        XCTAssertEqual(Engagement.level(xp: 3199).number, 10)
+        XCTAssertEqual(Engagement.level(xp: 3199).toNext, 1)
+        let big = Engagement.level(xp: 1_000_000) // 2500 + 1425 × 700
+        XCTAssertEqual(big.number, 1435)
+        XCTAssertEqual(big.floor, 1_000_000)
+        XCTAssertEqual(big.next, 1_000_700)
+        XCTAssertEqual(big.progress, 0)
+        XCTAssertEqual(big.title, "Hall of Famer")
+    }
+
+    func testNegativeXPIsLevelOne() {
+        let l = Engagement.level(xp: -10)
+        XCTAssertEqual(l.number, 1)
+        XCTAssertEqual(l.title, "Newcomer")
+        XCTAssertEqual(l.progress, 0)
     }
 
     func testMarkContactedAwardsPointsOncePerDayAndBadges() {

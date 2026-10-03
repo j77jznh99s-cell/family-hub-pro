@@ -14,16 +14,13 @@ public enum SuggestionEngine {
         calendar: Calendar = .current,
         includeUpToDate: Bool = false
     ) -> [Suggestion] {
-        let today = calendar.startOfDay(for: now)
-        return people
+        people
             .filter { p in
                 guard let snooze = p.snoozedUntil else { return true }
                 return snooze <= now
             }
             .map { p -> Suggestion in
-                let days = p.lastContacted.map {
-                    calendar.dateComponents([.day], from: calendar.startOfDay(for: $0), to: today).day ?? 0
-                }
+                let days = p.lastContacted.map { Engagement.daysBetween($0, now, calendar) }
                 let score = days.map { Double(max(0, $0)) / Double(max(1, p.cadenceDays)) } ?? 1.5
                 let opener = openers[p.id].flatMap { isFresh($0, now: now) ? $0 : nil }
                     ?? fallbackOpener(for: p, context: context, now: now, calendar: calendar)

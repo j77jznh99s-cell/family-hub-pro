@@ -133,7 +133,7 @@ public struct StreakStatus: Equatable, Sendable {
 
     public static let none = StreakStatus(current: 0, longest: 0, freezes: 0, doneToday: 0, goal: 1, frozenDays: [])
 
-        public var goalMetToday: Bool { doneToday >= goal }
+    public var goalMetToday: Bool { doneToday >= goal }
     /// A streak is going but today's goal isn't met yet.
     public var atRisk: Bool { current > 0 && !goalMetToday }
 }
@@ -217,7 +217,9 @@ public enum Engagement {
                 }
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
-            day = next
+            // Re-anchor to midnight: where DST starts at midnight (e.g. Chile) that day starts at 01:00,
+            // and adding days from 01:00 would never match the start-of-day keys again.
+            day = calendar.startOfDay(for: next)
         }
         return status
     }
@@ -238,6 +240,7 @@ public enum Engagement {
     }
 
     public static func level(xp: Int) -> Level {
+        let xp = max(0, xp) // a corrupt log could sum below zero; never report a level above 1 for that
         if let i = levelFloors.lastIndex(where: { $0 <= xp }), i < levelFloors.count - 1 {
             return Level(number: i + 1, title: levelTitles[i], xp: xp, floor: levelFloors[i], next: levelFloors[i + 1])
         }
@@ -253,7 +256,8 @@ public enum Engagement {
         var perDay: [Date: Int] = [:]
         for r in log { perDay[calendar.startOfDay(for: r.date), default: 0] += 1 }
         return (0..<days).reversed().compactMap { offset in
-            calendar.date(byAdding: .day, value: -offset, to: today).map { DayCount(day: $0, count: perDay[$0] ?? 0) }
+            calendar.date(byAdding: .day, value: -offset, to: today).map { calendar.startOfDay(for: $0) }
+                .map { DayCount(day: $0, count: perDay[$0] ?? 0) }
         }
     }
 
@@ -285,8 +289,14 @@ public enum Engagement {
         return ("💬 Time to say hi", "\(who). \"\(top.opener.text)\"")
     }
 
+    /// Whole calendar days from `a` to `b`. Measured noon to noon: where DST starts at midnight (e.g. Chile)
+    /// that day starts at 01:00, and a start-of-day to start-of-day difference can come out a day short.
     static func daysBetween(_ a: Date, _ b: Date, _ calendar: Calendar) -> Int {
-        calendar.dateComponents([.day], from: calendar.startOfDay(for: a), to: calendar.startOfDay(for: b)).day ?? 0
+        calendar.dateComponents([.day], from: noon(a, calendar), to: noon(b, calendar)).day ?? 0
+    }
+
+    static func noon(_ date: Date, _ calendar: Calendar) -> Date {
+        calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) ?? calendar.startOfDay(for: date)
     }
 }
 
