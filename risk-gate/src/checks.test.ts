@@ -119,6 +119,106 @@ describe("checkOrder", () => {
   });
 });
 
+describe("checkOrder input_sanity (fail closed on bad data)", () => {
+  beforeEach(() => {
+    if (fs.existsSync(HALT_FILE)) fs.rmSync(HALT_FILE);
+  });
+  after(() => {
+    if (fs.existsSync(HALT_FILE)) fs.rmSync(HALT_FILE);
+  });
+
+  async function expectInputReject(
+    order: OrderRequest,
+    bybit: BybitClient,
+    field: string
+  ): Promise<void> {
+    const result = await checkOrder(order, bybit);
+    assert.equal(result.approved, false);
+    assert.equal(result.reason, "input_sanity");
+    const last = result.checks[result.checks.length - 1];
+    assert.equal(last.name, "input_sanity");
+    assert.equal(last.passed, false);
+    assert.equal(last.detail?.field, field);
+  }
+
+  it("rejects a mark price of 0 (would make notional 0)", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ markPrice: async () => 0 }), "mark");
+  });
+
+  it("rejects a negative mark price", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ markPrice: async () => -50_000 }), "mark");
+  });
+
+  it("rejects a NaN mark price", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ markPrice: async () => NaN }), "mark");
+  });
+
+  it("rejects equity of 0 (missing wallet list)", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ equityUsdt: async () => 0 }), "equity");
+  });
+
+  it("rejects NaN equity", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ equityUsdt: async () => NaN }), "equity");
+  });
+
+  it("rejects leverage of 0 reported by the exchange", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ leverage: async () => 0 }), "leverage");
+  });
+
+  it("rejects NaN leverage reported by the exchange", async () => {
+    await expectInputReject(baseOrder, fakeBybit({ leverage: async () => NaN }), "leverage");
+  });
+
+  it("rejects NaN today's PnL", async () => {
+    await expectInputReject(
+      baseOrder,
+      fakeBybit({ pnlSinceMidnightUtc: async () => NaN }),
+      "todayPnl"
+    );
+  });
+
+  it("still allows a finite negative PnL inside the cap", async () => {
+    const result = await checkOrder(
+      baseOrder,
+      fakeBybit({ pnlSinceMidnightUtc: async () => -100 })
+    );
+    assert.equal(result.approved, true);
+  });
+
+  it("rejects qty of 0", async () => {
+    await expectInputReject({ ...baseOrder, qty: 0 }, fakeBybit(), "qty");
+  });
+
+  it("rejects a negative qty", async () => {
+    await expectInputReject({ ...baseOrder, qty: -1 }, fakeBybit(), "qty");
+  });
+
+  it("rejects a NaN qty", async () => {
+    await expectInputReject({ ...baseOrder, qty: NaN }, fakeBybit(), "qty");
+  });
+
+  it("rejects a limit price of 0", async () => {
+    await expectInputReject({ ...baseOrder, price: 0 }, fakeBybit(), "price");
+  });
+
+  it("rejects a negative limit price", async () => {
+    await expectInputReject({ ...baseOrder, price: -50_000 }, fakeBybit(), "price");
+  });
+
+  it("still approves a sane limit price near mark", async () => {
+    const result = await checkOrder({ ...baseOrder, price: 50_100 }, fakeBybit());
+    assert.equal(result.approved, true);
+    assert.ok(result.checks.every((c) => c.passed));
+  });
+
+  it("checks the kill switch before input sanity", async () => {
+    fs.writeFileSync(HALT_FILE, "");
+    const result = await checkOrder({ ...baseOrder, qty: 0 }, fakeBybit());
+    assert.equal(result.approved, false);
+    assert.equal(result.reason, "kill_switch");
+  });
+});
+
 describe("checkClose", () => {
   before(() => {
     if (fs.existsSync(HALT_FILE)) fs.rmSync(HALT_FILE);
@@ -154,5 +254,21 @@ describe("checkLeverage", () => {
   it("rejects leverage above the symbol cap", () => {
     assert.equal(checkLeverage("BTCUSDT", 11).approved, false);
     assert.equal(checkLeverage("SOLUSDT", 6).approved, false);
+  });
+
+  it("rejects leverage that is not finite or below 1x", () => {
+    if (fs.existsSync(HALT_FILE)) fs.rmSync(HALT_FILE);
+    for (const bad of [0, -2, NaN, 0.5]) {
+      const result = checkLeverage("BTCUSDT", bad);
+      assert.equal(result.approved, false, `leverage ${bad} should be rejected`);
+      assert.equal(result.reason, "input_sanity");
+    }
+  });
+
+  it("approves leverage of exactly 1x", () => {
+    if (fs.existsSync(HALT_FILE)) fs.rmSync(HALT_FILE);
+    const result = checkLeverage("BTCUSDT", 1);
+    assert.equal(result.approved, true);
+    assert.ok(result.checks.every((c) => c.passed));
   });
 });

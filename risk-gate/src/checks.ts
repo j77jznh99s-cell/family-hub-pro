@@ -30,6 +30,23 @@ function reject(reason: string, checks: CheckStep[]): GateResult {
   return { approved: false, reason, checks };
 }
 
+/** True only for a real number above zero (rejects 0, negatives, NaN, Infinity). */
+function isPositiveFinite(n: unknown): boolean {
+  return typeof n === "number" && Number.isFinite(n) && n > 0;
+}
+
+/** True only for a finite leverage of at least 1x. */
+function isValidLeverage(n: unknown): boolean {
+  return typeof n === "number" && Number.isFinite(n) && n >= 1;
+}
+
+/** Fail closed on garbage inputs or exchange data (e.g. Number("") === 0).
+ *  Only pushed on failure, so an approved order's checks are unchanged. */
+function rejectInput(field: string, value: unknown, checks: CheckStep[]): GateResult {
+  checks.push({ name: "input_sanity", passed: false, detail: { field, value } });
+  return reject("input_sanity", checks);
+}
+
 /**
  * Checks that gate every write, including closures and cancels: the kill
  * switch is a full stop, not just an entry filter.
@@ -55,8 +72,23 @@ export async function checkOrder(
     return reject("kill_switch", checks);
   }
 
+  // input_sanity: checkOrder is exported, so re-validate even though zod
+  // checks these at the MCP boundary.
+  if (!isPositiveFinite(req.qty)) {
+    return rejectInput("qty", req.qty, checks);
+  }
+  if (req.price !== undefined && !isPositiveFinite(req.price)) {
+    return rejectInput("price", req.price, checks);
+  }
+
   const equity = await bybit.equityUsdt();
+  if (!isPositiveFinite(equity)) {
+    return rejectInput("equity", equity, checks);
+  }
   const todayPnl = await bybit.pnlSinceMidnightUtc();
+  if (typeof todayPnl !== "number" || !Number.isFinite(todayPnl)) {
+    return rejectInput("todayPnl", todayPnl, checks);
+  }
   const dailyLossOk = todayPnl >= -DAILY_LOSS_CAP_PCT * equity;
   checks.push({
     name: "daily_loss_cap",
@@ -68,6 +100,9 @@ export async function checkOrder(
   }
 
   const mark = await bybit.markPrice(req.symbol);
+  if (!isPositiveFinite(mark)) {
+    return rejectInput("mark", mark, checks);
+  }
   const notional = req.qty * mark;
   const notionalOk = notional <= NOTIONAL_CAP_PCT * equity;
   checks.push({
@@ -80,6 +115,9 @@ export async function checkOrder(
   }
 
   const leverage = await bybit.leverage(req.symbol);
+  if (!isValidLeverage(leverage)) {
+    return rejectInput("leverage", leverage, checks);
+  }
   const cap = leverageCapFor(req.symbol);
   const leverageOk = leverage <= cap;
   checks.push({
@@ -145,6 +183,10 @@ export function checkLeverage(symbol: string, leverage: number): GateResult {
   const checks: CheckStep[] = [checkHalt()];
   if (!checks[0].passed) {
     return reject("kill_switch", checks);
+  }
+
+  if (!isValidLeverage(leverage)) {
+    return rejectInput("leverage", leverage, checks);
   }
 
   const cap = leverageCapFor(symbol);
