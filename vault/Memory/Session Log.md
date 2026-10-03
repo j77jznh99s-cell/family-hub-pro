@@ -1,6 +1,20 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03 18:30: local hourly run — Clip Studio presenter QA fixes
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (new, from `origin/claude/hourly-project-processing-ejbqs4`; worktree `fhp-clip-wt`) · **Agents used:** app-engineer
+
+- Rotation: AI Agent Team was next but skipped (someone else's uncommitted `agents/inbox/LOG.md` edit); wrapped to Clip Studio.
+  Cloud branch still at `965a4a3`, so picked the open app-engineer task (QA findings 1–2).
+- `niches.js` gets `disclaimerKeyPhrase` per lane + shared `hasSpokenDisclaimer()`; `writer.js` and `check.js` use it
+  instead of the hardcoded "not financial advice". `finalizeScript` reports "script text is missing" instead of
+  throwing on a missing script. 4 tests added. Orchestrator read the full diff.
+- New branch (not the cloud branch) so the cloud session's branch isn't diverged.
+- **Not run** (no Node on the PC). Commit `207fbba`, push hung (GitHub not signed in), stopped.
+
+**Next:** someone with Node runs `node --test` on that branch; owner decides merging it with the cloud branch.
+
+---
 ## 2026-10-03 17:00: local hourly run — Bybit risk gate fails closed on bad data
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
 

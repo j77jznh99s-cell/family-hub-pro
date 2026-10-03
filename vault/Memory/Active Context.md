@@ -78,7 +78,7 @@ trading/snatching, weekly Hollow Harvest drops, and checking outside-game purcha
 - [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
 - [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed, not compiled) — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
 - [ ] Bybit bot: risk gate hardened 2026-10-03 (`84b1ec0`, fails closed on bad exchange data, tests not run) — run `npm test` in `risk-gate/` on a machine with Node; still confirm paper vs live status.
-- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
+- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both.
 
 ## Timeline at risk
 **The ~1 Oct play-test target has passed with no play-test done** (as of 2026-10-02) — the owner is the only

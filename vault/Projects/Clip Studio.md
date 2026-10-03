@@ -116,5 +116,6 @@ check CI before pushing to one.
 ## Tasks
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
 - [ ] **owner:** decide whether to merge `claude/hourly-project-processing-ejbqs4` into `claude/video-clip-detection-mvp-g18ggk` (all automated checks this session could run passed; Docker build step still unverified — see QA Review).
-- [ ] **app-engineer:** fix the two minor findings above (fragile disclaimer-dedup string match in `writer.js`/`check.js`; missing `|| ''` guard in `writer.js:185`) before or shortly after merge.
+- [x] **app-engineer:** fix the two minor findings above (fragile disclaimer-dedup string match in `writer.js`/`check.js`; missing `|| ''` guard in `writer.js:185`) before or shortly after merge. Done 2026-10-03 (`207fbba` on new branch `claude/clip-studio-presenter-fixes`, built on the cloud branch; not pushed yet, tests not run — no Node on the PC).
+- [ ] **qa-tester:** run `node --test` on `claude/clip-studio-presenter-fixes` (needs Node) and confirm the 4 new tests + existing presenter/check tests pass.
 - [ ] **owner:** confirm what's next for Clip Studio (deploy? pricing? more features?) so an agent can pick it up
