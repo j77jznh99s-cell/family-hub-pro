@@ -33,7 +33,8 @@ weekly Saturday drops (17, 24, 31 Oct) that switch on by date.
 - **Written and self-reviewed by reading only.** The PC has no Rojo/Selene/Lune, and GitHub pushes
   fail, so CI hasn't run yet. One real bug was caught in review (positioning models before welds
   are live) and fixed before commit.
-- Not run in Roblox Studio yet.
+- Not run in Roblox Studio yet. 2026-10-03: built the place with `tools/build-place.ps1` (no Rojo needed,
+  38 instances) and opened it in Studio on the PC for the owner to play.
 
 ## Tasks
 - [ ] **owner:** decide Starling Heist vs. Sproutling Isles priority ([[Decisions]] #22)

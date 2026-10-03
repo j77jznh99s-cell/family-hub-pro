@@ -1,6 +1,16 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03: Starling Heist opened in Roblox Studio for the owner
+**Device:** PC (desktop app) · **Branch:** `claude/starling-heist` · **Agents used:** none
+
+- Owner asked to put the play-test in Studio. No Rojo on the PC, so wrote `roblox/starling-heist/tools/build-place.ps1`
+  (PowerShell-only Rojo stand-in), built `build/StarlingHeist.rbxlx` (38 instances, XML validated) and opened it in
+  Roblox Studio. Studio loaded it. Gameplay itself still unverified until the owner presses Play.
+
+**Next:** owner plays (F5, or Test → Clients and Servers with 2–3 players for stealing) and reports Output errors.
+
+---
 ## 2026-10-03 16:00: local hourly run — Family Hub core code review
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-familyhub-wt`) · **Agents used:** app-engineer
 
