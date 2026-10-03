@@ -8,7 +8,7 @@ The hourly Routine works the **top unchecked items that aren't marked (owner)**,
 Add new items with an owner role. Keep the list in priority order.
 
 ## Queue (priority order)
-- (empty — see [[Active Context]] for what's waiting on the owner)
+- [ ] qa-tester: refresh stale file:line citations in [[Sproutling Isles - QA Review]]'s Findings section (B1, M1, M2, M5, m11, m13, m16 at minimum) against roblox branch HEAD `b3ffc86` — the fixes themselves are still correct, only the line-number pointers drifted from an earlier same-day commit. Found 2026-10-03 during a test-plan polish pass; not urgent.
 
 ## Waiting on the owner (runs skip these)
 - [ ] (owner) video-analyst: the YouTube link tried 2026-09-27 (`youtu.be/FwOTs4UxQS4`) failed Descript's server-side import ("URL returned an HTML page instead of a media file"). Either confirm the video is public and retry, or send the file as a direct upload instead — see [[Video Analyst Runs]].

@@ -1,6 +1,34 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop
+**Device:** phone/cloud · **Branch:** `main` · **Agents used:** qa-tester
+
+- Owner asked to polish up a test, double-check it, and send it to the laptop for review. Clarified
+  first: the Sproutling Isles manual Studio play-test (the thing blocking the beta), delivered via a
+  push to `main` since that's the only transfer path between this session and the owner's laptop.
+- Confirmed via `git log` that the roblox branch (`claude/roblox-popular-game-trends-6u7sie`) hasn't
+  moved since the note's last review — HEAD is still `b3ffc86` — so there was no code drift to
+  re-review, only the document itself to polish.
+- qa-tester spot-checked 13 file:line citations against the actual code and found genuine **intra-day**
+  citation drift (not branch drift): a few citations were written against an earlier same-day commit
+  before later same-day commits shifted line numbers at final HEAD. Fixed the two that feed the
+  owner's actual Setup steps (M6/m7's `init.server.luau` references, `:90` → `:140`). Left the rest
+  (B1, M1, M2, M5, m11, m13, m16 citations) as a flagged follow-up — those fixes are still correct,
+  only their line-number pointers are stale, and fixing them was out of scope for a polish pass.
+- Recomputed the Hollow Harvest event test plan's date-offset table (it was computed "as of 26 Sep
+  2026" and had drifted by a week) against today's actual `os.time()`; re-verified the arithmetic
+  myself before pushing. Clarified an ambiguous HUD-value line in the T1 steps (25 Dew default vs.
+  300K if the optional Setup edit was made).
+- I reviewed the full diff before pushing — the offset math checks out independently, nothing outside
+  the polish scope (no Finding verdicts, no fix statuses) was touched. Pushed `66940d3`.
+- Added a follow-up task (citation-refresh across the Findings section) to [[Work Queue]] for
+  whenever the hourly worker resumes, or the owner's next ad-hoc QA ask.
+
+**Next:** test plan is ready for the owner to run in Studio on their laptop (pull `main`). See [[Active Context]].
+
+---
+
 ## 2026-09-27: OANDA re-check and hourly cost check
 **Device:** phone · **Branch:** `main` · **Agents used:** none
 
