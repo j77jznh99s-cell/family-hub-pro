@@ -32,7 +32,7 @@ still not available in the sandbox, so this is still a static review — nothing
 - **M3 confirmed fixed.** `ProgressionService.rebirth()` calls `SnatchService.forfeitCarriesFrom(player)` (`ProgressionService.luau:40`) before the wipe. `forfeitCarriesFrom` sets `carry.forfeited = true` for every in-flight carry targeting that victim (`SnatchService.luau:211-218`); `finish()` then skips returning the Sproutling to the (now-wiped) victim when `carry.forfeited` (`:87-91`), and a successful carry still pays the thief. No dupe path spotted.
 - **M4 confirmed fixed.** `ShopService.rollStock` now also sets `session.data.stock` and `session.data.stockEpoch = ShopService.nextRestockAt()` (`ShopService.luau:48-52`). `ShopService.loadStock` (`:56-70`) reuses the saved stock only if `session.data.stockEpoch == ShopService.nextRestockAt()`, otherwise rerolls. Rejoin-to-reroll is closed.
 - **M5 confirmed fixed.** `MonetizationService.processReceipt` returns `NotProcessedYet` when `not session.persist and not RunService:IsStudio()` (`MonetizationService.luau:116-119`), before granting anything — so a non-saving live session no longer grants-then-loses. `luckUntil` is saved: `session.data.luckUntil = session.luckUntil` in the `LuckBoost` handler (`:83`) and restored on join, `luckUntil = tonumber(data.luckUntil) or 0` (`init.server.luau:104`).
-- **M6 confirmed fixed.** `Config.StudioDisableShield = true` (`Config.luau:80`); `init.server.luau:90-92` sets `shield = 0` when `data.shieldForfeited or (Config.StudioDisableShield and RunService:IsStudio())`. Studio sessions no longer need a manual Config edit to test snatching — **the T2 test plan's manual "temporary Config edit" step for the shield (setup step 2, `NewPlayerShieldSeconds = 0`) is no longer necessary**; noted below.
+- **M6 confirmed fixed.** `Config.StudioDisableShield = true` (`Config.luau:80`); `init.server.luau:140-141` (re-confirmed against current HEAD `b3ffc86`; earlier drafts of this note cited `:90-92`, which was correct for an earlier same-day commit but has since shifted) sets `shield = 0` when `data.shieldForfeited or (Config.StudioDisableShield and RunService:IsStudio())`. Studio sessions no longer need a manual Config edit to test snatching — **the T2 test plan's manual "temporary Config edit" step for the shield (setup step 2, `NewPlayerShieldSeconds = 0`) is no longer necessary**; noted below.
 
 **Minor spot-checks — the brief asked for at least 5; all 14 claimed-fixed minors turned out to have clear before/after code, so all are checked below:**
 - **m1 (double save on shutdown) confirmed fixed.** `onPlayerRemoving` now returns early `if not session or session.leaving` and sets `session.leaving = true` before any yield (`init.server.luau:138-142`), so `PlayerRemoving` and `BindToClose` can't both save.
@@ -46,7 +46,7 @@ still not available in the sandbox, so this is still a static review — nothing
 - **m14 (stale comment) confirmed fixed.** `Products.luau:2-3` now reads "Items with id 0 still show in the in-game store, with a 'Set ID' button instead of a price, and can't be bought," matching the client behaviour.
 - **m16 (pads above capacity keep earning) confirmed fixed.** `State.income` only sums pads where `tonumber(key) <= State.padCapacity(session)` (`State.luau:58-63`).
 - **m17 (dupe on crash) confirmed fixed.** `saveBoth(thiefSession, victimSession)` is called right after a successful snatch (`SnatchService.luau:45-50, 81`), saving both profiles back-to-back so a crash between them is the only remaining window, and `DataService.save` serialises per player so an older write can't clobber a newer one.
-- **m7 (shield returns after rejoin) confirmed fixed.** `thiefSession.data.shieldForfeited = true` is set at snatch time (`SnatchService.luau:179`) and persisted; `init.server.luau:90` checks `data.shieldForfeited` on join.
+- **m7 (shield returns after rejoin) confirmed fixed.** `thiefSession.data.shieldForfeited = true` is set at snatch time (`SnatchService.luau:179`) and persisted; `init.server.luau:140` (was `:90` in an earlier same-day commit, see M6 note above) checks `data.shieldForfeited` on join.
 - **m12 (hatch spam during Drizzle) confirmed fixed.** `onSoil` only calls `Net.announce` for `ANNOUNCE_MUTATIONS` (starry/prismatic/golden), size ≥2, or `ANNOUNCE_RARITIES` (Legendary+) (`PlotService.luau:299-302`), so common Dewy hatches during Drizzle no longer spam the server.
 - **m10 (silent no-op casts) partially fixed, as claimed (toasts only).** `PondService.cast` now toasts "The water is still settling..." during cooldown (`PondService.luau:73`) and the Sky Well toasts "...only answers players who have rebirthed" at rebirths=0 (`:115`). The payout-amount/comment mismatch ("minutes of income" vs ~15-45s, `:17-18`) is left as an explicit `TODO(game-designer/owner, QA m10)` — correctly still tracked as open, not silently dropped.
 
@@ -224,7 +224,7 @@ Owner for m1-m5 and m7-m18: roblox-engineer. For m6: game-designer, then roblox-
 1. Open `roblox/sproutling-isles/build/SproutlingIsles.rbxlx` in Studio and open **View > Output**.
 2. Temporary Config edits in `ReplicatedStorage > Shared > Config`. **Undo all of these before publishing.**
    - `StudioTestPasses = true`
-   - `NewPlayerShieldSeconds = 0` (M6) — **2026-09-26: no longer needed.** `Config.StudioDisableShield = true` now zeroes the shield automatically in Studio (`init.server.luau:90-92`), confirmed on the code. Leave `NewPlayerShieldSeconds` alone unless you want to double-check the automatic path; the manual edit is now redundant, not wrong.
+   - `NewPlayerShieldSeconds = 0` (M6) — **no longer needed.** `Config.StudioDisableShield = true` already zeroes the shield automatically in Studio (`init.server.luau:140-141`, re-confirmed against current HEAD `b3ffc86` during this pass). Leave `NewPlayerShieldSeconds` alone — the manual edit is redundant, not wrong, so skip it unless you want to double-check the automatic path.
    - `StartingDew = 300000` (only for the rebirth test)
 3. **2026-09-26 re-review note:** B1, M2 and M6 were re-checked on the code (see the Re-review section above) and should now make the T2 snatch steps (T2-2 "Snatch!" prompt visible, T2-6 Bonk prompt via R) work as written on the first Studio play-test. This is still **unverified in Studio** — confirm it on the actual play-test.
 4. If the place is published and **Enable Studio Access to API Services** is on, Studio writes to the *real* DataStore. For these tests, leave it **off**. You'll get the "Saving is off" toast, which is expected.
@@ -235,7 +235,7 @@ Owner for m1-m5 and m7-m18: roblox-engineer. For m6: game-designer, then roblox-
 | --- | --- | --- |
 | 1 | Press Play and watch Output for 10 s | No red errors. Especially watch for `attempt to index nil`, `Infinite yield possible`, and anything from `PlotService`, `ShopService` or `Client`. |
 | 2 | Watch where you spawn | You land briefly at the plaza, then get moved inside the **Red plot** facing the gate. The sign reads "<you>'s Garden". Toasts: "Saving is off..." and "Welcome...". |
-| 3 | HUD | Top-left shows **300K Dew** (or 25) and +0 Dew/s. The hotbar shows Mossbun x2. Store and Home buttons are top-right. |
+| 3 | HUD | Top-left shows **25 Dew** (the game's default), or **300K Dew** if you made the optional `StartingDew = 300000` edit in Setup step 2. Either way, +0 Dew/s. The hotbar shows Mossbun x2. Store and Home buttons are top-right. |
 | 4 | Walk to a brown soil tile and press E | "Plant seed" is shown. Planting uses 1 Mossbun, a bud appears with a 30 s timer, and the prompt disappears while it grows. |
 | 5 | Wait 30 s, then press E ("Hatch!") | A "Hatched Mossbun!" popup. A Sproutling stands on pad 1 facing the gate with its name and "+1 Dew/s". Dew goes up by 1 per second. |
 | 6 | Near the pad, hold F | "Sell for N" appears, where N is about 4-9 (0.6 x 10 x size 0.8-1.5). Selling removes the Sproutling and adds Dew. **No "Snatch!" prompt should appear for you.** |
@@ -294,10 +294,12 @@ which isn't available in this sandbox, so still unverified end-to-end.
 `StudioDisableShield` at `:80` exist as Studio-only switches). `Events.luau` has no `Events.now()` helper and
 no `RunService` require — `Events.active`/`Events.part`/`Events.isWitchingHour`/`Events.fogIntervalSeconds`
 all take `now` as a plain parameter, and every call site passes raw `os.time()`. There is currently **no way
-to fast-forward the event clock in Studio**. Hollow Harvest Part 1 starts 17 Oct 2026 15:00 UTC; today is
-26 Sep 2026 — about 21 days out. Until this hook exists, **none of Fog scheduling, lantern
-spawn/pickup, stall gating, Witching Hour, or the end-of-event conversion can be Studio-tested before
-mid-October**, which is also when the owner is supposed to be running the pre-launch play-test per
+to fast-forward the event clock in Studio**. Hollow Harvest Part 1 starts 17 Oct 2026 15:00 UTC; as of that
+26 Sep 2026 review, about 21 days out (14 days out as of 3 Oct 2026, the last time this note was touched —
+the hook described below was built and confirmed the same day as the original finding, so this gap is
+historical, not current). Until this hook existed, **none of Fog scheduling, lantern
+spawn/pickup, stall gating, Witching Hour, or the end-of-event conversion could be Studio-tested before
+mid-October**, which is also when the owner was originally supposed to be running the pre-launch play-test per
 [[Sproutling Isles - Launch & Live Ops]] section 1. Flagging as a build-blocking gap for the owner's
 timeline, not just a missing convenience.
 
@@ -348,14 +350,15 @@ Real UTC timestamps from `Events.luau`, unchanged and re-verified against `date 
 
 **Method:** in the Studio command bar (server context), compute `Config.EventTimeOffset = <targetUnixTime> -
 os.time() + <a few seconds slack>` right before pressing Play, so `Events.now()` lands just past the
-boundary you want. As of *today* (26 Sep 2026, `os.time() ≈ 1790423015`), the four offsets work out to
+boundary you want. As of *today* (3 Oct 2026, `os.time() ≈ 1791053433`, recomputed this pass — the table
+below was last refreshed 26 Sep 2026 and had drifted by about a week), the four offsets work out to
 roughly:
 | Target | Offset (≈, recompute at actual test time) |
 | --- | --- |
-| Part 1 start | `+1,826,190` (≈ 21.1 days) |
-| Part 2 | `+2,430,990` (≈ 28.1 days) |
-| Witching Hour | `+2,981,790` (≈ 34.5 days) |
-| Just past end (`endAt + 60`) | `+3,154,585` (≈ 36.5 days) |
+| Part 1 start | `+1,195,772` (≈ 13.8 days) |
+| Part 2 | `+1,800,572` (≈ 20.8 days) |
+| Witching Hour | `+2,351,372` (≈ 27.2 days) |
+| Just past end (`endAt + 60`) | `+2,524,167` (≈ 29.2 days) |
 These drift by however many days pass between this review and the actual test — always recompute
 `targetTime - os.time()` at test time rather than reusing the table above verbatim.
 
