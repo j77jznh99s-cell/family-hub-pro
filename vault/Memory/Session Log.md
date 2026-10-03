@@ -1,6 +1,19 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03 17:00: local hourly run — Bybit risk gate fails closed on bad data
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
+
+- Rotation: Bybit Trading Bot (after Family Hub). Only open task was owner-owned, so reviewed the risk gate.
+- Found a fail-open: the Bybit client parses with `Number()`, and `Number("") === 0`, so an empty mark price made
+  notional 0 (passing `notional_cap`) and a 0 leverage passed `leverage_cap`. Added an `input_sanity` check to
+  `checkOrder`/`checkLeverage` that rejects non-positive/non-finite qty, price, equity, mark, NaN PnL, leverage < 1.
+  Only adds rejections; no cap, check or order changed. 18 tests added. Orchestrator read the full diff.
+- **Not run** (no Node on the PC). Commit `84b1ec0`, push failed (GitHub not signed in). No exchange calls made.
+
+**Next:** someone with Node runs `npm test` + `tsc` in `risk-gate/`; app-engineer task in [[Bybit Trading Bot]].
+
+---
 ## 2026-10-03: Starling Heist opened in Roblox Studio for the owner
 **Device:** PC (desktop app) · **Branch:** `claude/starling-heist` · **Agents used:** none
 

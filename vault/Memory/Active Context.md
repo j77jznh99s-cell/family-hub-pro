@@ -77,6 +77,7 @@ trading/snatching, weekly Hollow Harvest drops, and checking outside-game purcha
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
 - [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
 - [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed, not compiled) — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
+- [ ] Bybit bot: risk gate hardened 2026-10-03 (`84b1ec0`, fails closed on bad exchange data, tests not run) — run `npm test` in `risk-gate/` on a machine with Node; still confirm paper vs live status.
 - [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
 
 ## Timeline at risk
