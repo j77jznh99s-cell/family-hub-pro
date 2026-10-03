@@ -76,6 +76,7 @@ trading/snatching, weekly Hollow Harvest drops, and checking outside-game purcha
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
 - [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
+- [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed, not compiled) — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
 - [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
 
 ## Timeline at risk

@@ -1,6 +1,20 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03 16:00: local hourly run — Family Hub core code review
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-familyhub-wt`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Its only open task was owner-owned, so did a correctness review
+  of `FamilyHubCore` instead. Used separate worktrees because the main checkout is on `claude/starling-heist`.
+- Fixed 5 bugs: unreadable data file could be overwritten (now backed up first), streak and weekly chart broke on
+  midnight DST (Chile etc.), day counting made noon-to-noon and shared with the suggestion engine, negative XP.
+  Added 12 tests. Orchestrator read the diff and hand-checked the freeze-cap test values.
+- **Not compiled or run** (no Swift toolchain on the PC). Commit `5b87ea8`, push failed (GitHub not signed in).
+- New tasks and 3 owner questions in [[Family Hub]]; findings in `FamilyHub/REVIEW-2026-10-03.md`.
+
+**Next:** owner runs `swift test` on a Mac; app-engineer tasks in [[Family Hub]].
+
+---
 ## 2026-10-03: owner request — build a brand-new Roblox game from scratch
 **Device:** PC (desktop app) · **Branch:** `claude/starling-heist` · **Agents used:** none (built directly)
 
