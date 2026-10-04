@@ -1,6 +1,20 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-03 20:00: local hourly run — Sproutling Isles outside-game purchases
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, fast-forwarded 18 commits to origin first) · **Agents used:** roblox-engineer
+
+- Rotation: Sproutling Isles (after Clip Studio). Picked the roblox-engineer task "ProcessReceipt handles purchases made outside the game".
+- `processReceipt` now waits for `session.ready` (set at the end of join setup, so passes like DoubleDew are loaded) up to
+  `Config.ReceiptWaitSeconds` = 60, instead of refusing receipts that arrive during the DataStore load; refuses while
+  `session.leaving`; `DataService.save` returns false when another server owns the lock. Orchestrator read the full diff.
+- **Not run** (no selene/rojo/lune on the PC), not Studio-tested. Commit `01d455f`, push failed (GitHub not signed in).
+- Studio test: add a temporary `task.wait(10)` at the top of `DataService.load`, join, buy a dev product right away →
+  granted ~10 s later once; leave during the wait → no grant, granted once on rejoin.
+
+**Next:** run the lint/build/bake on `01d455f` and push; owner decides on the refund webhook (task in [[Sproutling Isles]]).
+
+---
 ## 2026-10-03 18:30: local hourly run — Clip Studio presenter QA fixes
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (new, from `origin/claude/hourly-project-processing-ejbqs4`; worktree `fhp-clip-wt`) · **Agents used:** app-engineer
 

@@ -63,6 +63,7 @@ run in Studio or CI** (no Roblox tools on the PC, pushes failing). Owner: pick l
 **2026-10-03 market refresh** ([[Roblox Market Research 2026]]): Grow a Garden 2 lost ~95% of its players; the
 new #1 is a steal/collect-pets game; big games' Halloween events began 2–9 Oct. Suggests leading with collecting/
 trading/snatching, weekly Hollow Harvest drops, and checking outside-game purchases before launch (tasks added).
+Outside-game purchases: fixed 2026-10-03 20:00 (`01d455f`, local only, not linted or Studio-tested); refund webhook is an owner decision.
 
 ## Waiting on the owner
 - [ ] **Starling Heist:** `gh auth login --web` on the PC so the branch pushes and CI runs; then play-test with
