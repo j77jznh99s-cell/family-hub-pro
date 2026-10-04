@@ -32,6 +32,35 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-04
+
+**Done overnight/today**
+- Nothing new overnight. Yesterday (not covered in a prior summary): you asked me to polish the
+  Sproutling Isles Studio test plan and get it to your laptop. Confirmed the game code hadn't
+  changed since the last QA review, had qa-tester spot-check citations (found and fixed 2 stale
+  line references), refreshed the Hollow Harvest event's date-offset table (it had drifted a
+  week), and clarified an ambiguous HUD line. Pushed to `main` — pull it on your laptop whenever
+  you're ready to run it.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **The Studio play-test is ready to run** — polished and double-checked, no known blockers left
+  on this end. This is the big one: your beta window (2–8 Oct) is now almost half over with no
+  play-test done yet.
+- Everything else unchanged: video-analyst's failed YouTube import, whether to resume the hourly
+  worker, the 13 Robux items, [[Decisions]] #1–4/#20/#21, OANDA setup, Clip Studio/Family Hub
+  direction, Command Deck wiring.
+
+**Next up**
+- Still nothing automatic until you resume the hourly worker. Waiting on your play-test results.
+
+---
+
 ## 2026-10-02
 
 **Done overnight/today**
