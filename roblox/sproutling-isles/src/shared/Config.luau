@@ -92,6 +92,10 @@ Config.FoundingGardenerBadgeId = 0
 Config.DataStoreName = "SproutlingIsles_v1"
 Config.AutosaveSeconds = 60
 Config.SessionLockSeconds = 90
+-- How long ProcessReceipt waits for a just-joined player's save to finish loading (a dev product
+-- bought outside the game, e.g. Home/Shop, is delivered as soon as they join a server). After
+-- this it gives up and Roblox redelivers the receipt later.
+Config.ReceiptWaitSeconds = 60
 
 -- Leaderboards (Week 5 live-ops: cross-server income + rarest-hatch boards in the Plaza).
 -- See vault/Projects/Sproutling Isles - Launch & Live Ops.md, Week 5 -- the spec is just one

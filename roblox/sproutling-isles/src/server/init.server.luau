@@ -170,6 +170,7 @@ local function onPlayerAdded(player: Player)
 	State.syncAll(session)
 	PlotService.renderPads(session)
 	EventService.onJoin(session) -- Hollow Harvest: sync the Moonberries/skin attributes, convert leftovers if the event has ended
+	session.ready = true -- receipts that arrived during the load (outside-game purchases) go through now
 
 	player.CharacterAdded:Connect(function(character)
 		onCharacter(session, character)

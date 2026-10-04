@@ -109,11 +109,35 @@ local handlers: { [string]: (State.Session) -> boolean } = {
 	end,
 }
 
+-- A dev product bought outside the game (Home/Shop) is delivered the moment the player joins a
+-- server, usually while DataService.load is still running. ProcessReceipt may yield, so wait for
+-- the join setup to finish instead of refusing (Roblox might not redeliver until a later join).
+-- Returns nil if the player left, was kicked or the load took longer than Config.ReceiptWaitSeconds.
+local function waitForSession(player: Player): State.Session?
+	local deadline = os.clock() + Config.ReceiptWaitSeconds
+	while player.Parent do
+		local session = State.get(player)
+		if session and session.ready then
+			return session
+		end
+		if os.clock() >= deadline then
+			return nil
+		end
+		task.wait(0.5)
+	end
+	return nil
+end
+
 local function processReceipt(receipt)
 	local player = Players:GetPlayerByUserId(receipt.PlayerId)
-	local session = player and State.get(player)
 	local product = Products.ProductById[receipt.ProductId]
-	if not session or not product then
+	if not player or not product then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local session = waitForSession(player)
+	-- leaving: the leave-save may already be written, so a grant now could be lost; Roblox
+	-- redelivers the receipt on the next join instead
+	if not session or session.leaving then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local receipts = session.data.receipts
@@ -138,7 +162,7 @@ local function processReceipt(receipt)
 		table.remove(receipts, 1)
 	end
 	State.notify(session, "Thanks for buying " .. product.name .. "!", "#ffe070")
-	if session.persist and not DataService.save(player :: Player, session.data, false) then
+	if session.persist and not DataService.save(player, session.data, false) then
 		-- the grant is recorded in memory, so a retry will not double-grant it
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
@@ -151,6 +175,9 @@ end
 
 function MonetizationService.init()
 	MarketplaceService.ProcessReceipt = processReceipt
+	-- Only fires for passes bought through an in-game prompt. A pass bought outside the game
+	-- (Home/Shop) while the player is in this server is not re-checked here; loadPasses picks it up
+	-- (UserOwnsGamePassAsync) on their next join.
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		local session = State.get(player)
 		if not purchased or not session then

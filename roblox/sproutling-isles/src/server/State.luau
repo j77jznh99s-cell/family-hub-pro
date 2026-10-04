@@ -26,6 +26,7 @@ export type Session = {
 	passes: { [string]: boolean },
 	joinedAt: number,
 	dewRemainder: number,
+	ready: boolean?, -- set once the join setup (plot, passes, stock) is done; ProcessReceipt waits for it
 	leaving: boolean?, -- set once the player starts leaving; stops autosaves and double saves
 	serverMovedAt: number?, -- os.clock() of the last server teleport of this player's character
 	serverMovedTo: Vector3?, -- where that teleport put them (the carry speed check measures from here too)

@@ -158,14 +158,17 @@ function DataService.save(player: Player, data, release: boolean): boolean
 		return true -- this player already left and released the lock; nothing newer to write
 	end
 	inFlight[userId] = true
+	local wrote = false
 	local ok, err = pcall(function()
 		store:UpdateAsync(key(player), function(old)
 			old = old or {}
 			if old.lock and old.lock.job ~= jobId then
+				wrote = false
 				return nil -- another server took over; never overwrite its newer data
 			end
 			old.data = data
 			old.lock = if release then nil else { job = jobId, t = os.time() }
+			wrote = true
 			return old
 		end)
 	end)
@@ -175,8 +178,11 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	end
 	if not ok then
 		warn("[Sproutling] save failed for", player.Name, err)
+	elseif not wrote then
+		warn("[Sproutling] save skipped for", player.Name, "(another server owns the profile)")
 	end
-	return ok
+	-- false when nothing was written, so ProcessReceipt doesn't report a grant that never got saved
+	return ok and wrote
 end
 
 return DataService
