@@ -65,6 +65,14 @@ FamilyHub/
 - iOS doesn't let apps read your iMessage history. Family Hub knows you texted someone when you send from its composer, tap ✓ on the widget, or swipe *Texted* in People. If you text someone straight from Messages, tap ✓ or swipe *Texted* afterwards so the timer resets.
 - On the lock screen, tapping the widget opens the message. The ✓ button is only on the home screen widgets.
 
+## Data file compatibility
+
+Your data lives in one JSON file (`familyhub.json`) that every app version and the widget read. An update must never make an older file unreadable, or the app would start empty.
+
+- Every stored type (`AppData`, `Person`, `ReachOut`, `Opener`, `LifeContext`, `Preferences`) has a tolerant `init(from:)`: a missing key gets the same default as the type's `init`. Only `id`/`name` (person), `personID`/`text` (opener) and `personID`/`date` (reach-out) are required.
+- An unknown theme or reach-out kind (a file written by a newer build) falls back to the default instead of failing the whole file.
+- **When you add a stored field:** decode it with `decodeIfPresent` (plus `?? <default>` unless it's optional) in that type's `init(from:)`. The compiler won't remind you if `init` has a default for it, and a missed field is saved but reset on every load. Add a test to `CompatibilityTests` that decodes JSON without the new key. Don't rename or remove keys. If you add a field to `Person`, add it to `applyingEdits` as well.
+
 ## Tests
 
 ```bash

@@ -101,6 +101,55 @@ public struct Opener: Codable, Hashable, Sendable {
     }
 }
 
+// MARK: - Tolerant decoding
+//
+// These types live in the data file shared by the app and widget. A key that's missing (a file written before
+// the field existed) gets the same default as `init`, so one new field never makes an older file unreadable.
+// Encoding is still synthesized, so the file format doesn't change. When you add a stored field, decode it here
+// with `decodeIfPresent(...) ?? <default>` (even if it's optional) and add a test in `CompatibilityTests`. The
+// compiler won't catch a missed field when `init` gives it a default: it would be saved but reset on every load.
+
+extension Person {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            id: c.decode(UUID.self, forKey: .id),
+            name: c.decode(String.self, forKey: .name),
+            relationship: c.decodeIfPresent(String.self, forKey: .relationship) ?? "",
+            phone: c.decodeIfPresent(String.self, forKey: .phone) ?? "",
+            cadenceDays: c.decodeIfPresent(Int.self, forKey: .cadenceDays) ?? 7,
+            lastContacted: c.decodeIfPresent(Date.self, forKey: .lastContacted),
+            notes: c.decodeIfPresent(String.self, forKey: .notes) ?? "",
+            snoozedUntil: c.decodeIfPresent(Date.self, forKey: .snoozedUntil),
+            isFavorite: c.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
+        )
+    }
+}
+
+extension LifeContext {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            projects: c.decodeIfPresent([String].self, forKey: .projects) ?? [],
+            notes: c.decodeIfPresent(String.self, forKey: .notes) ?? "",
+            upcomingEvents: c.decodeIfPresent([String].self, forKey: .upcomingEvents) ?? []
+        )
+    }
+}
+
+extension Opener {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            personID: c.decode(UUID.self, forKey: .personID),
+            text: c.decode(String.self, forKey: .text),
+            isAI: c.decodeIfPresent(Bool.self, forKey: .isAI) ?? false,
+            // Not `.now` like `init`: an opener of unknown age is treated as stale, so it gets rewritten.
+            createdAt: c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .distantPast
+        )
+    }
+}
+
 public enum Urgency: Int, Codable, Comparable, Sendable {
     case upToDate = 0
     case dueSoon = 1

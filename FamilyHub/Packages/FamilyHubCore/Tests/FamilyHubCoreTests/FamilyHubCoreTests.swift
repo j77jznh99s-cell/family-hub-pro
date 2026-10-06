@@ -231,6 +231,150 @@ final class AppDataTests: XCTestCase {
     }
 }
 
+/// Files written by older (or newer) builds must still load. JSON here uses the file's real format:
+/// `Store.encoder`/`Store.decoder`, ISO 8601 dates without fractions.
+final class CompatibilityTests: XCTestCase {
+    let id = UUID(uuidString: "6F9619FF-8B86-D011-B42D-00CF4FC964FF")!
+    let when = ISO8601DateFormatter().date(from: "2026-09-22T15:00:00Z")!
+
+    func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
+        try Store.decoder.decode(type, from: Data(json.utf8))
+    }
+
+    // MARK: Person
+
+    func testPersonWithOnlyIDAndNameGetsDefaults() throws {
+        let p = try decode(Person.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","name":"Mom"}"#)
+        XCTAssertEqual(p, Person(id: id, name: "Mom"))
+        XCTAssertEqual(p.cadenceDays, 7)
+        XCTAssertEqual(p.relationship, "")
+        XCTAssertNil(p.lastContacted)
+        XCTAssertFalse(p.isFavorite)
+    }
+
+    func testPersonAsWrittenByTheFirstVersion() throws {
+        let p = try decode(Person.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","name":"Mom","relationship":"mother","phone":"555-0101","cadenceDays":3,"lastContacted":"2026-09-22T15:00:00Z","notes":"garden","isFavorite":true}"#)
+        XCTAssertEqual(p, Person(id: id, name: "Mom", relationship: "mother", phone: "555-0101", cadenceDays: 3,
+                                 lastContacted: when, notes: "garden", isFavorite: true))
+    }
+
+    func testPersonStillNeedsIDAndName() {
+        XCTAssertThrowsError(try decode(Person.self, #"{"name":"Mom"}"#))
+        XCTAssertThrowsError(try decode(Person.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF"}"#))
+    }
+
+    // MARK: LifeContext
+
+    func testLifeContextWithMissingKeysGetsDefaults() throws {
+        XCTAssertEqual(try decode(LifeContext.self, "{}"), LifeContext())
+        XCTAssertEqual(try decode(LifeContext.self, #"{"projects":["Family Hub"]}"#), LifeContext(projects: ["Family Hub"]))
+    }
+
+    // MARK: Opener
+
+    func testOpenerWithOnlyPersonAndTextIsBuiltInAndStale() throws {
+        let o = try decode(Opener.self, #"{"personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","text":"hi"}"#)
+        XCTAssertEqual(o.personID, id)
+        XCTAssertEqual(o.text, "hi")
+        XCTAssertFalse(o.isAI)
+        XCTAssertEqual(o.createdAt, .distantPast, "unknown age counts as stale, so it gets rewritten")
+    }
+
+    func testOpenerAsWrittenByTheFirstVersion() throws {
+        let o = try decode(Opener.self, #"{"personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","text":"hi","isAI":true,"createdAt":"2026-09-22T15:00:00Z"}"#)
+        XCTAssertEqual(o, Opener(personID: id, text: "hi", isAI: true, createdAt: when))
+    }
+
+    // MARK: ReachOut
+
+    func testReachOutWithOnlyPersonAndDateGetsDefaults() throws {
+        let r = try decode(ReachOut.self, #"{"personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","date":"2026-09-22T15:00:00Z"}"#)
+        XCTAssertEqual(r, ReachOut(personID: id, date: when, kind: .late, points: 0))
+    }
+
+    func testReachOutAsWrittenByTheFirstVersion() throws {
+        let r = try decode(ReachOut.self, #"{"personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","date":"2026-09-22T15:00:00Z","kind":"reconnect","points":25}"#)
+        XCTAssertEqual(r, ReachOut(personID: id, date: when, kind: .reconnect, points: 25))
+    }
+
+    func testUnknownReachOutKindDoesNotFailTheFile() throws {
+        let json = #"{"log":[{"personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","date":"2026-09-22T15:00:00Z","kind":"superStreak","points":40}]}"#
+        let data = try decode(AppData.self, json)
+        XCTAssertEqual(data.log.first?.kind, .late)
+        XCTAssertEqual(data.xp, 40, "stored points are kept")
+    }
+
+    // MARK: Preferences
+
+    func testPreferencesWithMissingKeysGetDefaults() throws {
+        XCTAssertEqual(try decode(Preferences.self, "{}"), Preferences())
+        XCTAssertEqual(try decode(Preferences.self, #"{"dailyGoal":2}"#), Preferences(dailyGoal: 2))
+    }
+
+    func testPreferencesAsWrittenByTheFirstVersion() throws {
+        let p = try decode(Preferences.self, #"{"dailyGoal":2,"remindersOn":true,"reminderHour":20,"reminderMinute":30,"theme":"ocean"}"#)
+        XCTAssertEqual(p, Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .ocean))
+    }
+
+    func testUnknownThemeFallsBackToTheDefault() throws {
+        let p = try decode(Preferences.self, #"{"dailyGoal":3,"theme":"neon"}"#)
+        XCTAssertEqual(p.theme, .coral)
+        XCTAssertEqual(p.dailyGoal, 3)
+    }
+
+    // MARK: Whole file
+
+    func testFileFromTheFirstVersionLoadsThroughTheStore() throws {
+        // The shape commit 1f486be wrote: no log, badges or preferences yet.
+        let old = #"{"people":[{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","name":"Mom","relationship":"mother","phone":"","cadenceDays":3,"lastContacted":"2026-09-22T15:00:00Z","notes":"","isFavorite":false}],"openers":[],"context":{"projects":["x"],"notes":"","upcomingEvents":[]},"openersRefreshedAt":"2026-09-22T15:00:00Z","openersInputHash":"abc"}"#
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        let store = Store(url: url)
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: store.unreadableBackupURL)
+        }
+        try Data(old.utf8).write(to: url)
+
+        let data = store.load()
+        XCTAssertEqual(data.people, [Person(id: id, name: "Mom", relationship: "mother", cadenceDays: 3, lastContacted: when)])
+        XCTAssertEqual(data.context.projects, ["x"])
+        XCTAssertEqual(data.openersRefreshedAt, when)
+        XCTAssertEqual(data.openersInputHash, "abc")
+        XCTAssertTrue(data.log.isEmpty)
+        XCTAssertEqual(data.preferences, Preferences())
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.unreadableBackupURL.path), "the file was readable")
+    }
+
+    func testRoundTripKeepsEveryField() throws {
+        let p = Person(id: id, name: "Jake Smith", relationship: "brother", phone: "555-0102", cadenceDays: 5,
+                       lastContacted: when, notes: "the Denver trip", snoozedUntil: when.addingTimeInterval(86400),
+                       isFavorite: true)
+        let original = AppData(
+            people: [p],
+            openers: [p.id: Opener(personID: p.id, text: "yo", isAI: true, createdAt: when)],
+            context: LifeContext(projects: ["Family Hub"], notes: "busy week", upcomingEvents: ["Dentist"]),
+            openersRefreshedAt: when,
+            openersInputHash: "abc",
+            log: [
+                ReachOut(personID: p.id, date: when.addingTimeInterval(-3 * 86400), kind: .first, points: 20),
+                ReachOut(personID: p.id, date: when.addingTimeInterval(-2 * 86400), kind: .onTime, points: 15),
+                ReachOut(personID: p.id, date: when.addingTimeInterval(-86400), kind: .late, points: 10),
+                ReachOut(personID: p.id, date: when, kind: .reconnect, points: 25),
+            ],
+            badges: [Badge.firstHello.rawValue: when],
+            preferences: Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .grape)
+        )
+        let encoded = try Store.encoder.encode(original)
+        XCTAssertEqual(try Store.decoder.decode(AppData.self, from: encoded), original)
+
+        // The file format itself is unchanged: a person is still written with exactly these keys.
+        let personJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: Store.encoder.encode(p)) as? [String: Any])
+        XCTAssertEqual(Set(personJSON.keys), ["id", "name", "relationship", "phone", "cadenceDays", "lastContacted",
+                                              "notes", "snoozedUntil", "isFavorite"])
+        XCTAssertEqual(personJSON["lastContacted"] as? String, "2026-09-22T15:00:00Z")
+    }
+}
+
 final class PersonMergeTests: XCTestCase {
     let before = Date(timeIntervalSince1970: 1_780_000_000)
     let widgetTick = Date(timeIntervalSince1970: 1_790_000_000)

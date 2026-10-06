@@ -61,6 +61,36 @@ public struct Preferences: Codable, Hashable, Sendable {
     }
 }
 
+// MARK: - Tolerant decoding (see the note in Models.swift)
+
+extension ReachOut {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            personID: c.decode(UUID.self, forKey: .personID),
+            date: c.decode(Date.self, forKey: .date),
+            // A kind this build doesn't know (file written by a newer build) counts as a plain reach-out
+            // instead of failing the whole file. Points are stored, so XP doesn't change.
+            kind: (try? c.decodeIfPresent(Kind.self, forKey: .kind)) ?? .late,
+            points: c.decodeIfPresent(Int.self, forKey: .points) ?? 0
+        )
+    }
+}
+
+extension Preferences {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            dailyGoal: c.decodeIfPresent(Int.self, forKey: .dailyGoal) ?? 1,
+            remindersOn: c.decodeIfPresent(Bool.self, forKey: .remindersOn) ?? false,
+            reminderHour: c.decodeIfPresent(Int.self, forKey: .reminderHour) ?? 18,
+            reminderMinute: c.decodeIfPresent(Int.self, forKey: .reminderMinute) ?? 0,
+            // A theme this build doesn't know (file written by a newer build) falls back to the default.
+            theme: (try? c.decodeIfPresent(Theme.self, forKey: .theme)) ?? .coral
+        )
+    }
+}
+
 // MARK: - Badges
 
 public enum Badge: String, Codable, CaseIterable, Sendable {
