@@ -63,18 +63,36 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), fo
   log(`[presenter] lane: ${NICHES[nicheKey].label}`);
   const spent = usage.emptyUsage();
   const onResponse = (response) => usage.addClaudeResponse(spent, response);
-  const { brief, searchedUrls } = await writer.research(nicheKey, {
-    recentTopics: await recentTopics(),
-    now,
-    onResponse,
-  });
-  log('[presenter] research done, writing script');
-  const raw = await writer.writeScript(nicheKey, brief, { onResponse });
-  const { script, problems } = writer.finalizeScript(raw, nicheKey, searchedUrls);
+  // An attempt that dies before it gets a run folder has still spent Claude tokens; record
+  // them so --usage totals stay honest. A logging failure only warns, so it never hides
+  // the error the caller will throw.
+  const logFailedSpend = async (reason) => {
+    try {
+      await usage.logFailedAttempt(OUTPUT_DIR, { at: now.toISOString(), niche: nicheKey, reason, usage: spent });
+    } catch (logErr) {
+      log(`[presenter] couldn't record failed-attempt usage: ${logErr.message}`);
+    }
+  };
+
+  let brief, searchedUrls, script, problems;
+  try {
+    ({ brief, searchedUrls } = await writer.research(nicheKey, {
+      recentTopics: await recentTopics(),
+      now,
+      onResponse,
+    }));
+    log('[presenter] research done, writing script');
+    const raw = await writer.writeScript(nicheKey, brief, { onResponse });
+    ({ script, problems } = writer.finalizeScript(raw, nicheKey, searchedUrls));
+  } catch (err) {
+    // Refusal, empty research, cut-off or non-JSON script reply, network error, ...
+    // Skipped if no Claude reply arrived, since then nothing was spent.
+    if (spent.claude.calls) await logFailedSpend(err && err.message ? err.message : String(err));
+    throw err;
+  }
   if (problems.length) {
-    // Don't spend render credits on a script that failed its own checks - but do record
-    // the Claude spend, which already happened, so --usage totals stay honest.
-    await usage.logFailedAttempt(OUTPUT_DIR, { at: now.toISOString(), niche: nicheKey, reason: problems.join('; '), usage: spent });
+    // Don't spend render credits on a script that failed its own checks.
+    await logFailedSpend(problems.join('; '));
     throw new Error(`Script failed checks: ${problems.join('; ')}`);
   }
 

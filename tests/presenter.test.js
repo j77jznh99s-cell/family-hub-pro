@@ -262,6 +262,83 @@ test('a script that fails its checks still logs the Claude spend', async (t) => 
   assert.ok(month.failedAttempts >= 1);
 });
 
+// The failed log is shared by every test in this file, so these compare entry counts
+// before and after rather than the absolute contents.
+test('research throwing after a Claude reply still logs the spend and rethrows', async (t) => {
+  const usage = require('../src/presenter/usage');
+  const before = (await usage.readFailedAttempts(tmpOut)).length;
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 3000, output_tokens: 40 }, content: [{ type: 'server_tool_use', name: 'web_search' }] });
+    throw new Error('Research returned no brief');
+  });
+  const writeScript = t.mock.method(writer, 'writeScript', async () => rawScript());
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} }), /^Error: Research returned no brief$/);
+  assert.equal(writeScript.mock.calls.length, 0);
+  const failed = await usage.readFailedAttempts(tmpOut);
+  assert.equal(failed.length, before + 1);
+  assert.equal(failed.at(-1).reason, 'Research returned no brief');
+  assert.equal(failed.at(-1).niche, 'ai');
+  assert.equal(failed.at(-1).usage.claude.calls, 1);
+  assert.equal(failed.at(-1).usage.claude.input_tokens, 3000);
+  assert.equal(failed.at(-1).usage.claude.web_searches, 1);
+});
+
+test('writeScript throwing logs research + script spend and rethrows the original error', async (t) => {
+  const usage = require('../src/presenter/usage');
+  const before = (await usage.readFailedAttempts(tmpOut)).length;
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 1000, output_tokens: 100 }, content: [] });
+    return { brief: 'b', searchedUrls: new Set(['https://reuters.com/a']) };
+  });
+  const original = new Error('Script response was cut off (max_tokens)');
+  t.mock.method(writer, 'writeScript', async (niche, brief, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 400, output_tokens: 16000 }, content: [] });
+    throw original;
+  });
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} }), (err) => err === original);
+  const failed = await usage.readFailedAttempts(tmpOut);
+  assert.equal(failed.length, before + 1);
+  assert.equal(failed.at(-1).reason, original.message);
+  assert.equal(failed.at(-1).usage.claude.calls, 2);
+  assert.equal(failed.at(-1).usage.claude.input_tokens, 1400);
+  assert.equal(failed.at(-1).usage.claude.output_tokens, 16100);
+});
+
+test('an error before any Claude reply logs nothing', async (t) => {
+  const usage = require('../src/presenter/usage');
+  const before = (await usage.readFailedAttempts(tmpOut)).length;
+  t.mock.method(writer, 'research', async () => { throw new Error('fetch failed'); });
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} }), /fetch failed/);
+  assert.equal((await usage.readFailedAttempts(tmpOut)).length, before);
+});
+
+test('a failing usage log does not hide the original error', async (t) => {
+  const usage = require('../src/presenter/usage');
+  t.mock.method(usage, 'logFailedAttempt', async () => { throw new Error('disk full'); });
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 10, output_tokens: 1 }, content: [] });
+    throw new Error('Claude declined the research step (category: unspecified)');
+  });
+  const logs = [];
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: (m) => logs.push(m) }), /declined the research step/);
+  assert.ok(logs.some((m) => /couldn't record failed-attempt usage: disk full/.test(m)));
+});
+
+test('a script that fails its checks logs exactly one failed attempt', async (t) => {
+  const usage = require('../src/presenter/usage');
+  const before = (await usage.readFailedAttempts(tmpOut)).length;
+  t.mock.method(writer, 'research', async (niche, { onResponse }) => {
+    onResponse({ usage: { input_tokens: 700, output_tokens: 70 }, content: [] });
+    return { brief: 'b', searchedUrls: new Set(['https://reuters.com/a']) };
+  });
+  t.mock.method(writer, 'writeScript', async () => rawScript({ script: 'Too short.' }));
+  await assert.rejects(presenter.createPresenterVideo({ niche: 'ai', render: false, log: () => {} }), /^Error: Script failed checks: .*words/);
+  const failed = await usage.readFailedAttempts(tmpOut);
+  assert.equal(failed.length, before + 1);
+  assert.match(failed.at(-1).reason, /^script is 2 words/);
+  assert.equal(failed.at(-1).usage.claude.input_tokens, 700);
+});
+
 test('createPresenterVideo forDate files the run under the slot date but researches with today', async (t) => {
   const today = new Date('2026-09-24T15:00:00Z');
   t.mock.method(writer, 'research', async (niche, { now }) => {
