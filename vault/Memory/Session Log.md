@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 15:00: local hourly run — Family Hub edit sheet no longer undoes a widget ✓
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Picked the app-engineer task "`AppModel.upsert` replaces the whole `Person`".
+- Fix: new `Person.applyingEdits(from:to:)` in FamilyHubCore (3-way merge: fields the user changed win, the rest keep
+  the latest stored value). `upsert(_:original:)` uses it; both edit sheets and the favorite toggles pass the original.
+  A date picked in the editor's "Last texted" still wins. 4 tests (`PersonMergeTests`). Orchestrator reviewed the diff.
+  **Not compiled or run** (no Swift). Commit `a25463d`, push failed.
+
+**Next:** owner `swift test` on a Mac; app-engineer: refuse to save after a failed load; README note on optional fields.
+
+---
 ## 2026-10-06 14:00: local hourly run — Sproutling Isles Hollow Harvest weekly drops + Spotlight check
 **Device:** PC (desktop app) · **Branch:** `main` (worktree `fhp-main-wt`, vault only) · **Agents used:** live-ops-manager
 

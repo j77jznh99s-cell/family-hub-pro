@@ -79,7 +79,7 @@ No 2026 Roblox Halloween Spotlight dates announced yet; re-check 14–17 Oct. Th
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
 - [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
-- [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed) + widget ✓ race fixed 2026-10-06 (`b64728a`, `Store.update`); neither compiled or pushed — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
+- [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed) + widget ✓ race fixed 2026-10-06 (`b64728a`, `Store.update`) + edit sheet no longer undoes a widget ✓ (`a25463d`); none compiled or pushed — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
 - [ ] Bybit bot: risk gate hardened 2026-10-03 (`84b1ec0`) and the Bybit client now throws on missing/blank exchange numbers 2026-10-06 (`b9e9225`); neither run or pushed — run `npm test` in `risk-gate/` on a machine with Node; still confirm paper vs live status.
 - [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both. 2026-10-06: calendar/weekly/usage reviewed on that branch (`3798e7f`, 4 small fixes); 2 timing decisions for you in [[Clip Studio]] (QA Review 2 #3, #4).
 
