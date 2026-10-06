@@ -509,6 +509,51 @@ Replaces the single placeholder `SPROUT1K` demo code in `Codes.luau` (built 2026
 10. `src/server/MonetizationService.luau` + `src/shared/Products.luau`: the `SummonSpookyFog` handler (only after the owner approves and creates the product).
 11. Studio test hook: `Config.EventTimeOffset` (seconds added to `os.time()` for event checks) so qa-tester can jump to Part 2, Witching Hour and the end.
 
+#### Hollow Harvest weekly drops — proposal (2026-10-06)
+*live-ops-manager. Closes the task "consider splitting Hollow Harvest into weekly drops (17/24/31 Oct) and re-check Roblox's 2026 Halloween Spotlight dates".*
+
+**1. Roblox 2026 Halloween Spotlight: not announced (as far as I can find)**
+Searched 2026-10-06. I found **no official 2026 dates**. Do not plan around any.
+- The Spotlight page itself (https://www.roblox.com/spotlight/halloween-spotlight) still says "begins Thursday, October 23 at 9 AM PDT and ends Monday, November 3 at 9 AM PDT" and shows no year. 23 Oct is a Thursday in **2025**, not 2026 (23 Oct 2026 is a Friday). This is last year's page.
+- https://lastlevel.co.uk/blog/halloween-spotlight-2026 despite its title only describes the **2025** event ("October 23rd through November 3rd", written 29 Oct 2025).
+- https://roonby.com/2026/10/01/roblox-halloween-event-2026-new-teasers-and-headless-horseman-return/ (1 Oct 2026) says an event is "expected" in October 2026 but that Roblox "has not officially revealed" the date, duration or format. It is rumour and teasers only. Unverified.
+- Search results also mention some big games (for example Adopt Me!) starting their own Halloween events around 2–3 Oct 2026. These are game events, not the platform Spotlight. Snippet only, unverified.
+- Planning guess only (not a source): if Roblox repeats last year's pattern, a Spotlight would start about Thu 22 Oct 2026. Hollow Harvest Part 2 (Sat 24 Oct) would then land just after it starts. Re-check about 14–17 Oct.
+
+**2. Finding: the event is already split in the built code**
+The brief assumed one block. It is not. Checked read-only in `roblox/sproutling-isles/src` (`shared/Events.luau`, `server/EventService.luau`, `server/PondService.luau`):
+| Drop (UTC) | Already gated by date? | What happens |
+| --- | --- | --- |
+| **Part 1, Sat 17 Oct 15:00** (`part1At`) | Yes | Spooky Fog every 20 min, Wisp Lanterns, Moonberries, Haunted mutation, Lantern Stall with **Pumpkit** (60 berries, 5/day) |
+| **Part 2, Sat 24 Oct 15:00** (`part2At`) | Yes (`fromPart = 2`, `Events.part()`) | **Gourdgeist** (250 berries, 2/day), **Haunted Greenhouse** skin (400 berries), **Hollowisp** pond roll during Fog |
+| **Witching Hour, Sat 31 Oct 00:00** (`witchingHourAt`) | Yes (`Events.isWitchingHour()`) | Fog every 10 min until the end, Sun 1 Nov 23:59 (`endAt`) |
+The timestamps are correct (checked: `part1At` = `1792195200` + 15 h). So the "weekly drops" the 2026-10-03 refresh asked for **already exist**: two unlock steps plus a finale. The only thing not gated on 31 Oct is a new unlock, because Witching Hour is a faster Fog, not a new item.
+
+**3. Options and engineering estimate**
+| Option | What changes | Engineering (estimate, unverified; nothing run) | Verdict |
+| --- | --- | --- | --- |
+| A. **Keep as built** (3 steps: 17 / 24 / 31 Oct) | Nothing | 0 h | **Recommended** |
+| B. Add a real third unlock on 31 Oct (for example move the Haunted Greenhouse skin there) | `Events.part()` returns 3 from `witchingHourAt`; skin `fromPart = 3`; the hard-coded strings "unlocks in Part 2 (24 Oct)" and "unlocks Part 2" in `EventService.luau` become generic; one more test pass | about 1–2 h of code plus a re-test | Not recommended (see below) |
+| C. New content for a drop (extra species, decor, quests) | New build | optional, needs build; days of work | No. Launch is at risk. |
+
+**Why A, in short**
+- Players already get a reason to return on 17, 24 and 31 Oct. That matches the 28-day retention windows: Part 1 serves days 2–7 of the launch cohort, Part 2 serves days 8–14, Witching Hour serves the finale and days 15–28.
+- Option B would leave only about 2 days (31 Oct to 1 Nov 23:59) to earn a 400-berry skin. Players would feel rushed, and a rush to buy is a worse experience than a fair earn window. Moonberries are saved between drops, so early players are not hurt, but late joiners would be.
+- The owner has **not play-tested** and the launch (Sat 10 Oct) is at risk. Every extra code path adds risk to a build that has never run in Studio. Today's gating is the one the owner would test anyway.
+- Fairness check: nothing in A or B sells power. Robux items stay limited to Summon Spooky Fog (proposal, decision #10), which gives no extra lanterns to the buyer.
+
+**4. Economy effect (for game-designer to check; none needed for A)**
+- A: no change. Earn-rate and cap numbers are as confirmed on 2026-09-26. Still unverified until someone measures the Moonberry earn rate live.
+- Worth a second look: a player who starts on 24 Oct still has time for 8 days of Gourdgeist (max 2/day = 500 berries/day at ~360–540 berries/day earned), so the daily cap, not the clock, is the limit. Fine.
+- If B is ever chosen: re-check that 400 berries for the skin is reachable in 2 days (about 1 day of dedicated play by the existing estimate) and consider a 300–350 price. That would be a game-designer call.
+
+**5. Timing risk (read this)**
+- The event runs from the real clock (UTC), so it starts on 17 Oct **even if launch slips**. If launch slips past Sat 24 Oct, the timeline note above says to skip Halloween; that still applies. If launch slips to 11–17 Oct, the event still works but Part 1 will be the new players' first week (they will see the Stall and Fog right away).
+- Minor mismatch to know about: Witching Hour starts at 00:00 UTC on 31 Oct, which is **Fri 30 Oct, 8 pm US Eastern**, while Parts 1 and 2 start at 15:00 UTC (11 am Eastern). This is probably fine (Halloween weekend begins early) but the announcement should say "Friday night" or the time should be moved to 15:00 UTC. No decision needed from the owner; the roblox-engineer can change one number if wanted.
+- Also unfixed from before: the Studio play-test of the whole event is still the owner's open task.
+
+**Recommendation: do not split further. Keep the event as built (17 / 24 / 31 Oct).** No new build task, no new owner decision. Re-check the Spotlight dates on about 14–17 Oct and, if a Spotlight starts earlier than 24 Oct, consider only moving the Part 2 announcement, not the code.
+
 ---
 
 ### Winter event outline "Frostbloom Festival"

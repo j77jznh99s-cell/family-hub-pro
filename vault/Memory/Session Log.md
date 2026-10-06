@@ -1,6 +1,19 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 14:00: local hourly run — Sproutling Isles Hollow Harvest weekly drops + Spotlight check
+**Device:** PC (desktop app) · **Branch:** `main` (worktree `fhp-main-wt`, vault only) · **Agents used:** live-ops-manager
+
+- Rotation: Sproutling Isles (after Clip Studio). Picked the live-ops task "consider weekly drops + re-check Spotlight dates".
+- Finding: Hollow Harvest is already split in the built code (`shared/Events.luau`): Part 1 Sat 17 Oct 15:00 UTC,
+  Part 2 Sat 24 Oct 15:00 UTC, Witching Hour 31 Oct 00:00 UTC, end 1 Nov 23:59. Orchestrator re-checked the epoch values.
+  Recommendation: keep as built, no new code. Proposal section added to [[Sproutling Isles - Launch & Live Ops]].
+- Roblox 2026 Halloween Spotlight: no dates announced yet (Roblox's page still shows 2025's 23 Oct–3 Nov). Re-check 14–17 Oct.
+- Note: the event runs on the real clock, so it starts 17 Oct even if the launch slips.
+
+**Next:** live-ops re-check Spotlight ~14–17 Oct; roblox-engineer lint/build of `01d455f` when tools exist; owner play-test.
+
+---
 ## 2026-10-06 13:00: local hourly run — Clip Studio presenter QA (calendar/weekly/usage)
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** qa-tester
 
