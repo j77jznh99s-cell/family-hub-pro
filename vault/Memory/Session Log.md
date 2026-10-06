@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 12:00: local hourly run — Bybit client fails closed on bad exchange data
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`; main checkout is on starling-heist) · **Agents used:** app-engineer
+
+- Rotation: Bybit Trading Bot (after Family Hub). Picked the app-engineer task "make `bybit.ts` throw instead of returning 0".
+- New `parseExchangeNumber` throws on missing/blank/non-finite values; pure exported parsers for equity, mark price,
+  leverage, open positions and closed PnL. Size-0 rows still skipped. Only stricter: gate logic untouched, no exchange calls.
+- Orchestrator added: `closePosition` uses `findClosablePosition` (side + size only), so strict parsing of leverage or
+  mark price can never block closing a position. New `bybit.test.ts`. **Not run** (no Node). Commit `b9e9225`, push failed.
+
+**Next:** `npm test` + `npm run build` in `risk-gate/` on a machine with Node; owner still confirms paper vs live.
+
+---
 ## 2026-10-06 11:00: local hourly run — Family Hub widget ✓ race (review #12)
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`; main checkout is on starling-heist) · **Agents used:** app-engineer
 
