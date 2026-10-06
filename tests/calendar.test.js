@@ -62,6 +62,14 @@ test('marks slots with finished runs and flags missed ones', async () => {
   }
 });
 
+test('a topic with "|" or a line break stays in its table row', () => {
+  const [slot] = calendar.planWeek({ start: START, days: 1 });
+  const md = calendar.toMarkdown([{ ...slot, status: 'scripted', topic: 'Nvidia | AMD\nearnings', runDir: 'x' }], { today: START });
+  const row = md.split('\n').find((l) => l.startsWith('|') && l.includes(slot.date));
+  assert.ok(row.includes('Nvidia \\| AMD earnings'));
+  assert.equal(row.split(/(?<!\\)\|/).length, 7); // 5 cells + the two outer pipes
+});
+
 test('missing output folder means everything is planned', async () => {
   const slots = await calendar.attachRuns(calendar.planWeek({ start: START, days: 2 }), '/nonexistent/dir');
   assert.deepEqual(slots.map((s) => s.status), ['planned', 'planned']);

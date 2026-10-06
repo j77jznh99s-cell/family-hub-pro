@@ -97,7 +97,9 @@ function toMarkdown(slots, { today = new Date() } = {}) {
   for (const s of slots) {
     const missed = s.status === 'planned' && s.date < todayIso;
     const status = missed ? 'missed' : s.status;
-    const detail = s.topic || `\`npm run presenter -- --niche ${s.niche}\``;
+    // Topics come from the model; a "|" or line break would split the table row.
+    const topic = s.topic && String(s.topic).replace(/\s*[\r\n]+\s*/g, ' ').replace(/\|/g, '\\|');
+    const detail = topic || `\`npm run presenter -- --niche ${s.niche}\``;
     lines.push(`| ${s.weekday} ${s.date} | ${s.postAt} | ${s.label} | ${status} | ${detail} |`);
   }
   const counts = {};

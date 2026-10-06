@@ -61,3 +61,49 @@ test('summarize groups runs by month and skips demo runs', async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('summarize survives odd usage.json files and failed-log lines without NaN', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'usage-test-'));
+  try {
+    const write = (name, text) => {
+      fs.mkdirSync(path.join(dir, name));
+      fs.writeFileSync(path.join(dir, name, 'usage.json'), text);
+    };
+    const good = usage.emptyUsage();
+    usage.addClaudeResponse(good, { usage: { input_tokens: 1e6, output_tokens: 0 }, content: [] });
+    write('2026-09-24-ai-good', JSON.stringify(good));
+    write('2026-09-25-ai-empty-object', '{}');
+    write('2026-09-26-ai-no-heygen', JSON.stringify({ claude: { input_tokens: 1e6 } }));
+    write('2026-09-27-ai-string', '"oops"');
+    write('2026-09-28-ai-torn', '{"claude":');
+    fs.writeFileSync(
+      path.join(dir, 'usage-failed.jsonl'),
+      `${JSON.stringify({ at: '2026-09-29T10:00:00Z' })}\n${JSON.stringify({ at: '2026-09-29T11:00:00Z', usage: good })}\n`
+    );
+
+    const s = await usage.summarize(dir);
+    const m = s.months['2026-09'];
+    // good + {} + no-heygen count as runs; the string and the torn file are skipped.
+    assert.equal(m.runs, 3);
+    assert.equal(m.claudeUsd, 15); // 5 + 0 + 5 from runs, + 5 from the one failed line with usage
+    assert.equal(m.failedAttempts, 1);
+    assert.equal(m.heygenSeconds, 0);
+    assert.equal(m.webSearches, 0);
+    assert.doesNotMatch(usage.formatSummary(s), /NaN/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a non-numeric price override is rejected instead of turning totals into NaN', () => {
+  assert.throws(() => usage.prices({ PRESENTER_PRICE_INPUT_PER_MTOK: '$5' }), /plain numbers/);
+  assert.throws(() => usage.prices({ PRESENTER_PRICE_OUTPUT_PER_MTOK: 'abc' }), /plain numbers/);
+  assert.equal(usage.prices({ PRESENTER_PRICE_INPUT_PER_MTOK: '0' }).input, 0);
+});
+
+test('formatSummary lists months in order even when one only has failed attempts', () => {
+  const month = (extra) => ({ runs: 0, claudeUsd: 0, webSearches: 0, heygenSeconds: 0, renders: 0, ...extra });
+  // Insertion order as summarize builds it: run months first, failed-only months after.
+  const text = usage.formatSummary({ runs: [], months: { '2026-10': month({ runs: 1 }), '2026-09': month({ failedAttempts: 1 }) } });
+  assert.ok(text.indexOf('2026-09') < text.indexOf('2026-10'));
+});

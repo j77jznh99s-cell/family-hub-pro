@@ -28,6 +28,10 @@ function addClaudeResponse(total, response) {
 function prices(env = process.env) {
   const input = parseFloat(env.PRESENTER_PRICE_INPUT_PER_MTOK || '5');
   const output = parseFloat(env.PRESENTER_PRICE_OUTPUT_PER_MTOK || '25');
+  // A typo like "$5" would otherwise turn every total into NaN.
+  if (!Number.isFinite(input) || !Number.isFinite(output)) {
+    throw new Error('PRESENTER_PRICE_INPUT_PER_MTOK / PRESENTER_PRICE_OUTPUT_PER_MTOK must be plain numbers, e.g. 5');
+  }
   return { input, output, cacheWrite: input * 1.25, cacheRead: input * 0.1 };
 }
 
@@ -39,6 +43,18 @@ function claudeCost(claude, p = prices()) {
       claude.cache_read_input_tokens * p.cacheRead) /
     1e6;
   return Math.round(usd * 10000) / 10000;
+}
+
+// usage.json files and failed-log lines from older versions or hand edits may be missing
+// fields; read every number defensively so one odd file can't crash or NaN the totals.
+function normalizeUsage(u) {
+  if (!u || typeof u !== 'object') return null;
+  const out = emptyUsage();
+  const claude = u.claude && typeof u.claude === 'object' ? u.claude : {};
+  const heygen = u.heygen && typeof u.heygen === 'object' ? u.heygen : {};
+  for (const k of Object.keys(out.claude)) out.claude[k] = Number(claude[k]) || 0;
+  out.heygen = { renders: Number(heygen.renders) || 0, seconds: Number(heygen.seconds) || 0, test: Boolean(heygen.test) };
+  return out;
 }
 
 async function readUsage(runDir) {
@@ -86,7 +102,7 @@ async function summarize(outputDir) {
   const months = {};
   for (const name of entries) {
     if (name.startsWith('demo-')) continue;
-    const u = await readUsage(path.join(outputDir, name));
+    const u = normalizeUsage(await readUsage(path.join(outputDir, name)));
     if (!u) continue;
     const month = /^\d{4}-\d{2}/.test(name) ? name.slice(0, 7) : 'unknown';
     const cost = claudeCost(u.claude);
@@ -99,12 +115,14 @@ async function summarize(outputDir) {
     m.renders += u.heygen.renders;
   }
   for (const f of await readFailedAttempts(outputDir)) {
+    const fu = normalizeUsage(f && f.usage);
+    if (!fu) continue;
     const month = String(f.at || '').slice(0, 7) || 'unknown';
-    const cost = claudeCost(f.usage.claude);
+    const cost = claudeCost(fu.claude);
     const m = (months[month] ||= { runs: 0, claudeUsd: 0, webSearches: 0, heygenSeconds: 0, renders: 0 });
     m.failedAttempts = (m.failedAttempts || 0) + 1;
     m.claudeUsd = Math.round((m.claudeUsd + cost) * 10000) / 10000;
-    m.webSearches += f.usage.claude.web_searches;
+    m.webSearches += fu.claude.web_searches;
   }
   return { runs, months };
 }
@@ -118,7 +136,8 @@ function formatSummary({ runs, months }) {
     lines.push(`${r.run.slice(0, 46).padEnd(46)} ${r.claudeUsd.toFixed(2).padStart(9)} ${String(r.webSearches).padStart(9)} ${String(Math.round(r.heygenSeconds)).padStart(9)}`);
   }
   lines.push('', 'Month      runs  failed  Claude $  searches  HeyGen min');
-  for (const [month, m] of Object.entries(months)) {
+  // Sorted: months that only have failed attempts are added after the run months.
+  for (const [month, m] of Object.entries(months).sort(([a], [b]) => a.localeCompare(b))) {
     lines.push(`${month.padEnd(9)} ${String(m.runs).padStart(5)} ${String(m.failedAttempts || 0).padStart(7)} ${m.claudeUsd.toFixed(2).padStart(9)} ${String(m.webSearches).padStart(9)} ${(m.heygenSeconds / 60).toFixed(1).padStart(11)}`);
   }
   lines.push('', 'Claude $ is tokens at list price only; web searches and HeyGen minutes are billed separately - check your invoices.');
