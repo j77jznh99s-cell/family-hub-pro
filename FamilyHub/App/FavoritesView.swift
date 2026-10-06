@@ -24,7 +24,7 @@ struct FavoritesView: View {
                                     Button("Remove from favorites", systemImage: "star.slash") {
                                         var p = person
                                         p.isFavorite = false
-                                        model.upsert(p)
+                                        model.upsert(p, original: person)
                                     }
                                 }
                         }
@@ -44,7 +44,7 @@ struct FavoritesView: View {
                 }
             }
             .sheet(item: $editing) { person in
-                PersonEditor(person: person) { model.upsert($0) }
+                PersonEditor(person: person) { model.upsert($0, original: person) }
             }
             .sheet(isPresented: $picking) { FavoritePicker() }
         }
@@ -141,7 +141,7 @@ struct FavoritePicker: View {
                 Button {
                     var p = person
                     p.isFavorite.toggle()
-                    model.upsert(p)
+                    model.upsert(p, original: person)
                 } label: {
                     HStack(spacing: 12) {
                         Avatar(person: person, size: 40)

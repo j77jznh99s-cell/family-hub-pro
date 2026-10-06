@@ -61,7 +61,7 @@ struct PeopleView: View {
             }
             .sheet(item: $editing) { person in
                 PersonEditor(person: person) { saved in
-                    model.upsert(saved)
+                    model.upsert(saved, original: person)
                     Task { await model.refreshOpenersIfNeeded() }
                 }
             }

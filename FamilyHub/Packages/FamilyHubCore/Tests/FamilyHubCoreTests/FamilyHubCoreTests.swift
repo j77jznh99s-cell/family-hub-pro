@@ -231,6 +231,58 @@ final class AppDataTests: XCTestCase {
     }
 }
 
+final class PersonMergeTests: XCTestCase {
+    let before = Date(timeIntervalSince1970: 1_780_000_000)
+    let widgetTick = Date(timeIntervalSince1970: 1_790_000_000)
+
+    /// The person when the edit sheet opened: snoozed, last texted a while ago.
+    var original: Person {
+        Person(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, name: "Mom", cadenceDays: 3,
+               lastContacted: before, snoozedUntil: .distantFuture)
+    }
+
+    /// What's on disk after the widget's ✓ (same as `markContacted`: new date, snooze cleared).
+    var latest: Person {
+        var p = original
+        p.lastContacted = widgetTick
+        p.snoozedUntil = nil
+        return p
+    }
+
+    func testWidgetTickSurvivesAnEditThatOnlyChangedTheName() {
+        var edited = original
+        edited.name = "Mama"
+        let merged = latest.applyingEdits(from: original, to: edited)
+        XCTAssertEqual(merged.name, "Mama")
+        XCTAssertEqual(merged.lastContacted, widgetTick)
+        XCTAssertNil(merged.snoozedUntil)
+        XCTAssertEqual(merged.id, original.id)
+    }
+
+    func testLastContactedChangedInTheEditorWins() {
+        let picked = Date(timeIntervalSince1970: 1_785_000_000)
+        var edited = original
+        edited.lastContacted = picked
+        XCTAssertEqual(latest.applyingEdits(from: original, to: edited).lastContacted, picked)
+    }
+
+    func testNothingEditedReturnsLatestUnchanged() {
+        XCTAssertEqual(latest.applyingEdits(from: original, to: original), latest)
+    }
+
+    func testFieldChangedOnBothSidesTakesTheEdit() {
+        var newer = latest
+        newer.isFavorite = true
+        newer.notes = "from elsewhere"
+        var edited = original
+        edited.notes = "the Denver trip"
+        let merged = newer.applyingEdits(from: original, to: edited)
+        XCTAssertEqual(merged.notes, "the Denver trip")
+        XCTAssertTrue(merged.isFavorite, "a field the user didn't touch keeps its latest value")
+        XCTAssertEqual(merged.lastContacted, widgetTick)
+    }
+}
+
 final class OpenerGeneratorTests: XCTestCase {
     let people = [
         Person(name: "Mom", relationship: "mother", phone: "555-0101", notes: "Garden is finally blooming"),

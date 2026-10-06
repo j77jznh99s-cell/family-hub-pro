@@ -43,6 +43,26 @@ public struct Person: Codable, Identifiable, Hashable, Sendable {
     public var firstName: String {
         name.split(separator: " ").first.map(String.init) ?? name
     }
+
+    /// 3-way merge for saving an edit made on a copy that may have gone stale (e.g. a widget ✓ landed while the
+    /// edit sheet was open). Call on the latest stored person: each field the user changed (`edited` differs from
+    /// `original`) wins, every other field keeps its latest value. `id` never changes.
+    /// When you add a stored field to `Person`, add it here too, or edits to it will be dropped.
+    public func applyingEdits(from original: Person, to edited: Person) -> Person {
+        var merged = self
+        func take<Value: Equatable>(_ field: WritableKeyPath<Person, Value>) {
+            if edited[keyPath: field] != original[keyPath: field] { merged[keyPath: field] = edited[keyPath: field] }
+        }
+        take(\.name)
+        take(\.relationship)
+        take(\.phone)
+        take(\.cadenceDays)
+        take(\.lastContacted)
+        take(\.notes)
+        take(\.snoozedUntil)
+        take(\.isFavorite)
+        return merged
+    }
 }
 
 /// What's going on in your life, so openers can be about something real.

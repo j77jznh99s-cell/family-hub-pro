@@ -69,10 +69,16 @@ final class AppModel {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    func upsert(_ person: Person) {
+    /// Pass `original` (the person as it was before you edited your copy) so only the fields you changed are
+    /// saved; without it the stored person is replaced whole, which can undo a widget ✓ made in the meantime.
+    func upsert(_ person: Person, original: Person? = nil) {
         update { d in
             if let i = d.people.firstIndex(where: { $0.id == person.id }) {
-                d.people[i] = person
+                if let original {
+                    d.people[i] = d.people[i].applyingEdits(from: original, to: person)
+                } else {
+                    d.people[i] = person
+                }
             } else {
                 d.people.append(person)
             }
