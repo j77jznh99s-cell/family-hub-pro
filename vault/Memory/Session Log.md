@@ -1,6 +1,24 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 18:00: local hourly run — Sproutling Isles receipts QA review + lost-purchase fix
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`) · **Agents used:** qa-tester
+
+- Rotation: Sproutling Isles (after Clip Studio). Every open task is owner-gated, date-gated (Spotlight 14–17 Oct)
+  or needs selene/rojo/lune, so the task was an independent static QA review of `01d455f` (outside-game purchases).
+- Result: `01d455f` is sound (wait yields properly, leaving flag set before the final save, no double grant, all
+  `save()` callers fine with the new `false` return). No blockers.
+- Major (pre-existing) fixed: if the save after a grant failed, Roblox's retry hit the receipt-history check and got
+  `PurchaseGranted` with no save, so the purchase could be lost (always, when another server owns the lock). Now a
+  repeat receipt is confirmed only after a save that includes it succeeds. Orchestrator re-read the change. Commit
+  `c0e934c`, push failed. **Not run** (no selene/rojo/lune), not Studio-tested.
+- Minors filed for roblox-engineer: `Config.ReceiptWaitSeconds` 60 can be shorter than a slow load (safe, just
+  delayed; consider ~90); two saves can overlap after the 30 s wait in `DataService.luau:34-39`; committed
+  `build/SproutlingIsles.rbxlx` is stale (rebuild with rojo before publishing).
+
+**Next:** roblox-engineer: run selene/rojo/lune on `c0e934c` and push; decide on the 3 minors.
+
+---
 ## 2026-10-06 17:00: local hourly run — Clip Studio logs spend when a presenter run fails early
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** app-engineer
 

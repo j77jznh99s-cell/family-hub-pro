@@ -64,6 +64,7 @@ run in Studio or CI** (no Roblox tools on the PC, pushes failing). Owner: pick l
 new #1 is a steal/collect-pets game; big games' Halloween events began 2–9 Oct. Suggests leading with collecting/
 trading/snatching, weekly Hollow Harvest drops, and checking outside-game purchases before launch (tasks added).
 Outside-game purchases: fixed 2026-10-03 20:00 (`01d455f`, local only, not linted or Studio-tested); refund webhook is an owner decision.
+QA-reviewed 2026-10-06 18:00: sound; one older lost-purchase bug fixed (`c0e934c`, re-save before confirming a repeat receipt); 2 minors + stale `.rbxlx` filed for roblox-engineer.
 Weekly drops: checked 2026-10-06 — already built that way (17 Oct / 24 Oct / Witching Hour 31 Oct), no change needed.
 No 2026 Roblox Halloween Spotlight dates announced yet; re-check 14–17 Oct. The event starts 17 Oct on the real clock even if launch slips.
 
