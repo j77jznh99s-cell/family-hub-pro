@@ -52,11 +52,18 @@ final class AppModel {
 
     // MARK: - Mutations
 
+    /// Applies `change` to the latest file (not our possibly stale copy), so a widget ✓ made while we were in
+    /// the background isn't overwritten. Keep `change` a mutation: it may run on fresher data than `data`.
     func update(_ change: (inout AppData) -> Void) {
-        change(&data)
         do {
-            try store.save(data)
+            data = try store.update(change)
+        } catch is Store.UnreadableFileError {
+            // The file went bad under us (it's been backed up): our copy is the best data left, so save that.
+            change(&data)
+            do { try store.save(data) } catch { lastError = "Couldn't save: \(error.localizedDescription)" }
         } catch {
+            // Saving failed: still show the change in the UI, as before.
+            change(&data)
             lastError = "Couldn't save: \(error.localizedDescription)"
         }
         WidgetCenter.shared.reloadAllTimelines()

@@ -101,9 +101,7 @@ struct MarkTextedIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         guard let id = UUID(uuidString: personID) else { return .result() }
-        var data = Store.shared.load()
-        data.markContacted(id)
-        try Store.shared.save(data)
+        try Store.shared.update { _ = $0.markContacted(id) }
         return .result()
     }
 }

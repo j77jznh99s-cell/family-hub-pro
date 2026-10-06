@@ -125,24 +125,52 @@ public final class Store: @unchecked Sendable {
             .appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".unreadable.json")
     }
 
+    /// Thrown by `update` when the file exists but can't be read, so it never replaces real data with an empty copy.
+    public struct UnreadableFileError: Error {}
+
     public func load() -> AppData {
         lock.lock(); defer { lock.unlock() }
+        return (try? loadUnlocked()) ?? AppData()
+    }
+
+    public func save(_ appData: AppData) throws {
+        lock.lock(); defer { lock.unlock() }
+        try saveUnlocked(appData)
+    }
+
+    /// Read-modify-write: loads the latest file, applies `change`, saves and returns the result.
+    /// Use this instead of saving an in-memory copy, so a write from the other process (the widget's ✓, or the app)
+    /// since your last load isn't overwritten. The lock only covers this process; app and widget aren't
+    /// coordinated (no NSFileCoordinator), so the remaining race window is this one read + write.
+    /// Throws `UnreadableFileError` (and saves nothing) if the file exists but can't be decoded.
+    @discardableResult
+    public func update(_ change: (inout AppData) throws -> Void) throws -> AppData {
+        lock.lock(); defer { lock.unlock() }
+        var appData = try loadUnlocked()
+        try change(&appData)
+        try saveUnlocked(appData)
+        return appData
+    }
+
+    // NSLock isn't reentrant, so load(), save() and update() take the lock and share these.
+
+    /// No file yet → empty data. An unreadable file is backed up, then `UnreadableFileError` is thrown.
+    private func loadUnlocked() throws -> AppData {
         guard FileManager.default.fileExists(atPath: url.path) else { return AppData() }
         do {
             let data = try Data(contentsOf: url)
             return try Self.decoder.decode(AppData.self, from: data)
         } catch {
-            // The caller gets empty data and its next save would replace the file, so keep a copy first.
+            // load() hands out empty data and a later save would replace the file, so keep a copy first.
             // Only the first bad file is kept: it's the one most likely to still hold the real data.
             if !FileManager.default.fileExists(atPath: unreadableBackupURL.path) {
                 try? FileManager.default.copyItem(at: url, to: unreadableBackupURL)
             }
-            return AppData()
+            throw UnreadableFileError()
         }
     }
 
-    public func save(_ appData: AppData) throws {
-        lock.lock(); defer { lock.unlock() }
+    private func saveUnlocked(_ appData: AppData) throws {
         let data = try Self.encoder.encode(appData)
         try data.write(to: url, options: [.atomic])
     }

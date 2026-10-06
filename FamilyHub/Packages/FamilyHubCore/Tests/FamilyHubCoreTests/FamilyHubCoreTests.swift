@@ -166,6 +166,69 @@ final class AppDataTests: XCTestCase {
         XCTAssertEqual(store.load().people.first?.name, "Mom")
         XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad, "the backup is never overwritten")
     }
+
+    func testUpdateKeepsAWriteFromAnotherStoreOnTheSameFile() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let app = Store(url: url)
+        let widget = Store(url: url)
+        // Whole seconds, because the file stores ISO 8601 dates without fractions.
+        let when = Date(timeIntervalSince1970: 1_790_000_000)
+        let mom = Person(name: "Mom", cadenceDays: 3, lastContacted: Date(timeIntervalSince1970: 0))
+        try app.save(AppData(people: [mom]))
+        let stale = app.load() // the app's in-memory copy
+
+        try widget.update { _ = $0.markContacted(mom.id, at: when) } // the widget's ✓
+        let saved = try app.update { $0.context.notes = "busy week" }
+
+        XCTAssertEqual(stale.log.count, 0)
+        XCTAssertEqual(saved.log.count, 1, "the widget's reach-out survives the app's later save")
+        XCTAssertEqual(saved.people[0].lastContacted, when)
+        XCTAssertEqual(saved.context.notes, "busy week")
+        XCTAssertEqual(app.load(), saved)
+    }
+
+    func testUpdateReturnsWhatItSaved() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let store = Store(url: url)
+
+        let saved = try store.update { $0.people.append(Person(name: "Jake")) } // no file yet: starts from AppData()
+        XCTAssertEqual(saved.people.map(\.name), ["Jake"])
+        XCTAssertEqual(store.load(), saved)
+        XCTAssertEqual(Store(url: url).load(), saved)
+    }
+
+    func testUpdateClosureCanHandBackAResult() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let store = Store(url: url)
+        let mom = Person(name: "Mom", cadenceDays: 3)
+        try store.save(AppData(people: [mom]))
+
+        var result: ReachOutResult?
+        let saved = try store.update { result = $0.markContacted(mom.id) }
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.counted, true)
+        XCTAssertEqual(saved.log.count, 1)
+    }
+
+    func testUpdateRefusesToReplaceAnUnreadableFile() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        let store = Store(url: url)
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: store.unreadableBackupURL)
+        }
+        let bad = Data(#"{"people":[{"name":42}]}"#.utf8)
+        try bad.write(to: url)
+
+        XCTAssertThrowsError(try store.update { $0.people.append(Person(name: "Jake")) }) { error in
+            XCTAssertTrue(error is Store.UnreadableFileError)
+        }
+        XCTAssertEqual(try Data(contentsOf: url), bad, "nothing was saved over the file")
+        XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad)
+    }
 }
 
 final class OpenerGeneratorTests: XCTestCase {

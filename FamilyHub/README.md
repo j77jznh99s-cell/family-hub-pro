@@ -54,6 +54,7 @@ FamilyHub/
 └── Widget/                     WidgetKit: lock screen (inline/rectangular/circular) + home (small/medium)
 ```
 
+- **App and widget share one file.** Every change goes through `Store.update`, which re-reads the file, applies the change and saves, so the app doesn't overwrite a ✓ you tapped on the widget while it was in the background.
 - **The widget never touches the network.** It reads one small file and runs the ranking locally, which takes microseconds. The widget schedules updates for each midnight ahead of time, so "9 days" becomes "10 days" without the app running.
 - **AI openers are written in the app, in one batched request**, only when they're missing, more than 20 hours old, or you've changed notes/projects. The results are cached, so opening the app doesn't wait on anything.
 - **Privacy**: phone numbers and last names are never sent to Claude, only first names, relationships, your notes, and your context. The API key lives in the iOS Keychain.
