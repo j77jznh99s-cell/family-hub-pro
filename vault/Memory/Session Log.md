@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 13:00: local hourly run — Clip Studio presenter QA (calendar/weekly/usage)
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** qa-tester
+
+- Rotation: AI Agent Team skipped (same uncommitted `agents/inbox/LOG.md`), so Clip Studio. Cloud branch unchanged (`965a4a3`).
+- Task: line-by-line read of `calendar.js`, `weekly.js`, `usage.js` (flagged "not reviewed in depth" in the 2026-09-26 QA).
+  12 findings, no blockers; 4 small ones fixed + 4 tests (odd usage.json / failed-log lines no longer crash or NaN the
+  totals; bad price override errors clearly; months sorted; `|`/newline in topics escaped in the calendar table).
+  **Not run** (no Node). Commit `3798e7f`, push failed. Bigger findings filed in [[Clip Studio]] → "QA Review 2".
+
+**Next:** app-engineer: log spend for runs that fail before the script check; shared per-day setting. Owner: UTC vs local dates.
+
+---
 ## 2026-10-06 12:00: local hourly run — Bybit client fails closed on bad exchange data
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`; main checkout is on starling-heist) · **Agents used:** app-engineer
 

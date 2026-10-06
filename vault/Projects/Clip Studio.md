@@ -113,9 +113,37 @@ its root, so it inherited the identical red CI on every push this session made t
 pass locally. Any other branch forked from `main` before `fd327a0` likely needs the same port —
 check CI before pushing to one.
 
+## QA Review 2: calendar / weekly / usage (2026-10-06)
+
+Code read only (no Node on the PC, nothing run), on `claude/clip-studio-presenter-fixes`. No blockers.
+Fixed in `3798e7f` (+4 tests, not run): odd `usage.json`/failed-log lines crashed or NaN'd `--usage` and
+`--weekly-report` (`usage.js`, new `normalizeUsage`); a non-numeric `PRESENTER_PRICE_*` gave NaN (now a clear error —
+note this also stops the weekly report); `--usage` months out of order; `|` or a line break in a topic broke the
+`calendar.md` table row.
+
+Open (not fixed):
+1. **Major — spend lost on early failures**, `src/presenter/index.js:66-73`: refusals, empty research, truncated or
+   non-JSON script replies are billed but never written to `usage-failed.jsonl` (only script-check failures are, line 77).
+2. **Major — `--per-day 2` vs weekly report/dashboard**: `weekly.js:13` and `src/routes/presenter.js:40` assume one
+   video a day, so ~half the days show "missed" and the second daily run is never pre-post checked.
+3. **Major (decision) — month of spend**: `usage.js` totals by run-folder date; `--fill-week` folders carry the future
+   slot date, so spend can land in the wrong month. Suggest storing the real time in `usage.json`.
+4. Minor (decision) — dates are UTC days, post times labelled "local" (`calendar.js:23-44`, `index.js:81`): an evening
+   run in US time is filed under tomorrow.
+5. Minor, suspected — same day + lane + topic reuses the run folder and overwrites the earlier run (`index.js:81-85`).
+6. Minor — `--days 0`/`abc` and bad `--per-day` silently fall back to defaults (`scripts/presenter.js:35-36`).
+7. Minor — `--per-day` above the number of post times repeats times (`calendar.js:46`); a comment there is wrong for `--per-day 4`.
+8. Low — `calendar.md` / `weekly-*.md` written with plain `writeFile`, not `writeFileAtomic`.
+
 ## Tasks
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
 - [ ] **owner:** decide whether to merge `claude/hourly-project-processing-ejbqs4` into `claude/video-clip-detection-mvp-g18ggk` (all automated checks this session could run passed; Docker build step still unverified — see QA Review).
 - [x] **app-engineer:** fix the two minor findings above (fragile disclaimer-dedup string match in `writer.js`/`check.js`; missing `|| ''` guard in `writer.js:185`) before or shortly after merge. Done 2026-10-03 (`207fbba` on new branch `claude/clip-studio-presenter-fixes`, built on the cloud branch; not pushed yet, tests not run — no Node on the PC).
 - [ ] **qa-tester:** run `node --test` on `claude/clip-studio-presenter-fixes` (needs Node) and confirm the 4 new tests + existing presenter/check tests pass.
+- [x] **qa-tester:** line-by-line review of `calendar.js`, `weekly.js`, `usage.js`. Done 2026-10-06 — see QA Review 2 (`3798e7f`, tests not run).
+- [ ] **qa-tester:** also run the 4 new tests from `3798e7f` when Node is available.
+- [ ] **app-engineer:** log spend for presenter runs that fail before the script check (QA Review 2 #1).
+- [ ] **app-engineer:** one shared "videos per day" setting for the CLI, weekly report and dashboard calendar (QA Review 2 #2).
+- [ ] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6).
+- [ ] **owner:** which date spend counts under (spent vs slot date) and UTC vs local calendar days (QA Review 2 #3, #4).
 - [ ] **owner:** confirm what's next for Clip Studio (deploy? pricing? more features?) so an agent can pick it up
