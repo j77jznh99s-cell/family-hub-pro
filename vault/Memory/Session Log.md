@@ -1,6 +1,19 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 16:00: local hourly run — Bybit monitoring scripts fail closed on bad exchange data
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
+
+- Rotation: Bybit Trading Bot (after Family Hub). Task: the read-only client `scripts/lib/bybit.js` (used by
+  /status, `position-check`, `funding-check`) still had the old `Number("")===0` parsing that `b9e9225` fixed in the gate.
+- Fix: strict `parseExchangeNumber` + pure parsers; a missing `list` throws (so `position-check` no longer alerts every
+  position as "closed" and overwrites its snapshot); `""`/`"0"` stop/TP = none; `guessOutcome` moved to
+  `scripts/lib/outcome.js`, no divide-by-0. New `scripts/lib/*.test.js` + `npm run test:scripts`. Orchestrator reviewed the diff.
+  **Not run** (no Node). No exchange calls; risk gate untouched. Commit `a9f70ea`, push failed.
+
+**Next:** run `npm run test:scripts` and `npm run test:gate` on a machine with Node; owner: paper vs live.
+
+---
 ## 2026-10-06 15:00: local hourly run — Family Hub edit sheet no longer undoes a widget ✓
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
 
