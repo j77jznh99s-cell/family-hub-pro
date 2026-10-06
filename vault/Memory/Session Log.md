@@ -1,6 +1,21 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 19:00: local hourly run — Family Hub data files always load (tolerant decoding)
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Task: "new fields must be optional/defaulted so old files still load".
+- Finding: no field added since the first version breaks old files today (`AppData` was already tolerant). The real
+  risks were the *next* new field, and an unknown theme/reach-out kind written by a newer build failing the whole file.
+- Fix: tolerant `init(from:)` (in extensions, memberwise `init` kept) for `Person`, `LifeContext`, `Opener`,
+  `ReachOut`, `Preferences`; encoding unchanged. 15 `CompatibilityTests` + README "Data file compatibility" note.
+  Orchestrator reviewed the diff and corrected a comment that wrongly said the compiler forces new fields to be
+  decoded (it doesn't when `init` has a default — the field would silently reset on load). Commit `88472e2`,
+  push failed. **Not compiled or run** (no Swift).
+
+**Next:** owner: `swift test` on a Mac (or push so CI runs); optionally review the 3 defaults listed in [[Family Hub]].
+
+---
 ## 2026-10-06 18:00: local hourly run — Sproutling Isles receipts QA review + lost-purchase fix
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`) · **Agents used:** qa-tester
 
