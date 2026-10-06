@@ -8,6 +8,7 @@
     "install:gate": "npm install --prefix risk-gate",
     "build:gate": "npm run build --prefix risk-gate",
     "test:gate": "npm test --prefix risk-gate",
+    "test:scripts": "node --test scripts/lib/bybit.test.js scripts/lib/outcome.test.js",
     "cycle": "codex exec --model gpt-6-astra \"$(cat prompts/cycle.md)\""
   },
   "dependencies": {

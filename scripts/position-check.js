@@ -5,6 +5,7 @@
 // position that appeared without a matching cycle log).
 import fs from "node:fs";
 import { getOpenPositions } from "./lib/bybit.js";
+import { guessOutcome } from "./lib/outcome.js";
 import { sendMessage } from "./lib/telegram.js";
 import { POSITION_SNAPSHOT_FILE, STATE_DIR } from "./lib/paths.js";
 
@@ -21,20 +22,10 @@ function saveSnapshot(snapshot) {
   fs.writeFileSync(POSITION_SNAPSHOT_FILE, JSON.stringify(snapshot, null, 2));
 }
 
-function guessOutcome(prev) {
-  if (prev.stopLoss !== null && prev.markPrice !== undefined) {
-    const nearStop = Math.abs(prev.markPrice - prev.stopLoss) / prev.stopLoss < 0.005;
-    if (nearStop) return "likely stop-out";
-  }
-  if (prev.takeProfit !== null && prev.markPrice !== undefined) {
-    const nearTp = Math.abs(prev.markPrice - prev.takeProfit) / prev.takeProfit < 0.005;
-    if (nearTp) return "likely take-profit";
-  }
-  return "closed (reason unclear, check logs/audit.jsonl and Bybit order history)";
-}
-
 async function main() {
   const previous = loadSnapshot();
+  // getOpenPositions throws on a malformed response, so main() rejects here
+  // and the snapshot below is not overwritten with a bogus "no positions".
   const current = await getOpenPositions();
   const currentBySymbol = Object.fromEntries(current.map((p) => [p.symbol, p]));
 

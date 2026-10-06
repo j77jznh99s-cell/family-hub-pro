@@ -55,26 +55,152 @@ async function signedGet(endpoint, params = {}) {
   return json.result;
 }
 
+/**
+ * Strictly parse a numeric field from a Bybit response (same semantics as
+ * risk-gate/src/bybit.ts).
+ *
+ * Bybit encodes numbers as strings. `Number("")` is 0 and `Number(undefined)`
+ * is NaN, so a naive `Number(x)` silently turns a missing or blank field into
+ * a plausible-looking value. This throws instead, so monitoring reports an
+ * error rather than a fake 0.
+ *
+ * Throws on: undefined, null, non-string/non-number values, blank or
+ * whitespace-only strings, and anything that does not parse to a finite
+ * number. With `positive: true`, also throws unless the value is > 0.
+ * With `nonNegative: true`, also throws if the value is < 0.
+ */
+export function parseExchangeNumber(value, field, opts = {}) {
+  let parsed;
+  if (typeof value === "number") {
+    parsed = value;
+  } else if (typeof value === "string") {
+    if (value.trim() === "") {
+      throw new Error(`Bybit response field ${field} is blank`);
+    }
+    parsed = Number(value);
+  } else if (value === undefined || value === null) {
+    throw new Error(`Bybit response field ${field} is missing`);
+  } else {
+    throw new Error(`Bybit response field ${field} has unexpected type ${typeof value}`);
+  }
+
+  if (!Number.isFinite(parsed)) {
+    throw new Error(
+      `Bybit response field ${field} is not a finite number: ${JSON.stringify(value)}`
+    );
+  }
+  if (opts.positive && !(parsed > 0)) {
+    throw new Error(`Bybit response field ${field} must be > 0, got ${parsed}`);
+  }
+  if (opts.nonNegative && parsed < 0) {
+    throw new Error(`Bybit response field ${field} must be >= 0, got ${parsed}`);
+  }
+  return parsed;
+}
+
+/**
+ * Parse an optional price such as a position's stopLoss/takeProfit. Bybit
+ * returns "" or "0" when none is set, so those (and missing) mean null.
+ * Anything else must be a finite number > 0.
+ */
+export function parseOptionalPrice(value, field) {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string" && (value.trim() === "" || Number(value) === 0)) return null;
+  if (value === 0) return null;
+  return parseExchangeNumber(value, field, { positive: true });
+}
+
+function requireList(list, what) {
+  if (!Array.isArray(list)) {
+    throw new Error(`Bybit response for ${what} has no list`);
+  }
+  return list;
+}
+
+/** Pure parser for /v5/account/wallet-balance. Exported for tests. */
+export function parseEquity(result) {
+  const row = requireList(result?.list, "wallet balance")[0];
+  if (!row) {
+    throw new Error("Bybit wallet balance list is empty; cannot determine equity");
+  }
+  return parseExchangeNumber(row.totalEquity, "totalEquity");
+}
+
+/**
+ * Pure parser for /v5/position/list (all USDT positions). Exported for tests.
+ *
+ * Rows with size "0" (no open position) are skipped without error. A blank,
+ * missing, negative or non-numeric size throws, as does a missing list, so a
+ * malformed response never looks like "no positions".
+ */
+export function parsePositions(result) {
+  const rows = requireList(result?.list, "position list");
+  const positions = [];
+  for (const row of rows) {
+    const symbol = row?.symbol;
+    if (typeof symbol !== "string" || symbol.trim() === "") {
+      throw new Error("Bybit position row has a missing or blank symbol");
+    }
+    const size = parseExchangeNumber(row.size, `size (${symbol})`, { nonNegative: true });
+    if (size === 0) continue;
+
+    if (row.side !== "Buy" && row.side !== "Sell") {
+      throw new Error(
+        `Bybit position ${symbol} has size ${size} but invalid side ${JSON.stringify(row.side)}`
+      );
+    }
+    positions.push({
+      symbol,
+      side: row.side,
+      size,
+      entryPrice: parseExchangeNumber(row.avgPrice, `avgPrice (${symbol})`, { positive: true }),
+      markPrice: parseExchangeNumber(row.markPrice, `markPrice (${symbol})`, { positive: true }),
+      leverage: parseExchangeNumber(row.leverage, `leverage (${symbol})`, { positive: true }),
+      unrealisedPnl: parseExchangeNumber(row.unrealisedPnl, `unrealisedPnl (${symbol})`),
+      stopLoss: parseOptionalPrice(row.stopLoss, `stopLoss (${symbol})`),
+      takeProfit: parseOptionalPrice(row.takeProfit, `takeProfit (${symbol})`),
+    });
+  }
+  return positions;
+}
+
+/** Pure sum of one /v5/position/closed-pnl page. Exported for tests. */
+export function parseClosedPnl(page) {
+  return requireList(page?.list, "closed PnL").reduce(
+    (sum, row, i) => sum + parseExchangeNumber(row?.closedPnl, `closedPnl[${i}]`),
+    0
+  );
+}
+
+/**
+ * Pure parser for /v5/market/funding/history (limit 1). Exported for tests.
+ * An empty list means no funding record and returns null (funding-check skips
+ * it); a missing list or a blank/non-numeric rate throws.
+ */
+export function parseFundingRate(result, symbol) {
+  const row = requireList(result?.list, `funding history ${symbol}`)[0];
+  if (!row) return null;
+  return parseExchangeNumber(row.fundingRate, `fundingRate (${symbol})`);
+}
+
+/**
+ * Pure parser for /v5/market/tickers mark price. Exported for tests.
+ * An empty list returns null; a missing list or a blank/zero price throws.
+ */
+export function parseMarkPrice(result, symbol) {
+  const row = requireList(result?.list, `tickers ${symbol}`)[0];
+  if (!row) return null;
+  return parseExchangeNumber(row.markPrice, `markPrice (${symbol})`, { positive: true });
+}
+
 export async function getEquityUsdt() {
   const result = await signedGet("/v5/account/wallet-balance", { accountType: "UNIFIED" });
-  return Number(result.list?.[0]?.totalEquity ?? "0");
+  return parseEquity(result);
 }
 
 export async function getOpenPositions() {
   const result = await signedGet("/v5/position/list", { category: CATEGORY, settleCoin: "USDT" });
-  return (result.list ?? [])
-    .filter((p) => Number(p.size) > 0)
-    .map((p) => ({
-      symbol: p.symbol,
-      side: p.side,
-      size: Number(p.size),
-      entryPrice: Number(p.avgPrice),
-      markPrice: Number(p.markPrice),
-      leverage: Number(p.leverage),
-      unrealisedPnl: Number(p.unrealisedPnl),
-      stopLoss: p.stopLoss ? Number(p.stopLoss) : null,
-      takeProfit: p.takeProfit ? Number(p.takeProfit) : null,
-    }));
+  return parsePositions(result);
 }
 
 export async function getClosedPnlToday() {
@@ -89,7 +215,7 @@ export async function getClosedPnlToday() {
       limit: 100,
       cursor,
     });
-    realized += (page.list ?? []).reduce((sum, row) => sum + Number(row.closedPnl), 0);
+    realized += parseClosedPnl(page);
     cursor = page.nextPageCursor || undefined;
   } while (cursor);
   return realized;
@@ -101,12 +227,10 @@ export async function getFundingRate(symbol) {
     symbol,
     limit: 1,
   });
-  const row = result.list?.[0];
-  return row ? Number(row.fundingRate) : null;
+  return parseFundingRate(result, symbol);
 }
 
 export async function getMarkPrice(symbol) {
   const result = await signedGet("/v5/market/tickers", { category: CATEGORY, symbol });
-  const row = result.list?.[0];
-  return row ? Number(row.markPrice) : null;
+  return parseMarkPrice(result, symbol);
 }
