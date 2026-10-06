@@ -19,7 +19,9 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
 - [ ] **owner:** on a Mac, run `cd FamilyHub/Packages/FamilyHubCore && swift test` to check the 2026-10-03 review fixes (or push so CI runs).
 - [ ] **owner:** 3 product questions from the review: (1) send a "text anyone to keep your streak" reminder when nobody is due? (2) people with 30+ day cadences always score "reconnect" (+25, badge) even when on time — only count when overdue? (3) raising the daily goal wipes past streaks — keep, or store the goal per day?
 - [ ] **app-engineer:** after a failed load, refuse to save and tell the user (builds on the new backup file).
-- [ ] **app-engineer:** the widget's ✓ can be lost if the app saves its older in-memory copy first — reload the file before saving (review finding #12).
+- [x] **app-engineer:** the widget's ✓ can be lost if the app saves its older in-memory copy first (review #12) — fixed 2026-10-06 with `Store.update` read-modify-write (`b64728a`, local only, not compiled).
+- [ ] **app-engineer:** `AppModel.upsert` replaces the whole `Person`, so saving an edit sheet opened before a widget ✓ puts back the old `lastContacted` — update only the edited fields.
+- [ ] **app-engineer (optional):** coordinate app/widget file access with `NSFileCoordinator` (the race window is now one read+write).
 - [ ] **app-engineer:** new fields on `Person`, `ReachOut`, `Opener`, `LifeContext`, `Preferences` must be optional/defaulted so old files still load (add a note to the README).
 - [x] **app-engineer:** correctness review of `FamilyHubCore` (2026-10-03, `5b87ea8`).
 - Note for agents: building and running iOS needs Xcode on a Mac; the cloud sandbox can only edit and review code.

@@ -1,6 +1,20 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 11:00: local hourly run — Family Hub widget ✓ race (review #12)
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`; main checkout is on starling-heist) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Picked the app-engineer task "widget's ✓ can be lost" (review #12).
+- New `Store.update(_:)`: load → change → save under the lock, returns the saved data. `AppModel.update` and the widget's
+  `MarkTextedIntent` use it. Orchestrator added: `update` throws `Store.UnreadableFileError` (saves nothing) on an
+  undecodable file, so it never replaces real data with an empty copy; the app then saves its own copy, as before.
+  4 tests. **Not compiled or run** (no Swift). Commit `b64728a`, push failed (GitHub not signed in).
+- Remaining gap: `AppModel.upsert` replaces the whole `Person`, so an edit sheet opened before a widget ✓ restores the old
+  `lastContacted` (log entry kept). Added as a task. Still no `NSFileCoordinator` across processes.
+
+**Next:** `swift test` on a Mac / CI after push; app-engineer: make `upsert` merge fields instead of replacing the Person.
+
+---
 ## 2026-10-03 20:00: local hourly run — Sproutling Isles outside-game purchases
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, fast-forwarded 18 commits to origin first) · **Agents used:** roblox-engineer
 
