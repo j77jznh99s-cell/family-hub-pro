@@ -1,6 +1,19 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 17:00: local hourly run — Clip Studio logs spend when a presenter run fails early
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** app-engineer
+
+- Rotation: AI Agent Team skipped (same uncommitted `agents/inbox/LOG.md`), so Clip Studio. Task: QA Review 2 #1.
+- Fix: `createPresenterVideo` now records Claude spend in `usage-failed.jsonl` when research or script writing throws
+  (refusal, empty brief, cut-off or non-JSON reply), then rethrows the original error. Nothing is logged if no Claude
+  reply arrived. A failing usage log only warns. Script-check failures behave as before (one entry). 5 tests in
+  `tests/presenter.test.js`. Orchestrator reviewed the diff and kept the old zero-spend script-check logging.
+  **Not run** (no Node). Commit `b51d8e1`, push failed.
+
+**Next:** run `node --test tests/` on a machine with Node; app-engineer: QA Review 2 #2 (videos per day) or #5/#6.
+
+---
 ## 2026-10-06 16:00: local hourly run — Bybit monitoring scripts fail closed on bad exchange data
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
 

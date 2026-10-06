@@ -122,7 +122,7 @@ note this also stops the weekly report); `--usage` months out of order; `|` or a
 `calendar.md` table row.
 
 Open (not fixed):
-1. **Major — spend lost on early failures**, `src/presenter/index.js:66-73`: refusals, empty research, truncated or
+1. **Fixed 2026-10-06 (`b51d8e1`).** **Major — spend lost on early failures**, `src/presenter/index.js:66-73`: refusals, empty research, truncated or
    non-JSON script replies are billed but never written to `usage-failed.jsonl` (only script-check failures are, line 77).
 2. **Major — `--per-day 2` vs weekly report/dashboard**: `weekly.js:13` and `src/routes/presenter.js:40` assume one
    video a day, so ~half the days show "missed" and the second daily run is never pre-post checked.
@@ -142,7 +142,8 @@ Open (not fixed):
 - [ ] **qa-tester:** run `node --test` on `claude/clip-studio-presenter-fixes` (needs Node) and confirm the 4 new tests + existing presenter/check tests pass.
 - [x] **qa-tester:** line-by-line review of `calendar.js`, `weekly.js`, `usage.js`. Done 2026-10-06 — see QA Review 2 (`3798e7f`, tests not run).
 - [ ] **qa-tester:** also run the 4 new tests from `3798e7f` when Node is available.
-- [ ] **app-engineer:** log spend for presenter runs that fail before the script check (QA Review 2 #1).
+- [x] **app-engineer:** log spend for presenter runs that fail before the script check (QA Review 2 #1). Done 2026-10-06 (`b51d8e1`: thrown research/script errors log spend if any Claude reply arrived, then rethrow; 5 tests, not run).
+- [ ] **qa-tester:** run the 5 new tests from `b51d8e1` (`tests/presenter.test.js`) when Node is available.
 - [ ] **app-engineer:** one shared "videos per day" setting for the CLI, weekly report and dashboard calendar (QA Review 2 #2).
 - [ ] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6).
 - [ ] **owner:** which date spend counts under (spent vs slot date) and UTC vs local calendar days (QA Review 2 #3, #4).
