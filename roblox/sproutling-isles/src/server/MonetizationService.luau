@@ -142,6 +142,11 @@ local function processReceipt(receipt)
 	end
 	local receipts = session.data.receipts
 	if table.find(receipts, receipt.PurchaseId) then
+		-- already granted in memory, but maybe never saved (an earlier save failed): only confirm
+		-- once a save that includes it has gone through
+		if session.persist and not DataService.save(player, session.data, false) then
+			return Enum.ProductPurchaseDecision.NotProcessedYet
+		end
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 	-- M5: in a live server a non-saving session (DataStore load failed) would lose the purchase on
