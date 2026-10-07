@@ -1,6 +1,42 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-07: owner request — "Catch-Up Recorder" built into Family Hub
+**Device:** phone/cloud · **Branch:** `claude/family-hub-widget-1w7cv9` · **Agents used:** app-engineer
+
+- Owner saw an ad for "Pocket," a $200 AI wearable that records conversations and summarizes them,
+  and asked if something similar could be built into their phone instead. Gave an honest answer
+  first: the always-on ambient background recording can't be replicated as a plain iOS app (iOS
+  sandboxes background mic access hard — exactly why that product needs separate hardware), but an
+  on-demand "tap to record a conversation" version is completely buildable. Owner said to build it
+  into Family Hub.
+- Read [[Family Hub]], the branch's own README, and the existing `OpenerGenerator`/`AppModel`/
+  `PeopleView` code to match conventions before delegating, so the brief to app-engineer was
+  concrete rather than open-ended.
+- app-engineer built **Catch-Up Recorder**: on-device speech-to-text while recording
+  (`RecordingService.swift`, `SFSpeechRecognizer` with `requiresOnDeviceRecognition` where
+  supported), a new `CatchUpSummarizer.swift` that mirrors `OpenerGenerator.swift`'s exact shape
+  (same request building, reuses `OpenerError`, same JSON-schema structured output) to turn a
+  transcript into a one-sentence summary, a suggested note for the person's profile, and a
+  follow-up checklist, plus a free-text "ask about this conversation" feature. Wired into
+  `PeopleView` (swipe action) and `TodayView` (toolbar button, no person preselected). 11 files,
+  ~800 lines, pushed `0f097d3` to the project branch (not `main`).
+- **I reviewed the full diff myself before recording this done** — read every new/changed file:
+  confirmed `CatchUpSummarizer` correctly reuses `OpenerGenerator`'s internal `endpoint`/
+  `APIErrorEnvelope`/`MessageResponse` (same module, so internal visibility is enough — no access
+  bug), confirmed `RecordingService` uses the iOS-17-appropriate `AVAudioApplication.requestRecordPermission()`
+  API matching the project's deployment target, confirmed `Store.swift`'s new field follows the
+  existing tolerant-decode pattern exactly, confirmed `Keychain.apiKey`/`Prefs.model`/
+  `model.sortedPeople`/`model.theme.accent` are all real APIs used correctly in the new
+  `CatchUpView.swift`, and spot-checked the new tests — they actually assert the privacy promise
+  (phone number and last name proven absent from the built prompt, not just claimed in a comment).
+- **Not verified beyond reading:** there's no Swift toolchain or Xcode in this sandbox, so nothing
+  in this diff has been compiled or run. This is write-and-review work like every other Family Hub
+  commit from this session — the owner is the only one who can actually build and test it.
+- Updated [[Family Hub]] with the feature, what's unverified, and exact owner test steps.
+
+**Next:** owner builds and tests in Xcode on their Mac; see [[Family Hub]]'s Tasks for the exact steps.
+
 ## 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop
 **Device:** phone/cloud · **Branch:** `main` · **Agents used:** qa-tester
 
