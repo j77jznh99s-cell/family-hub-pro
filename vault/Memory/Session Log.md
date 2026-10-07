@@ -1,6 +1,22 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-06 20:00: local hourly run — Bybit position-check keys by symbol + side (hedge mode)
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
+
+- Rotation: Bybit Trading Bot (after Family Hub). Task: "`position-check` keys positions by symbol, so in hedge mode
+  a Buy and Sell on one symbol hide each other".
+- Fix: diff moved into pure `scripts/lib/positions.js` (`positionKey` = `symbol:side`, `normaliseSnapshot`,
+  `diffPositions`). Old symbol-keyed snapshot files are re-keyed on load (no false alerts on the first run after the
+  upgrade); garbage/non-object snapshots ignored. Also catches a one-way side flip between checks. "Closed" alerts now
+  name the side. `positions.test.js` (10 cases) added to `test:scripts`. Orchestrator re-read the code and traced the
+  test math by hand. Commit `47c409d`, push failed. **Not run** (no Node). Read-only script, no exchange calls, risk
+  gate untouched.
+
+**Next:** anyone with Node: `npm run test:scripts`; then one testnet `position-check` run against an old-format snapshot
+(expect no alerts and a re-keyed file).
+
+---
 ## 2026-10-06 19:00: local hourly run — Family Hub data files always load (tolerant decoding)
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
 
