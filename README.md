@@ -47,6 +47,7 @@ trading-bot/
     dist/                     build output (gitignored)
   scripts/
     position-check.js         cron, every minute — read-only position diff/alerts
+                              (keyed by symbol + side, so hedge-mode legs and side flips are caught)
     funding-check.js          cron, every 4h — read-only funding-rate alerts
     telegram-alert.js         CLI: node scripts/telegram-alert.js "text"
     telegram-commands.js      long-running: /status /halt /resume /close /why

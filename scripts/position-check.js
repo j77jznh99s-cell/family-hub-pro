@@ -2,13 +2,16 @@
 // Runs every minute via cron. Ordinary read-only monitoring: it never
 // writes to the exchange, it only diffs positions against the last check
 // and alerts on anything that changed (a stop-out, a take-profit hit, or a
-// position that appeared without a matching cycle log).
+// position that appeared without a matching cycle log). Positions are keyed
+// by symbol and side, so both legs of a hedge-mode position are tracked.
 import fs from "node:fs";
 import { getOpenPositions } from "./lib/bybit.js";
-import { guessOutcome } from "./lib/outcome.js";
+import { diffPositions } from "./lib/positions.js";
 import { sendMessage } from "./lib/telegram.js";
 import { POSITION_SNAPSHOT_FILE, STATE_DIR } from "./lib/paths.js";
 
+// Returns the raw parsed snapshot; diffPositions normalises it (including
+// old plain-symbol-keyed snapshots and non-object JSON values).
 function loadSnapshot() {
   try {
     return JSON.parse(fs.readFileSync(POSITION_SNAPSHOT_FILE, "utf8"));
@@ -27,31 +30,14 @@ async function main() {
   // getOpenPositions throws on a malformed response, so main() rejects here
   // and the snapshot below is not overwritten with a bogus "no positions".
   const current = await getOpenPositions();
-  const currentBySymbol = Object.fromEntries(current.map((p) => [p.symbol, p]));
-
-  const alerts = [];
-
-  for (const [symbol, prev] of Object.entries(previous)) {
-    if (!currentBySymbol[symbol]) {
-      alerts.push(`Position closed: ${symbol} — ${guessOutcome(prev)}. Last unrealised PnL ${prev.unrealisedPnl}.`);
-    }
-  }
-
-  for (const p of current) {
-    if (!previous[p.symbol]) {
-      alerts.push(
-        `Position detected: ${p.symbol} ${p.side} size ${p.size} @ ${p.entryPrice}, ` +
-          `stop ${p.stopLoss ?? "none"}, take profit ${p.takeProfit ?? "none"}.`
-      );
-    }
-  }
+  const { alerts, snapshot } = diffPositions(previous, current);
 
   for (const alert of alerts) {
     console.log(alert);
     await sendMessage(`[position-check] ${alert}`);
   }
 
-  saveSnapshot(currentBySymbol);
+  saveSnapshot(snapshot);
 }
 
 main().catch((err) => {
