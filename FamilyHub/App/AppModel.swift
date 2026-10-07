@@ -101,6 +101,32 @@ final class AppModel {
 
     func person(_ id: UUID) -> Person? { data.people.first { $0.id == id } }
 
+    // MARK: - Catch-Up Recorder
+
+    var catchUpNotes: [CatchUpNote] { data.catchUpNotes }
+
+    func addCatchUpNote(_ note: CatchUpNote) {
+        update { d in d.catchUpNotes.insert(note, at: 0) }
+    }
+
+    func assignCatchUpNote(_ id: UUID, to personID: UUID?) {
+        update { d in
+            guard let i = d.catchUpNotes.firstIndex(where: { $0.id == id }) else { return }
+            d.catchUpNotes[i].personID = personID
+        }
+    }
+
+    /// Appends a suggested note from a catch-up onto that person's profile notes, same style as
+    /// the existing "What's going on with them?" field.
+    func saveSuggestedNote(_ text: String, to personID: UUID) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        update { d in
+            guard let i = d.people.firstIndex(where: { $0.id == personID }) else { return }
+            d.people[i].notes = d.people[i].notes.isEmpty ? trimmed : d.people[i].notes + "\n" + trimmed
+        }
+    }
+
     // MARK: - Engagement
 
     var theme: Theme { data.preferences.theme }

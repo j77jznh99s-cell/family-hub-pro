@@ -7,6 +7,7 @@ struct PeopleView: View {
     @Environment(AppModel.self) private var model
     @State private var editing: Person?
     @State private var showingPicker = false
+    @State private var catchUpTarget: Person?
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,10 @@ struct PeopleView: View {
                         .swipeActions(edge: .leading) {
                             Button("Texted", systemImage: "checkmark") { model.markContacted(person.id) }
                                 .tint(.green)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button("Catch-up", systemImage: "mic.fill") { catchUpTarget = person }
+                                .tint(model.theme.accent)
                         }
                 }
                 .onDelete { offsets in
@@ -64,6 +69,9 @@ struct PeopleView: View {
                     model.upsert(saved)
                     Task { await model.refreshOpenersIfNeeded() }
                 }
+            }
+            .sheet(item: $catchUpTarget) { person in
+                CatchUpView(personID: person.id)
             }
         }
     }

@@ -4,6 +4,7 @@ import SwiftUI
 /// The main screen: your streak up top, then who to text today, each with a ready-to-send opener.
 struct TodayView: View {
     @Environment(AppModel.self) private var model
+    @State private var showingCatchUp = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,11 @@ struct TodayView: View {
             .background(AppBackground())
             .navigationTitle("Today")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingCatchUp = true } label: {
+                        Label("Catch-Up Recorder", systemImage: "mic.fill")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await model.refreshOpenersIfNeeded(force: true) }
@@ -40,6 +46,7 @@ struct TodayView: View {
                 }
             }
             .refreshable { await model.refreshOpenersIfNeeded(force: true) }
+            .sheet(isPresented: $showingCatchUp) { CatchUpView() }
         }
     }
 

@@ -9,6 +9,7 @@ An iPhone app that helps you keep in touch with the people you care about, for a
 - **Favorites**: your inner circle as big photo tiles, each with a ring that fills up as they come due and a 🔥 streak for that person.
 - **Progress**: your streak, freezes, daily goal, level, a chart of your week, and your badge collection.
 - **Make it yours**: photos for each person (imported from Contacts automatically), your own background photo, six color themes, and a daily reminder notification at a time you choose.
+- **Catch-Up Recorder**: just got off the phone with Mom? Tap record for a quick recap (or record key moments of the call itself on speakerphone). Family Hub transcribes it on your phone, then asks Claude for a one-sentence summary, a short note worth saving to that person's profile (so future openers can reference what you actually talked about), and a checklist of anything you said you'd follow up on. You can also ask a follow-up question about the conversation afterward. Find it on each person's row in **People** (swipe left) or from the **Today** tab's toolbar. Nothing but the transcript text ever leaves the recording — the audio itself is discarded as soon as it's transcribed.
 - **Widgets**:
   - *Lock screen*: "💬 Text Mom · 9 days" above the clock, a 🔥 streak circle, or a rectangle that also shows the opener. Tap one to open the message.
   - *Home screen*: small (the top person) or medium (the top 3), with photos, your streak, and your background photo. Tap a name to text them, or ✓ if you already did.
@@ -45,12 +46,14 @@ You need a Mac with Xcode 15 or newer (it's free from the Mac App Store). A free
 FamilyHub/
 ├── project.yml                 XcodeGen spec (app + widget extension, shared App Group)
 ├── Packages/FamilyHubCore/     All the logic, as a plain Swift package with unit tests
-│   ├── Models.swift            Person, LifeContext, Opener, Suggestion
+│   ├── Models.swift            Person, LifeContext, Opener, Suggestion, CatchUpNote
 │   ├── SuggestionEngine.swift  Who's due, ranked; offline fallback openers
 │   ├── Engagement.swift        Streaks and freezes, XP, levels, badges, reminder text
 │   ├── Store.swift             One small JSON file (+ photos) in the App Group, shared by app + widget
-│   └── OpenerGenerator.swift   Claude Messages API call (one request for everyone on the list)
-├── App/                        SwiftUI app: Today, Favorites, Progress, People, Me, celebration, Messages composer
+│   ├── OpenerGenerator.swift   Claude Messages API call (one request for everyone on the list)
+│   └── CatchUpSummarizer.swift Claude calls for the Catch-Up Recorder (summary + ask-a-question)
+├── App/                        SwiftUI app: Today, Favorites, Progress, People, Me, celebration, Messages composer,
+│                                Catch-Up Recorder (RecordingService.swift + CatchUpView.swift)
 └── Widget/                     WidgetKit: lock screen (inline/rectangular/circular) + home (small/medium)
 ```
 
@@ -63,6 +66,7 @@ FamilyHub/
 
 - iOS doesn't let apps read your iMessage history. Family Hub knows you texted someone when you send from its composer, tap ✓ on the widget, or swipe *Texted* in People. If you text someone straight from Messages, tap ✓ or swipe *Texted* afterwards so the timer resets.
 - On the lock screen, tapping the widget opens the message. The ✓ button is only on the home screen widgets.
+- The Catch-Up Recorder only works while the app is open (iOS doesn't allow background microphone access, which is why always-on ambient recording needs separate hardware rather than a plain app). On-device speech recognition accuracy and language support vary by device and locale; this feature needs real-device testing — the simulator's microphone and speech recognition are unreliable — which only the owner can do.
 
 ## Tests
 
