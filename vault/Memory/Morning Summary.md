@@ -32,6 +32,43 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-07
+
+**Done overnight/today**
+- You asked about replicating a $200 AI wearable recorder on your phone instead — gave you the
+  honest answer (always-on background recording isn't possible as a plain app, iOS blocks that;
+  on-demand recording is), then built the on-demand version into Family Hub: the **Catch-Up
+  Recorder**. Tap-record a quick recap after a call, on-device transcription, then Claude writes a
+  summary, a note for that person's profile, and a follow-up checklist, plus you can ask follow-up
+  questions about the conversation. Pushed to the Family Hub branch (`0f097d3`), not `main`.
+- I reviewed the full diff myself before calling it done — it reuses the app's existing patterns
+  exactly (same Claude API call shape as the opener-writer, same privacy rules, same storage
+  pattern) and the privacy promise is actually tested in code, not just claimed.
+- **Completely unverified** — there's no Xcode or Swift toolchain in this sandbox, so none of it has
+  been compiled or run. This needs you.
+
+**New projects waiting for your OK**
+- None — this was your own request, not a speculative new project.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Family Hub: build and test the Catch-Up Recorder.** `cd FamilyHub/Packages/FamilyHubCore &&
+  swift test` first (logic tests, no device needed), then `xcodegen` + run on a real iPhone (not the
+  simulator — mic/speech there is unreliable). Exact steps in [[Family Hub]]. Tell me what breaks.
+- **Sproutling Isles play-test — beta window (2–8 Oct) ends in 1 day, still no play-test done.**
+  Needs a call either way: run it today/tomorrow, push the dates, or launch without the full pass.
+- Everything else unchanged: video-analyst's failed YouTube import, whether to resume the hourly
+  worker, the 13 Robux items, [[Decisions]] #1/#3/#4/#20/#21, OANDA setup, Clip Studio direction,
+  Command Deck wiring, and what's next for Family Hub overall (TestFlight? App Store?).
+
+**Next up**
+- Waiting on you to test the Catch-Up Recorder and on the Sproutling Isles beta-timeline call.
+  Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-06
 
 **Done overnight/today**
