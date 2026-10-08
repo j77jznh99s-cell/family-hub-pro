@@ -32,6 +32,36 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-08
+
+**Done overnight/today**
+- Nothing new from an automated run — worker still paused. Yesterday (after this summary's cutoff):
+  refreshed [[AI Memory Export]] (a portable summary of every project, your preferences and open
+  decisions) and sent you the file directly, in response to your request for something to hand to
+  another AI assistant.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Sproutling Isles: today is the last day of the planned 2–8 Oct closed beta window, and the
+  Studio play-test still hasn't happened.** The test plan has been ready and double-checked since
+  3 Oct. This needs a decision regardless of which way it goes — run it today, or push the beta/
+  launch dates back.
+- **Family Hub: still waiting on you to build and test the Catch-Up Recorder** (`0f097d3`) —
+  `swift test` then Xcode on a real iPhone. Completely unverified until you do.
+- Everything else unchanged: video-analyst's failed YouTube import, whether to resume the hourly
+  worker, the 13 Robux items, [[Decisions]] #1/#3/#4/#20/#21, OANDA setup, Clip Studio direction,
+  Command Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on your Sproutling Isles timeline call and the Family Hub test. Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-07
 
 **Done overnight/today**
