@@ -1,6 +1,51 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-08: owner request — knowledge graph built (VPS agent idea declined)
+**Device:** phone/cloud · **Branch:** `claude/clip-bzq4u9` · **Agents used:** none (built directly — workspace-level, not one of the four `app-engineer` projects)
+
+**Owner asked**
+- Sent a video (a tutorial on building a self-learning AI agent: rent a VPS, install Tailscale, run
+  a coding agent on it, connect a knowledge graph for memory, talk to it over iMessage/Telegram) and
+  asked to "implement" it.
+
+**What was done**
+- Got the video to me via Dropbox → Descript `import_media` by URL (direct chat upload kept failing
+  on size; this bypasses that entirely — worth remembering for any future large file).
+- Before building: checked [[Agent Platform Comparison]] and found the owner had already researched
+  almost this exact idea on 2026-09-26 and it's sitting as **pending** [[Decisions]] #21
+  ("put StarNet on hold"), plus the house rule to never spend money without flagging it first (a VPS
+  is a recurring cost) and the fact that provisioning a VPS/Tailscale isn't something buildable as
+  code from this sandbox anyway. Surfaced this to the owner with pros/cons for three options before
+  writing anything.
+- Owner chose: build the knowledge-graph piece only, no VPS, no new recurring cost.
+- Built `tools/knowledge-graph/graph.js` (nodes + typed edges, file-based, no new npm dependency) +
+  `tools/knowledge-graph/cli.js` (add-node, add-edge, get, find, neighbors, traverse, stats) +
+  `tests/knowledgeGraph.test.js` (9 tests, all passing). Data lives at
+  `vault/Memory/knowledge-graph.json`, git-tracked like the rest of the vault.
+- Seeded it with real current data: an `owner` node, one `project` node per row in [[00 Home]]'s
+  project table, and a `decision` node for #21 linked from `project:starnet-automation`. Verified the
+  multi-hop `traverse` command end-to-end against this real data (`owner --path owns,has_decision`
+  correctly returns only decision:21, not all 7 projects).
+- Wrote [[Knowledge Graph]] (new playbook: schema, CLI usage, why this instead of the VPS route).
+  Linked it from [[00 Home]], added a row to [[How Agents Work]]'s memory table, and noted in
+  [[Team Roster]] that `knowledge-keeper` owns keeping it in sync going forward.
+- Ran the full suite (`npm install` + `npm test`): 39/39 pass, including the 9 new tests. (The repo
+  had no `node_modules` in this fresh sandbox before `npm install` — unrelated to this change, not a
+  regression; worth remembering other sessions may hit the same thing.)
+
+**Not verified**
+- No live use yet of the knowledge graph by another agent/session — only my own seed data and tests.
+- Whether the schema (generic `type`/`label`/`data` nodes, typed edges) actually fits how the owner
+  wants to query it long-term is unproven; built to be easy to extend, not finalized.
+
+**Decisions** (also add to [[Decisions]])
+- Declined the standalone VPS agent project for now; built the knowledge-graph memory layer only,
+  inside the existing sandboxed workspace, no new cost or server.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-07: owner request — "Catch-Up Recorder" built into Family Hub
 **Device:** phone/cloud · **Branch:** `claude/family-hub-widget-1w7cv9` · **Agents used:** app-engineer
 

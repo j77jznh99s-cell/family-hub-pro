@@ -17,6 +17,7 @@ needs goes into a vault note and gets pushed to GitHub. If it isn't in the vault
 | Who the owner is and how they work | [[Owner Profile]] |
 | Project knowledge, status and tasks | `vault/Projects/<Project>.md` |
 | How to do something repeatable | `vault/Playbooks/` |
+| Structured relationships for multi-hop lookups | [[Knowledge Graph]] (`vault/Memory/knowledge-graph.json`) |
 
 ## 2. The orchestrator loop (main session)
 1. Load context: `CLAUDE.md` → [[00 Home]] → [[Active Context]] → the project note.

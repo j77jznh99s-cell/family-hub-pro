@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-08 | Workspace | Declined the standalone VPS-based agent project (from a tutorial video); built a [[Knowledge Graph]] memory layer instead, inside the existing sandbox, no new server/cost | Confirms #21: matches the already-researched recommendation (cost, security, duplicates existing setup); gets the real learning/recall benefit without the VPS/Tailscale/messaging-bridge parts | Owner asked for pros/cons, then chose |
 | 2026-09-27 | Workspace | Paused the "Hourly project work (worker)" Routine (`trig_012vmVxmbAkxxY59wCnKaG1J`) — disabled, not deleted, so it keeps its run history and can be turned back on | Owner: "Pause the hourly queue" | Owner |
 | 2026-09-26 | Workspace | Cheapest way that still gets work done: up to 3 tasks per hourly run (~20 min each, since Routines can't fire more than hourly), quick exit when blocked, cheaper models for routine agents, no paid services | Owner: "cheapest way possible", "20 minutes if you can" | Owner asked, Claude chose |
 | 2026-09-26 | Workspace | Anything that costs money: never pay; push-notify the owner and list it in [[Work Queue]] | Owner: "notified if anything needs to be paid for beforehand" | Owner |
@@ -57,5 +58,9 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| 21 | StarNet: put on hold and stay on the cloud setup (Claude Code + Routines + vault)? See [[Agent Platform Comparison]] | Yes; add self-hosted n8n later only if Gumroad needs it |
 | 20 | Which product line first: family printables, Roblox game-making guides, or spreadsheet/Notion templates? | Family printables (easiest to make well and check for originality) |
+
+~~21 | StarNet: put on hold and stay on the cloud setup? | Yes~~ — **resolved 2026-10-08**: owner
+declined a separate VPS-based agent (from a tutorial video) in favor of staying on the current setup
+and adding a [[Knowledge Graph]] memory layer instead. See the 2026-10-08 row above. StarNet itself
+(the local pixel-art station) remains on hold, unchanged.
