@@ -35,3 +35,4 @@ Claude sessions write to the vault on `main`. Pull first, so you see the latest 
 ## Where things are
 - [[00 Home]]: the index · [[Active Context]]: what's next · [[Decisions]]: the 15 questions waiting for you
 - [[Sproutling Isles - Design Doc]]: the full game design (vault copy)
+- [[Start Here - iPhone]]: the equivalent phone/Obsidian-mobile setup

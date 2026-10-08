@@ -1,6 +1,27 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-08: owner request — iPhone/Obsidian setup guide written
+**Device:** phone · **Branch:** `main` (direct, owner asked me to handle sync to main this session) · **Agents used:** none
+
+**Owner asked**
+- After the [[Knowledge Graph]] work, asked about connecting Obsidian to make the vault a "second
+  brain." The vault was already Obsidian-ready and had [[Start Here - Laptop]], but nothing for
+  phone — and this owner works mostly from their phone (established earlier this session).
+
+**What was done**
+- Wrote [[Start Here - iPhone]]: two-way sync via **Working Copy** (recommended — more reliable than
+  running git inside Obsidian on a repo this size) or the **Obsidian Git** plugin directly (one app,
+  flagged as less reliable here). Linked from [[00 Home]] and [[Start Here - Laptop]].
+
+**Not verified**
+- Not tested on a real iPhone by me (can't — no iOS device in the sandbox). Owner should confirm the
+  Working Copy → Obsidian folder-picker step actually surfaces `vault` as expected on their iOS
+  version before relying on it.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-08: owner request — knowledge graph built (VPS agent idea declined)
 **Device:** phone/cloud · **Branch:** `claude/clip-bzq4u9` · **Agents used:** none (built directly — workspace-level, not one of the four `app-engineer` projects)
 

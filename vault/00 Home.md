@@ -4,7 +4,7 @@ updated: 2026-09-26
 ---
 # Home
 
-**New on the laptop?** Read [[Start Here - Laptop]].
+**New on the laptop?** Read [[Start Here - Laptop]]. **On iPhone?** Read [[Start Here - iPhone]].
 
 The owner's shared brain. Every Claude session and agent starts here (see `CLAUDE.md`).
 Open this folder in Obsidian as a vault to browse it with links and graph view.
