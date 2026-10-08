@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # Active Context
 
@@ -18,6 +18,12 @@ When resumed: works one task from [[Work Queue]] following [[Hourly Workflow]]; 
 CI and the queue, then logs a one-line "nothing changed" and stops — no more speculative work is being added
 to `tools/audit-economy.luau` (it's feature-complete at 4 sections, see below). Next real progress needs the
 owner to unblock something.
+
+**2026-10-08: [[Knowledge Graph]] built** (`tools/knowledge-graph/`, workspace-level, not tied to one
+project) — owner sent a VPS-agent tutorial video, asked to implement it; found it was already
+researched and recommended against ([[Decisions]] #21), so proposed alternatives and owner chose the
+graph-only route instead. Nodes/edges, file-based, git-tracked, no server/cost. 9/9 new tests pass,
+seeded with real project data. See [[Active Context#Waiting on the owner]] below for the ask.
 
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
@@ -60,12 +66,13 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 - [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
   table fixed), ready to pull on the laptop and run with no known blockers left on this end.
-- [ ] video-analyst: first real attempt (`youtu.be/FwOTs4UxQS4`, 2026-09-27) failed — Descript's importer got back an HTML page, not a media file. Confirm the video's public/accessible, or send the file as a direct upload instead. See [[Video Analyst Runs]].
+- [ ] video-analyst: first real attempt (`youtu.be/FwOTs4UxQS4`, 2026-09-27) failed — Descript's importer got back an HTML page, not a media file. Confirm the video's public/accessible, or send the file as a direct upload instead. See [[Video Analyst Runs]]. **Note for next time:** a direct-link upload to Dropbox (file-level share link, `dl=1`, and specifically the `dl.dropboxusercontent.com` host — `www.dropbox.com` with `dl=1` still returned an HTML page) worked cleanly on 2026-10-08 for a 53MB video when the chat's own upload limit (~30MB) was the blocker.
+- [ ] Try the new [[Knowledge Graph]] (`tools/knowledge-graph/cli.js`) in a real session and say whether the node/edge schema fits how you actually want to query things — built and tested 2026-10-08 but only seeded with my own placeholder data so far.
 - [ ] Say whether to wire the new [[#Key links|Command Deck]] hub artifact (built 2026-09-27 on request) into the hourly routine for periodic refresh, or leave it as refresh-on-request.
 - [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct — `Config.EventTimeOffset` is built (`04a3211`), so the full test plan in the QA note is ready to run.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
-- [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
+- [ ] StarNet itself (the local pixel-art station) is still on hold, separate from the VPS-agent idea declined 2026-10-08; if you want to revisit StarNet specifically, the next step is just the Gumroad account.
 - [ ] Say what's next for Clip Studio — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
 - [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do (no Xcode in the sandbox). See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
 

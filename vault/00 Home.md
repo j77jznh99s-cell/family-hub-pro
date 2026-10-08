@@ -17,6 +17,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Decisions]]: decisions the owner made, and why
 - [[Owner Profile]]: goals, preferences and how the owner likes to work
 - [[AI Memory Export]]: portable snapshot of the owner for another AI assistant
+- [[Knowledge Graph]]: structured nodes/edges on top of the vault for multi-hop lookups (e.g. "what decisions are blocking project X")
 
 ## Projects
 - [[Sproutling Isles]]: Roblox grow-and-snatch game (active)

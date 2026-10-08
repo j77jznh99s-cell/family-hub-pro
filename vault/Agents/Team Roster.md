@@ -15,7 +15,7 @@ Each role is a Claude Code subagent defined in `.claude/agents/<name>.md`. The m
 | `live-ops-manager` | Events calendar, monetization tuning, analytics, launch checklist | Project note, design doc (Economy + Retention) | Live-ops plans, event specs, KPI reviews | Add pay-to-win items |
 | `app-engineer` | Non-Roblox code: [[Clip Studio]], [[Family Hub]], [[Bybit Trading Bot]] | That project's note and README | Code on that project's branch | Touch the trading bot's risk gate or live trading without explicit owner approval |
 | `product-maker` | Original digital products and Gumroad listings (drafts only) | [[Gumroad Digital Products]] (section 1 first), the research brief | Product drafts and listings as files | Copy anyone's product, use brands/characters, or publish, price, refund or contact buyers |
-| `knowledge-keeper` | Vault hygiene: logs, decisions, active context, links | [[Active Context]], [[Session Log]], git log | Memory notes | Invent decisions or facts |
+| `knowledge-keeper` | Vault hygiene: logs, decisions, active context, links, the [[Knowledge Graph]] | [[Active Context]], [[Session Log]], git log | Memory notes, `vault/Memory/knowledge-graph.json` (via `tools/knowledge-graph/cli.js`) | Invent decisions or facts |
 | `video-analyst` | Breaking down tutorial videos/series (uploaded files or YouTube links) into a written brief, then a ~5-minute video+audio recap via Descript | The source video/URL, its transcript, the relevant project note | Breakdown notes, a Descript project (draft) | Publish externally without being asked; use someone else's footage as if original without flagging it |
 
 ## Hand-offs that work well
