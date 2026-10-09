@@ -32,6 +32,44 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-09
+
+**Done overnight/today**
+- Nothing new from an automated run — worker still paused. Yesterday (after this summary's cutoff),
+  your own session did real work:
+  - You sent a tutorial video about building a self-hosted VPS AI agent and asked to implement it.
+    Found you'd already researched and decided against this almost exactly (pending [[Decisions]]
+    #21, "put StarNet on hold") — flagged that instead of just building it, and you chose a smaller
+    piece: a **file-based knowledge graph** (`tools/knowledge-graph/`), no VPS, no new recurring
+    cost. 9/9 new tests pass, seeded with real project data.
+  - You then asked about syncing the vault to Obsidian on your iPhone — wrote [[Start Here - iPhone]]
+    (Working Copy or Obsidian Git, two-way sync). **Not verified on a real device yet.**
+
+**New projects waiting for your OK**
+- None — both were your own requests, worked through to a smaller, cheaper scope than what was
+  originally asked, with your sign-off at the fork point.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Sproutling Isles: the planned 2–8 Oct beta window has now fully passed with no play-test done.**
+  This needs a decision, not just a flag — the test plan has been ready since 3 Oct.
+- **Family Hub: still waiting on your Catch-Up Recorder test** (`swift test`, then Xcode on a real iPhone).
+- **Try the new Knowledge Graph** (`tools/knowledge-graph/cli.js`) and say whether its schema fits
+  how you actually want to query things — only seeded with placeholder data so far.
+- **Confirm Obsidian-on-iPhone sync works** per [[Start Here - iPhone]] — written but unverified.
+- Everything else unchanged: video-analyst's YouTube import (a workaround for large files via
+  Dropbox direct-link was found 2026-10-08, worth using next time), whether to resume the hourly
+  worker, the 13 Robux items, remaining [[Decisions]], OANDA setup, Clip Studio direction, Command
+  Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on you for the Sproutling Isles beta-timeline call, the Family Hub test, and feedback on
+  the two new tools built yesterday. Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-08
 
 **Done overnight/today**
