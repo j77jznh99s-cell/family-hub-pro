@@ -41,6 +41,25 @@ async function recentTopics(outputDir = OUTPUT_DIR, limit = 15) {
   return topics;
 }
 
+// Creates a fresh run folder. A second run with the same date, lane and topic gets
+// "<name>-2", "<name>-3", ... instead of overwriting the first; the first keeps the plain
+// name, so the "<date>-<lane>-" prefix the calendar matches on is unchanged. mkdir without
+// `recursive` fails with EEXIST when the folder is already there, so two runs racing for
+// the same name can't both claim it.
+async function makeRunDir(outputDir, name, { maxTries = 100 } = {}) {
+  await fs.mkdir(outputDir, { recursive: true });
+  for (let n = 1; n <= maxTries; n++) {
+    const dir = path.join(outputDir, n === 1 ? name : `${name}-${n}`);
+    try {
+      await fs.mkdir(dir);
+      return dir;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+    }
+  }
+  throw new Error(`Couldn't find a free run folder name for ${name} after ${maxTries} tries`);
+}
+
 function postText(script) {
   const tags = script.hashtags.map((h) => `#${h}`).join(' ');
   const sources = script.sources.map((s) => `- ${s.title}: ${s.url}`).join('\n');
@@ -96,8 +115,7 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), fo
     throw new Error(`Script failed checks: ${problems.join('; ')}`);
   }
 
-  const runDir = path.join(OUTPUT_DIR, `${(forDate || now).toISOString().slice(0, 10)}-${nicheKey}-${slugify(script.topic)}`);
-  await fs.mkdir(runDir, { recursive: true });
+  const runDir = await makeRunDir(OUTPUT_DIR, `${(forDate || now).toISOString().slice(0, 10)}-${nicheKey}-${slugify(script.topic)}`);
   await writeFileAtomic(path.join(runDir, 'research.md'), brief, 'utf8');
   await writeFileAtomic(path.join(runDir, 'script.json'), JSON.stringify(script, null, 2), 'utf8');
   await writeFileAtomic(path.join(runDir, 'post.txt'), postText(script), 'utf8');
@@ -142,4 +160,4 @@ async function createPresenterVideo({ niche, render = true, now = new Date(), fo
   return { runDir, script, videoPath, captionedPath };
 }
 
-module.exports = { createPresenterVideo, recentTopics, postText, slugify, OUTPUT_DIR };
+module.exports = { createPresenterVideo, recentTopics, postText, slugify, makeRunDir, OUTPUT_DIR };

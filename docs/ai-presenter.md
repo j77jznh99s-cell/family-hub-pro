@@ -29,7 +29,9 @@ trending, informational topic:
    `npm run presenter -- --overlay <run folder>`.
 6. **Save.** Everything goes to `data/presenter/<date>-<lane>-<topic>/`:
    `video.mp4`, `video.captioned.mp4`, `script.json`, `post.txt` (caption, hashtags,
-   sources, AI disclosure), `research.md`, `render.json`.
+   sources, AI disclosure), `research.md`, `render.json`. A second run on the same day,
+   lane and topic goes to `<date>-<lane>-<topic>-2/` (then `-3`, ...), so it never
+   overwrites an earlier run.
 
 `npm run presenter -- --script-only` does steps 1-3 without spending HeyGen credits, so
 you can review scripts first.
@@ -87,7 +89,7 @@ npm run presenter -- --calendar                 # next 7 days, one video a day
 npm run presenter -- --calendar --per-day 2 --times 12:00,18:00
 ```
 
-Prints and saves `data/presenter/calendar.md`: each slot's lane, a post time and its status (`planned`, `scripted`, `rendered`, `captioned`, or `missed` for a past slot with no run). The lanes rotate evenly so each one gets equal airtime. With one video a day, each slot uses the same lane `--niche auto` would pick for that date. The post times are only a starting point, so adjust them once you see your own analytics (`PRESENTER_POST_TIMES` sets the default). Planning makes no API calls.
+Prints and saves `data/presenter/calendar.md`: each slot's lane, a post time and its status (`planned`, `scripted`, `rendered`, `captioned`, or `missed` for a past slot with no run). The lanes rotate evenly so each one gets equal airtime. With one video a day, each slot uses the same lane `--niche auto` would pick for that date. The post times are only a starting point, so adjust them once you see your own analytics (`PRESENTER_POST_TIMES` sets the default). Planning makes no API calls. `--days` takes 1 to 31 and `--per-day` 1 to 6 (for both `--calendar` and `--fill-week`); anything else, such as `0`, `abc` or `2.5`, stops with an error instead of quietly using the default. With more videos a day than post times, the times repeat in order.
 
 To script ahead, run `npm run presenter -- --fill-week`. It lists the slots from today on that don't have a run yet (the next 3 days by default; use `--days` to change that). Add `--yes` to write them. Filling only researches and writes scripts: nothing is rendered and nothing is posted, so HeyGen credits are only spent when you render deliberately. Each script is filed under its slot's date and shows up in the calendar as `scripted`. The research still uses today's news, though, so re-read a script written days ahead before you render it. The filler carries on past a script that fails its checks. At the end it runs the pre-posting check (`--check`) on every new script and prints one summary, including which slots are still empty. It exits with an error if anything failed. It needs `ANTHROPIC_API_KEY`.
 

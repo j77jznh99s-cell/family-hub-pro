@@ -339,6 +339,67 @@ test('a script that fails its checks logs exactly one failed attempt', async (t)
   assert.equal(failed.at(-1).usage.claude.input_tokens, 700);
 });
 
+test('makeRunDir keeps the plain name first, then adds -2, -3 instead of reusing a folder', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'presenter-rundir-'));
+  try {
+    const name = '2026-09-24-markets-fed-holds-rates';
+    const first = await presenter.makeRunDir(dir, name);
+    const second = await presenter.makeRunDir(dir, name);
+    const third = await presenter.makeRunDir(dir, name);
+    assert.deepEqual([first, second, third].map((d) => path.basename(d)), [name, `${name}-2`, `${name}-3`]);
+    for (const d of [first, second, third]) assert.ok(fs.statSync(d).isDirectory());
+    const { validId } = require('../src/presenter/runs');
+    assert.ok(validId(path.basename(third))); // still a valid dashboard run id
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('makeRunDir gives runs racing for the same name different folders', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'presenter-rundir-'));
+  try {
+    const dirs = await Promise.all(Array.from({ length: 5 }, () => presenter.makeRunDir(dir, '2026-09-24-ai-same')));
+    assert.equal(new Set(dirs).size, 5);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('makeRunDir gives up after maxTries rather than looping forever', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'presenter-rundir-'));
+  try {
+    await presenter.makeRunDir(dir, 'x', { maxTries: 2 });
+    await presenter.makeRunDir(dir, 'x', { maxTries: 2 });
+    await assert.rejects(presenter.makeRunDir(dir, 'x', { maxTries: 2 }), /free run folder name for x/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a second run on the same day, lane and topic does not overwrite the first', async (t) => {
+  const now = new Date('2026-09-25T09:00:00Z');
+  let title = 'First take';
+  t.mock.method(writer, 'research', async () => ({ brief: `TOPIC: Same day twice (${title})`, searchedUrls: new Set(['https://reuters.com/a']) }));
+  t.mock.method(writer, 'writeScript', async () => rawScript({ topic: 'Same day twice', title }));
+  const first = await presenter.createPresenterVideo({ niche: 'ai', render: false, now, log: () => {} });
+  title = 'Second take';
+  const second = await presenter.createPresenterVideo({ niche: 'ai', render: false, now, log: () => {} });
+
+  assert.equal(path.basename(first.runDir), '2026-09-25-ai-same-day-twice');
+  assert.equal(path.basename(second.runDir), '2026-09-25-ai-same-day-twice-2');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(first.runDir, 'script.json'), 'utf8')).title, 'First take');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(second.runDir, 'script.json'), 'utf8')).title, 'Second take');
+  assert.match(fs.readFileSync(path.join(first.runDir, 'research.md'), 'utf8'), /First take/);
+
+  // The calendar still finds a suffixed folder by its "<date>-<lane>-" prefix.
+  const calendar = require('../src/presenter/calendar');
+  const slot = { date: '2026-09-25', niche: 'ai', label: NICHES.ai.label };
+  fs.rmSync(first.runDir, { recursive: true, force: true });
+  const [attached] = await calendar.attachRuns([slot], tmpOut);
+  assert.equal(attached.runDir, '2026-09-25-ai-same-day-twice-2');
+  assert.equal(attached.status, 'scripted');
+});
+
 test('createPresenterVideo forDate files the run under the slot date but researches with today', async (t) => {
   const today = new Date('2026-09-24T15:00:00Z');
   t.mock.method(writer, 'research', async (niche, { now }) => {

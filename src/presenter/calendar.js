@@ -27,9 +27,13 @@ function dayIndex(date) {
 // Slots are numbered continuously (day * perDay + slot), so lanes rotate evenly across
 // the week and consecutive days never open with the same lane. With one video a day
 // this matches the lane `--niche auto` picks for that date.
+// Upper bounds for planning; the CLI checks --days / --per-day against these too.
+const MAX_DAYS = 31;
+const MAX_PER_DAY = 6;
+
 function planWeek({ start = new Date(), days = 7, perDay = 1, times } = {}) {
-  if (!Number.isInteger(days) || days < 1 || days > 31) throw new Error('days must be 1-31');
-  if (!Number.isInteger(perDay) || perDay < 1 || perDay > 6) throw new Error('perDay must be 1-6');
+  if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) throw new Error(`days must be 1-${MAX_DAYS}`);
+  if (!Number.isInteger(perDay) || perDay < 1 || perDay > MAX_PER_DAY) throw new Error(`perDay must be 1-${MAX_PER_DAY}`);
   const postTimes = parseTimes(times);
   const first = dayIndex(start);
   const slots = [];
@@ -108,4 +112,4 @@ function toMarkdown(slots, { today = new Date() } = {}) {
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = { planWeek, attachRuns, toMarkdown, parseTimes };
+module.exports = { planWeek, attachRuns, toMarkdown, parseTimes, MAX_DAYS, MAX_PER_DAY };

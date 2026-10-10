@@ -18,28 +18,7 @@ const path = require('path');
 const { createPresenterVideo, OUTPUT_DIR } = require('../src/presenter');
 const calendar = require('../src/presenter/calendar');
 const { burnText } = require('../src/presenter/overlay');
-
-function parseArgs(argv) {
-  const args = { niche: 'auto', render: true };
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--niche') args.niche = argv[++i];
-    else if (argv[i] === '--script-only') args.render = false;
-    else if (argv[i] === '--overlay') args.overlay = argv[++i];
-    else if (argv[i] === '--calendar') args.calendar = true;
-    else if (argv[i] === '--fill-week') args.fill = true;
-    else if (argv[i] === '--yes') args.yes = true;
-    else if (argv[i] === '--demo') args.demo = true;
-    else if (argv[i] === '--usage') args.usage = true;
-    else if (argv[i] === '--weekly-report') args.weekly = true;
-    else if (argv[i] === '--check') args.check = argv[++i] || 'all';
-    else if (argv[i] === '--days') args.days = parseInt(argv[++i], 10);
-    else if (argv[i] === '--per-day') args.perDay = parseInt(argv[++i], 10);
-    else if (argv[i] === '--times') args.times = argv[++i];
-    else if (argv[i] === '--help' || argv[i] === '-h') args.help = true;
-    else throw new Error(`Unknown argument: ${argv[i]}`);
-  }
-  return args;
-}
+const { parseArgs } = require('../src/presenter/args');
 
 (async () => {
   const args = parseArgs(process.argv.slice(2));
@@ -52,7 +31,8 @@ function parseArgs(argv) {
         '       npm run presenter -- --usage\n' +
         '       npm run presenter -- --weekly-report\n' +
         '       npm run presenter -- --calendar [--days 7] [--per-day 1] [--times 12:00,18:00]\n' +
-        '       npm run presenter -- --fill-week [--days 3] [--per-day 1] [--yes]'
+        '       npm run presenter -- --fill-week [--days 3] [--per-day 1] [--yes]\n' +
+        '       (--days: 1-31, --per-day: 1-6)'
     );
     return;
   }
