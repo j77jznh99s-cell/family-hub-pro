@@ -32,6 +32,32 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-10
+
+**Done overnight/today**
+- Nothing — worker still paused, no new commits from any session, no chat requests.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Today was the originally planned Sproutling Isles public launch date (10 Oct) — and the beta
+  window before it never happened.** This isn't a soft flag anymore; the original plan has now
+  fully slipped. Needs a real decision: new beta/launch dates, or some other path forward.
+- Everything else unchanged: Family Hub's Catch-Up Recorder still needs your Xcode test, the new
+  Knowledge Graph and iPhone/Obsidian setup still need your try/confirm, video-analyst's YouTube
+  import, whether to resume the hourly worker, the 13 Robux items, remaining [[Decisions]], OANDA
+  setup, Clip Studio direction, Command Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on you for the Sproutling Isles timeline decision above all else. Nothing automatic until
+  the hourly worker is resumed.
+
+---
+
 ## 2026-10-09
 
 **Done overnight/today**

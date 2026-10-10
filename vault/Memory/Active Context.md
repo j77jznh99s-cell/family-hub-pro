@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 # Active Context
 
@@ -78,10 +78,11 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 - [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do (no Xcode in the sandbox). See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
 
 ## Timeline at risk
-**The planned 2–8 Oct closed beta window has now fully passed with no play-test done** (as of 2026-10-09) —
-the owner is the only one who can run it (Roblox Studio access). Launch 10 Oct is now in question; this needs
-an explicit owner decision (push the dates, or launch without the full pre-beta pass), not something a session
-can resolve on its own. If launch slips past 24 Oct, skip Halloween.
+**The original plan has now fully slipped** (as of 2026-10-10, the originally planned public-launch date):
+the 2–8 Oct beta window passed with no play-test done, and today's launch date passed with it. The owner is
+the only one who can run the play-test (Roblox Studio access). This needs an explicit owner decision — new
+beta/launch dates, or another path forward — not something a session can resolve on its own. If launch slips
+past 24 Oct, skip Halloween.
 
 ## Key links
 - Queue: [[Work Queue]] · Rule: [[Hourly Workflow]] · Summary: [[Morning Summary]]
