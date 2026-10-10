@@ -32,6 +32,137 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-10
+
+**Done overnight/today**
+- Nothing — worker still paused, no new commits from any session, no chat requests.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Today was the originally planned Sproutling Isles public launch date (10 Oct) — and the beta
+  window before it never happened.** This isn't a soft flag anymore; the original plan has now
+  fully slipped. Needs a real decision: new beta/launch dates, or some other path forward.
+- Everything else unchanged: Family Hub's Catch-Up Recorder still needs your Xcode test, the new
+  Knowledge Graph and iPhone/Obsidian setup still need your try/confirm, video-analyst's YouTube
+  import, whether to resume the hourly worker, the 13 Robux items, remaining [[Decisions]], OANDA
+  setup, Clip Studio direction, Command Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on you for the Sproutling Isles timeline decision above all else. Nothing automatic until
+  the hourly worker is resumed.
+
+---
+
+## 2026-10-09
+
+**Done overnight/today**
+- Nothing new from an automated run — worker still paused. Yesterday (after this summary's cutoff),
+  your own session did real work:
+  - You sent a tutorial video about building a self-hosted VPS AI agent and asked to implement it.
+    Found you'd already researched and decided against this almost exactly (pending [[Decisions]]
+    #21, "put StarNet on hold") — flagged that instead of just building it, and you chose a smaller
+    piece: a **file-based knowledge graph** (`tools/knowledge-graph/`), no VPS, no new recurring
+    cost. 9/9 new tests pass, seeded with real project data.
+  - You then asked about syncing the vault to Obsidian on your iPhone — wrote [[Start Here - iPhone]]
+    (Working Copy or Obsidian Git, two-way sync). **Not verified on a real device yet.**
+
+**New projects waiting for your OK**
+- None — both were your own requests, worked through to a smaller, cheaper scope than what was
+  originally asked, with your sign-off at the fork point.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Sproutling Isles: the planned 2–8 Oct beta window has now fully passed with no play-test done.**
+  This needs a decision, not just a flag — the test plan has been ready since 3 Oct.
+- **Family Hub: still waiting on your Catch-Up Recorder test** (`swift test`, then Xcode on a real iPhone).
+- **Try the new Knowledge Graph** (`tools/knowledge-graph/cli.js`) and say whether its schema fits
+  how you actually want to query things — only seeded with placeholder data so far.
+- **Confirm Obsidian-on-iPhone sync works** per [[Start Here - iPhone]] — written but unverified.
+- Everything else unchanged: video-analyst's YouTube import (a workaround for large files via
+  Dropbox direct-link was found 2026-10-08, worth using next time), whether to resume the hourly
+  worker, the 13 Robux items, remaining [[Decisions]], OANDA setup, Clip Studio direction, Command
+  Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on you for the Sproutling Isles beta-timeline call, the Family Hub test, and feedback on
+  the two new tools built yesterday. Nothing automatic until the hourly worker is resumed.
+
+---
+
+## 2026-10-08
+
+**Done overnight/today**
+- Nothing new from an automated run — worker still paused. Yesterday (after this summary's cutoff):
+  refreshed [[AI Memory Export]] (a portable summary of every project, your preferences and open
+  decisions) and sent you the file directly, in response to your request for something to hand to
+  another AI assistant.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Sproutling Isles: today is the last day of the planned 2–8 Oct closed beta window, and the
+  Studio play-test still hasn't happened.** The test plan has been ready and double-checked since
+  3 Oct. This needs a decision regardless of which way it goes — run it today, or push the beta/
+  launch dates back.
+- **Family Hub: still waiting on you to build and test the Catch-Up Recorder** (`0f097d3`) —
+  `swift test` then Xcode on a real iPhone. Completely unverified until you do.
+- Everything else unchanged: video-analyst's failed YouTube import, whether to resume the hourly
+  worker, the 13 Robux items, [[Decisions]] #1/#3/#4/#20/#21, OANDA setup, Clip Studio direction,
+  Command Deck wiring, what's next for Family Hub overall.
+
+**Next up**
+- Waiting on your Sproutling Isles timeline call and the Family Hub test. Nothing automatic until the hourly worker is resumed.
+
+---
+
+## 2026-10-07
+
+**Done overnight/today**
+- You asked about replicating a $200 AI wearable recorder on your phone instead — gave you the
+  honest answer (always-on background recording isn't possible as a plain app, iOS blocks that;
+  on-demand recording is), then built the on-demand version into Family Hub: the **Catch-Up
+  Recorder**. Tap-record a quick recap after a call, on-device transcription, then Claude writes a
+  summary, a note for that person's profile, and a follow-up checklist, plus you can ask follow-up
+  questions about the conversation. Pushed to the Family Hub branch (`0f097d3`), not `main`.
+- I reviewed the full diff myself before calling it done — it reuses the app's existing patterns
+  exactly (same Claude API call shape as the opener-writer, same privacy rules, same storage
+  pattern) and the privacy promise is actually tested in code, not just claimed.
+- **Completely unverified** — there's no Xcode or Swift toolchain in this sandbox, so none of it has
+  been compiled or run. This needs you.
+
+**New projects waiting for your OK**
+- None — this was your own request, not a speculative new project.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Family Hub: build and test the Catch-Up Recorder.** `cd FamilyHub/Packages/FamilyHubCore &&
+  swift test` first (logic tests, no device needed), then `xcodegen` + run on a real iPhone (not the
+  simulator — mic/speech there is unreliable). Exact steps in [[Family Hub]]. Tell me what breaks.
+- **Sproutling Isles play-test — beta window (2–8 Oct) ends in 1 day, still no play-test done.**
+  Needs a call either way: run it today/tomorrow, push the dates, or launch without the full pass.
+- Everything else unchanged: video-analyst's failed YouTube import, whether to resume the hourly
+  worker, the 13 Robux items, [[Decisions]] #1/#3/#4/#20/#21, OANDA setup, Clip Studio direction,
+  Command Deck wiring, and what's next for Family Hub overall (TestFlight? App Store?).
+
+**Next up**
+- Waiting on you to test the Catch-Up Recorder and on the Sproutling Isles beta-timeline call.
+  Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-06
 
 **Done overnight/today**

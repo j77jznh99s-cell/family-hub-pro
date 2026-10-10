@@ -4,7 +4,7 @@ updated: 2026-09-26
 ---
 # Home
 
-**New on the laptop?** Read [[Start Here - Laptop]].
+**New on the laptop?** Read [[Start Here - Laptop]]. **On iPhone?** Read [[Start Here - iPhone]].
 
 The owner's shared brain. Every Claude session and agent starts here (see `CLAUDE.md`).
 Open this folder in Obsidian as a vault to browse it with links and graph view.
@@ -17,6 +17,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Decisions]]: decisions the owner made, and why
 - [[Owner Profile]]: goals, preferences and how the owner likes to work
 - [[AI Memory Export]]: portable snapshot of the owner for another AI assistant
+- [[Knowledge Graph]]: structured nodes/edges on top of the vault for multi-hop lookups (e.g. "what decisions are blocking project X")
 
 ## Projects
 - [[Starling Heist]]: brand-new Roblox steal-and-collect game, built 2026-10-03 (not play-tested yet)

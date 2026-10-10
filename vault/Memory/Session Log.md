@@ -1,6 +1,25 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-10 13:45: local hourly run — Clip Studio: unique run folders, strict --days/--per-day
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** app-engineer
+
+- Rotation: AI Agent Team skipped (same uncommitted `agents/inbox/LOG.md`, no remote) → Clip Studio. Cloud branch
+  unchanged at `965a4a3`; new cloud branch `claude/clip-bzq4u9` is vault/knowledge-graph only.
+- QA Review 2 #5 confirmed and fixed: a second run on the same date + lane + topic reused the folder and overwrote the
+  first. New `makeRunDir` (non-recursive `mkdir`, `-2`, `-3` … on `EEXIST`, race-safe); first run keeps the plain name.
+  Orchestrator checked consumers: calendar `attachRuns` matches by `<date>-<lane>-` prefix, usage month by date prefix,
+  dashboard `ID_RE` allows it.
+- QA Review 2 #6 fixed: parsing moved to `src/presenter/args.js`; `--days` 1–31 and `--per-day` 1–6 must be whole
+  numbers, else `[presenter] …` error + exit 1 (caps shared with `planWeek`). Docs updated. 10 tests added.
+  Commit `cd43c65`, push failed. **Not run** (no Node).
+- Merged `origin/main` (morning summaries, knowledge graph, Catch-Up Recorder notes) into local `main`; resolved 4 vault
+  conflicts by keeping both sides. Found Family Hub's local and GitHub branch tips have diverged (task added).
+
+**Next:** anyone with Node: `node --test tests/presenter.test.js tests/presenterArgs.test.js`. Leftover note: a crashed
+run's half-written folder is no longer reused, so the calendar may show the older, incomplete folder first.
+
+---
 ## 2026-10-06 20:00: local hourly run — Bybit position-check keys by symbol + side (hedge mode)
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
 
@@ -236,6 +255,109 @@ tags: [memory, log]
   outside-game purchases / refund webhook).
 
 **Next:** owner play-test is still the blocker. See [[Active Context]].
+
+---
+## 2026-10-08: owner request — iPhone/Obsidian setup guide written
+**Device:** phone · **Branch:** `main` (direct, owner asked me to handle sync to main this session) · **Agents used:** none
+
+**Owner asked**
+- After the [[Knowledge Graph]] work, asked about connecting Obsidian to make the vault a "second
+  brain." The vault was already Obsidian-ready and had [[Start Here - Laptop]], but nothing for
+  phone — and this owner works mostly from their phone (established earlier this session).
+
+**What was done**
+- Wrote [[Start Here - iPhone]]: two-way sync via **Working Copy** (recommended — more reliable than
+  running git inside Obsidian on a repo this size) or the **Obsidian Git** plugin directly (one app,
+  flagged as less reliable here). Linked from [[00 Home]] and [[Start Here - Laptop]].
+
+**Not verified**
+- Not tested on a real iPhone by me (can't — no iOS device in the sandbox). Owner should confirm the
+  Working Copy → Obsidian folder-picker step actually surfaces `vault` as expected on their iOS
+  version before relying on it.
+
+**Next:** see [[Active Context]].
+
+
+## 2026-10-08: owner request — knowledge graph built (VPS agent idea declined)
+**Device:** phone/cloud · **Branch:** `claude/clip-bzq4u9` · **Agents used:** none (built directly — workspace-level, not one of the four `app-engineer` projects)
+
+**Owner asked**
+- Sent a video (a tutorial on building a self-learning AI agent: rent a VPS, install Tailscale, run
+  a coding agent on it, connect a knowledge graph for memory, talk to it over iMessage/Telegram) and
+  asked to "implement" it.
+
+**What was done**
+- Got the video to me via Dropbox → Descript `import_media` by URL (direct chat upload kept failing
+  on size; this bypasses that entirely — worth remembering for any future large file).
+- Before building: checked [[Agent Platform Comparison]] and found the owner had already researched
+  almost this exact idea on 2026-09-26 and it's sitting as **pending** [[Decisions]] #21
+  ("put StarNet on hold"), plus the house rule to never spend money without flagging it first (a VPS
+  is a recurring cost) and the fact that provisioning a VPS/Tailscale isn't something buildable as
+  code from this sandbox anyway. Surfaced this to the owner with pros/cons for three options before
+  writing anything.
+- Owner chose: build the knowledge-graph piece only, no VPS, no new recurring cost.
+- Built `tools/knowledge-graph/graph.js` (nodes + typed edges, file-based, no new npm dependency) +
+  `tools/knowledge-graph/cli.js` (add-node, add-edge, get, find, neighbors, traverse, stats) +
+  `tests/knowledgeGraph.test.js` (9 tests, all passing). Data lives at
+  `vault/Memory/knowledge-graph.json`, git-tracked like the rest of the vault.
+- Seeded it with real current data: an `owner` node, one `project` node per row in [[00 Home]]'s
+  project table, and a `decision` node for #21 linked from `project:starnet-automation`. Verified the
+  multi-hop `traverse` command end-to-end against this real data (`owner --path owns,has_decision`
+  correctly returns only decision:21, not all 7 projects).
+- Wrote [[Knowledge Graph]] (new playbook: schema, CLI usage, why this instead of the VPS route).
+  Linked it from [[00 Home]], added a row to [[How Agents Work]]'s memory table, and noted in
+  [[Team Roster]] that `knowledge-keeper` owns keeping it in sync going forward.
+- Ran the full suite (`npm install` + `npm test`): 39/39 pass, including the 9 new tests. (The repo
+  had no `node_modules` in this fresh sandbox before `npm install` — unrelated to this change, not a
+  regression; worth remembering other sessions may hit the same thing.)
+
+**Not verified**
+- No live use yet of the knowledge graph by another agent/session — only my own seed data and tests.
+- Whether the schema (generic `type`/`label`/`data` nodes, typed edges) actually fits how the owner
+  wants to query it long-term is unproven; built to be easy to extend, not finalized.
+
+**Decisions** (also add to [[Decisions]])
+- Declined the standalone VPS agent project for now; built the knowledge-graph memory layer only,
+  inside the existing sandboxed workspace, no new cost or server.
+
+**Next:** see [[Active Context]].
+
+
+## 2026-10-07: owner request — "Catch-Up Recorder" built into Family Hub
+**Device:** phone/cloud · **Branch:** `claude/family-hub-widget-1w7cv9` · **Agents used:** app-engineer
+
+- Owner saw an ad for "Pocket," a $200 AI wearable that records conversations and summarizes them,
+  and asked if something similar could be built into their phone instead. Gave an honest answer
+  first: the always-on ambient background recording can't be replicated as a plain iOS app (iOS
+  sandboxes background mic access hard — exactly why that product needs separate hardware), but an
+  on-demand "tap to record a conversation" version is completely buildable. Owner said to build it
+  into Family Hub.
+- Read [[Family Hub]], the branch's own README, and the existing `OpenerGenerator`/`AppModel`/
+  `PeopleView` code to match conventions before delegating, so the brief to app-engineer was
+  concrete rather than open-ended.
+- app-engineer built **Catch-Up Recorder**: on-device speech-to-text while recording
+  (`RecordingService.swift`, `SFSpeechRecognizer` with `requiresOnDeviceRecognition` where
+  supported), a new `CatchUpSummarizer.swift` that mirrors `OpenerGenerator.swift`'s exact shape
+  (same request building, reuses `OpenerError`, same JSON-schema structured output) to turn a
+  transcript into a one-sentence summary, a suggested note for the person's profile, and a
+  follow-up checklist, plus a free-text "ask about this conversation" feature. Wired into
+  `PeopleView` (swipe action) and `TodayView` (toolbar button, no person preselected). 11 files,
+  ~800 lines, pushed `0f097d3` to the project branch (not `main`).
+- **I reviewed the full diff myself before recording this done** — read every new/changed file:
+  confirmed `CatchUpSummarizer` correctly reuses `OpenerGenerator`'s internal `endpoint`/
+  `APIErrorEnvelope`/`MessageResponse` (same module, so internal visibility is enough — no access
+  bug), confirmed `RecordingService` uses the iOS-17-appropriate `AVAudioApplication.requestRecordPermission()`
+  API matching the project's deployment target, confirmed `Store.swift`'s new field follows the
+  existing tolerant-decode pattern exactly, confirmed `Keychain.apiKey`/`Prefs.model`/
+  `model.sortedPeople`/`model.theme.accent` are all real APIs used correctly in the new
+  `CatchUpView.swift`, and spot-checked the new tests — they actually assert the privacy promise
+  (phone number and last name proven absent from the built prompt, not just claimed in a comment).
+- **Not verified beyond reading:** there's no Swift toolchain or Xcode in this sandbox, so nothing
+  in this diff has been compiled or run. This is write-and-review work like every other Family Hub
+  commit from this session — the owner is the only one who can actually build and test it.
+- Updated [[Family Hub]] with the feature, what's unverified, and exact owner test steps.
+
+**Next:** owner builds and tests in Xcode on their Mac; see [[Family Hub]]'s Tasks for the exact steps.
 
 ---
 ## 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop

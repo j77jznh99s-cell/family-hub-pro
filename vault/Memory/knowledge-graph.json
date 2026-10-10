@@ -1,0 +1,158 @@
+{
+  "nodes": {
+    "owner": {
+      "id": "owner",
+      "type": "person",
+      "label": "Owner",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:47.799Z",
+      "updatedAt": "2026-10-08T05:28:47.799Z"
+    },
+    "project:sproutling-isles": {
+      "id": "project:sproutling-isles",
+      "type": "project",
+      "label": "Sproutling Isles",
+      "data": {
+        "kind": "Roblox game",
+        "status": "active, pending owner play-test"
+      },
+      "createdAt": "2026-10-08T05:28:47.858Z",
+      "updatedAt": "2026-10-08T05:28:47.858Z"
+    },
+    "project:clip-studio": {
+      "id": "project:clip-studio",
+      "type": "project",
+      "label": "Clip Studio",
+      "data": {
+        "kind": "AI video clipper web app",
+        "status": "active"
+      },
+      "createdAt": "2026-10-08T05:28:47.924Z",
+      "updatedAt": "2026-10-08T05:28:47.924Z"
+    },
+    "project:family-hub": {
+      "id": "project:family-hub",
+      "type": "project",
+      "label": "Family Hub",
+      "data": {
+        "kind": "iPhone app with widgets",
+        "status": "active"
+      },
+      "createdAt": "2026-10-08T05:28:47.997Z",
+      "updatedAt": "2026-10-08T05:28:47.997Z"
+    },
+    "project:bybit-trading-bot": {
+      "id": "project:bybit-trading-bot",
+      "type": "project",
+      "label": "Bybit Trading Bot",
+      "data": {
+        "kind": "risk-gated perpetuals bot",
+        "status": "active"
+      },
+      "createdAt": "2026-10-08T05:28:48.053Z",
+      "updatedAt": "2026-10-08T05:28:48.053Z"
+    },
+    "project:trading-agent": {
+      "id": "project:trading-agent",
+      "type": "project",
+      "label": "Trading Agent",
+      "data": {
+        "kind": "forex setup alerts",
+        "status": "blocked on OANDA setup"
+      },
+      "createdAt": "2026-10-08T05:28:48.126Z",
+      "updatedAt": "2026-10-08T05:28:48.126Z"
+    },
+    "project:gumroad-digital-products": {
+      "id": "project:gumroad-digital-products",
+      "type": "project",
+      "label": "Gumroad Digital Products",
+      "data": {
+        "kind": "original digital products",
+        "status": "planning"
+      },
+      "createdAt": "2026-10-08T05:28:48.183Z",
+      "updatedAt": "2026-10-08T05:28:48.183Z"
+    },
+    "project:starnet-automation": {
+      "id": "project:starnet-automation",
+      "type": "project",
+      "label": "StarNet Automation",
+      "data": {
+        "kind": "local agent team station",
+        "status": "on hold, pending owner OK"
+      },
+      "createdAt": "2026-10-08T05:28:48.239Z",
+      "updatedAt": "2026-10-08T05:28:48.239Z"
+    },
+    "decision:21": {
+      "id": "decision:21",
+      "type": "decision",
+      "label": "Keep Claude Code setup, put StarNet on hold",
+      "data": {
+        "date": "2026-09-26",
+        "status": "pending owner OK"
+      },
+      "createdAt": "2026-10-08T05:28:48.306Z",
+      "updatedAt": "2026-10-08T05:28:48.306Z"
+    }
+  },
+  "edges": [
+    {
+      "from": "owner",
+      "to": "project:sproutling-isles",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.362Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:clip-studio",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.413Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:family-hub",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.476Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:bybit-trading-bot",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.535Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:trading-agent",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.585Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:gumroad-digital-products",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.667Z"
+    },
+    {
+      "from": "owner",
+      "to": "project:starnet-automation",
+      "type": "owns",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.768Z"
+    },
+    {
+      "from": "project:starnet-automation",
+      "to": "decision:21",
+      "type": "has_decision",
+      "data": {},
+      "createdAt": "2026-10-08T05:28:48.830Z"
+    }
+  ]
+}

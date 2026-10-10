@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-06
+updated: 2026-10-10
 ---
 # Active Context
 
@@ -18,6 +18,12 @@ When resumed: works one task from [[Work Queue]] following [[Hourly Workflow]]; 
 CI and the queue, then logs a one-line "nothing changed" and stops — no more speculative work is being added
 to `tools/audit-economy.luau` (it's feature-complete at 4 sections, see below). Next real progress needs the
 owner to unblock something.
+
+**2026-10-08: [[Knowledge Graph]] built** (`tools/knowledge-graph/`, workspace-level, not tied to one
+project) — owner sent a VPS-agent tutorial video, asked to implement it; found it was already
+researched and recommended against ([[Decisions]] #21), so proposed alternatives and owner chose the
+graph-only route instead. Nodes/edges, file-based, git-tracked, no server/cost. 9/9 new tests pass,
+seeded with real project data. See [[Active Context#Waiting on the owner]] below for the ask.
 
 Projects: [[Sproutling Isles]] (2026-09-23 fixes re-reviewed 2026-09-26, all confirmed in code; full analytics spec
 built 2026-09-26 across two passes (`a136cba`, `e432cfd`); leaderboards built 2026-09-26 (`21c68c3`, a display bug
@@ -74,21 +80,25 @@ No 2026 Roblox Halloween Spotlight dates announced yet; re-check 14–17 Oct. Th
 - [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
   table fixed), ready to pull on the laptop and run with no known blockers left on this end.
-- [ ] video-analyst: first real attempt (`youtu.be/FwOTs4UxQS4`, 2026-09-27) failed — Descript's importer got back an HTML page, not a media file. Confirm the video's public/accessible, or send the file as a direct upload instead. See [[Video Analyst Runs]].
+- [ ] video-analyst: first real attempt (`youtu.be/FwOTs4UxQS4`, 2026-09-27) failed — Descript's importer got back an HTML page, not a media file. Confirm the video's public/accessible, or send the file as a direct upload instead. See [[Video Analyst Runs]]. **Note for next time:** a direct-link upload to Dropbox (file-level share link, `dl=1`, and specifically the `dl.dropboxusercontent.com` host — `www.dropbox.com` with `dl=1` still returned an HTML page) worked cleanly on 2026-10-08 for a 53MB video when the chat's own upload limit (~30MB) was the blocker.
+- [ ] Try the new [[Knowledge Graph]] (`tools/knowledge-graph/cli.js`) in a real session and say whether the node/edge schema fits how you actually want to query things — built and tested 2026-10-08 but only seeded with my own placeholder data so far.
+- [ ] **Set up Obsidian on iPhone** per [[Start Here - iPhone]] (written 2026-10-08, unverified — no iOS device in the sandbox to test the Working Copy → Obsidian folder-picker step). Confirm it actually works, then this note's "not verified" can be cleared.
 - [ ] Say whether to wire the new [[#Key links|Command Deck]] hub artifact (built 2026-09-27 on request) into the hourly routine for periodic refresh, or leave it as refresh-on-request.
 - [ ] Play-test Sproutling Isles in Studio ([[Sproutling Isles - QA Review]]); answer [[Decisions]] (#1–4 block the next build; #20 product line — see the 2026-09-26 demand brief in [[Gumroad Digital Products]]). Now also covers the Hollow Harvest Halloween event before 17 Oct — `Config.EventTimeOffset` is built (`04a3211`), so the full test plan in the QA note is ready to run.
 - [ ] Create the 13 Robux items and share the IDs (includes a new "Summon Spooky Fog" dev product, ~149 R$, for Hollow Harvest).
 - [ ] Trading agent: OANDA setup (network access + `OANDA_ENV`, `OANDA_ACCOUNT_ID`); also decide whether to enable the `daily-paper.yml` schedule.
-- [ ] StarNet: Claude now recommends putting it on hold ([[Decisions]] #21, [[Agent Platform Comparison]]); if agreed, the next step is just the Gumroad account.
-- [ ] Family Hub: reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed) + widget ✓ race fixed 2026-10-06 (`b64728a`, `Store.update`) + edit sheet no longer undoes a widget ✓ (`a25463d`) + old/newer data files always load (`88472e2`); none compiled or pushed — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]].
+- [ ] StarNet itself (the local pixel-art station) is still on hold, separate from the VPS-agent idea declined 2026-10-08; if you want to revisit StarNet specifically, the next step is just the Gumroad account.
+- [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07, cloud) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do. See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
+- [ ] Family Hub (local PC runs): reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed) + widget ✓ race fixed 2026-10-06 (`b64728a`, `Store.update`) + edit sheet no longer undoes a widget ✓ (`a25463d`) + old/newer data files always load (`88472e2`); none compiled or pushed — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]]. Note: the local branch (`88472e2`) and GitHub's (`0f097d3`) have diverged and need merging.
 - [ ] Bybit bot: risk gate hardened 2026-10-03 (`84b1ec0`) and the Bybit client now throws on missing/blank exchange numbers 2026-10-06 (`b9e9225`), and so do the monitoring scripts (`a9f70ea`, 16:00); `position-check` tracks hedge-mode legs by symbol+side (`47c409d`, 20:00); none run or pushed — run `npm run test:gate` and `npm run test:scripts` on a machine with Node; still confirm paper vs live status.
-- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both. 2026-10-06: calendar/weekly/usage reviewed on that branch (`3798e7f`, 4 small fixes), and early-failure spend now logged (`b51d8e1`, 17:00); 2 timing decisions for you in [[Clip Studio]] (QA Review 2 #3, #4).
+- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both. 2026-10-06: calendar/weekly/usage reviewed on that branch (`3798e7f`, 4 small fixes), and early-failure spend now logged (`b51d8e1`, 17:00); 2026-10-10: a repeat run no longer overwrites the earlier run's folder, and bad `--days`/`--per-day` now error out (`cd43c65`). 2 timing decisions for you in [[Clip Studio]] (QA Review 2 #3, #4).
 
 ## Timeline at risk
-**The ~1 Oct play-test target has passed with no play-test done** (as of 2026-10-02) — the owner is the only
-one who can run it (Roblox Studio access). Beta 2–8 Oct and launch 10 Oct now need either an urgent play-test
-or a pushed-back date; this is the owner's call, not something a session can resolve on its own. If launch
-slips past 24 Oct, skip Halloween.
+**The original plan has now fully slipped** (as of 2026-10-10, the originally planned public-launch date):
+the 2–8 Oct beta window passed with no play-test done, and today's launch date passed with it. The owner is
+the only one who can run the play-test (Roblox Studio access). This needs an explicit owner decision — new
+beta/launch dates, or another path forward — not something a session can resolve on its own. If launch slips
+past 24 Oct, skip Halloween.
 
 ## Key links
 - Queue: [[Work Queue]] · Rule: [[Hourly Workflow]] · Summary: [[Morning Summary]]

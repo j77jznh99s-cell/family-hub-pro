@@ -145,6 +145,7 @@ Open (not fixed):
 - [x] **app-engineer:** log spend for presenter runs that fail before the script check (QA Review 2 #1). Done 2026-10-06 (`b51d8e1`: thrown research/script errors log spend if any Claude reply arrived, then rethrow; 5 tests, not run).
 - [ ] **qa-tester:** run the 5 new tests from `b51d8e1` (`tests/presenter.test.js`) when Node is available.
 - [ ] **app-engineer:** one shared "videos per day" setting for the CLI, weekly report and dashboard calendar (QA Review 2 #2).
-- [ ] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6).
+- [x] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6). Done 2026-10-10 (`cd43c65`: `makeRunDir` adds `-2`, `-3` … instead of overwriting; `--days` 1–31 / `--per-day` 1–6 or exit 1; 10 tests, not run).
+- [ ] **qa-tester:** run `tests/presenter.test.js` + `tests/presenterArgs.test.js` from `cd43c65` when Node is available.
 - [ ] **owner:** which date spend counts under (spent vs slot date) and UTC vs local calendar days (QA Review 2 #3, #4).
 - [ ] **owner:** confirm what's next for Clip Studio (deploy? pricing? more features?) so an agent can pick it up

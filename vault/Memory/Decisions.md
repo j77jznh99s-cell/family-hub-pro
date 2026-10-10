@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-08 | Workspace | Declined the standalone VPS-based agent project (from a tutorial video); built a [[Knowledge Graph]] memory layer instead, inside the existing sandbox, no new server/cost | Confirms #21: matches the already-researched recommendation (cost, security, duplicates existing setup); gets the real learning/recall benefit without the VPS/Tailscale/messaging-bridge parts | Owner asked for pros/cons, then chose |
 | 2026-10-03 | Starling Heist | Build a brand-new Roblox game from scratch that follows what's popular now (steal-and-collect, weekly drops, Halloween event) and Roblox's current rules; Sproutling Isles is kept as it is, not deleted | Owner: "start from the beginning and build it completely fresh… follows what's popular right now and the rules and regulations that Roblox set" | Owner (Claude chose the concept from the 2026-10-03 market refresh) |
 | 2026-10-03 | Starling Heist | No paid random items, no trading, nothing sold for Robux protects from thieves or changes odds | Avoids the paid-random-items odds/PolicyService rules entirely and keeps it fair | Claude (design pillar) |
 | 2026-09-27 | Workspace | Paused the "Hourly project work (worker)" Routine (`trig_012vmVxmbAkxxY59wCnKaG1J`) — disabled, not deleted, so it keeps its run history and can be turned back on | Owner: "Pause the hourly queue" | Owner |
@@ -60,5 +61,9 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| 21 | StarNet: put on hold and stay on the cloud setup (Claude Code + Routines + vault)? See [[Agent Platform Comparison]] | Yes; add self-hosted n8n later only if Gumroad needs it |
 | 20 | Which product line first: family printables, Roblox game-making guides, or spreadsheet/Notion templates? | Family printables (easiest to make well and check for originality) |
+
+~~21 | StarNet: put on hold and stay on the cloud setup? | Yes~~ — **resolved 2026-10-08**: owner
+declined a separate VPS-based agent (from a tutorial video) in favor of staying on the current setup
+and adding a [[Knowledge Graph]] memory layer instead. See the 2026-10-08 row above. StarNet itself
+(the local pixel-art station) remains on hold, unchanged.
