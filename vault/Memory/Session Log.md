@@ -1,6 +1,23 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-10 20:45: local hourly run — Sproutling Isles: no overlapping saves, 90 s receipt wait
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`) · **Agents used:** roblox-engineer
+
+- Rotation: Sproutling Isles (after Clip Studio). Task: the 2 receipts minors from the 2026-10-06 QA review.
+- `Config.ReceiptWaitSeconds` 60 → 90 (covers worst-case load: 30 s wait + 6 attempts with 5 s gaps).
+- `DataService`: in-flight writes counted per player; `pendingSaves()` = saves not yet returned (waiting or writing),
+  so BindToClose can't see 0 between an autosave and a queued leave-save. Autosave/receipt save no longer starts
+  while another write runs past 30 s (returns false → NotProcessedYet). Leave-save waits up to 120 s, then writes
+  anyway (owner OK asked). Load that still finds a stuck save after 30 s runs unsaved instead of reading stale data.
+- Orchestrator read the diff: every path decrements `active`; callers' return-value handling unchanged.
+  Commit `16171a1`, push failed. **Not linted/built** (no selene/rojo/lune), not Studio-tested.
+- New task: pre-existing edge case, `released` is set even when the leave-save wrote nothing.
+
+**Next:** run selene/rojo/lune on `16171a1`; Studio slow-save test: add a 40 s `task.wait` in the save's UpdateAsync,
+check the next autosave logs "save deferred" and leaving still writes.
+
+---
 ## 2026-10-10 13:45: local hourly run — Clip Studio: unique run folders, strict --days/--per-day
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`) · **Agents used:** app-engineer
 
