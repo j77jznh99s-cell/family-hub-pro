@@ -32,6 +32,28 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-11
+
+**Done overnight/today**
+- Nothing — worker still paused, no new commits from any session, no chat requests.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- Same open list as yesterday, unchanged — see [[Active Context]]'s "Timeline at risk" and "Waiting
+  on the owner" sections for the full picture (Sproutling Isles timeline decision, Family Hub test,
+  Knowledge Graph/iPhone-Obsidian confirmation, and the rest). Not re-listing every item daily now
+  that nothing's moved; flag if you want the full list repeated here again.
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-10
 
 **Done overnight/today**
