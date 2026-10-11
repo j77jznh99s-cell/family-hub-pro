@@ -25,26 +25,34 @@ end
 local jobId = if game.JobId ~= "" then game.JobId else "studio"
 
 -- Saves are serialised per player so an older write can never land after a newer one:
---   inFlight[userId]  - a save for this player is running right now
+--   inFlight[userId]  - number of UpdateAsync writes running for this player (nil when idle,
+--                       else 1; only a release save that outwaited a stuck write makes it 2)
 --   released[userId]  - the leave-save (lock release) is done; later non-release saves are
 --                       dropped so a late autosave can't re-take the lock (cleared on next load)
-local inFlight: { [number]: boolean } = {}
+--   active            - save() calls not yet returned, waiting or writing (for BindToClose)
+local inFlight: { [number]: number } = {}
 local released: { [number]: boolean } = {}
+local active = 0
 
-local function waitIdle(userId: number, timeout: number)
+-- A leave-save waits this long for a running write instead of the usual 30 s, so it is not lost.
+local RELEASE_WAIT_SECONDS = 120
+
+-- True once no write is running for this player; false if the timeout ran out first.
+-- No yield between a true result and the caller's inFlight increment, so two waiters can't both start.
+local function waitIdle(userId: number, timeout: number): boolean
 	local deadline = os.clock() + timeout
-	while inFlight[userId] and os.clock() < deadline do
+	while inFlight[userId] do
+		if os.clock() >= deadline then
+			return false
+		end
 		task.wait(0.1)
 	end
+	return true
 end
 
--- Number of saves currently running (BindToClose waits for this to reach 0).
+-- Number of saves still in progress, waiting or writing (BindToClose waits for this to reach 0).
 function DataService.pendingSaves(): number
-	local n = 0
-	for _ in inFlight do
-		n += 1
-	end
-	return n
+	return active
 end
 
 function DataService.defaultData()
@@ -110,8 +118,12 @@ function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 	if not store then
 		return DataService.defaultData(), false, true
 	end
-	-- a fast rejoin to this same server must not read data older than the leave-save still in flight
-	waitIdle(player.UserId, 30)
+	-- a fast rejoin to this same server must not read data older than the leave-save still in flight;
+	-- if that write is still stuck after 30 s, run this session unsaved rather than load stale data
+	if not waitIdle(player.UserId, 30) then
+		warn("[Sproutling] load gave up for", player.Name, "(previous save still running), progress will not save")
+		return DataService.defaultData(), false, true
+	end
 	released[player.UserId] = nil
 	for attempt = 1, 6 do
 		local loaded = nil
@@ -153,11 +165,21 @@ function DataService.save(player: Player, data, release: boolean): boolean
 		return true
 	end
 	local userId = player.UserId
-	waitIdle(userId, 30)
+	active += 1
+	if not waitIdle(userId, if release then RELEASE_WAIT_SECONDS else 30) and not release then
+		-- another write is still running: never overlap it. Autosaves retry next round; a receipt
+		-- returns NotProcessedYet and Roblox redelivers it.
+		active -= 1
+		warn("[Sproutling] save deferred for", player.Name, "(previous save still running)")
+		return false
+	end
+	-- A release that waited RELEASE_WAIT_SECONDS writes anyway: a request that hasn't returned in
+	-- 2 min has failed in practice, and dropping the leave-save would lose the session's progress.
 	if released[userId] then
+		active -= 1
 		return true -- this player already left and released the lock; nothing newer to write
 	end
-	inFlight[userId] = true
+	inFlight[userId] = (inFlight[userId] or 0) + 1
 	local wrote = false
 	local ok, err = pcall(function()
 		store:UpdateAsync(key(player), function(old)
@@ -172,7 +194,9 @@ function DataService.save(player: Player, data, release: boolean): boolean
 			return old
 		end)
 	end)
-	inFlight[userId] = nil
+	local left = (inFlight[userId] or 1) - 1
+	inFlight[userId] = if left > 0 then left else nil
+	active -= 1
 	if ok and release then
 		released[userId] = true
 	end
