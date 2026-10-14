@@ -155,7 +155,12 @@ Confirm:
 * `memory/decision.json` reflects a decision consistent with `STRATEGY.md`.
 * If an order was proposed, `logs/audit.jsonl` has one entry per check plus
   the final `approved`/`rejected` outcome, and (if approved) the exchange
-  response.
+  response. Every approved write first logs a `submitting` entry before it
+  is sent to the exchange, then an `approved` or `error` entry; if the
+  `submitting` entry cannot be written, the gate refuses and sends nothing
+  (closes and cancels still go through with a warning, since they reduce risk).
+  A `submitting` entry with no follow-up means the process died mid-call;
+  check Bybit's order history.
 * On Bybit's testnet UI, any approved order actually appears with its
   attached stop loss / take profit.
 

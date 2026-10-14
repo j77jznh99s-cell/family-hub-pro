@@ -7,7 +7,12 @@ export interface AuditEntry {
   tool: string;
   request: unknown;
   checks: CheckStep[];
-  result: "approved" | "rejected" | "error";
+  /**
+   * "submitting" is written before an approved action is forwarded to the
+   * exchange; it is always followed by "approved" or "error" unless the
+   * process died mid-call (in which case check the exchange's order history).
+   */
+  result: "submitting" | "approved" | "rejected" | "error";
   reason?: string;
   exchange_response?: unknown;
 }

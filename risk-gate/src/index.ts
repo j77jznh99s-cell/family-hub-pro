@@ -2,9 +2,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { appendAudit } from "./audit.js";
 import { createBybitClient } from "./bybit.js";
 import { checkCancel, checkClose, checkLeverage, checkOrder } from "./checks.js";
+import { runGated } from "./gate.js";
 import type { OrderRequest } from "./types.js";
 
 const bybit = createBybitClient();
@@ -16,6 +16,12 @@ const server = new McpServer({
     "Holds Bybit trading credentials and approves or rejects every order. " +
     "This is the only tool set allowed to write to the exchange.",
 });
+
+// Every write goes through runGated (src/gate.ts): checks, then a
+// "submitting" audit entry, then the exchange call, then the final audit
+// entry. If the "submitting" entry cannot be written, nothing is sent, except
+// for close_position and cancel_order (risk-reducing, blocked only by the kill
+// switch), which warn and go ahead.
 
 server.registerTool(
   "place_order",
@@ -48,66 +54,18 @@ server.registerTool(
       price: args.price,
     };
 
-    let result;
-    try {
-      result = await checkOrder(req, bybit);
-    } catch (err) {
-      appendAudit({
-        tool: "place_order",
-        request: req,
-        checks: [],
-        result: "error",
-        reason: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        content: [{ type: "text", text: `Gate error while checking order: ${err instanceof Error ? err.message : String(err)}` }],
-        isError: true,
-      };
-    }
-
-    if (!result.approved) {
-      appendAudit({
-        tool: "place_order",
-        request: req,
-        checks: result.checks,
-        result: "rejected",
-        reason: result.reason,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: `REJECTED (${result.reason}). Do not retry this action with different numbers.`,
-          },
-        ],
-      };
-    }
-
-    try {
-      const exchangeResponse = await bybit.placeOrder(req);
-      appendAudit({
-        tool: "place_order",
-        request: req,
-        checks: result.checks,
-        result: "approved",
-        exchange_response: exchangeResponse,
-      });
-      return {
-        content: [{ type: "text", text: `APPROVED and submitted. ${JSON.stringify(exchangeResponse)}` }],
-      };
-    } catch (err) {
-      appendAudit({
-        tool: "place_order",
-        request: req,
-        checks: result.checks,
-        result: "error",
-        reason: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        content: [{ type: "text", text: `Approved by the gate but the exchange rejected it: ${err instanceof Error ? err.message : String(err)}` }],
-        isError: true,
-      };
-    }
+    return runGated({
+      tool: "place_order",
+      request: req,
+      check: () => checkOrder(req, bybit),
+      submit: () => bybit.placeOrder(req),
+      messages: {
+        checkError: (msg) => `Gate error while checking order: ${msg}`,
+        rejected: (reason) => `REJECTED (${reason}). Do not retry this action with different numbers.`,
+        success: (resp) => `APPROVED and submitted. ${JSON.stringify(resp)}`,
+        failure: (msg) => `Approved by the gate but the exchange rejected it: ${msg}`,
+      },
+    });
   }
 );
 
@@ -123,47 +81,20 @@ server.registerTool(
       symbol: z.string(),
     },
   },
-  async ({ symbol }) => {
-    const result = checkClose();
-    if (!result.approved) {
-      appendAudit({
-        tool: "close_position",
-        request: { symbol },
-        checks: result.checks,
-        result: "rejected",
-        reason: result.reason,
-      });
-      return {
-        content: [{ type: "text", text: `REJECTED (${result.reason}).` }],
-      };
-    }
-
-    try {
-      const exchangeResponse = await bybit.closePosition(symbol);
-      appendAudit({
-        tool: "close_position",
-        request: { symbol },
-        checks: result.checks,
-        result: "approved",
-        exchange_response: exchangeResponse,
-      });
-      return {
-        content: [{ type: "text", text: `Closed. ${JSON.stringify(exchangeResponse)}` }],
-      };
-    } catch (err) {
-      appendAudit({
-        tool: "close_position",
-        request: { symbol },
-        checks: result.checks,
-        result: "error",
-        reason: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        content: [{ type: "text", text: `Close failed: ${err instanceof Error ? err.message : String(err)}` }],
-        isError: true,
-      };
-    }
-  }
+  async ({ symbol }) =>
+    runGated({
+      tool: "close_position",
+      request: { symbol },
+      check: () => checkClose(),
+      submit: () => bybit.closePosition(symbol),
+      riskReducing: true,
+      messages: {
+        checkError: (msg) => `Gate error while checking close: ${msg}`,
+        rejected: (reason) => `REJECTED (${reason}).`,
+        success: (resp) => `Closed. ${JSON.stringify(resp)}`,
+        failure: (msg) => `Close failed: ${msg}`,
+      },
+    })
 );
 
 server.registerTool(
@@ -176,47 +107,19 @@ server.registerTool(
       leverage: z.number().positive(),
     },
   },
-  async ({ symbol, leverage }) => {
-    const result = checkLeverage(symbol, leverage);
-    if (!result.approved) {
-      appendAudit({
-        tool: "set_leverage",
-        request: { symbol, leverage },
-        checks: result.checks,
-        result: "rejected",
-        reason: result.reason,
-      });
-      return {
-        content: [{ type: "text", text: `REJECTED (${result.reason}). Do not retry with a different leverage value.` }],
-      };
-    }
-
-    try {
-      const exchangeResponse = await bybit.setLeverage(symbol, leverage);
-      appendAudit({
-        tool: "set_leverage",
-        request: { symbol, leverage },
-        checks: result.checks,
-        result: "approved",
-        exchange_response: exchangeResponse,
-      });
-      return {
-        content: [{ type: "text", text: `Leverage set. ${JSON.stringify(exchangeResponse)}` }],
-      };
-    } catch (err) {
-      appendAudit({
-        tool: "set_leverage",
-        request: { symbol, leverage },
-        checks: result.checks,
-        result: "error",
-        reason: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        content: [{ type: "text", text: `Set leverage failed: ${err instanceof Error ? err.message : String(err)}` }],
-        isError: true,
-      };
-    }
-  }
+  async ({ symbol, leverage }) =>
+    runGated({
+      tool: "set_leverage",
+      request: { symbol, leverage },
+      check: () => checkLeverage(symbol, leverage),
+      submit: () => bybit.setLeverage(symbol, leverage),
+      messages: {
+        checkError: (msg) => `Gate error while checking leverage: ${msg}`,
+        rejected: (reason) => `REJECTED (${reason}). Do not retry with a different leverage value.`,
+        success: (resp) => `Leverage set. ${JSON.stringify(resp)}`,
+        failure: (msg) => `Set leverage failed: ${msg}`,
+      },
+    })
 );
 
 server.registerTool(
@@ -229,47 +132,20 @@ server.registerTool(
       order_id: z.string(),
     },
   },
-  async ({ symbol, order_id }) => {
-    const result = checkCancel();
-    if (!result.approved) {
-      appendAudit({
-        tool: "cancel_order",
-        request: { symbol, order_id },
-        checks: result.checks,
-        result: "rejected",
-        reason: result.reason,
-      });
-      return {
-        content: [{ type: "text", text: `REJECTED (${result.reason}).` }],
-      };
-    }
-
-    try {
-      const exchangeResponse = await bybit.cancelOrder(symbol, order_id);
-      appendAudit({
-        tool: "cancel_order",
-        request: { symbol, order_id },
-        checks: result.checks,
-        result: "approved",
-        exchange_response: exchangeResponse,
-      });
-      return {
-        content: [{ type: "text", text: `Cancelled. ${JSON.stringify(exchangeResponse)}` }],
-      };
-    } catch (err) {
-      appendAudit({
-        tool: "cancel_order",
-        request: { symbol, order_id },
-        checks: result.checks,
-        result: "error",
-        reason: err instanceof Error ? err.message : String(err),
-      });
-      return {
-        content: [{ type: "text", text: `Cancel failed: ${err instanceof Error ? err.message : String(err)}` }],
-        isError: true,
-      };
-    }
-  }
+  async ({ symbol, order_id }) =>
+    runGated({
+      tool: "cancel_order",
+      request: { symbol, order_id },
+      check: () => checkCancel(),
+      submit: () => bybit.cancelOrder(symbol, order_id),
+      riskReducing: true,
+      messages: {
+        checkError: (msg) => `Gate error while checking cancel: ${msg}`,
+        rejected: (reason) => `REJECTED (${reason}).`,
+        success: (resp) => `Cancelled. ${JSON.stringify(resp)}`,
+        failure: (msg) => `Cancel failed: ${msg}`,
+      },
+    })
 );
 
 const transport = new StdioServerTransport();
