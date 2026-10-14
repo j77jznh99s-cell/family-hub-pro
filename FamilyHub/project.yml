@@ -54,6 +54,8 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSContactsUsageDescription: Pick the people you want to stay in touch with.
         NSCalendarsFullAccessUsageDescription: Family Hub reads upcoming event titles so conversation starters can mention what's going on in your week. Nothing is changed on your calendar.
+        NSMicrophoneUsageDescription: Family Hub records a catch-up conversation so it can be transcribed into a summary. The recording itself is discarded right after transcription — nothing but the transcript text ever leaves this step, and only that text is sent to Claude to write the summary.
+        NSSpeechRecognitionUsageDescription: Family Hub transcribes your catch-up recordings, on-device where your language supports it, so it can turn them into a summary, a note for that person's profile, and a follow-up checklist.
         CFBundleURLTypes:
           - CFBundleURLName: $(APP_BUNDLE_ID)
             CFBundleURLSchemes: [familyhub]

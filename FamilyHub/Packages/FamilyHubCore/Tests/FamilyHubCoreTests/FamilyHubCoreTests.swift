@@ -322,6 +322,25 @@ final class CompatibilityTests: XCTestCase {
         XCTAssertEqual(p.dailyGoal, 3)
     }
 
+    // MARK: CatchUpNote
+
+    func testCatchUpNoteWithOnlyIDGetsDefaults() throws {
+        let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF"}"#)
+        XCTAssertEqual(n, CatchUpNote(id: id, createdAt: .distantPast))
+        XCTAssertNil(n.personID)
+        XCTAssertTrue(n.actionItems.isEmpty)
+    }
+
+    func testCatchUpNoteAsWrittenByTheFirstVersion() throws {
+        let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","transcript":"t","summary":"s","suggestedNote":"the new job","actionItems":["send photos"],"createdAt":"2026-09-22T15:00:00Z"}"#)
+        XCTAssertEqual(n, CatchUpNote(id: id, personID: id, transcript: "t", summary: "s", suggestedNote: "the new job",
+                                      actionItems: ["send photos"], createdAt: when))
+    }
+
+    func testCatchUpNoteStillNeedsID() {
+        XCTAssertThrowsError(try decode(CatchUpNote.self, #"{"transcript":"t"}"#))
+    }
+
     // MARK: Whole file
 
     func testFileFromTheFirstVersionLoadsThroughTheStore() throws {
@@ -342,6 +361,7 @@ final class CompatibilityTests: XCTestCase {
         XCTAssertEqual(data.openersInputHash, "abc")
         XCTAssertTrue(data.log.isEmpty)
         XCTAssertEqual(data.preferences, Preferences())
+        XCTAssertTrue(data.catchUpNotes.isEmpty)
         XCTAssertFalse(FileManager.default.fileExists(atPath: store.unreadableBackupURL.path), "the file was readable")
     }
 
@@ -362,7 +382,9 @@ final class CompatibilityTests: XCTestCase {
                 ReachOut(personID: p.id, date: when, kind: .reconnect, points: 25),
             ],
             badges: [Badge.firstHello.rawValue: when],
-            preferences: Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .grape)
+            preferences: Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .grape),
+            catchUpNotes: [CatchUpNote(id: id, personID: p.id, transcript: "t", summary: "s", suggestedNote: "n",
+                                       actionItems: ["a"], createdAt: when)]
         )
         let encoded = try Store.encoder.encode(original)
         XCTAssertEqual(try Store.decoder.decode(AppData.self, from: encoded), original)

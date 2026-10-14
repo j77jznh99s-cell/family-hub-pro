@@ -101,6 +101,37 @@ public struct Opener: Codable, Hashable, Sendable {
     }
 }
 
+/// A recorded catch-up conversation, summarized by Claude: a one-sentence recap, a short note worth
+/// keeping on that person's profile, and a checklist of anything you said you'd follow up on.
+public struct CatchUpNote: Codable, Identifiable, Hashable, Sendable {
+    public var id: UUID
+    /// nil until it's assigned to someone — the general "record a catch-up" entry point starts unassigned.
+    public var personID: UUID?
+    public var transcript: String
+    public var summary: String
+    public var suggestedNote: String
+    public var actionItems: [String]
+    public var createdAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        personID: UUID? = nil,
+        transcript: String = "",
+        summary: String = "",
+        suggestedNote: String = "",
+        actionItems: [String] = [],
+        createdAt: Date = .now
+    ) {
+        self.id = id
+        self.personID = personID
+        self.transcript = transcript
+        self.summary = summary
+        self.suggestedNote = suggestedNote
+        self.actionItems = actionItems
+        self.createdAt = createdAt
+    }
+}
+
 // MARK: - Tolerant decoding
 //
 // These types live in the data file shared by the app and widget. A key that's missing (a file written before
@@ -145,6 +176,22 @@ extension Opener {
             text: c.decode(String.self, forKey: .text),
             isAI: c.decodeIfPresent(Bool.self, forKey: .isAI) ?? false,
             // Not `.now` like `init`: an opener of unknown age is treated as stale, so it gets rewritten.
+            createdAt: c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .distantPast
+        )
+    }
+}
+
+extension CatchUpNote {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            id: c.decode(UUID.self, forKey: .id),
+            personID: c.decodeIfPresent(UUID.self, forKey: .personID),
+            transcript: c.decodeIfPresent(String.self, forKey: .transcript) ?? "",
+            summary: c.decodeIfPresent(String.self, forKey: .summary) ?? "",
+            suggestedNote: c.decodeIfPresent(String.self, forKey: .suggestedNote) ?? "",
+            actionItems: c.decodeIfPresent([String].self, forKey: .actionItems) ?? [],
+            // Not `.now` like `init`: a note of unknown age shouldn't jump to the top of the list on every load.
             createdAt: c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .distantPast
         )
     }

@@ -15,6 +15,8 @@ public struct AppData: Codable, Equatable, Sendable {
     /// Badge raw value → when it was earned.
     public var badges: [String: Date]
     public var preferences: Preferences
+    /// Recorded catch-up conversations (Catch-Up Recorder), newest first by convention of the caller.
+    public var catchUpNotes: [CatchUpNote]
 
     public init(
         people: [Person] = [],
@@ -24,7 +26,8 @@ public struct AppData: Codable, Equatable, Sendable {
         openersInputHash: String? = nil,
         log: [ReachOut] = [],
         badges: [String: Date] = [:],
-        preferences: Preferences = Preferences()
+        preferences: Preferences = Preferences(),
+        catchUpNotes: [CatchUpNote] = []
     ) {
         self.people = people
         self.openers = openers
@@ -34,10 +37,11 @@ public struct AppData: Codable, Equatable, Sendable {
         self.log = log
         self.badges = badges
         self.preferences = preferences
+        self.catchUpNotes = catchUpNotes
     }
 
     enum CodingKeys: String, CodingKey {
-        case people, openers, context, openersRefreshedAt, openersInputHash, log, badges, preferences
+        case people, openers, context, openersRefreshedAt, openersInputHash, log, badges, preferences, catchUpNotes
     }
 
     /// Tolerant of files written by older versions: anything missing gets its default instead of failing the whole load.
@@ -51,6 +55,7 @@ public struct AppData: Codable, Equatable, Sendable {
         log = try c.decodeIfPresent([ReachOut].self, forKey: .log) ?? []
         badges = try c.decodeIfPresent([String: Date].self, forKey: .badges) ?? [:]
         preferences = try c.decodeIfPresent(Preferences.self, forKey: .preferences) ?? Preferences()
+        catchUpNotes = try c.decodeIfPresent([CatchUpNote].self, forKey: .catchUpNotes) ?? []
     }
 
     public func suggestions(now: Date = .now, includeUpToDate: Bool = false) -> [Suggestion] {
