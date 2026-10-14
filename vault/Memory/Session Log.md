@@ -1,6 +1,24 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-14 13:05: local hourly run — Bybit: first real test run + audit-before-submit in the risk gate
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
+
+- Rotation: Bybit (after Family Hub). Node 24 is now on the PC, so the bot's tests ran for the first time:
+  `test:scripts` 46/46 pass, risk-gate 58/58 pass, `tsc --noEmit` clean. All earlier "not run" Bybit commits verified.
+- Task: the gate only logged to `logs/audit.jsonl` AFTER the exchange call, so a crash in between left a live order
+  with no record, and a failed log write after a good order reported "the exchange rejected it".
+- Fix: new `risk-gate/src/gate.ts` (`runGated`) used by all 4 tools: checks → `submitting` audit entry → exchange →
+  `approved`/`error` entry. If the `submitting` write fails, entries and leverage changes are refused (nothing sent);
+  closes/cancels (risk-reducing, kill-switch-only by contract) warn and go ahead (orchestrator's change to the
+  agent's version). A failed final write still reports what the exchange did. `checks.ts` untouched; tool texts unchanged.
+- Now 69/69 gate tests (11 new), 46/46 scripts, tsc clean. Commit `5c34a45`, push failed. No exchange calls made.
+- New: `npm audit` flags `@modelcontextprotocol/sdk` <1.30.2 (high, OAuth client issue; gate uses stdio, likely not
+  exposed) → task to bump and re-test.
+
+**Next:** push once GitHub is signed in; SDK bump; owner still confirms paper vs live.
+
+---
 ## 2026-10-14 10:55: local hourly run — Family Hub: local fixes + cloud Catch-Up Recorder merged
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
 
