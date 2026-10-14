@@ -1,6 +1,22 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-14 10:55: local hourly run — Family Hub: local fixes + cloud Catch-Up Recorder merged
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Task: merge the diverged local (`88472e2`) and GitHub (`0f097d3`) tips.
+- One conflict (`Models.swift`): kept all local tolerant decoding + `applyingEdits`, plus the new `CatchUpNote` type.
+  `CatchUpNote` got a tolerant `init(from:)` like the other stored types (only `id` required; missing `createdAt` →
+  `.distantPast`) + 3 compatibility tests; `catchUpNotes` added to the round-trip and first-version tests.
+- Orchestrator checked: catch-up save paths (`addCatchUpNote`, `assignCatchUpNote`, `saveSuggestedNote`) all go
+  through `Store.update`, so the widget ✓ / edit-sheet races don't come back. No conflict markers left.
+- Merge commit `1a32998`, push failed. **Not compiled or tested** (no Swift).
+- New tasks: transcript lost if summarising fails; ticked follow-ups not saved; swipe-to-delete on People probably
+  replaced by the new "Catch-up" swipe (owner UX choice).
+
+**Next:** push the branch once GitHub is signed in; `swift test` on a Mac.
+
+---
 ## 2026-10-10 20:45: local hourly run — Sproutling Isles: no overlapping saves, 90 s receipt wait
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`) · **Agents used:** roblox-engineer
 

@@ -29,11 +29,15 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
   no Swift toolchain or Xcode in the sandbox, so none of it has been compiled, let alone run.
 - **Branches diverged (found 2026-10-10):** the cloud's Catch-Up Recorder (`0f097d3`, on GitHub) and the local PC
   runs' fixes (`5b87ea8` … `88472e2`, local only, never pushed) are on two different tips of
-  `claude/family-hub-widget-1w7cv9`. Merge them before more Family Hub work.
+  `claude/family-hub-widget-1w7cv9`. **Merged locally 2026-10-14 (`1a32998`, not pushed, not compiled):** one
+  `Models.swift` conflict, both sides kept; `CatchUpNote` now decodes tolerantly like the other stored types.
 - **Details:** `FamilyHub/README.md` on that branch (now documents the new feature + its on-device-only limitation).
 
 ## Tasks
-- [ ] **app-engineer:** merge the local `claude/family-hub-widget-1w7cv9` (`88472e2`) with `origin/claude/family-hub-widget-1w7cv9` (`0f097d3`); check the Catch-Up Recorder's `Store.swift` changes against the local `Store.update` and tolerant-decoding changes.
+- [x] **app-engineer:** merge the local `claude/family-hub-widget-1w7cv9` (`88472e2`) with `origin/claude/family-hub-widget-1w7cv9` (`0f097d3`); check the Catch-Up Recorder's `Store.swift` changes against the local `Store.update` and tolerant-decoding changes — done 2026-10-14 (`1a32998`, local only, not compiled).
+- [ ] **app-engineer:** Catch-Up Recorder: a recorded transcript is lost if summarising fails or there's no API key (a note is only saved after a summary) — save the transcript first.
+- [ ] **app-engineer:** Catch-Up Recorder: ticked follow-up items aren't saved.
+- [ ] **owner:** the new "Catch-up" swipe on People (`PeopleView.swift:22–25`) probably replaces swipe-to-delete, and there's no Edit button, so people may no longer be deletable there. Pick: Delete in the swipe, an Edit button, or move Catch-up to the leading edge. Unverified on device.
 - [ ] **owner:** build it — `cd FamilyHub/Packages/FamilyHubCore && swift test` for the new
   `CatchUpSummarizerTests` (15 tests, logic-only, no device needed) and the 2026-10-03/06 review fixes, then
   `xcodegen` + run on a real iPhone (simulator mic/speech is unreliable) and exercise: People row swipe → record
