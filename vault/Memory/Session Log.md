@@ -1,6 +1,22 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-15 10:21: local hourly run — Sproutling Isles: receipt no longer confirmed when the leave-save wrote nothing
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `60c49d0`) · **Agents used:** roblox-engineer
+
+- Rotation: Sproutling Isles (after Clip Studio). Task: the 2026-10-10 edge case in `DataService.save`.
+- Bug: a leave-save that skipped its write (another server owns the profile) still set `released`, so a receipt
+  save waiting behind it returned true without saving → `PurchaseGranted` for a grant never stored (lost purchase).
+- Fix: `released` now stores `"saved"` or `"lost"`. Later non-release saves are dropped either way (no stale write,
+  no lock re-take) but return true only after `"saved"`; after `"lost"` the receipt gets `NotProcessedYet` and Roblox
+  redelivers it to the server that owns the profile. pcall-error leave-saves unchanged; `load()` still clears it.
+- Checked all 6 `DataService.save` callers (only the 2 receipt calls use the result) and that nothing yields between
+  `processReceipt`'s `leaving` check and its save, so the `"saved"` case stays safe.
+- **Not verified:** no selene/rojo/lune on the PC; not Studio-tested (the two-server case needs a live test).
+
+**Next:** push once GitHub is signed in; lint/build `16171a1` + `60c49d0` and rebuild the stale `.rbxlx`.
+
+---
 ## 2026-10-15 00:22: local hourly run — Clip Studio: first real test run of `claude/clip-studio-presenter-fixes`
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `cd43c65`) · **Agents used:** none (orchestrator ran the qa-tester "run tests" tasks directly)
 
