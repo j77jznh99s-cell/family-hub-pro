@@ -27,11 +27,13 @@ local jobId = if game.JobId ~= "" then game.JobId else "studio"
 -- Saves are serialised per player so an older write can never land after a newer one:
 --   inFlight[userId]  - number of UpdateAsync writes running for this player (nil when idle,
 --                       else 1; only a release save that outwaited a stuck write makes it 2)
---   released[userId]  - the leave-save (lock release) is done; later non-release saves are
---                       dropped so a late autosave can't re-take the lock (cleared on next load)
+--   released[userId]  - the leave-save ran: "saved" if it wrote (lock released), "lost" if another
+--                       server owned the profile. Later non-release saves are dropped either way so
+--                       a late write can't re-take the lock; they return true only after "saved",
+--                       so a receipt waits for the owning server instead (cleared on next load)
 --   active            - save() calls not yet returned, waiting or writing (for BindToClose)
 local inFlight: { [number]: number } = {}
-local released: { [number]: boolean } = {}
+local released: { [number]: "saved" | "lost" } = {}
 local active = 0
 
 -- A leave-save waits this long for a running write instead of the usual 30 s, so it is not lost.
@@ -177,7 +179,9 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	-- 2 min has failed in practice, and dropping the leave-save would lose the session's progress.
 	if released[userId] then
 		active -= 1
-		return true -- this player already left and released the lock; nothing newer to write
+		-- this player already left; nothing newer to write. Only report success if the leave-save
+		-- actually landed, else a receipt would confirm a grant that never got saved.
+		return released[userId] == "saved"
 	end
 	inFlight[userId] = (inFlight[userId] or 0) + 1
 	local wrote = false
@@ -198,7 +202,7 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	inFlight[userId] = if left > 0 then left else nil
 	active -= 1
 	if ok and release then
-		released[userId] = true
+		released[userId] = if wrote then "saved" else "lost"
 	end
 	if not ok then
 		warn("[Sproutling] save failed for", player.Name, err)
