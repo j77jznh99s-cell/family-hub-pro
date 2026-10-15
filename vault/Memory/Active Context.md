@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 # Active Context
 
@@ -92,7 +92,7 @@ No 2026 Roblox Halloween Spotlight dates announced yet; re-check 14–17 Oct. Th
 - [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07, cloud) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do. See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
 - [ ] Family Hub (local PC runs): reviewed 2026-10-03 (`5b87ea8`, 5 bugs fixed) + widget ✓ race fixed 2026-10-06 (`b64728a`, `Store.update`) + edit sheet no longer undoes a widget ✓ (`a25463d`) + old/newer data files always load (`88472e2`); none compiled or pushed — run `swift test` on a Mac and answer 3 product questions in [[Family Hub]]. Local and GitHub branches merged 2026-10-14 (`1a32998`, local only); new: pick how to delete people now that the Catch-up swipe likely replaced swipe-to-delete.
 - [ ] Bybit bot: risk gate hardened 2026-10-03 (`84b1ec0`) and the Bybit client now throws on missing/blank exchange numbers 2026-10-06 (`b9e9225`), and so do the monitoring scripts (`a9f70ea`, 16:00); `position-check` tracks hedge-mode legs by symbol+side (`47c409d`, 20:00); 2026-10-14 all tests finally run on the PC (Node installed): all pass; the gate now logs a `submitting` audit entry before every exchange write and refuses new entries if it can't (`5c34a45`; gate 69/69, scripts 46/46). Not pushed. Still confirm paper vs live status.
-- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both. 2026-10-06: calendar/weekly/usage reviewed on that branch (`3798e7f`, 4 small fixes), and early-failure spend now logged (`b51d8e1`, 17:00); 2026-10-10: a repeat run no longer overwrites the earlier run's folder, and bad `--days`/`--per-day` now error out (`cd43c65`). 2 timing decisions for you in [[Clip Studio]] (QA Review 2 #3, #4).
+- [ ] Say what's next for Clip Studio and Family Hub — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean). Its 2 minor bugs were fixed 2026-10-03 on `claude/clip-studio-presenter-fixes` (`207fbba`, built on top of it; tests not run, not pushed) — merge that branch instead to get both. 2026-10-06: calendar/weekly/usage reviewed on that branch (`3798e7f`, 4 small fixes), and early-failure spend now logged (`b51d8e1`, 17:00); 2026-10-10: a repeat run no longer overwrites the earlier run's folder, and bad `--days`/`--per-day` now error out (`cd43c65`). 2026-10-15: tests finally run on the PC (Node 24): 114/119 pass, 3 skipped (no ffmpeg), 2 DB/queue files can't load (`better-sqlite3` has no Node 24 Windows build; environment only), so all those presenter fixes are verified. 2 timing decisions for you in [[Clip Studio]] (QA Review 2 #3, #4).
 
 ## Timeline at risk
 **The original plan has now fully slipped** (as of 2026-10-10, the originally planned public-launch date):

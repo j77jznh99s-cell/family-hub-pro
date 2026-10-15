@@ -1,6 +1,22 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-15 00:22: local hourly run — Clip Studio: first real test run of `claude/clip-studio-presenter-fixes`
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `cd43c65`) · **Agents used:** none (orchestrator ran the qa-tester "run tests" tasks directly)
+
+- Rotation: AI Agent Team skipped (repo still has uncommitted `agents/inbox/LOG.md` + now `agents/newsletter/LOG.md`), so Clip Studio.
+  Cloud branch unchanged at `965a4a3`, nothing to redo.
+- Ran the suite with Node 24.20 on the PC (`npm ci --ignore-scripts`, then `node --test --test-force-exit "tests/*.test.js"`):
+  **119 tests: 114 pass, 0 code failures, 3 skipped (no ffmpeg), 2 files fail to load** (`db.test.js`, `queue.test.js`):
+  `better-sqlite3` 11.10 has no prebuilt binary for Node 24 on Windows and the PC has no C++ build tools, so it can't compile.
+  Environment only, not a code bug (CI uses Node 22 on Linux).
+- So every "tests not run" presenter commit is now verified: `207fbba`, `3798e7f`, `b51d8e1`, `cd43c65`
+  (presenter, presenterArgs, check, usage, calendar, weekly, fill, runs, auth tests all pass).
+- No code change, no branch commit. Note: on Node 24, `node --test tests/` (a folder) fails; use the glob.
+
+**Next:** push once GitHub is signed in; owner decides merge; optional task: bump `better-sqlite3` to a version with Node 24 prebuilds.
+
+---
 ## 2026-10-14 13:05: local hourly run — Bybit: first real test run + audit-before-submit in the risk gate
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`) · **Agents used:** app-engineer
 

@@ -139,13 +139,14 @@ Open (not fixed):
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
 - [ ] **owner:** decide whether to merge `claude/hourly-project-processing-ejbqs4` into `claude/video-clip-detection-mvp-g18ggk` (all automated checks this session could run passed; Docker build step still unverified — see QA Review).
 - [x] **app-engineer:** fix the two minor findings above (fragile disclaimer-dedup string match in `writer.js`/`check.js`; missing `|| ''` guard in `writer.js:185`) before or shortly after merge. Done 2026-10-03 (`207fbba` on new branch `claude/clip-studio-presenter-fixes`, built on the cloud branch; not pushed yet, tests not run — no Node on the PC).
-- [ ] **qa-tester:** run `node --test` on `claude/clip-studio-presenter-fixes` (needs Node) and confirm the 4 new tests + existing presenter/check tests pass.
+- [x] **qa-tester:** run `node --test` on `claude/clip-studio-presenter-fixes` (needs Node) and confirm the 4 new tests + existing presenter/check tests pass. Done 2026-10-15 on the PC (Node 24.20, at `cd43c65`, `node --test --test-force-exit "tests/*.test.js"`): 119 tests, 114 pass, 3 skipped (no ffmpeg), `db.test.js`/`queue.test.js` can't load because `better-sqlite3` 11.10 has no Node 24 Windows binary and the PC can't compile it (environment, not a code bug). This also covers the 3 "run the tests" tasks below.
 - [x] **qa-tester:** line-by-line review of `calendar.js`, `weekly.js`, `usage.js`. Done 2026-10-06 — see QA Review 2 (`3798e7f`, tests not run).
-- [ ] **qa-tester:** also run the 4 new tests from `3798e7f` when Node is available.
+- [x] **qa-tester:** also run the 4 new tests from `3798e7f` when Node is available. Done 2026-10-15, pass.
 - [x] **app-engineer:** log spend for presenter runs that fail before the script check (QA Review 2 #1). Done 2026-10-06 (`b51d8e1`: thrown research/script errors log spend if any Claude reply arrived, then rethrow; 5 tests, not run).
-- [ ] **qa-tester:** run the 5 new tests from `b51d8e1` (`tests/presenter.test.js`) when Node is available.
+- [x] **qa-tester:** run the 5 new tests from `b51d8e1` (`tests/presenter.test.js`) when Node is available. Done 2026-10-15, pass.
 - [ ] **app-engineer:** one shared "videos per day" setting for the CLI, weekly report and dashboard calendar (QA Review 2 #2).
 - [x] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6). Done 2026-10-10 (`cd43c65`: `makeRunDir` adds `-2`, `-3` … instead of overwriting; `--days` 1–31 / `--per-day` 1–6 or exit 1; 10 tests, not run).
-- [ ] **qa-tester:** run `tests/presenter.test.js` + `tests/presenterArgs.test.js` from `cd43c65` when Node is available.
+- [x] **qa-tester:** run `tests/presenter.test.js` + `tests/presenterArgs.test.js` from `cd43c65` when Node is available. Done 2026-10-15, pass.
+- [ ] **app-engineer:** bump `better-sqlite3` (11.10 → a version with Node 24 prebuilds) so the full suite also runs on the PC's Node 24, then re-run all tests (CI stays on Node 22).
 - [ ] **owner:** which date spend counts under (spent vs slot date) and UTC vs local calendar days (QA Review 2 #3, #4).
 - [ ] **owner:** confirm what's next for Clip Studio (deploy? pricing? more features?) so an agent can pick it up
