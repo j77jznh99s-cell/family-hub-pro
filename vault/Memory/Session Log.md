@@ -1,6 +1,21 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-15 13:02: local hourly run — Family Hub: Catch-Up transcripts saved first, ticked follow-ups persist
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `9a3e9cb`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Did the 2 open Catch-Up Recorder app-engineer tasks.
+- Transcript is saved as a `CatchUpNote` when recording stops (or recognition ends on its own), before any Claude
+  call; the summary later updates the same note, so no key / a failed summary no longer loses it. New "Earlier
+  catch-ups" list in the recorder: "Not summarised yet", tap to retry, swipe to delete. Only text stored, never audio.
+- Ticked follow-ups now save: `CatchUpNote.checkedActionItems` (tolerant decode → empty), via `Store.update`;
+  a new summary clears old ticks. Logic in FamilyHubCore (`upsertCatchUpNote`, `setCatchUpActionItem`, `deleteCatchUpNote`) + tests.
+- Orchestrator reviewed the core/AppModel diff (synthesized CodingKeys cover the new field; old `addCatchUpNote` call site gone).
+- **Not verified:** no Swift on the PC, nothing compiled or run; push failed (GitHub not signed in).
+
+**Next:** owner runs `swift test` + on-device steps in [[Family Hub]]; app-engineer: profile-note "Saved" state, live transcript.
+
+---
 ## 2026-10-15 10:21: local hourly run — Sproutling Isles: receipt no longer confirmed when the leave-save wrote nothing
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `60c49d0`) · **Agents used:** roblox-engineer
 

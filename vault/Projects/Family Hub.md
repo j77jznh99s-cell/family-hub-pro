@@ -1,6 +1,6 @@
 ---
 tags: [project, ios]
-updated: 2026-10-10
+updated: 2026-10-15
 ---
 # Family Hub
 
@@ -35,8 +35,11 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
 
 ## Tasks
 - [x] **app-engineer:** merge the local `claude/family-hub-widget-1w7cv9` (`88472e2`) with `origin/claude/family-hub-widget-1w7cv9` (`0f097d3`); check the Catch-Up Recorder's `Store.swift` changes against the local `Store.update` and tolerant-decoding changes — done 2026-10-14 (`1a32998`, local only, not compiled).
-- [ ] **app-engineer:** Catch-Up Recorder: a recorded transcript is lost if summarising fails or there's no API key (a note is only saved after a summary) — save the transcript first.
-- [ ] **app-engineer:** Catch-Up Recorder: ticked follow-up items aren't saved.
+- [x] **app-engineer:** Catch-Up Recorder: a recorded transcript is lost if summarising fails or there's no API key — done 2026-10-15 (`9a3e9cb`, local only, not compiled): transcript saved as a note when recording stops (also when recognition ends on its own), summary later fills the same note; new "Earlier catch-ups" list in the recorder ("Not summarised yet", tap to retry, swipe to delete).
+- [x] **app-engineer:** Catch-Up Recorder: ticked follow-up items aren't saved — done 2026-10-15 (`9a3e9cb`): new `CatchUpNote.checkedActionItems` (decodes to empty on old files), saved via `Store.update`; a new summary clears old ticks. Tests added, not run.
+- [ ] **app-engineer:** Catch-Up Recorder: the profile note's "Saved" state isn't stored, so reopening an old catch-up could add the same note to the profile twice.
+- [ ] **app-engineer (small):** Catch-Up Recorder: show the live transcript while recording (today it appears only after Stop).
+- [ ] **owner:** saved catch-ups are listed only inside the recorder — enough, or also on each person's page? And swipe-to-delete there has no undo — keep it?
 - [ ] **owner:** the new "Catch-up" swipe on People (`PeopleView.swift:22–25`) probably replaces swipe-to-delete, and there's no Edit button, so people may no longer be deletable there. Pick: Delete in the swipe, an Edit button, or move Catch-up to the leading edge. Unverified on device.
 - [ ] **owner:** build it — `cd FamilyHub/Packages/FamilyHubCore && swift test` for the new
   `CatchUpSummarizerTests` (15 tests, logic-only, no device needed) and the 2026-10-03/06 review fixes, then
