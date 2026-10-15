@@ -335,6 +335,21 @@ final class CompatibilityTests: XCTestCase {
         let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","transcript":"t","summary":"s","suggestedNote":"the new job","actionItems":["send photos"],"createdAt":"2026-09-22T15:00:00Z"}"#)
         XCTAssertEqual(n, CatchUpNote(id: id, personID: id, transcript: "t", summary: "s", suggestedNote: "the new job",
                                       actionItems: ["send photos"], createdAt: when))
+        XCTAssertTrue(n.checkedActionItems.isEmpty, "notes saved before ticks were stored load with nothing ticked")
+    }
+
+    func testCatchUpNoteWithTickedFollowUpsLoads() throws {
+        let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","transcript":"t","summary":"s","actionItems":["a","b"],"createdAt":"2026-09-22T15:00:00Z","checkedActionItems":[1]}"#)
+        XCTAssertEqual(n.checkedActionItems, [1])
+        XCTAssertFalse(n.isActionItemChecked(0))
+        XCTAssertTrue(n.isActionItemChecked(1))
+    }
+
+    func testCatchUpNoteSavedBeforeItsSummaryLoads() throws {
+        // What the recorder now writes the moment recording stops, before any Claude call.
+        let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","transcript":"we talked about the trip","summary":"","suggestedNote":"","actionItems":[],"createdAt":"2026-09-22T15:00:00Z","checkedActionItems":[]}"#)
+        XCTAssertEqual(n.transcript, "we talked about the trip")
+        XCTAssertTrue(n.needsSummary)
     }
 
     func testCatchUpNoteStillNeedsID() {
@@ -384,7 +399,7 @@ final class CompatibilityTests: XCTestCase {
             badges: [Badge.firstHello.rawValue: when],
             preferences: Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .grape),
             catchUpNotes: [CatchUpNote(id: id, personID: p.id, transcript: "t", summary: "s", suggestedNote: "n",
-                                       actionItems: ["a"], createdAt: when)]
+                                       actionItems: ["a", "b"], createdAt: when, checkedActionItems: [1])]
         )
         let encoded = try Store.encoder.encode(original)
         XCTAssertEqual(try Store.decoder.decode(AppData.self, from: encoded), original)
@@ -394,6 +409,101 @@ final class CompatibilityTests: XCTestCase {
         XCTAssertEqual(Set(personJSON.keys), ["id", "name", "relationship", "phone", "cadenceDays", "lastContacted",
                                               "notes", "snoozedUntil", "isFavorite"])
         XCTAssertEqual(personJSON["lastContacted"] as? String, "2026-09-22T15:00:00Z")
+    }
+}
+
+/// Catch-Up Recorder storage: the transcript is saved before any summary, and ticked follow-ups persist.
+final class CatchUpNoteStorageTests: XCTestCase {
+    func tempStore() -> (Store, URL) {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        return (Store(url: url), url)
+    }
+
+    func testNeedsSummaryOnlyWhenThereIsATranscriptAndNoSummary() {
+        XCTAssertFalse(CatchUpNote().needsSummary, "nothing recorded yet")
+        XCTAssertFalse(CatchUpNote(transcript: "  \n ").needsSummary, "blank transcript")
+        XCTAssertTrue(CatchUpNote(transcript: "hi").needsSummary)
+        XCTAssertFalse(CatchUpNote(transcript: "hi", summary: "s").needsSummary)
+    }
+
+    func testUpsertAddsNewestFirstThenUpdatesInPlace() {
+        var data = AppData()
+        let older = CatchUpNote(transcript: "older")
+        var note = CatchUpNote(transcript: "what was said")
+        data.upsertCatchUpNote(older)
+        data.upsertCatchUpNote(note)
+        XCTAssertEqual(data.catchUpNotes.map(\.id), [note.id, older.id])
+
+        note.applySummary(summary: "s", suggestedNote: "n", actionItems: ["a"])
+        data.upsertCatchUpNote(note)
+        XCTAssertEqual(data.catchUpNotes.count, 2, "the summary updates the saved note, it doesn't add another")
+        XCTAssertEqual(data.catchUpNotes.first, note)
+    }
+
+    func testTranscriptSurvivesAFailedSummaryThroughTheStore() throws {
+        let (store, url) = tempStore()
+        defer { try? FileManager.default.removeItem(at: url) }
+        // Whole-second date: the file stores ISO 8601 without fractions.
+        let note = CatchUpNote(transcript: "she starts the new job Monday", createdAt: Date(timeIntervalSince1970: 1_790_000_000))
+
+        // Recording stops: saved straight away, before any Claude call.
+        try store.update { $0.upsertCatchUpNote(note) }
+        // The summary call fails (or there's no API key): nothing else is written. Reopening the app still has it.
+        let reloaded = Store(url: url).load()
+        XCTAssertEqual(reloaded.catchUpNotes, [note])
+        XCTAssertTrue(reloaded.catchUpNotes[0].needsSummary, "offered for a retry")
+
+        // Retry succeeds later: the same note gets its summary.
+        var summarized = reloaded.catchUpNotes[0]
+        summarized.applySummary(summary: "New job news", suggestedNote: "the new job", actionItems: ["text her Monday"])
+        try store.update { $0.upsertCatchUpNote(summarized) }
+        let after = store.load().catchUpNotes
+        XCTAssertEqual(after.count, 1)
+        XCTAssertEqual(after[0].transcript, "she starts the new job Monday")
+        XCTAssertEqual(after[0].summary, "New job news")
+        XCTAssertFalse(after[0].needsSummary)
+    }
+
+    func testTickedFollowUpIsSavedThroughTheStore() throws {
+        let (store, url) = tempStore()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let note = CatchUpNote(transcript: "t", summary: "s", actionItems: ["send photos", "call the doctor"])
+        try store.update { $0.upsertCatchUpNote(note) }
+
+        try store.update { $0.setCatchUpActionItem(note.id, index: 1, checked: true) }
+        XCTAssertEqual(Store(url: url).load().catchUpNotes.first?.checkedActionItems, [1])
+
+        try store.update { $0.setCatchUpActionItem(note.id, index: 1, checked: false) }
+        XCTAssertEqual(Store(url: url).load().catchUpNotes.first?.checkedActionItems, [])
+    }
+
+    func testSetActionItemIgnoresBadIndicesAndUnknownNotes() {
+        var note = CatchUpNote(actionItems: ["a"])
+        note.setActionItem(5, checked: true)
+        note.setActionItem(-1, checked: true)
+        XCTAssertTrue(note.checkedActionItems.isEmpty)
+        note.setActionItem(0, checked: true)
+        note.setActionItem(0, checked: true)
+        XCTAssertEqual(note.checkedActionItems, [0], "ticking twice is the same as once")
+
+        var data = AppData(catchUpNotes: [note])
+        data.setCatchUpActionItem(UUID(), index: 0, checked: false)
+        XCTAssertEqual(data.catchUpNotes, [note])
+    }
+
+    func testNewSummaryClearsOldTicks() {
+        var note = CatchUpNote(transcript: "t", summary: "s", actionItems: ["a", "b"], checkedActionItems: [0, 1])
+        note.applySummary(summary: "s2", suggestedNote: "n2", actionItems: ["c"])
+        XCTAssertEqual(note.actionItems, ["c"])
+        XCTAssertTrue(note.checkedActionItems.isEmpty, "ticks referred to the old list's positions")
+    }
+
+    func testDeleteCatchUpNote() {
+        let keep = CatchUpNote(transcript: "keep")
+        let drop = CatchUpNote(transcript: "drop")
+        var data = AppData(catchUpNotes: [drop, keep])
+        data.deleteCatchUpNote(drop.id)
+        XCTAssertEqual(data.catchUpNotes, [keep])
     }
 }
 

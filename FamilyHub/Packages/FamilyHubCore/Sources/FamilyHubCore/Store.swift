@@ -73,6 +73,28 @@ public struct AppData: Codable, Equatable, Sendable {
         guard let i = people.firstIndex(where: { $0.id == id }) else { return }
         people[i].snoozedUntil = calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: date))
     }
+
+    // MARK: Catch-up notes
+
+    /// Saves a catch-up note: replaces the stored one with the same id, or adds it at the top (newest first).
+    /// The recorder calls this as soon as a transcript exists, then again when the summary arrives.
+    public mutating func upsertCatchUpNote(_ note: CatchUpNote) {
+        if let i = catchUpNotes.firstIndex(where: { $0.id == note.id }) {
+            catchUpNotes[i] = note
+        } else {
+            catchUpNotes.insert(note, at: 0)
+        }
+    }
+
+    /// Ticks or unticks one follow-up on a stored note. Unknown ids and out-of-range indices are ignored.
+    public mutating func setCatchUpActionItem(_ id: UUID, index: Int, checked: Bool) {
+        guard let i = catchUpNotes.firstIndex(where: { $0.id == id }) else { return }
+        catchUpNotes[i].setActionItem(index, checked: checked)
+    }
+
+    public mutating func deleteCatchUpNote(_ id: UUID) {
+        catchUpNotes.removeAll { $0.id == id }
+    }
 }
 
 public final class Store: @unchecked Sendable {

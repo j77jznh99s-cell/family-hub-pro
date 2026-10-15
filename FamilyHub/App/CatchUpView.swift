@@ -5,28 +5,43 @@ import SwiftUI
 /// the call itself on speakerphone — and turn it into a summary, a note for that person's profile,
 /// and a checklist of anything you said you'd follow up on. See `RecordingService` for the
 /// on-device speech-to-text and `CatchUpSummarizer` for the Claude calls.
+///
+/// The transcript is saved as soon as recording stops, before any Claude call, so a failed summary or a
+/// missing API key never loses it; the summary is added to the same note later (retry from "Earlier catch-ups").
 struct CatchUpView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var recorder = RecordingService()
     @State private var note: CatchUpNote
     @State private var persisted = false
+    /// The note the current/last recording belongs to; a late transcript update only ever lands on that note.
+    @State private var recordingNoteID: UUID?
     @State private var isSummarizing = false
     @State private var errorText: String?
     @State private var question = ""
     @State private var answer: String?
     @State private var isAsking = false
     @State private var savedNote = false
-    @State private var checkedItems: Set<Int> = []
+    /// Which saved notes "Earlier catch-ups" lists: this person's, or everyone's from the general entry point.
+    private let filterPersonID: UUID?
 
     /// `personID` nil = the general entry point (Today tab); pick someone afterwards, or leave it unassigned.
     init(personID: UUID? = nil) {
         _note = State(initialValue: CatchUpNote(personID: personID))
+        filterPersonID = personID
     }
 
     private var person: Person? {
         guard let id = note.personID else { return nil }
         return model.person(id)
+    }
+
+    private var earlierNotes: [CatchUpNote] {
+        Array(
+            model.catchUpNotes
+                .filter { $0.id != note.id && (filterPersonID == nil || $0.personID == filterPersonID) }
+                .prefix(20)
+        )
     }
 
     var body: some View {
@@ -58,6 +73,19 @@ struct CatchUpView: View {
                     }
                 }
 
+                if persisted, note.needsSummary, !recorder.isRecording {
+                    Section {
+                        Label(
+                            Keychain.apiKey == nil
+                                ? "Transcript saved. Add a Claude API key in the Me tab to summarise it — it'll be under Earlier catch-ups."
+                                : "Transcript saved. You can summarise it now, or later from Earlier catch-ups.",
+                            systemImage: "tray.and.arrow.down"
+                        )
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+
                 if let errorText {
                     Section {
                         Label(errorText, systemImage: "exclamationmark.triangle")
@@ -71,11 +99,21 @@ struct CatchUpView: View {
                     if !note.actionItems.isEmpty { actionItemsSection }
                     askSection
                 }
+
+                earlierSection
             }
             .navigationTitle("Catch-Up Recorder")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+            }
+            // Recognition can end on its own (a time limit or an error), and the final words can arrive just
+            // after Stop: save whatever transcript exists whenever the recorder isn't running.
+            .onChange(of: recorder.isRecording) { _, isRecording in
+                if !isRecording { captureTranscript(recorder.transcript) }
+            }
+            .onChange(of: recorder.transcript) { _, text in
+                if !recorder.isRecording { captureTranscript(text) }
             }
         }
     }
@@ -92,7 +130,7 @@ struct CatchUpView: View {
 
             if recorder.isRecording {
                 Text("Listening…").foregroundStyle(.secondary)
-            } else if !note.transcript.isEmpty, note.summary.isEmpty {
+            } else if note.needsSummary {
                 Button {
                     Task { await generateSummary() }
                 } label: {
@@ -131,15 +169,16 @@ struct CatchUpView: View {
     @ViewBuilder private var actionItemsSection: some View {
         Section("Follow up on") {
             ForEach(Array(note.actionItems.enumerated()), id: \.offset) { i, item in
+                let checked = note.isActionItemChecked(i)
                 Button {
-                    if checkedItems.contains(i) { checkedItems.remove(i) } else { checkedItems.insert(i) }
+                    setActionItem(i, checked: !checked)
                 } label: {
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: checkedItems.contains(i) ? "checkmark.square.fill" : "square")
-                            .foregroundStyle(checkedItems.contains(i) ? model.theme.accent : .secondary)
+                        Image(systemName: checked ? "checkmark.square.fill" : "square")
+                            .foregroundStyle(checked ? model.theme.accent : .secondary)
                         Text(item)
-                            .strikethrough(checkedItems.contains(i))
-                            .foregroundStyle(checkedItems.contains(i) ? .secondary : .primary)
+                            .strikethrough(checked)
+                            .foregroundStyle(checked ? .secondary : .primary)
                     }
                 }
                 .buttonStyle(.plain)
@@ -159,6 +198,41 @@ struct CatchUpView: View {
         }
     }
 
+    /// Saved catch-ups (newest first); tap one to reopen it — e.g. to summarise a transcript saved without one.
+    @ViewBuilder private var earlierSection: some View {
+        let notes = earlierNotes
+        if !recorder.isRecording, !notes.isEmpty {
+            Section("Earlier catch-ups") {
+                ForEach(notes) { saved in
+                    Button {
+                        open(saved)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(saved.summary.isEmpty ? saved.transcript : saved.summary)
+                                .lineLimit(2)
+                                .foregroundStyle(.primary)
+                            HStack(spacing: 6) {
+                                if saved.needsSummary { Text("Not summarised yet") }
+                                if filterPersonID == nil, let id = saved.personID, let p = model.person(id) {
+                                    Text(p.firstName)
+                                }
+                                if saved.createdAt != .distantPast {
+                                    Text(saved.createdAt, format: .dateTime.month().day())
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions {
+                        Button("Delete", role: .destructive) { model.deleteCatchUpNote(saved.id) }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Actions
 
     private func setPerson(_ id: UUID?) {
@@ -166,17 +240,54 @@ struct CatchUpView: View {
         if persisted { model.assignCatchUpNote(note.id, to: id) }
     }
 
+    private func setActionItem(_ index: Int, checked: Bool) {
+        note.setActionItem(index, checked: checked)
+        if persisted { model.setCatchUpActionItem(note.id, index: index, checked: checked) }
+    }
+
+    /// Shows a saved note in place of the current one (the current one is already saved, if it has a transcript).
+    private func open(_ saved: CatchUpNote) {
+        note = saved
+        persisted = true
+        recordingNoteID = nil
+        resetConversationState()
+    }
+
+    private func resetConversationState() {
+        errorText = nil
+        question = ""
+        answer = nil
+        savedNote = false
+    }
+
     private func toggleRecording() async {
         if recorder.isRecording {
-            note.transcript = recorder.stop()
+            captureTranscript(recorder.stop())
         } else {
             errorText = nil
             do {
                 try await recorder.start()
+                // A new recording never overwrites one that's already saved: it starts a fresh note, same person.
+                if !note.transcript.isEmpty {
+                    note = CatchUpNote(personID: note.personID)
+                    persisted = false
+                    resetConversationState()
+                }
+                recordingNoteID = note.id
             } catch {
                 errorText = error.localizedDescription
             }
         }
+    }
+
+    /// Saves the transcript straight away (before any Claude call), so it survives a failed summary or no API key.
+    /// Only transcript text is stored — never audio.
+    private func captureTranscript(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard note.id == recordingNoteID, !trimmed.isEmpty, trimmed != note.transcript else { return }
+        note.transcript = trimmed
+        model.saveCatchUpNote(note)
+        persisted = true
     }
 
     private func generateSummary() async {
@@ -184,23 +295,23 @@ struct CatchUpView: View {
             errorText = OpenerError.missingAPIKey.localizedDescription
             return
         }
+        let target = note
         isSummarizing = true
         defer { isSummarizing = false }
         do {
             let summarizer = CatchUpSummarizer(apiKey: apiKey, model: Prefs.model)
-            let result = try await summarizer.summarize(transcript: note.transcript, person: person)
-            note.summary = result.summary
-            note.suggestedNote = result.suggestedNote
-            note.actionItems = result.actionItems
-            errorText = nil
-            if persisted {
-                model.assignCatchUpNote(note.id, to: note.personID) // keep personID in sync if changed before this point
-            } else {
-                model.addCatchUpNote(note)
+            let result = try await summarizer.summarize(transcript: target.transcript, person: person)
+            // Apply to the latest copy of that note: another note may have been opened while this was running.
+            var updated = model.catchUpNotes.first { $0.id == target.id } ?? target
+            updated.applySummary(summary: result.summary, suggestedNote: result.suggestedNote, actionItems: result.actionItems)
+            model.saveCatchUpNote(updated)
+            if note.id == target.id {
+                note = updated
                 persisted = true
+                errorText = nil
             }
         } catch {
-            errorText = error.localizedDescription
+            if note.id == target.id { errorText = error.localizedDescription }
         }
     }
 

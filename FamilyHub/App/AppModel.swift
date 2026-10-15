@@ -118,8 +118,18 @@ final class AppModel {
 
     var catchUpNotes: [CatchUpNote] { data.catchUpNotes }
 
-    func addCatchUpNote(_ note: CatchUpNote) {
-        update { d in d.catchUpNotes.insert(note, at: 0) }
+    /// Adds the note, or replaces the stored copy with the same id. Called as soon as a transcript exists
+    /// (so it survives a failed summary or a missing API key) and again when the summary arrives.
+    func saveCatchUpNote(_ note: CatchUpNote) {
+        update { $0.upsertCatchUpNote(note) }
+    }
+
+    func setCatchUpActionItem(_ id: UUID, index: Int, checked: Bool) {
+        update { $0.setCatchUpActionItem(id, index: index, checked: checked) }
+    }
+
+    func deleteCatchUpNote(_ id: UUID) {
+        update { $0.deleteCatchUpNote(id) }
     }
 
     func assignCatchUpNote(_ id: UUID, to personID: UUID?) {
