@@ -10,3 +10,4 @@ clips/*
 *.log
 dump.rdb
 .DS_Store
+graphify-out/cache/

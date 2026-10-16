@@ -1,6 +1,47 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-16 16:59: local hourly run — Clip Studio: better-sqlite3 12, Windows caption fix, suite fully green
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `bb3f1d3`) · **Agents used:** none (done inline by the orchestrator; small change)
+
+- Rotation: AI Agent Team (after Bybit) skipped, still uncommitted `agents/*/LOG.md` + new `n8n/start-n8n.cmd`; moved to Clip Studio.
+- Did the filed task "bump `better-sqlite3`": `^11.5` → `^12.11.1` (supports Node 20–26; Docker/CI stay on 22). npm's
+  new `allowScripts` blocked its install script, so the prebuilt binary was fetched by running `prebuild-install` by hand.
+- ffmpeg is now installed on the PC, which showed a real bug: `escapeForFilterPath` escaped once, but ffmpeg unescapes
+  twice, so `ass=`/`subtitles=` broke on Windows paths (`C:\...`). Now escapes twice; checked against real ffmpeg 9 with
+  drive-letter, apostrophe and `,[];` paths; unit test added. Linux paths without those characters are unchanged.
+- Test temp-dir cleanup no longer fails on Windows when the open SQLite file blocks removal (3 test files).
+- **Verified:** full suite 125/125 pass, 0 skipped (Windows, Node 24, ffmpeg 9).
+- **Not verified:** CI/Docker (Node 22, Linux) not run; push failed (GitHub not signed in).
+- Also merged `origin/main` (graphify install + morning summary) into local `main`: 2 vault conflicts, both sides kept.
+
+**Next:** owner: merge decision / what's next for Clip Studio; app-engineer: none open for Clip Studio.
+
+---
+## 2026-10-16: owner request — Graphify installed
+**Device:** phone · **Branch:** `claude/graphify-setup` → merged to `main` · **Agents used:** none
+
+**Owner asked**
+- Ran `graphify install --project --platform claude`, then "whatever you need to do to get it done".
+
+**What was done**
+- Installed `graphifyy` 0.9.91, ran the project install (skill, `CLAUDE.md` section, PreToolUse hooks).
+- Built the code graph with `graphify update .`: 769 nodes, 1106 edges, 69 communities in `graphify-out/`.
+- Added a SessionStart hook (`.claude/hooks/install-graphify.sh`) so cloud sessions install graphify and
+  refresh the graph; tested by uninstalling and re-running it. Gitignored `graphify-out/cache/`.
+- Updated [[Claude Code Add-ons]].
+
+**Not verified**
+- Only the AST (code) graph was built; the LLM pass over docs/vault (`/graphify .`) was not run.
+- 2 `.sql` files skipped (needs `graphifyy[sql]`). Owner then ran `uv tool install graphifyy` on the laptop (reported done, not checked from here).
+- The graph only covers `main`; project branches (Sproutling Isles, Family Hub) aren't in it.
+
+**Decisions** (also add to [[Decisions]])
+- Owner approved installing Graphify.
+
+**Next:** see [[Active Context]].
+
+---
 ## 2026-10-15 22:04: local hourly run — Bybit: audit entries linked per attempt, "outcome unknown" on timeouts
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `df80168`) · **Agents used:** app-engineer
 

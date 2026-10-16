@@ -32,6 +32,37 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-16
+
+**Done overnight/today**
+- Nothing new from an automated run. Yesterday (not yet in a prior summary), a phone session did
+  real work: you sent 4 screenshots of a reel (PonyTail, Graphify, Agent Skills, OmniRoute) and
+  asked to implement them. Researched all 4 and wrote [[Claude Code Add-ons]] with verdicts
+  (recommend PonyTail + Agent Skills, Graphify optional, skip OmniRoute). You then separately ran
+  `graphify install` yourself and asked to finish the setup — installed it (skill, hooks, a
+  SessionStart hook so cloud sessions auto-install it), built the code graph (769 nodes, 1106
+  edges), gitignored its cache. I spot-checked the installed hook and settings — it's scoped to
+  gating Bash/Grep/Read/Glob through `graphify hook-guard` and a quiet pip-install/graph-refresh on
+  session start, nothing that reaches outside the project or sends data anywhere unexpected.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- **Approve PonyTail + Agent Skills** (or decline) per [[Claude Code Add-ons]] — Graphify itself is
+  already done, including on your laptop per your own report (not independently checked from here).
+- Everything else unchanged and still open for well over a week now — see [[Active Context]] for
+  the full list (Sproutling Isles timeline, Family Hub test, Knowledge Graph/iPhone-Obsidian
+  confirmation, and the rest).
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-15
 
 **Done overnight/today**
