@@ -1,6 +1,23 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-15 22:04: local hourly run — Bybit: audit entries linked per attempt, "outcome unknown" on timeouts
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `df80168`) · **Agents used:** app-engineer
+
+- Rotation: Bybit Trading Bot (after Family Hub). Did the app-engineer task "shared id + timeout wording".
+- `AuditEntry.attempt_id` (optional): one UUID per approved `runGated` call, on the `submitting` entry and its
+  `approved`/`error` follow-up; rejected/check-error entries omit it; old log lines still valid.
+- New `isUncertainOutcome(err)` in `gate.ts`: timeouts, network/socket/fetch errors, HTTP 5xx/408, unreadable
+  replies and Bybit 10000/10016 now say "OUTCOME UNKNOWN: may or may not have gone through, check orders/positions,
+  don't blindly resubmit" instead of "exchange rejected it". Real rejections keep the old wording. Wording only:
+  what is checked/sent is unchanged; `checks.ts` untouched; no exchange calls.
+- **Verified:** orchestrator re-ran: gate `npm test` 97/97, `tsc --noEmit` clean, `test:scripts` 46/46.
+- **Not verified:** never seen against a real Bybit timeout (simulated errors only). Push failed (GitHub not signed in).
+- Also merged `origin/main` into local `main` (2 vault conflicts, both sides kept).
+
+**Next:** owner: OK treating Bybit 10000/10016 as "outcome unknown" (on the safe side); app-engineer: MCP SDK bump, Telegram alert on repeated `position-check` failures.
+
+---
 ## 2026-10-15 13:02: local hourly run — Family Hub: Catch-Up transcripts saved first, ticked follow-ups persist
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `9a3e9cb`) · **Agents used:** app-engineer
 
@@ -353,6 +370,24 @@ run's half-written folder is no longer reused, so the calendar may show the olde
   outside-game purchases / refund webhook).
 
 **Next:** owner play-test is still the blocker. See [[Active Context]].
+
+---
+## 2026-10-16: owner request — Claude Code add-ons from a reel (researched, install blocked)
+**Device:** phone · **Branch:** `main` · **Agents used:** none
+
+**Owner asked**
+- Sent 4 screenshots of a reel (PonyTail, Graphify, Agent Skills, OmniRoute) and asked to implement it.
+
+**What was done**
+- Researched all 4, found the real repos, read PonyTail's hooks. Wrote [[Claude Code Add-ons]] with
+  verdicts and exact install steps. Recommend PonyTail + Agent Skills, Graphify optional, skip OmniRoute.
+- Tried to add the plugins to `.claude/settings.json` and run `graphify install --project`: both
+  blocked by the sandbox's safety check (third-party code into the repo needs the owner's approval).
+
+**Not verified**
+- None of the 4 tools installed or run here.
+
+**Next:** see [[Active Context]].
 
 ---
 ## 2026-10-08: owner request — iPhone/Obsidian setup guide written

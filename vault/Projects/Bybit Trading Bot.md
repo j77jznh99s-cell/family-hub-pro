@@ -1,6 +1,6 @@
 ---
 tags: [project, trading, high-risk]
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 # Bybit Trading Bot
 
@@ -15,7 +15,8 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   monitoring client `scripts/lib/bybit.js` got the same fix (`a9f70ea`, local only, not run). 2026-10-06 20:00:
   `position-check` now tracks hedge-mode legs separately (symbol+side, `47c409d`, local only, not run).
   2026-10-14: all tests run for the first time (Node on the PC) and pass; gate now audits before every exchange
-  write and fails closed if it can't (`5c34a45`, local only; gate 69/69, scripts 46/46).
+  write and fails closed if it can't (`5c34a45`, local only; gate 69/69, scripts 46/46). 2026-10-15: audit
+  entries linked by `attempt_id`; timeouts/network errors report "outcome unknown" not "rejected" (`df80168`, local only; gate 97/97).
 
 ## Hard rules for every agent
 - Never weaken, bypass or disable the risk gate's checks.
@@ -37,8 +38,11 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   no longer says "exchange rejected it" — `5c34a45`, 2026-10-14, 69/69 gate tests, tsc clean, not pushed
 - [ ] **app-engineer:** bump `@modelcontextprotocol/sdk` in `risk-gate/` and root to ≥1.30.2 (`npm audit`: high,
   GHSA-6qxp-vccf-f47h, OAuth client; gate uses stdio so probably not exposed) and re-run all tests + tsc
-- [ ] **app-engineer:** add a shared id linking each `submitting` audit entry to its `approved`/`error` entry; and
-  reword `place_order`'s "exchange rejected it" when the error is a timeout/network failure (order may exist)
+- [x] **app-engineer:** add a shared id linking each `submitting` audit entry to its `approved`/`error` entry; and
+  reword `place_order`'s "exchange rejected it" when the error is a timeout/network failure (order may exist) —
+  `df80168`, 2026-10-15 22:04: `attempt_id` + `isUncertainOutcome` ("OUTCOME UNKNOWN, check before resubmitting"); gate 97/97, tsc clean, scripts 46/46; not pushed
+- [ ] **owner (optional):** OK that Bybit retCodes 10000 (server timeout) and 10016 (internal error/restarting) now read
+  as "outcome unknown" instead of "rejected" (wording only, on the safe side; revert in `gate.ts` `messageLooksUncertain` if not)
 - [ ] **qa-tester / owner:** (`test:scripts` now passes) one testnet
   `position-check` run against an old-format `state` snapshot: expect no alerts and a file re-keyed to `symbol:side`
 - [ ] **app-engineer:** if `position-check` keeps failing (bad data / outage), nothing tells the owner (cron only logs); send one Telegram alert on repeated failures
