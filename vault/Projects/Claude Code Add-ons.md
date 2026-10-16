@@ -36,7 +36,7 @@ Graphify: **installed 2026-10-16** (owner approved). Repo now has `.claude/skill
 `.claude/settings.json`, a SessionStart hook (`.claude/hooks/install-graphify.sh`) that pip-installs `graphifyy` in cloud
 sessions and refreshes the code graph, and the built graph in `graphify-out/` (769 nodes, 1106 edges, AST-only, no API cost;
 `graphify-out/cache/` is gitignored). Use `graphify query "..."`; after code changes run `graphify update .`.
-Laptop: `uv tool install graphifyy` so the hooks find the command.
+Laptop: `uv tool install graphifyy` so the hooks find the command (owner reported done, 2026-10-16).
 
 ## Watch out
 - PonyTail's rules load into **every** session, including the hourly Routine (when resumed). Turn off per session with `/ponytail off`.

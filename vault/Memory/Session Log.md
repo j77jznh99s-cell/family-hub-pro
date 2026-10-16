@@ -16,7 +16,7 @@ tags: [memory, log]
 
 **Not verified**
 - Only the AST (code) graph was built; the LLM pass over docs/vault (`/graphify .`) was not run.
-- 2 `.sql` files skipped (needs `graphifyy[sql]`). Laptop needs `uv tool install graphifyy` for the hooks.
+- 2 `.sql` files skipped (needs `graphifyy[sql]`). Owner then ran `uv tool install graphifyy` on the laptop (reported done, not checked from here).
 - The graph only covers `main`; project branches (Sproutling Isles, Family Hub) aren't in it.
 
 **Decisions** (also add to [[Decisions]])
