@@ -16,7 +16,8 @@ const db = require('../src/db');
 const { enqueue } = require('../src/services/queue');
 
 after(() => {
-  fs.rmSync(tmpDataDir, { recursive: true, force: true });
+  // shortcut: on Windows the still-open SQLite file blocks removal (EPERM), so a temp dir is left behind there.
+  try { fs.rmSync(tmpDataDir, { recursive: true, force: true }); } catch {}
 });
 
 async function waitForStatus(jobId, { timeoutMs = 10000 } = {}) {

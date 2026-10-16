@@ -17,7 +17,8 @@ if (!process.env.DATABASE_URL) {
 const db = require('../src/db');
 
 after(() => {
-  if (tmpDataDir) fs.rmSync(tmpDataDir, { recursive: true, force: true });
+  // shortcut: on Windows the still-open SQLite file blocks removal (EPERM), so a temp dir is left behind there.
+  try { if (tmpDataDir) fs.rmSync(tmpDataDir, { recursive: true, force: true }); } catch {}
 });
 
 function uniqueId(prefix) {

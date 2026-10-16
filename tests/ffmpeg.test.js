@@ -35,6 +35,16 @@ test('buildVideoFilters keeps subtitles-only behavior unchanged', () => {
   assert.match(vf, /^subtitles=\/tmp\/x\.srt:force_style=/);
 });
 
+const { escapeForFilterPath } = require('../src/services/ffmpeg');
+
+// Expected strings were checked against a real ffmpeg 9 `-vf ass=...` run on Windows.
+test('escapeForFilterPath escapes twice so Windows and odd paths survive the filtergraph', () => {
+  assert.equal(escapeForFilterPath('/tmp/x.srt'), '/tmp/x.srt');
+  assert.equal(escapeForFilterPath('C:\\Temp\\o.ass'), 'C\\\\:\\\\\\\\Temp\\\\\\\\o.ass');
+  assert.equal(escapeForFilterPath("/tmp/it's.ass"), "/tmp/it\\\\\\'s.ass");
+  assert.equal(escapeForFilterPath('/tmp/a,b [c];d.ass'), '/tmp/a\\,b \\[c\\]\\;d.ass');
+});
+
 const { summarizeProbe, describeProbeProblem } = require('../src/services/ffmpeg');
 
 test('summarizeProbe reads video/audio streams and duration', () => {

@@ -31,7 +31,8 @@ try {
   hasFfmpeg = false;
 }
 
-after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+// shortcut: on Windows the still-open SQLite file blocks removal (EPERM), so a temp dir is left behind there.
+after(() => { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {} });
 
 function probeSize(file) {
   const out = execFileSync('ffprobe', [

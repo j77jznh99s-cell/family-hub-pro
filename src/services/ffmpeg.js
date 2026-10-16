@@ -135,9 +135,11 @@ async function extractFrame(filePath, timestampSeconds, outPath, { width = 480 }
 
 // ffmpeg's filtergraph syntax treats ':' and other characters as special inside a
 // filename argument (e.g. subtitles=path) - escape them so a normal path never breaks
-// the filter string. Not a security boundary (paths here are always ones we generated).
+// the filter string. ffmpeg unescapes twice (option value, then filtergraph), so we
+// escape twice too; one level broke Windows paths like C:\... .
+// Not a security boundary (paths here are always ones we generated).
 function escapeForFilterPath(filePath) {
-  return filePath.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+  return filePath.replace(/[\\:']/g, '\\$&').replace(/[\\'[\],;]/g, '\\$&');
 }
 
 // Parses "W:H" (e.g. "9:16") into a width/height ratio, or null for unset/invalid -
