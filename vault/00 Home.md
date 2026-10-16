@@ -27,6 +27,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Clip Studio]]: AI video clipper web app
 - [[Family Hub]]: iPhone family app with widgets
 - [[Bybit Trading Bot]]: risk-gated perpetuals bot
+- [[Claude Code Add-ons]]: PonyTail, Agent Skills, Graphify, OmniRoute — verdicts and install steps (2026-10-16)
 - [[Agent Platform Comparison]]: StarNet vs. other agent platforms (2026-09-26); recommends staying on the cloud setup
 - [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
 - [[Gumroad Digital Products]]: original digital products sold by the agent crew (planning)

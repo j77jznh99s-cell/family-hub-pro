@@ -1,6 +1,24 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-16: owner request — Claude Code add-ons from a reel (researched, install blocked)
+**Device:** phone · **Branch:** `main` · **Agents used:** none
+
+**Owner asked**
+- Sent 4 screenshots of a reel (PonyTail, Graphify, Agent Skills, OmniRoute) and asked to implement it.
+
+**What was done**
+- Researched all 4, found the real repos, read PonyTail's hooks. Wrote [[Claude Code Add-ons]] with
+  verdicts and exact install steps. Recommend PonyTail + Agent Skills, Graphify optional, skip OmniRoute.
+- Tried to add the plugins to `.claude/settings.json` and run `graphify install --project`: both
+  blocked by the sandbox's safety check (third-party code into the repo needs the owner's approval).
+
+**Not verified**
+- None of the 4 tools installed or run here.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-08: owner request — iPhone/Obsidian setup guide written
 **Device:** phone · **Branch:** `main` (direct, owner asked me to handle sync to main this session) · **Agents used:** none
 

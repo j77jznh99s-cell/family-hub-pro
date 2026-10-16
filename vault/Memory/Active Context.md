@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 # Active Context
 
@@ -63,6 +63,7 @@ lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · 
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
+- [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), Graphify optional, OmniRoute declined. Steps in [[Claude Code Add-ons]]; sandbox blocked me from installing them myself.
 - [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
   table fixed), ready to pull on the laptop and run with no known blockers left on this end.
