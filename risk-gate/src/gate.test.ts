@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AuditEntry } from "./audit.js";
-import { runGated, type GatedSpec } from "./gate.js";
+import { isUncertainOutcome, runGated, type GatedSpec } from "./gate.js";
 import type { GateResult } from "./types.js";
 
 type Entry = Omit<AuditEntry, "ts">;
@@ -172,5 +172,164 @@ describe("runGated", () => {
     assert.equal(h.submits(), 1);
     assert.equal(res.isError, true);
     assert.match(textOf(res), /timeout/);
+  });
+});
+
+describe("runGated attempt_id", () => {
+  it("is the same on the 'submitting' and 'approved' entries", async () => {
+    const h = harness();
+    await runGated(h.spec);
+    assert.equal(h.entries.length, 2);
+    assert.equal(typeof h.entries[0].attempt_id, "string");
+    assert.ok(h.entries[0].attempt_id!.length > 0);
+    assert.equal(h.entries[1].attempt_id, h.entries[0].attempt_id);
+  });
+
+  it("is the same on the 'submitting' and 'error' entries", async () => {
+    const h = harness({
+      submit: async () => {
+        throw new Error("Bybit API error 110007: insufficient balance");
+      },
+    });
+    await runGated(h.spec);
+    assert.deepEqual(h.calls, ["audit:submitting", "submit", "audit:error"]);
+    assert.equal(typeof h.entries[0].attempt_id, "string");
+    assert.equal(h.entries[1].attempt_id, h.entries[0].attempt_id);
+  });
+
+  it("differs between two calls", async () => {
+    const h = harness();
+    await runGated(h.spec);
+    await runGated(h.spec);
+    assert.equal(h.entries.length, 4);
+    assert.equal(h.entries[2].attempt_id, h.entries[3].attempt_id);
+    assert.notEqual(h.entries[0].attempt_id, h.entries[2].attempt_id);
+  });
+
+  it("is omitted on 'rejected' entries", async () => {
+    const h = harness({ check: () => rejected });
+    await runGated(h.spec);
+    assert.equal(h.entries[0].attempt_id, undefined);
+  });
+
+  it("is mentioned when the follow-up audit write fails after success", async () => {
+    const warnings: string[] = [];
+    const h = harness({ failAuditOn: ["approved"] });
+    const res = await runGated({ ...h.spec, warn: (m) => warnings.push(m) });
+    const id = h.entries[0].attempt_id!;
+    assert.ok(textOf(res).includes(id));
+    assert.ok(warnings.some((w) => w.includes(id)));
+  });
+});
+
+describe("runGated uncertain outcome", () => {
+  const cases: [string, () => unknown][] = [
+    ["fetch failed with ECONNRESET cause", () => {
+      const e = new TypeError("fetch failed");
+      (e as { cause?: unknown }).cause = Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" });
+      return e;
+    }],
+    ["fetch failed with undici connect timeout cause", () =>
+      new TypeError("fetch failed", {
+        cause: Object.assign(new Error("Connect Timeout Error"), { code: "UND_ERR_CONNECT_TIMEOUT" }),
+      })],
+    ["AbortError", () => Object.assign(new Error("This operation was aborted"), { name: "AbortError" })],
+    ["TimeoutError", () => Object.assign(new Error("The operation timed out."), { name: "TimeoutError" })],
+    ["ETIMEDOUT code", () => Object.assign(new Error("connect"), { code: "ETIMEDOUT" })],
+    ["ENOTFOUND code", () => Object.assign(new Error("getaddrinfo"), { code: "ENOTFOUND" })],
+    ["EAI_AGAIN code", () => Object.assign(new Error("getaddrinfo"), { code: "EAI_AGAIN" })],
+    ["ECONNREFUSED code", () => Object.assign(new Error("connect"), { code: "ECONNREFUSED" })],
+    ["plain 'timeout' message", () => new Error("timeout")],
+    ["HTTP 502", () => new Error("Bybit HTTP 502: Bad Gateway")],
+    ["HTTP 504", () => new Error("Bybit HTTP 504: Gateway Timeout")],
+    ["unparseable body", () => new SyntaxError("Unexpected end of JSON input")],
+    ["Bybit server timeout retCode 10000", () => new Error("Bybit API error 10000: Server Timeout")],
+    ["Bybit internal error retCode 10016", () => new Error("Bybit API error 10016: Internal server error")],
+    ["non-Error string", () => "socket hang up"],
+  ];
+
+  for (const [name, make] of cases) {
+    it(`isUncertainOutcome: ${name}`, () => {
+      assert.equal(isUncertainOutcome(make()), true);
+    });
+  }
+
+  const rejections: [string, unknown][] = [
+    ["Bybit retCode rejection", new Error("Bybit API error 110007: ab not enough for new order")],
+    ["Bybit HTTP 401", new Error("Bybit HTTP 401: Unauthorized")],
+    ["plain exchange rejection", new Error("insufficient margin")],
+  ];
+  for (const [name, err] of rejections) {
+    it(`isUncertainOutcome is false for ${name}`, () => {
+      assert.equal(isUncertainOutcome(err), false);
+    });
+  }
+
+  it("a network error says OUTCOME UNKNOWN, not 'rejected', and audits 'error' with an unknown-outcome reason", async () => {
+    const h = harness({
+      submit: async () => {
+        throw new TypeError("fetch failed", {
+          cause: Object.assign(new Error("read ECONNRESET"), { code: "ECONNRESET" }),
+        });
+      },
+    });
+    const res = await runGated(h.spec);
+    const t = textOf(res);
+    assert.equal(h.submits(), 1);
+    assert.equal(res.isError, true);
+    assert.match(t, /OUTCOME UNKNOWN/);
+    assert.match(t, /may or may not/);
+    assert.match(t, /check open orders and positions/i);
+    assert.match(t, /do not blindly resubmit/i);
+    assert.doesNotMatch(t, /rejected/i);
+    assert.ok(t.includes(h.entries[0].attempt_id!));
+    assert.deepEqual(h.calls, ["audit:submitting", "submit", "audit:error"]);
+    assert.equal(h.entries[1].result, "error");
+    assert.match(h.entries[1].reason!, /OUTCOME UNKNOWN/);
+    assert.match(h.entries[1].reason!, /fetch failed/);
+    assert.equal(h.entries[1].attempt_id, h.entries[0].attempt_id);
+  });
+
+  it("a timeout says OUTCOME UNKNOWN, not 'rejected'", async () => {
+    const h = harness({
+      submit: async () => {
+        throw Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" });
+      },
+    });
+    const t = textOf(await runGated(h.spec));
+    assert.match(t, /OUTCOME UNKNOWN/);
+    assert.doesNotMatch(t, /rejected/i);
+  });
+
+  it("a real Bybit rejection keeps the tool's own failure text", async () => {
+    const h = harness({
+      submit: async () => {
+        throw new Error("Bybit API error 110007: ab not enough for new order");
+      },
+    });
+    const res = await runGated(h.spec);
+    const t = textOf(res);
+    assert.equal(res.isError, true);
+    assert.equal(t, "Approved by the gate but the exchange rejected it: Bybit API error 110007: ab not enough for new order");
+    assert.doesNotMatch(t, /OUTCOME UNKNOWN/);
+    assert.equal(h.entries[1].reason, "Bybit API error 110007: ab not enough for new order");
+  });
+
+  it("fail-closed still holds: 'submitting' write fails -> refused, no submit", async () => {
+    const h = harness({ failAuditOn: ["submitting"] });
+    const res = await runGated(h.spec);
+    assert.equal(h.submits(), 0);
+    assert.equal(res.isError, true);
+    assert.match(textOf(res), /nothing was sent to the exchange/);
+  });
+
+  it("fail-closed still holds: risk-reducing goes ahead and keeps the attempt_id on its follow-up", async () => {
+    const h = harness({ failAuditOn: ["submitting"] });
+    const res = await runGated({ ...h.spec, riskReducing: true });
+    assert.equal(h.submits(), 1);
+    assert.equal(res.isError, undefined);
+    assert.equal(h.entries.length, 1);
+    assert.equal(h.entries[0].result, "approved");
+    assert.equal(typeof h.entries[0].attempt_id, "string");
   });
 });

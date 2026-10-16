@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { appendAudit, type AuditEntry } from "./audit.js";
 import type { GateResult } from "./types.js";
 
@@ -40,6 +41,71 @@ function errMsg(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/** Error codes (on the error or anywhere in its `cause` chain) that mean the
+ * connection failed or timed out, so the request may or may not have reached
+ * the exchange. */
+const UNCERTAIN_CODES = new Set([
+  "ETIMEDOUT",
+  "ESOCKETTIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ECONNABORTED",
+  "EPIPE",
+  "EAI_AGAIN",
+  "ENOTFOUND",
+  "ENETUNREACH",
+  "ENETDOWN",
+  "EHOSTUNREACH",
+  "EHOSTDOWN",
+]);
+
+const UNCERTAIN_NAMES = new Set(["AbortError", "TimeoutError", "FetchError"]);
+
+/**
+ * True when a submit error does NOT prove the exchange rejected the request:
+ * timeouts, network/socket failures, fetch failures, HTTP 5xx/408, an
+ * unreadable response body, and Bybit's own "server timeout" (10000) and
+ * "internal error / restarting" (10016) codes. In all of these the order may
+ * or may not exist on the exchange.
+ *
+ * Deliberately conservative: when in doubt it returns true. That only changes
+ * the wording the model sees; it never changes what is sent.
+ */
+export function isUncertainOutcome(err: unknown): boolean {
+  const seen = new Set<unknown>();
+  let cur: unknown = err;
+  for (let depth = 0; cur != null && depth < 10 && !seen.has(cur); depth++) {
+    seen.add(cur);
+    if (typeof cur === "object") {
+      const e = cur as { name?: unknown; code?: unknown; message?: unknown; cause?: unknown };
+      if (typeof e.name === "string" && UNCERTAIN_NAMES.has(e.name)) return true;
+      // A response that arrived but could not be parsed (res.json() failing):
+      // the exchange may have processed the request.
+      if (e.name === "SyntaxError") return true;
+      if (typeof e.code === "string" && (UNCERTAIN_CODES.has(e.code) || e.code.startsWith("UND_ERR_"))) {
+        return true;
+      }
+      if (typeof e.message === "string" && messageLooksUncertain(e.message)) return true;
+      cur = e.cause;
+    } else {
+      return messageLooksUncertain(String(cur));
+    }
+  }
+  return false;
+}
+
+function messageLooksUncertain(m: string): boolean {
+  if (/fetch failed|timed? ?out|socket hang up|network|aborted/i.test(m)) return true;
+  for (const code of UNCERTAIN_CODES) if (m.includes(code)) return true;
+  // HTTP 5xx / 408 from signedRequest: the request reached something that may
+  // have forwarded it.
+  if (/^Bybit HTTP (5\d\d|408)\b/.test(m)) return true;
+  // Bybit retCode 10000 (server timeout) and 10016 (internal error / service
+  // restarting) do not prove the order was not placed.
+  if (/^Bybit API error (10000|10016)\b/.test(m)) return true;
+  return false;
+}
+
 function text(t: string, isError = false): ToolResult {
   return isError ? { content: [{ type: "text", text: t }], isError: true } : { content: [{ type: "text", text: t }] };
 }
@@ -79,10 +145,13 @@ export async function runGated(spec: GatedSpec): Promise<ToolResult> {
     return text(messages.rejected(result.reason));
   }
 
+  // Shared by the "submitting" entry and its "approved"/"error" follow-up.
+  const attempt_id = randomUUID();
+
   // Fail closed: no audit record on disk, no exchange call (except for
   // risk-reducing actions, which must never be stuck behind a full disk).
   try {
-    audit({ tool, request, checks: result.checks, result: "submitting" });
+    audit({ tool, request, checks: result.checks, result: "submitting", attempt_id });
   } catch (err) {
     if (spec.riskReducing) {
       warn(`${tool}: audit log write failed before submit, sending anyway (risk-reducing): ${errMsg(err)}`);
@@ -101,18 +170,46 @@ export async function runGated(spec: GatedSpec): Promise<ToolResult> {
   try {
     exchangeResponse = await spec.submit();
   } catch (err) {
-    auditBestEffort({ tool, request, checks: result.checks, result: "error", reason: errMsg(err) });
+    if (isUncertainOutcome(err)) {
+      auditBestEffort({
+        tool,
+        request,
+        checks: result.checks,
+        result: "error",
+        attempt_id,
+        reason: `OUTCOME UNKNOWN (timeout/network failure; may or may not exist on the exchange): ${errMsg(err)}`,
+      });
+      return text(
+        `OUTCOME UNKNOWN: the gate approved this ${tool} action and sent it, but the exchange call failed ` +
+          `with a timeout or network error (${errMsg(err)}). The exchange did NOT confirm a rejection: ` +
+          `the action may or may not have gone through. Check open orders and positions on the exchange ` +
+          `before doing anything else, and do not blindly resubmit. (attempt_id ${attempt_id})`,
+        true
+      );
+    }
+    auditBestEffort({ tool, request, checks: result.checks, result: "error", attempt_id, reason: errMsg(err) });
     return text(messages.failure(errMsg(err)), true);
   }
 
   try {
-    audit({ tool, request, checks: result.checks, result: "approved", exchange_response: exchangeResponse });
+    audit({
+      tool,
+      request,
+      checks: result.checks,
+      result: "approved",
+      attempt_id,
+      exchange_response: exchangeResponse,
+    });
   } catch (err) {
-    warn(`${tool}: exchange accepted the action but the follow-up audit write failed: ${errMsg(err)}`);
+    warn(
+      `${tool}: exchange accepted the action but the follow-up audit write failed ` +
+        `(attempt_id ${attempt_id}): ${errMsg(err)}`
+    );
     return text(
       `${messages.success(exchangeResponse)} ` +
         `WARNING: the exchange accepted this action, but the follow-up audit log write failed ` +
-        `(${errMsg(err)}). The "submitting" entry is on disk; the exchange response above is the record. ` +
+        `(${errMsg(err)}). The "submitting" entry (attempt_id ${attempt_id}) is on disk; ` +
+        `the exchange response above is the record. ` +
         `Do not resubmit this action.`
     );
   }

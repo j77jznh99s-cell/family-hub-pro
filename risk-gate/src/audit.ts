@@ -13,6 +13,13 @@ export interface AuditEntry {
    * process died mid-call (in which case check the exchange's order history).
    */
   result: "submitting" | "approved" | "rejected" | "error";
+  /**
+   * Links a "submitting" entry to its follow-up "approved"/"error" entry for
+   * the same exchange call (one random UUID per approved runGated call).
+   * Only set on those three entry kinds; "rejected" and check-error entries
+   * never reach the exchange and omit it. Optional so older log lines stay valid.
+   */
+  attempt_id?: string;
   reason?: string;
   exchange_response?: unknown;
 }
