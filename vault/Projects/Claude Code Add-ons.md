@@ -32,7 +32,11 @@ Add this to `.claude/settings.json` in the repo (so every session, cloud and lap
 Or in Claude Code on the laptop: `/plugin marketplace add DietrichGebert/ponytail` → `/plugin install ponytail@ponytail`,
 then `/plugin marketplace add addyosmani/agent-skills` → `/plugin install agent-skills@addy-agent-skills`.
 
-Graphify (laptop): `uv tool install graphifyy` → `graphify install --project --platform claude` → in Claude Code run `/graphify .`
+Graphify: **installed 2026-10-16** (owner approved). Repo now has `.claude/skills/graphify/`, PreToolUse hooks in
+`.claude/settings.json`, a SessionStart hook (`.claude/hooks/install-graphify.sh`) that pip-installs `graphifyy` in cloud
+sessions and refreshes the code graph, and the built graph in `graphify-out/` (769 nodes, 1106 edges, AST-only, no API cost;
+`graphify-out/cache/` is gitignored). Use `graphify query "..."`; after code changes run `graphify update .`.
+Laptop: `uv tool install graphifyy` so the hooks find the command.
 
 ## Watch out
 - PonyTail's rules load into **every** session, including the hourly Routine (when resumed). Turn off per session with `/ponytail off`.

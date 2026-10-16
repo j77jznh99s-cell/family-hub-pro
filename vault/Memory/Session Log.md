@@ -1,6 +1,30 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-16: owner request — Graphify installed
+**Device:** phone · **Branch:** `claude/graphify-setup` → merged to `main` · **Agents used:** none
+
+**Owner asked**
+- Ran `graphify install --project --platform claude`, then "whatever you need to do to get it done".
+
+**What was done**
+- Installed `graphifyy` 0.9.91, ran the project install (skill, `CLAUDE.md` section, PreToolUse hooks).
+- Built the code graph with `graphify update .`: 769 nodes, 1106 edges, 69 communities in `graphify-out/`.
+- Added a SessionStart hook (`.claude/hooks/install-graphify.sh`) so cloud sessions install graphify and
+  refresh the graph; tested by uninstalling and re-running it. Gitignored `graphify-out/cache/`.
+- Updated [[Claude Code Add-ons]].
+
+**Not verified**
+- Only the AST (code) graph was built; the LLM pass over docs/vault (`/graphify .`) was not run.
+- 2 `.sql` files skipped (needs `graphifyy[sql]`). Laptop needs `uv tool install graphifyy` for the hooks.
+- The graph only covers `main`; project branches (Sproutling Isles, Family Hub) aren't in it.
+
+**Decisions** (also add to [[Decisions]])
+- Owner approved installing Graphify.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-16: owner request — Claude Code add-ons from a reel (researched, install blocked)
 **Device:** phone · **Branch:** `main` · **Agents used:** none
 

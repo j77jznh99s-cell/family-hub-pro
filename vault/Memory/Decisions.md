@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-16 | Workspace | Installed Graphify (code knowledge graph) in the repo, with hooks and a SessionStart installer | Owner ran the install command and said "whatever you need to do to get it done" | Owner |
 | 2026-10-08 | Workspace | Declined the standalone VPS-based agent project (from a tutorial video); built a [[Knowledge Graph]] memory layer instead, inside the existing sandbox, no new server/cost | Confirms #21: matches the already-researched recommendation (cost, security, duplicates existing setup); gets the real learning/recall benefit without the VPS/Tailscale/messaging-bridge parts | Owner asked for pros/cons, then chose |
 | 2026-09-27 | Workspace | Paused the "Hourly project work (worker)" Routine (`trig_012vmVxmbAkxxY59wCnKaG1J`) — disabled, not deleted, so it keeps its run history and can be turned back on | Owner: "Pause the hourly queue" | Owner |
 | 2026-09-26 | Workspace | Cheapest way that still gets work done: up to 3 tasks per hourly run (~20 min each, since Routines can't fire more than hourly), quick exit when blocked, cheaper models for routine agents, no paid services | Owner: "cheapest way possible", "20 minutes if you can" | Owner asked, Claude chose |
