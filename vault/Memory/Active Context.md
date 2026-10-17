@@ -74,7 +74,7 @@ QA-reviewed 2026-10-06 18:00: sound; one older lost-purchase bug fixed (`c0e934c
 2026-10-10 20:45: both minors fixed (`16171a1`, local only, not linted): receipt wait 90 s, saves for one player never overlap. Owner: OK the leave-save "write anyway after 120 s" fallback (see [[Sproutling Isles]] tasks).
 2026-10-15 10:21: last known receipts edge case fixed (`60c49d0`, local only, not linted): a receipt is no longer confirmed when the leave-save skipped its write because another server owns the profile.
 Weekly drops: checked 2026-10-06 — already built that way (17 Oct / 24 Oct / Witching Hour 31 Oct), no change needed.
-No 2026 Roblox Halloween Spotlight dates announced yet; re-check 14–17 Oct. The event starts 17 Oct on the real clock even if launch slips.
+2026-10-16 20:10: Roblox's 2026 Halloween event reported as "The Hollow" from Thu 22 Oct (fan/news sources only, unverified); no code change, optional Part 2 teaser 22 Oct; Witching Hour now worded "Friday 30 Oct night (US)". Hollow Harvest starts 17 Oct (tomorrow) on the real clock even if launch slips.
 
 ## Waiting on the owner
 - [ ] **Starling Heist:** `gh auth login --web` on the PC so the branch pushes and CI runs; then play-test with

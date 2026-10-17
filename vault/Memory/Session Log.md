@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-16 20:10: local hourly run — Sproutling Isles: Halloween Spotlight re-check + Witching Hour wording
+**Device:** PC (desktop app) · **Branch:** `main` (vault only, worktree `fhp-main-wt`) · **Agents used:** live-ops-manager
+
+- Rotation: Sproutling Isles (after Clip Studio). roblox-engineer lint/build task still blocked (no selene/rojo/lune on the PC), so did the live-ops task due 14–17 Oct.
+- Roblox's 2026 platform Halloween event is reported as **"The Hollow"**, starting **Thu 22 Oct 2026** (11 am PDT, to ~9 Nov), from fan/news sources quoting Roblox's X account; **no roblox.com/DevForum source found, unverified**. Old Spotlight page now 404s.
+- No code change. Optional: Part 2 teaser post on Thu 22 Oct; real Part 2 post stays Sat 24 Oct. Re-check a Roblox source 21–22 Oct.
+- Witching Hour wording fixed in [[Sproutling Isles - Launch & Live Ops]] (table, Week 4, announcement, dates line): starts **Friday 30 Oct night (US)** = 31 Oct 00:00 UTC. UTC times unchanged.
+- **Not verified:** The Hollow dates (no primary source); whether Sproutling Isles could join it.
+
+**Next:** live-ops-manager: 21–22 Oct confirm The Hollow on a Roblox page, then Part 2 teaser; roblox-engineer: lint/build still blocked.
+
+---
 ## 2026-10-16 16:59: local hourly run — Clip Studio: better-sqlite3 12, Windows caption fix, suite fully green
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `bb3f1d3`) · **Agents used:** none (done inline by the orchestrator; small change)
 

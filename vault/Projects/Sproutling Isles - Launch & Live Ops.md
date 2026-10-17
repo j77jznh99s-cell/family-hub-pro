@@ -330,7 +330,7 @@ Every week also includes: a Monday KPI review (**live-ops-manager**), bug fixes 
 | 1 | 10 Oct | Launch: "First Bloom" | D1 ≥ 30%, avg session ≥ 15 min |
 | 2 | 17 Oct | Halloween part 1: Spooky Fog | D2–7 play days ≥ 2.2 per new player; event participation ≥ 60% DAU |
 | 3 | 24 Oct | Halloween part 2: Gourdgeist + Haunted Greenhouse | D7 ≥ 10% |
-| 4 | 31 Oct | Halloween finale: Witching Hour | spend days: payers with 2+ purchase days ≥ 25% of payers |
+| 4 | 31 Oct | Halloween finale: Witching Hour (starts Fri 30 Oct night US = 31 Oct 00:00 UTC) | spend days: payers with 2+ purchase days ≥ 25% of payers |
 | 5 | 7 Nov | Leaderboards + Codes + (ads if eligible) | launch-cohort D28 ≥ 4%; days 8–28 play days ≥ 3 |
 | 6 | 14 Nov | "Bloom Rush" + Trading Booths beta (if built) | co-play: sessions with a friend ≥ 25% |
 | 7 | 21 Nov | Harvest Festival (US Thanksgiving 26 Nov) | DAU up vs Week 6; payer conversion ≥ 2% |
@@ -355,10 +355,10 @@ Every week also includes: a Monday KPI review (**live-ops-manager**), bug fixes 
 - **Announcement:** "👻 Part 2! The Gourdgeist has sprouted and the Haunted Greenhouse is in the Lantern Stall. Fish the pond during Spooky Fog and a Hollowisp might bite..."
 - **KPI:** D7 ≥ 10%; ≥ 30% of event players buy at least one Moonberry item.
 
-### Week 4: Halloween finale, Witching Hour (Sat 31 Oct)
-- **Content:** Sat 31 Oct to Sun 1 Nov: **Witching Hour**, when Spooky Fog comes every **10 minutes** instead of 20. The event ends **Sun 1 Nov 23:59 UTC**. Leftover Moonberries convert to Dew (1 Moonberry = 5 min of the player's income, min 100 Dew). Event species stay forever and are **never sold again in 2026**.
+### Week 4: Halloween finale, Witching Hour (starts Friday 30 Oct night US)
+- **Content:** Sat 31 Oct 00:00 UTC (= **Friday 30 Oct night (US)**: 8 pm Eastern / 5 pm Pacific) to Sun 1 Nov: **Witching Hour**, when Spooky Fog comes every **10 minutes** instead of 20. The event ends **Sun 1 Nov 23:59 UTC**. Leftover Moonberries convert to Dew (1 Moonberry = 5 min of the player's income, min 100 Dew). Event species stay forever and are **never sold again in 2026**.
 - **Items/prices:** none new. *Optional proposal:* a 20%-off Summon Spooky Fog for the finale weekend (*owner*).
-- **Announcement:** "🕯️ WITCHING HOUR: Spooky Fog every 10 minutes all weekend! Hollow Harvest ends Sunday night. Last chance for Pumpkit, Gourdgeist and the Haunted Greenhouse!"
+- **Announcement:** "🕯️ WITCHING HOUR starts Friday night (US)! Spooky Fog every 10 minutes all weekend! Hollow Harvest ends Sunday night. Last chance for Pumpkit, Gourdgeist and the Haunted Greenhouse!"
 - **KPI:** spend days (payers with 2+ purchase days ≥ 25% of payers); peak CCU above the Week 2 peak.
 
 ### Week 5: Leaderboards, Codes and ads (Sat 7 Nov)
@@ -411,7 +411,7 @@ Replaces the single placeholder `SPROUT1K` demo code in `Codes.luau` (built 2026
 
 **Goal:** give the launch cohort a reason to return every day in days 2–7 and 8–28 (appointment Fog, daily lanterns, a two-part unlock), create rare-hatch and snatch moments worth clipping, and do it without new power-for-Robux.
 
-**Dates (UTC):** Part 1 Sat 17 Oct 15:00 → Part 2 Sat 24 Oct 15:00 → Witching Hour Sat 31 Oct 00:00 → end Sun 1 Nov 23:59. All times are driven by `os.time()` against config, so no redeploy is needed to start or stop it.
+**Dates (UTC):** Part 1 Sat 17 Oct 15:00 → Part 2 Sat 24 Oct 15:00 → Witching Hour Sat 31 Oct 00:00 (= Friday 30 Oct night (US): 8 pm Eastern / 5 pm Pacific) → end Sun 1 Nov 23:59. All times are driven by `os.time()` against config, so no redeploy is needed to start or stop it.
 
 **Player flow**
 1. On join, a banner says "🎃 Hollow Harvest" with a countdown to the next Spooky Fog.
@@ -553,6 +553,26 @@ The timestamps are correct (checked: `part1At` = `1792195200` + 15 h). So the "w
 - Also unfixed from before: the Studio play-test of the whole event is still the owner's open task.
 
 **Recommendation: do not split further. Keep the event as built (17 / 24 / 31 Oct).** No new build task, no new owner decision. Re-check the Spotlight dates on about 14–17 Oct and, if a Spotlight starts earlier than 24 Oct, consider only moving the Part 2 announcement, not the code.
+
+#### Spotlight re-check (2026-10-16)
+*live-ops-manager. Searched 2026-10-16.*
+
+**Finding: a 2026 platform Halloween event is reported, but I could not confirm it from a Roblox page.**
+- Name reported: **"The Hollow"** (not "Halloween Spotlight"). Start reported: **Thu 22 Oct 2026** (weekday checks out: 22 Oct 2026 is a Thursday).
+- Sources are fan/news accounts quoting a teaser on Roblox's official X account. I could not open the X posts or find a roblox.com or DevForum page with the dates. **Unverified.**
+  - https://x.com/RBXEventHunters/status/2108962209833562214 ("The Hollow", starting 22 Oct)
+  - https://x.com/Roblox_RTC_BR/status/2108962288023855313 (says Roblox confirmed it; starts Thursday 22 Oct)
+  - https://games.gg/roblox/guides/roblox-the-hollow-2026/ (posted 12 Oct 2026: starts 22 Oct 2026, 11:00 AM PDT; runs through 9 Nov 2026)
+- Old Spotlight page https://www.roblox.com/spotlight/halloween-spotlight now returns 404.
+- Some sites still repeat "23 Oct – 3 Nov". Those are the **2025** dates. Ignore them.
+
+**What it means for us**
+- If true, The Hollow starts 2 days before our Part 2 (Sat 24 Oct) and runs past our end (1 Nov). We are probably not a listed game (not launched yet; not checked), so it may pull players to the featured games.
+- **No code change.** Keep Part 1 / Part 2 / Witching Hour times as built.
+- Optional, announcement only: post a short Part 2 **teaser on Thu 22 Oct** ("Gourdgeist sprouts Saturday!"), so we have news the day The Hollow starts. Keep the real Part 2 post on Sat 24 Oct.
+- Re-check a Roblox primary source on 21–22 Oct before posting.
+
+**Witching Hour wording fixed** in this note (Week 4 table row, Week 4 section and announcement, event dates line): it starts **Friday 30 Oct night (US)**. 31 Oct 00:00 UTC = Fri 30 Oct 8 pm Eastern / 5 pm Pacific. UTC times unchanged.
 
 ---
 
