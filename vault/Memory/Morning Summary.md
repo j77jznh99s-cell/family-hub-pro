@@ -32,6 +32,28 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-17
+
+**Done overnight/today**
+- Nothing — worker still paused, no new commits from any session, no chat requests. (The
+  `graphify-out/` files show local timestamp-only churn on this session's fresh checkout — same
+  AST hashes, not real code changes — left uncommitted rather than creating a noise commit.)
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$).
+
+**Needs you**
+- Still the same open list, unchanged for well over a week now — see [[Active Context]] for the
+  full picture, including yesterday's new item (approve PonyTail + Agent Skills, or decline).
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-16
 
 **Done overnight/today**
