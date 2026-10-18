@@ -21,7 +21,6 @@ struct CatchUpView: View {
     @State private var question = ""
     @State private var answer: String?
     @State private var isAsking = false
-    @State private var savedNote = false
     /// Which saved notes "Earlier catch-ups" lists: this person's, or everyone's from the general entry point.
     private let filterPersonID: UUID?
 
@@ -150,13 +149,10 @@ struct CatchUpView: View {
         if !note.suggestedNote.isEmpty {
             Section("Note for their profile") {
                 Text(note.suggestedNote)
-                if savedNote {
+                if note.isNoteSavedToProfile {
                     Label("Saved", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                 } else if let person {
-                    Button("Save to \(person.firstName)'s profile") {
-                        model.saveSuggestedNote(note.suggestedNote, to: person.id)
-                        savedNote = true
-                    }
+                    Button("Save to \(person.firstName)'s profile") { saveNoteToProfile() }
                 } else {
                     Text("Pick who this was with, above, to save it to their profile.")
                         .font(.footnote)
@@ -245,6 +241,12 @@ struct CatchUpView: View {
         if persisted { model.setCatchUpActionItem(note.id, index: index, checked: checked) }
     }
 
+    /// Appends to the profile and marks the stored note in one write, then mirrors the stored mark here.
+    private func saveNoteToProfile() {
+        model.saveCatchUpNoteToProfile(note.id)
+        note.noteSavedToPersonID = model.catchUpNotes.first { $0.id == note.id }?.noteSavedToPersonID
+    }
+
     /// Shows a saved note in place of the current one (the current one is already saved, if it has a transcript).
     private func open(_ saved: CatchUpNote) {
         note = saved
@@ -257,7 +259,6 @@ struct CatchUpView: View {
         errorText = nil
         question = ""
         answer = nil
-        savedNote = false
     }
 
     private func toggleRecording() async {

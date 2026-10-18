@@ -336,6 +336,14 @@ final class CompatibilityTests: XCTestCase {
         XCTAssertEqual(n, CatchUpNote(id: id, personID: id, transcript: "t", summary: "s", suggestedNote: "the new job",
                                       actionItems: ["send photos"], createdAt: when))
         XCTAssertTrue(n.checkedActionItems.isEmpty, "notes saved before ticks were stored load with nothing ticked")
+        XCTAssertNil(n.noteSavedToPersonID, "notes saved before the profile mark was stored load as not saved")
+        XCTAssertFalse(n.isNoteSavedToProfile)
+    }
+
+    func testCatchUpNoteSavedToProfileLoads() throws {
+        let n = try decode(CatchUpNote.self, #"{"id":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","personID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF","summary":"s","suggestedNote":"n","noteSavedToPersonID":"6F9619FF-8B86-D011-B42D-00CF4FC964FF"}"#)
+        XCTAssertEqual(n.noteSavedToPersonID, id)
+        XCTAssertTrue(n.isNoteSavedToProfile)
     }
 
     func testCatchUpNoteWithTickedFollowUpsLoads() throws {
@@ -399,7 +407,8 @@ final class CompatibilityTests: XCTestCase {
             badges: [Badge.firstHello.rawValue: when],
             preferences: Preferences(dailyGoal: 2, remindersOn: true, reminderHour: 20, reminderMinute: 30, theme: .grape),
             catchUpNotes: [CatchUpNote(id: id, personID: p.id, transcript: "t", summary: "s", suggestedNote: "n",
-                                       actionItems: ["a", "b"], createdAt: when, checkedActionItems: [1])]
+                                       actionItems: ["a", "b"], createdAt: when, checkedActionItems: [1],
+                                       noteSavedToPersonID: p.id)]
         )
         let encoded = try Store.encoder.encode(original)
         XCTAssertEqual(try Store.decoder.decode(AppData.self, from: encoded), original)
@@ -496,6 +505,56 @@ final class CatchUpNoteStorageTests: XCTestCase {
         note.applySummary(summary: "s2", suggestedNote: "n2", actionItems: ["c"])
         XCTAssertEqual(note.actionItems, ["c"])
         XCTAssertTrue(note.checkedActionItems.isEmpty, "ticks referred to the old list's positions")
+    }
+
+    func testProfileNoteIsSavedOnceThroughTheStore() throws {
+        let (store, url) = tempStore()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let mom = Person(name: "Mom", notes: "likes gardening")
+        let note = CatchUpNote(personID: mom.id, transcript: "t", summary: "s", suggestedNote: " the new job \n")
+        try store.update { $0.people = [mom]; $0.upsertCatchUpNote(note) }
+
+        try store.update { $0.saveCatchUpNoteToProfile(note.id) }
+        // Reopening the old catch-up later and tapping save again (or a stale screen) must not add it twice.
+        try Store(url: url).update { $0.saveCatchUpNoteToProfile(note.id) }
+
+        let after = Store(url: url).load()
+        XCTAssertEqual(after.people.first?.notes, "likes gardening\nthe new job")
+        XCTAssertEqual(after.catchUpNotes.first?.noteSavedToPersonID, mom.id)
+        XCTAssertEqual(after.catchUpNotes.first?.isNoteSavedToProfile, true)
+    }
+
+    func testProfileNoteNeedsSomeoneAndText() {
+        let mom = Person(name: "Mom")
+        let unassigned = CatchUpNote(summary: "s", suggestedNote: "n")
+        let blank = CatchUpNote(personID: mom.id, summary: "s", suggestedNote: "  ")
+        var data = AppData(people: [mom], catchUpNotes: [unassigned, blank])
+        data.saveCatchUpNoteToProfile(unassigned.id)
+        data.saveCatchUpNoteToProfile(blank.id)
+        data.saveCatchUpNoteToProfile(UUID())
+        XCTAssertEqual(data.people.first?.notes, "")
+        XCTAssertEqual(data.catchUpNotes, [unassigned, blank])
+    }
+
+    func testReassignedCatchUpCanBeSavedToTheNewPerson() {
+        let mom = Person(name: "Mom")
+        let dad = Person(name: "Dad")
+        var data = AppData(people: [mom, dad], catchUpNotes: [CatchUpNote(personID: mom.id, summary: "s", suggestedNote: "n")])
+        data.saveCatchUpNoteToProfile(data.catchUpNotes[0].id)
+        data.catchUpNotes[0].personID = dad.id
+        XCTAssertFalse(data.catchUpNotes[0].isNoteSavedToProfile, "it was saved to Mom, not Dad")
+        data.saveCatchUpNoteToProfile(data.catchUpNotes[0].id)
+        XCTAssertEqual(data.people.map(\.notes), ["n", "n"])
+    }
+
+    func testNewSummaryCanBeSavedToTheProfileAgain() {
+        let mom = Person(name: "Mom")
+        var note = CatchUpNote(personID: mom.id, summary: "s", suggestedNote: "old", noteSavedToPersonID: mom.id)
+        note.applySummary(summary: "s2", suggestedNote: "new", actionItems: [])
+        XCTAssertNil(note.noteSavedToPersonID, "the new suggested note isn't on the profile yet")
+        var data = AppData(people: [mom], catchUpNotes: [note])
+        data.saveCatchUpNoteToProfile(note.id)
+        XCTAssertEqual(data.people.first?.notes, "new")
     }
 
     func testDeleteCatchUpNote() {

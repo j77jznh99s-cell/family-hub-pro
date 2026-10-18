@@ -114,6 +114,8 @@ public struct CatchUpNote: Codable, Identifiable, Hashable, Sendable {
     public var createdAt: Date
     /// Indices into `actionItems` that have been ticked off. Cleared whenever a new summary replaces the list.
     public var checkedActionItems: Set<Int>
+    /// Who `suggestedNote` was already added to, so reopening the note doesn't add it twice. Cleared by a new summary.
+    public var noteSavedToPersonID: UUID?
 
     public init(
         id: UUID = UUID(),
@@ -123,7 +125,8 @@ public struct CatchUpNote: Codable, Identifiable, Hashable, Sendable {
         suggestedNote: String = "",
         actionItems: [String] = [],
         createdAt: Date = .now,
-        checkedActionItems: Set<Int> = []
+        checkedActionItems: Set<Int> = [],
+        noteSavedToPersonID: UUID? = nil
     ) {
         self.id = id
         self.personID = personID
@@ -133,6 +136,12 @@ public struct CatchUpNote: Codable, Identifiable, Hashable, Sendable {
         self.actionItems = actionItems
         self.createdAt = createdAt
         self.checkedActionItems = checkedActionItems
+        self.noteSavedToPersonID = noteSavedToPersonID
+    }
+
+    /// The suggested note is already on the profile of the person this catch-up is assigned to.
+    public var isNoteSavedToProfile: Bool {
+        personID != nil && noteSavedToPersonID == personID
     }
 
     /// A transcript was saved but there's no summary yet (no API key, or the Claude call failed): offer a retry.
@@ -150,12 +159,14 @@ public struct CatchUpNote: Codable, Identifiable, Hashable, Sendable {
         if checked { checkedActionItems.insert(index) } else { checkedActionItems.remove(index) }
     }
 
-    /// Stores a fresh summary. Ticks belong to the old list's positions, so they're cleared.
+    /// Stores a fresh summary. Ticks belong to the old list's positions, so they're cleared; the new
+    /// suggested note hasn't been saved anywhere yet, so it can be saved to the profile again.
     public mutating func applySummary(summary: String, suggestedNote: String, actionItems: [String]) {
         self.summary = summary
         self.suggestedNote = suggestedNote
         self.actionItems = actionItems
         checkedActionItems = []
+        noteSavedToPersonID = nil
     }
 }
 
@@ -220,7 +231,8 @@ extension CatchUpNote {
             actionItems: c.decodeIfPresent([String].self, forKey: .actionItems) ?? [],
             // Not `.now` like `init`: a note of unknown age shouldn't jump to the top of the list on every load.
             createdAt: c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .distantPast,
-            checkedActionItems: c.decodeIfPresent(Set<Int>.self, forKey: .checkedActionItems) ?? []
+            checkedActionItems: c.decodeIfPresent(Set<Int>.self, forKey: .checkedActionItems) ?? [],
+            noteSavedToPersonID: c.decodeIfPresent(UUID.self, forKey: .noteSavedToPersonID)
         )
     }
 }

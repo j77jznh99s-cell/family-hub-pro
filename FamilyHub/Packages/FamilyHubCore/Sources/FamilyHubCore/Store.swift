@@ -92,6 +92,20 @@ public struct AppData: Codable, Equatable, Sendable {
         catchUpNotes[i].setActionItem(index, checked: checked)
     }
 
+    /// Appends a catch-up's suggested note onto its person's profile notes (same style as the "What's going on
+    /// with them?" field) and records that it did, in the same write. Does nothing if it's already there,
+    /// the note is unassigned or blank, or either id is unknown — so reopening an old catch-up never adds it twice.
+    public mutating func saveCatchUpNoteToProfile(_ id: UUID) {
+        guard let n = catchUpNotes.firstIndex(where: { $0.id == id }),
+              !catchUpNotes[n].isNoteSavedToProfile,
+              let personID = catchUpNotes[n].personID,
+              let p = people.firstIndex(where: { $0.id == personID }) else { return }
+        let text = catchUpNotes[n].suggestedNote.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        people[p].notes = people[p].notes.isEmpty ? text : people[p].notes + "\n" + text
+        catchUpNotes[n].noteSavedToPersonID = personID
+    }
+
     public mutating func deleteCatchUpNote(_ id: UUID) {
         catchUpNotes.removeAll { $0.id == id }
     }

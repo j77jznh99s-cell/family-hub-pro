@@ -139,15 +139,9 @@ final class AppModel {
         }
     }
 
-    /// Appends a suggested note from a catch-up onto that person's profile notes, same style as
-    /// the existing "What's going on with them?" field.
-    func saveSuggestedNote(_ text: String, to personID: UUID) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        update { d in
-            guard let i = d.people.firstIndex(where: { $0.id == personID }) else { return }
-            d.people[i].notes = d.people[i].notes.isEmpty ? trimmed : d.people[i].notes + "\n" + trimmed
-        }
+    /// Adds a stored catch-up's suggested note to its person's profile, once; see `AppData.saveCatchUpNoteToProfile`.
+    func saveCatchUpNoteToProfile(_ id: UUID) {
+        update { $0.saveCatchUpNoteToProfile(id) }
     }
 
     // MARK: - Engagement
