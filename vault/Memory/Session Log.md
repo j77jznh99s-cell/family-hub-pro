@@ -1,6 +1,17 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-17 22:34: local hourly run — Family Hub: catch-up profile note no longer added twice
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `ad6ee49`) · **Agents used:** app-engineer
+
+- Rotation: Family Hub (after Sproutling Isles). Did the app-engineer task "profile note's Saved state isn't stored".
+- `CatchUpNote.noteSavedToPersonID` (tolerant decode, nil on old files); `AppData.saveCatchUpNoteToProfile(id)` appends the note and records it in one `Store.update` write, and does nothing if it's already saved. `CatchUpView` reads "Saved" from the stored note instead of `@State`. A new summary (`applySummary`) or reassigning the person lets it be saved again.
+- Orchestrator reviewed the diff (only caller was the view; the note is always stored before a summary exists).
+- **Not verified:** not compiled, tests not run (no Swift on the PC). Not pushed (GitHub not signed in).
+
+**Next:** app-engineer (small): live transcript while recording; owner: `swift test` on a Mac.
+
+---
 ## 2026-10-16 20:10: local hourly run — Sproutling Isles: Halloween Spotlight re-check + Witching Hour wording
 **Device:** PC (desktop app) · **Branch:** `main` (vault only, worktree `fhp-main-wt`) · **Agents used:** live-ops-manager
 
