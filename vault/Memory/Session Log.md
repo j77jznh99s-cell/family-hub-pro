@@ -1,6 +1,17 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-18 13:48: local hourly run — Bybit Trading Bot: MCP SDK bump (npm audit high)
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `c240454`) · **Agents used:** none (orchestrator inline; mechanical dependency bump)
+
+- Rotation: Bybit Trading Bot (after Family Hub). Did the app-engineer task "bump `@modelcontextprotocol/sdk` to ≥1.30.2".
+- `@modelcontextprotocol/sdk` `^1.12.0` → `^1.32.1` in `risk-gate/` and root (lockfiles: 1.30.0 → 1.32.1). zod 3.25.76 meets the SDK's `^3.25 || ^4.0`, unchanged.
+- Verified on the PC: `npm audit` 0 in both, gate 97/97, `tsc --noEmit` clean, `test:scripts` 46/46. No gate code touched, no exchange calls.
+- **Not verified:** the gate server wasn't started over stdio (needs keys); tests don't cover the MCP transport. Not pushed (GitHub not signed in).
+
+**Next:** app-engineer: Telegram alert when `position-check` keeps failing; owner: paper vs live status.
+
+---
 ## 2026-10-17 22:34: local hourly run — Family Hub: catch-up profile note no longer added twice
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `ad6ee49`) · **Agents used:** app-engineer
 

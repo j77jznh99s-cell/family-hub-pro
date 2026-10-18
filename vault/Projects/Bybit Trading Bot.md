@@ -1,6 +1,6 @@
 ---
 tags: [project, trading, high-risk]
-updated: 2026-10-15
+updated: 2026-10-18
 ---
 # Bybit Trading Bot
 
@@ -36,8 +36,9 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
 - [x] **app-engineer:** gate writes a `submitting` audit entry before every exchange write (`risk-gate/src/gate.ts`,
   `runGated`); can't write it → new entries/leverage refused, closes/cancels warn and go ahead; a failed final write
   no longer says "exchange rejected it" — `5c34a45`, 2026-10-14, 69/69 gate tests, tsc clean, not pushed
-- [ ] **app-engineer:** bump `@modelcontextprotocol/sdk` in `risk-gate/` and root to ≥1.30.2 (`npm audit`: high,
-  GHSA-6qxp-vccf-f47h, OAuth client; gate uses stdio so probably not exposed) and re-run all tests + tsc
+- [x] **app-engineer:** bump `@modelcontextprotocol/sdk` in `risk-gate/` and root to ≥1.30.2 (`npm audit`: high,
+  GHSA-6qxp-vccf-f47h, OAuth client; gate uses stdio so probably not exposed) and re-run all tests + tsc —
+  `c240454`, 2026-10-18: now ^1.32.1, audit 0, gate 97/97, tsc clean, scripts 46/46; server not started over stdio; not pushed
 - [x] **app-engineer:** add a shared id linking each `submitting` audit entry to its `approved`/`error` entry; and
   reword `place_order`'s "exchange rejected it" when the error is a timeout/network failure (order may exist) —
   `df80168`, 2026-10-15 22:04: `attempt_id` + `isUncertainOutcome` ("OUTCOME UNKNOWN, check before resubmitting"); gate 97/97, tsc clean, scripts 46/46; not pushed
