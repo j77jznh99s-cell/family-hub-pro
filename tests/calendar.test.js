@@ -34,6 +34,24 @@ test('rejects bad options', () => {
   assert.throws(() => calendar.planWeek({ perDay: 9 }), /perDay/);
 });
 
+test('PRESENTER_PER_DAY sets the shared videos-per-day default; bad values error', () => {
+  assert.equal(calendar.defaultPerDay({}), 1);
+  assert.equal(calendar.defaultPerDay({ PRESENTER_PER_DAY: ' ' }), 1);
+  assert.equal(calendar.defaultPerDay({ PRESENTER_PER_DAY: '3' }), 3);
+  for (const bad of ['0', 'abc', '1.5', '7']) {
+    assert.throws(() => calendar.defaultPerDay({ PRESENTER_PER_DAY: bad }), /PRESENTER_PER_DAY must be/, bad);
+  }
+  const saved = process.env.PRESENTER_PER_DAY;
+  process.env.PRESENTER_PER_DAY = '2';
+  try {
+    assert.equal(calendar.planWeek({ start: START, days: 3 }).length, 6);
+    assert.equal(calendar.planWeek({ start: START, days: 3, perDay: 1 }).length, 3);
+  } finally {
+    if (saved === undefined) delete process.env.PRESENTER_PER_DAY;
+    else process.env.PRESENTER_PER_DAY = saved;
+  }
+});
+
 test('marks slots with finished runs and flags missed ones', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'calendar-test-'));
   try {

@@ -31,7 +31,19 @@ function dayIndex(date) {
 const MAX_DAYS = 31;
 const MAX_PER_DAY = 6;
 
-function planWeek({ start = new Date(), days = 7, perDay = 1, times } = {}) {
+// One "videos per day" setting shared by the CLI, the weekly report and the dashboard
+// calendar, so they all plan the same slots (QA Review 2 #2). Bad values error, not default.
+function defaultPerDay(env = process.env) {
+  const raw = env.PRESENTER_PER_DAY;
+  if (raw === undefined || String(raw).trim() === '') return 1;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > MAX_PER_DAY) {
+    throw new Error(`PRESENTER_PER_DAY must be a whole number from 1 to ${MAX_PER_DAY} (got "${raw}")`);
+  }
+  return n;
+}
+
+function planWeek({ start = new Date(), days = 7, perDay = defaultPerDay(), times } = {}) {
   if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) throw new Error(`days must be 1-${MAX_DAYS}`);
   if (!Number.isInteger(perDay) || perDay < 1 || perDay > MAX_PER_DAY) throw new Error(`perDay must be 1-${MAX_PER_DAY}`);
   const postTimes = parseTimes(times);
@@ -112,4 +124,4 @@ function toMarkdown(slots, { today = new Date() } = {}) {
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = { planWeek, attachRuns, toMarkdown, parseTimes, MAX_DAYS, MAX_PER_DAY };
+module.exports = { planWeek, attachRuns, toMarkdown, parseTimes, defaultPerDay, MAX_DAYS, MAX_PER_DAY };

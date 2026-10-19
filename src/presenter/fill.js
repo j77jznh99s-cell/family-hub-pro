@@ -5,7 +5,7 @@ const calendar = require('./calendar');
 const check = require('./check');
 
 // Slots from today on that have no run folder yet, in calendar order.
-async function pendingSlots(outputDir, { today = new Date(), days = 7, perDay = 1, times } = {}) {
+async function pendingSlots(outputDir, { today = new Date(), days = 7, perDay, times } = {}) {
   const slots = await calendar.attachRuns(calendar.planWeek({ start: today, days, perDay, times }), outputDir);
   const todayIso = today.toISOString().slice(0, 10);
   return slots.filter((s) => s.status === 'planned' && s.date >= todayIso);

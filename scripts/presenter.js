@@ -68,7 +68,7 @@ const { parseArgs } = require('../src/presenter/args');
     const fill = require('../src/presenter/fill');
     const pending = await fill.pendingSlots(OUTPUT_DIR, {
       days: args.days || 3,
-      perDay: args.perDay || 1,
+      perDay: args.perDay,
       times: args.times || process.env.PRESENTER_POST_TIMES,
     });
     console.log(fill.describe(pending));
@@ -89,7 +89,7 @@ const { parseArgs } = require('../src/presenter/args');
   if (args.calendar) {
     const slots = calendar.planWeek({
       days: args.days || 7,
-      perDay: args.perDay || 1,
+      perDay: args.perDay,
       times: args.times || process.env.PRESENTER_POST_TIMES,
     });
     const md = calendar.toMarkdown(await calendar.attachRuns(slots, OUTPUT_DIR));

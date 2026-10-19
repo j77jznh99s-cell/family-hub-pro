@@ -37,7 +37,7 @@ function presenterRouter(outputDir = OUTPUT_DIR) {
 
   router.get('/calendar', async (req, res, next) => {
     try {
-      const slots = calendar.planWeek({ days: 7, perDay: 1, times: process.env.PRESENTER_POST_TIMES });
+      const slots = calendar.planWeek({ days: 7, times: process.env.PRESENTER_POST_TIMES });
       res.json(await calendar.attachRuns(slots, outputDir));
     } catch (err) {
       next(err);
