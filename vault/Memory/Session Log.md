@@ -1,6 +1,16 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-18 21:48: local hourly run — Clip Studio: shared "videos per day" setting
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `8fb8502`) · **Agents used:** none (orchestrator inline; small change)
+
+- Rotation: AI Agent Team skipped (still uncommitted `agents/inbox/LOG.md` + `agents/newsletter/LOG.md`); Clip Studio next. Cloud branch unchanged (`965a4a3`).
+- Did the app-engineer task QA Review 2 #2: the weekly report and dashboard calendar always planned 1 video a day, so they disagreed with `--calendar --per-day 2`. New `calendar.defaultPerDay()` reads `PRESENTER_PER_DAY` (1–6, default 1, bad values error); `planWeek` defaults to it; CLI/fill/route no longer hard-code 1. Docs updated.
+- Verified on the PC: full suite 126/126 (1 new test). Not pushed (GitHub not signed in).
+
+**Next:** owner: QA Review 2 #3/#4 (spend dates) and what's next for Clip Studio.
+
+---
 ## 2026-10-18 13:48: local hourly run — Bybit Trading Bot: MCP SDK bump (npm audit high)
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `c240454`) · **Agents used:** none (orchestrator inline; mechanical dependency bump)
 
