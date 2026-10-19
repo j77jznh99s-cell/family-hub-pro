@@ -1,6 +1,17 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-19 10:53: local hourly run — Sproutling Isles: QA review of the save-overlap fixes
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `b918340`) · **Agents used:** qa-tester
+
+- Rotation: Sproutling Isles (after Clip Studio). Lint/build task still blocked (no selene/rojo/lune), so did a static review of the never-reviewed `16171a1` + `60c49d0` (DataService save overlap / `released`).
+- Blocker found and fixed (`b918340`): load only waited for running writes, so a fast rejoin could load before a queued leave-save, which then wrote older data and marked the new session "already saved" (its saves and receipts reported success with nothing stored). Saves are now counted per player (queued + running) and load waits for 0. Orchestrator re-read the diff: every path decrements, no self-wait.
+- 2 new tasks: BindToClose 25 s vs leave-save 120 s (owner choice); load-gave-up returns `isNew = true` (re-fires Joined / Founding Gardener).
+- **Not verified:** not linted/built, not Studio-tested. Not pushed (GitHub not signed in).
+
+**Next:** roblox-engineer: `isNew` fix; owner: BindToClose trade-off, Studio play-test.
+
+---
 ## 2026-10-18 21:48: local hourly run — Clip Studio: shared "videos per day" setting
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `8fb8502`) · **Agents used:** none (orchestrator inline; small change)
 
