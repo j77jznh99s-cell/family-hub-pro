@@ -35,15 +35,25 @@ local jobId = if game.JobId ~= "" then game.JobId else "studio"
 local inFlight: { [number]: number } = {}
 local released: { [number]: "saved" | "lost" } = {}
 local active = 0
+-- pending[userId]: the same count per player. load waits for 0 so a leave-save still queued behind
+-- another write can't land after a fast rejoin's load (stale data, and released re-set on the new session)
+local pending: { [number]: number } = {}
+
+local function track(userId: number, delta: number)
+	active += delta
+	local n = (pending[userId] or 0) + delta
+	pending[userId] = if n > 0 then n else nil
+end
 
 -- A leave-save waits this long for a running write instead of the usual 30 s, so it is not lost.
 local RELEASE_WAIT_SECONDS = 120
 
 -- True once no write is running for this player; false if the timeout ran out first.
 -- No yield between a true result and the caller's inFlight increment, so two waiters can't both start.
-local function waitIdle(userId: number, timeout: number): boolean
+local function waitIdle(userId: number, timeout: number, busy: { [number]: number }?): boolean
 	local deadline = os.clock() + timeout
-	while inFlight[userId] do
+	local map = busy or inFlight
+	while map[userId] do
 		if os.clock() >= deadline then
 			return false
 		end
@@ -122,7 +132,7 @@ function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 	end
 	-- a fast rejoin to this same server must not read data older than the leave-save still in flight;
 	-- if that write is still stuck after 30 s, run this session unsaved rather than load stale data
-	if not waitIdle(player.UserId, 30) then
+	if not waitIdle(player.UserId, 30, pending) then
 		warn("[Sproutling] load gave up for", player.Name, "(previous save still running), progress will not save")
 		return DataService.defaultData(), false, true
 	end
@@ -167,18 +177,18 @@ function DataService.save(player: Player, data, release: boolean): boolean
 		return true
 	end
 	local userId = player.UserId
-	active += 1
+	track(userId, 1)
 	if not waitIdle(userId, if release then RELEASE_WAIT_SECONDS else 30) and not release then
 		-- another write is still running: never overlap it. Autosaves retry next round; a receipt
 		-- returns NotProcessedYet and Roblox redelivers it.
-		active -= 1
+		track(userId, -1)
 		warn("[Sproutling] save deferred for", player.Name, "(previous save still running)")
 		return false
 	end
 	-- A release that waited RELEASE_WAIT_SECONDS writes anyway: a request that hasn't returned in
 	-- 2 min has failed in practice, and dropping the leave-save would lose the session's progress.
 	if released[userId] then
-		active -= 1
+		track(userId, -1)
 		-- this player already left; nothing newer to write. Only report success if the leave-save
 		-- actually landed, else a receipt would confirm a grant that never got saved.
 		return released[userId] == "saved"
@@ -200,7 +210,7 @@ function DataService.save(player: Player, data, release: boolean): boolean
 	end)
 	local left = (inFlight[userId] or 1) - 1
 	inFlight[userId] = if left > 0 then left else nil
-	active -= 1
+	track(userId, -1)
 	if ok and release then
 		released[userId] = if wrote then "saved" else "lost"
 	end
