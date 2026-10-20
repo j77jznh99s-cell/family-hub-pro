@@ -13,6 +13,9 @@ final class AppModel {
     private(set) var data: AppData
     var isRefreshingOpeners = false
     var lastError: String?
+    /// The data file couldn't be read at launch, so `data` is an empty placeholder: saving it would replace
+    /// the real data, so nothing is saved until a load succeeds (e.g. after an app update that can read it).
+    private(set) var dataUnreadable = false
     /// Set by a widget tap or the Text button; drives the message composer sheet.
     var composeTarget: ComposeTarget?
     /// Set after a reach-out is logged; drives the celebration overlay.
@@ -34,15 +37,23 @@ final class AppModel {
 
     init(store: Store = .shared) {
         self.store = store
-        self.data = store.load()
+        do {
+            self.data = try store.loadOrThrow()
+        } catch {
+            self.data = AppData()
+            self.dataUnreadable = true
+        }
     }
 
     var suggestions: [Suggestion] { data.suggestions() }
 
     /// Pick up changes made while we were in the background (e.g. the widget's "I texted them" button).
+    /// An unreadable file keeps our copy instead of replacing it with empty data.
     func reload() {
-        let latest = store.load()
-        if latest != data { data = latest }
+        if let latest = try? store.loadOrThrow() {
+            dataUnreadable = false
+            if latest != data { data = latest }
+        }
         scheduleReminder()
     }
 
@@ -58,6 +69,8 @@ final class AppModel {
         do {
             data = try store.update(change)
         } catch is Store.UnreadableFileError {
+            // Unreadable since launch: our copy is empty, so saving it would replace the real data. Change nothing.
+            guard !dataUnreadable else { return }
             // The file went bad under us (it's been backed up): our copy is the best data left, so save that.
             change(&data)
             do { try store.save(data) } catch { lastError = "Couldn't save: \(error.localizedDescription)" }
@@ -86,6 +99,7 @@ final class AppModel {
     }
 
     func delete(_ ids: [UUID]) {
+        guard !dataUnreadable else { return } // the people can't be removed, so keep their photos too
         update { d in
             d.people.removeAll { ids.contains($0.id) }
             for id in ids { d.openers[id] = nil }
@@ -279,7 +293,7 @@ final class AppModel {
     /// Refresh openers when they're missing, older than the max age, or your notes changed.
     /// Cheap to call on every foreground: it returns immediately when nothing's stale.
     func refreshOpenersIfNeeded(force: Bool = false) async {
-        guard !isRefreshingOpeners else { return }
+        guard !isRefreshingOpeners, !dataUnreadable else { return }
         let apiKey = Keychain.apiKey ?? ""
         guard !apiKey.isEmpty else { return }
 

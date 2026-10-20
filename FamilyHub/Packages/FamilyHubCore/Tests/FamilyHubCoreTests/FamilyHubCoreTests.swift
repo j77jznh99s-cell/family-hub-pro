@@ -229,6 +229,24 @@ final class AppDataTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), bad, "nothing was saved over the file")
         XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad)
     }
+
+    func testLoadOrThrowTellsAnUnreadableFileFromAMissingOne() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        let store = Store(url: url)
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: store.unreadableBackupURL)
+        }
+        XCTAssertEqual(try store.loadOrThrow(), AppData(), "no file yet is a fresh start, not an error")
+
+        let bad = Data(#"{"people":[{"name":42}]}"#.utf8)
+        try bad.write(to: url)
+        XCTAssertThrowsError(try store.loadOrThrow()) { error in
+            XCTAssertTrue(error is Store.UnreadableFileError)
+        }
+        XCTAssertEqual(try Data(contentsOf: store.unreadableBackupURL), bad)
+        XCTAssertEqual(store.load(), AppData(), "load() still hands out empty data")
+    }
 }
 
 /// Files written by older (or newer) builds must still load. JSON here uses the file's real format:

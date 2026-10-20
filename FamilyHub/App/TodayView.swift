@@ -11,6 +11,13 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 12) {
                     StreakHeader()
+                    if model.dataUnreadable {
+                        Label("Your saved people couldn't be read, so changes aren't being saved (that would erase them). A copy is kept as familyhub.unreadable.json. Updating the app may fix it.", systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .card()
+                    }
                     if let error = model.lastError {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .font(.footnote)

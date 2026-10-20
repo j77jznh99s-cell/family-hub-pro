@@ -170,8 +170,13 @@ public final class Store: @unchecked Sendable {
     public struct UnreadableFileError: Error {}
 
     public func load() -> AppData {
+        (try? loadOrThrow()) ?? AppData()
+    }
+
+    /// Like `load()`, but throws `UnreadableFileError` (after the backup) instead of handing out empty data.
+    public func loadOrThrow() throws -> AppData {
         lock.lock(); defer { lock.unlock() }
-        return (try? loadUnlocked()) ?? AppData()
+        return try loadUnlocked()
     }
 
     public func save(_ appData: AppData) throws {
