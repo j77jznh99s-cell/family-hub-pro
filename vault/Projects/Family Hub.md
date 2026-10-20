@@ -1,6 +1,6 @@
 ---
 tags: [project, ios]
-updated: 2026-10-15
+updated: 2026-10-20
 ---
 # Family Hub
 
@@ -49,7 +49,8 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
   real, un-run code, not a guarantee.
 - [ ] **owner:** confirm next steps (TestFlight? App Store? more features?) — still open.
 - [ ] **owner:** 3 product questions from the review: (1) send a "text anyone to keep your streak" reminder when nobody is due? (2) people with 30+ day cadences always score "reconnect" (+25, badge) even when on time — only count when overdue? (3) raising the daily goal wipes past streaks — keep, or store the goal per day?
-- [ ] **app-engineer:** after a failed load, refuse to save and tell the user (builds on the new backup file).
+- [x] **app-engineer:** after a failed load, refuse to save and tell the user — done 2026-10-20 (`6823a74`, local only, not compiled): `Store.loadOrThrow()`, `AppModel.dataUnreadable` blocks saves/person deletes/opener fetches, Today banner; `reload()` no longer swaps our copy for empty data. 1 test added, not run.
+- [ ] **owner (optional):** while the data file is unreadable the app can't save anything (by design, so it can't erase it). Want a "Start fresh" button (keeps `familyhub.unreadable.json`), or is "update the app" enough?
 - [x] **app-engineer:** the widget's ✓ can be lost if the app saves its older in-memory copy first (review #12) — fixed 2026-10-06 with `Store.update` read-modify-write (`b64728a`, local only, not compiled).
 - [x] **app-engineer:** `AppModel.upsert` replaced the whole `Person`, so saving an edit sheet opened before a widget ✓ put back the old `lastContacted` — fixed 2026-10-06 with a `Person.applyingEdits` 3-way merge + 4 tests (`a25463d`, local only, not compiled).
 - [ ] **app-engineer (optional):** coordinate app/widget file access with `NSFileCoordinator` (the race window is now one read+write).

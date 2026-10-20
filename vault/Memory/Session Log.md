@@ -1,6 +1,17 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-20 13:05: local hourly run — Family Hub: don't save over an unreadable data file
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `6823a74`) · **Agents used:** none (orchestrator inline; small change)
+
+- Rotation: Family Hub (after Sproutling Isles). Did the app-engineer task "after a failed load, refuse to save and tell the user".
+- Before: an unreadable `familyhub.json` at launch gave empty data, and the first change saved that over the file (only `familyhub.unreadable.json` kept the real data). `reload()` also swapped a good in-memory copy for empty data if the file went bad.
+- Now (`6823a74`): new `Store.loadOrThrow()`; `AppModel.dataUnreadable` set when the launch load fails; while set, `update` changes nothing, `delete` keeps photos, openers aren't fetched; Today shows a banner; a later successful `reload()` clears it. `reload()` keeps our copy on an unreadable file. 1 new test.
+- **Not verified:** not compiled or run (no Swift on the PC). Not pushed (GitHub not signed in).
+
+**Next:** owner: build + `swift test` on a Mac; optional: a "start fresh" button for this state.
+
+---
 ## 2026-10-19 10:53: local hourly run — Sproutling Isles: QA review of the save-overlap fixes
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `b918340`) · **Agents used:** qa-tester
 
