@@ -7,6 +7,11 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-21 | Sproutling Isles | **Open-world fantasy RPG** (Renaissance style, older dungeon-crawl feel; genre ideas from Elden Ring, Shangri-La Frontier, Delicious in Dungeon, Diablo, nothing copied). Replaces the modern-city direction from earlier the same day | Owner | Owner |
+| 2026-10-21 | Sproutling Isles | City rebuilt as a fantasy city (horses/carriages, ships, airships instead of cars/boats/planes) | Owner picked the recommended option | Owner |
+| 2026-10-21 | Sproutling Isles | Core loop: dungeon loot crawl AND overworld bosses, built side by side | Owner chose 'both equally' | Owner |
+| 2026-10-21 | Sproutling Isles | Combat: real-time action (click to attack, dodge roll, stamina, hotkey abilities, phone buttons) | Owner picked the recommended option | Owner |
+| 2026-10-21 | Sproutling Isles | Gardening kept: plots grow RPG ingredients for potions and cooking; Sproutlings become companion pets that fight | Owner picked the recommended option | Owner |
 | 2026-10-21 | Sproutling Isles | **Turn Sproutling Isles into a city game**: whole city with boats, planes, pets, shops, weapons, tools and abilities. Gardening plots kept for now as player homes (whether to keep the gardening loop is still open) | Owner chose this over a separate new game or a city district add-on | Owner |
 | 2026-10-21 | Sproutling Isles | Combat: cartoon, no blood (blasters, swords, abilities with knockback and respawns) | Fits Roblox's widest age rating | Owner (recommended option) |
 | 2026-10-21 | Sproutling Isles | Part budget: big but phone-safe, ~25-40k parts with streaming, not 100k | Owner asked for 100k; 100k would crash phones | Owner (recommended option) |

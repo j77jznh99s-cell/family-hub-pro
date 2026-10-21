@@ -64,7 +64,7 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).
-- [ ] **Sproutling Isles is becoming a city game** (2026-10-21): phase 1 (city map + airport, `86c76d7`) is pushed. Test it in Studio (Play mode for the terrain), then say go for phase 2 (shops + currency). Open: keep gardening or drop it? One currency or two? Where is PvP allowed?
+- [ ] **Sproutling Isles is becoming an open-world fantasy RPG** (2026-10-21): step 1 (fantasy city, `34cac1a`) is pushed. Test it in Studio (Play mode for the terrain), then say go for step 2 (combat core). Plan in [[Sproutling Isles]].
 - [ ] **Look at the new Sproutling Isles map in Studio** (2026-10-21): first play-test done ("looks good"), then a big atmosphere/buildings/landscape upgrade was pushed (`544640a`). Now includes terrain hills (`3e61f50`, only visible after pressing Play; first real test of TerrainBuilder). On the laptop: `cd $HOME\Documents\family-hub-pro`, `git pull`, then reopen `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`. Check phone frame rate; say what to change.
 - [x] ~~Run the Sproutling Isles Studio play-test~~ (owner ran it 2026-10-21, no errors reported; old note follows) ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date

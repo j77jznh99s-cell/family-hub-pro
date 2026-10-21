@@ -32,18 +32,24 @@ Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch in
 - Gate lock 60 s (90 s with a pass); snatch carry window 45 s; new-player shield 15 min.
 - Rebirth 250k Dew (x4 each time), +50% Dew permanently.
 
-## City game plan (owner decision 2026-10-21)
+## RPG plan (owner decisions 2026-10-21)
 
-Sproutling Isles is becoming a city game. Built in phases; the owner tests each in Studio before the next.
+Sproutling Isles is becoming an **open-world fantasy RPG**: Renaissance-style world, older dungeon-crawl feel,
+genre ideas from Elden Ring / Shangri-La Frontier / Delicious in Dungeon / Diablo (borrow ideas only — no names,
+characters, art or story). Built in steps; the owner tests each in Studio before the next. Steps 2+ are gameplay
+code that can't be run in the sandbox, so expect a bug-fix round after each Studio test.
 
-1. **City map** — done 2026-10-21 (`86c76d7`): `src/shared/CityBuilder.luau`, Map.City south of the island + airport. Shops carry `Shop` attributes and a `ShopAnchor`; cars/boats/planes carry a `Vehicle` attribute. All anchored scenery so far.
-2. **Shops + currency** — prompts at each `ShopAnchor`, a shop UI, prices in Dew (or a new city currency, decide).
-3. **Vehicles** — drivable cars and boats (VehicleSeat), then planes/helicopters; vehicle dealer sells them.
-4. **Pets** — follow-the-player pets from the Pet Shop, with rarities.
-5. **Tools, weapons, abilities** — cartoon blasters/swords (knockback, respawn, safe zones), dash, double jump, grapple.
-6. **Performance** — turn on StreamingEnabled after auditing client lookups of map parts; keep under ~40k parts.
-
-Open questions for the owner: keep the gardening loop or drop it; one currency or two; where PvP is allowed.
+1. **Fantasy city** — done 2026-10-21 (`34cac1a`): walled city, guild, cathedral, mage tower, market square,
+   arena (`Arena` attribute), 24 trade shops with `Shop` attributes + `ShopAnchor`s, horses/carriages, ships,
+   airship port. (Replaced the modern city from `86c76d7`.)
+2. **Combat core** — health, stamina, dodge roll, real-time melee/ranged/magic on click, hotkey abilities,
+   phone buttons, enemy AI, respawns. Cartoon, no blood.
+3. **First dungeon + first overworld boss** — dungeon entrances in the hills, procedural rooms, a boss; a field
+   boss roaming a hill site; random loot with rarities.
+4. **Inventory, gear and shops** — equipment slots, the trade shops sell/buy, currency.
+5. **Cooking + garden ingredients** — monster drops + garden herbs → buff meals and potions.
+6. **Companions and mounts** — Sproutlings fight beside you; horses/ships/airships become rideable.
+7. **Performance** — StreamingEnabled after auditing client lookups; keep under ~40k parts.
 
 ## Tasks
 Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner decisions are collected in [[Decisions]].
@@ -72,7 +78,8 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **roblox-engineer:** detail pass, 2026-10-21 (owner: "more"): yards, paths, market props, well, haystacks, signposts, palms, sea arch/stacks, ruins, giant Elder blossom tree, 5 hot-air balloons. 3528 parts. Not seen in Studio.
 - [x] **roblox-engineer:** terrain hills pass, 2026-10-21 (`3e61f50`; owner sent a reference screenshot and asked for "astronomically" more detail). New `Shared/Landscape.luau` (heightfield maths) + `server/TerrainBuilder.luau` (fills Terrain at server start, background task) give a ring of hills around the island in a lagoon. On the hills: walled castle, 2 hamlets, fenced farm with barn/silo/windmill, watchtower, lighthouse, ruins, waterfall cliff with rainbow, 3 bridges, ~300 trees incl. new wedge-cone pines. 8,713 parts. **Terrain code never run in real Roblox** (Lune can't write Terrain) — first Play in Studio is its test; hills only show in Play mode.
 - [x] **roblox-engineer:** city phase 1 (map), 2026-10-21 (`86c76d7`): roads, 24 shops, towers, apartments, houses, park, civic buildings, harbour, marina, airport, bridges, cars, boats, planes. 16,330 parts. Not seen in Studio.
-- [ ] **roblox-engineer:** city phase 2 (shops + currency) — waits for the owner's Studio check of phase 1.
+- [x] **roblox-engineer:** RPG step 1, fantasy city, 2026-10-21 (`34cac1a`). 18,371 parts. Not seen in Studio.
+- [ ] **roblox-engineer:** RPG step 2 (combat core) — waits for the owner's Studio check of step 1.
 - [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs
