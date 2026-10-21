@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-21 (night): quests, wilds and sky isles
+**Device:** laptop · **Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
+
+**Owner asked**
+- Fill the open land: quest items, village extensions, more quests and characters in the mountains, a way up to the sky islands.
+
+**What was done**
+- `aa24a1c`: Shared/Quests (data), Shared/WildsBuilder (camps, homesteads, discoveries, items, shrines, sky isle content), server QuestService, client QuestLog (talk window, tracker, beam, head marks). New enemies golem/wisp/stormcaller. Skeleton/bat models added (were missing). Landscape v3.
+
+**Not verified**
+- Nothing run in Studio. Quest flow, prompts, sky teleports and new enemy AI on islets are untested.
+
 ## 2026-10-21 (late): Sproutling Isles world reshape
 **Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
 

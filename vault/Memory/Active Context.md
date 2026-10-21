@@ -12,6 +12,7 @@ updated: 2026-10-21
 the whole thing, then a bug-fix round. Texture asset IDs still pending. Details in [[Sproutling Isles]].
 Later the same day the world was reshaped (`d393a2b`): vast irregular land, curvy roads at different heights, organic city.
 Owner's laptop clone is now up to date on the branch (`git pull` works; run commands one per line).
+Then quests + sky isles were added (`aa24a1c`): owner should pull again before the play-test, and re-bake terrain (Version 3).
 
 **Hourly workflow is PAUSED (owner, 2026-09-27 ~15:04 UTC).** The "Hourly project work (worker)" Routine
 (`trig_012vmVxmbAkxxY59wCnKaG1J`) is disabled — it will not fire until the owner re-enables it. The morning-summary
