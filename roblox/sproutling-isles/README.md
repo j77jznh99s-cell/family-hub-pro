@@ -90,6 +90,15 @@ the client code `src/client/Combat.luau`.
 5. Test snatching with **Test > Clients and Servers > 2 players**. `Config.StudioDisableShield`
    (default true) turns off the 15-minute new-player shield, but only inside Studio. Live servers
    ignore it. The victim bonks a thief with **R** (gamepad **Y**).
+6. **Textures:** upload the 12 images in `assets/textures/` (Asset Manager > Bulk Import) and paste
+   their asset IDs into `src/shared/MaterialKit.luau`. Until then the royal kit stays off.
+
+### Performance (phones)
+
+About 18,900 baked parts. **Streaming is on** (`default.project.json`: target radius 640, min 128), so
+phones load only what's near them. The plaza shop, Rebirth Shrine and Sprout Supply are Persistent,
+because the HUD reads their labels from anywhere. Plots and animated props are Atomic. Server teleports
+(home, crypt, fast travel) call `RequestStreamAroundAsync` before moving you.
 
 ## Code map
 

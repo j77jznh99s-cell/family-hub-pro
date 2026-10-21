@@ -47,6 +47,7 @@ local function teleport(player: Player, to: Vector3)
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if character and root then
+		pcall(player.RequestStreamAroundAsync, player, to, 3) -- streaming: load the floor first
 		character:PivotTo(CFrame.new(to))
 		root.AssemblyLinearVelocity = Vector3.zero
 	end

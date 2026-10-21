@@ -47,6 +47,7 @@ local function go(player: Player, id: any)
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if character and root then
+			pcall(player.RequestStreamAroundAsync, player, dest.pos, 3) -- streaming: load the ground first
 			character:PivotTo(CFrame.new(dest.pos + Vector3.new(0, 4, 0)))
 			root.AssemblyLinearVelocity = Vector3.zero
 			State.notify(session, "You arrive at " .. dest.name .. ".", "#a0ffa0")

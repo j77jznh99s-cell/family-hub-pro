@@ -493,6 +493,7 @@ local function airship(parent: Instance, x: number, y: number, z: number, headin
 	local m = model(parent, "Airship")
 	m:SetAttribute("Vehicle", "airship")
 	m:SetAttribute("Bob", "float")
+	m.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 	local rel = frame(x, z, heading)
 	local envelope = tube(m, "Envelope", 48, 18, rel(0, y + 16, 0), color, Enum.Material.Fabric)
 	m.PrimaryPart = envelope
@@ -751,6 +752,7 @@ local function mageTower(parent: Instance, x: number, z: number)
 		rune.PrimaryPart = stoneP
 		part(rune, "Glyph", Vector3.new(1, 2, 1.1), stoneP.CFrame, rgb(190, 140, 255), Enum.Material.Neon)
 		rune:SetAttribute("Bob", true)
+		rune.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 	end
 end
 

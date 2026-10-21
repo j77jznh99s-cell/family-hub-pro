@@ -525,6 +525,10 @@ local function buildPlaza(map: Instance)
 	part(daily, "Anchor", Vector3.new(3, 3, 3), at(-31, 5, 42.5), rgb(255, 120, 170), Enum.Material.Neon)
 
 	local supply = stall(plaza, "Sprout Supply", 32, 44, Vector3.new(-0.6, 0, -0.8).Unit, 14, rgb(90, 160, 255))
+	-- the client reads labels in these from anywhere on the map, so they never stream out
+	for _, m in { shop, rebirth, supply } do
+		m.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+	end
 	part(supply, "Anchor", Vector3.new(3, 3, 3), at(31, 5, 42.5), rgb(120, 190, 255), Enum.Material.Neon)
 
 	-- Hollow Harvest Lantern Stall: reuses the Seed Shop kiosk pattern (see EventService.luau, which
@@ -556,6 +560,7 @@ local function buildPlot(plots: Instance, index: number)
 
 	local plot = Instance.new("Model")
 	plot.Name = "Plot" .. index
+	plot.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- a plot streams in whole
 	plot:SetAttribute("Index", index)
 	plot:SetAttribute("ColorName", colorInfo[1])
 	plot:SetAttribute("Inward", d)
@@ -860,6 +865,7 @@ local function windmill(parent: Instance, x: number, z: number, facing: Vector3)
 		end
 	end
 	sails:SetAttribute("SpinSpeed", 25)
+	sails.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 end
 
 -- A string of coloured festoon bulbs between two points.
@@ -922,6 +928,7 @@ local function crystal(parent: Instance, x: number, y: number, z: number, scale:
 	})
 	if bob then
 		model:SetAttribute("Bob", true)
+		model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 	end
 end
 
@@ -1244,6 +1251,7 @@ local function balloon(parent: Instance, x: number, y: number, z: number, a: Col
 	local flame = deco(ball(model, "Burner", 1.6, x, y - 14.5, z, rgb(255, 170, 60), Enum.Material.Neon))
 	glowLight(flame, 14, 1, rgb(255, 180, 90))
 	model:SetAttribute("Bob", "float")
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 end
 
 local function buildDetails(scenery: Instance)
@@ -1370,6 +1378,7 @@ local function lighthouse(parent: Instance, x: number, y: number, z: number)
 		ray.Transparency = 0.75
 	end
 	beam:SetAttribute("SpinSpeed", 40)
+	beam.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- animated whole on the client
 end
 
 -- Small stone keep with corner towers, battlements and banners.

@@ -639,38 +639,57 @@ RunService.RenderStepped:Connect(function()
 end)
 
 ----------------------------------------------------------------------------------------------
--- scenery animation (client-only, cosmetic): windmill sails turn, floating crystals bob
+-- scenery animation (client-only, cosmetic): windmill sails turn, floating crystals bob.
+-- With streaming on, animated models are Atomic: each one arrives or leaves whole, so they're
+-- tracked as they stream in and dropped when they stream out.
 
 task.spawn(function()
 	local map = workspace:WaitForChild("Map", 60)
-	local scenery = map and map:WaitForChild("Scenery", 60)
-	if not scenery then
+	if not map then
 		return
 	end
-	local spinners: { { model: Model, speed: number } } = {}
+	local spinners: { [Model]: number } = {}
 	-- Bob = true: small crystals that bob and turn; Bob = "float": balloons that rise and sink slowly
-	local bobbers: { { model: Model, base: CFrame, phase: number, spin: boolean, height: number } } = {}
-	for _, d in scenery:GetDescendants() do
-		if d:IsA("Model") and d.PrimaryPart then
-			local speed = d:GetAttribute("SpinSpeed")
-			if typeof(speed) == "number" then
-				table.insert(spinners, { model = d, speed = math.rad(speed) })
-			elseif d:GetAttribute("Bob") then
-				local spin = d:GetAttribute("Bob") == true
-				table.insert(bobbers, { model = d, base = d:GetPivot(), phase = #bobbers * 1.7, spin = spin, height = if spin then 1.2 else 4 })
-			end
+	local bobbers: { [Model]: { base: CFrame, phase: number, spin: boolean, height: number } } = {}
+	local count = 0
+	local function track(d: Instance)
+		if not d:IsA("Model") then
+			return
+		end
+		local speed = d:GetAttribute("SpinSpeed")
+		local bob = d:GetAttribute("Bob")
+		if typeof(speed) == "number" then
+			spinners[d] = math.rad(speed)
+		elseif bob then
+			count += 1
+			local spin = bob == true
+			bobbers[d] = { base = d:GetPivot(), phase = count * 1.7, spin = spin, height = if spin then 1.2 else 4 }
 		end
 	end
+	for _, d in map:GetDescendants() do
+		track(d)
+	end
+	map.DescendantAdded:Connect(track)
+	map.DescendantRemoving:Connect(function(d)
+		if d:IsA("Model") then
+			spinners[d] = nil
+			bobbers[d] = nil
+		end
+	end)
 	RunService.RenderStepped:Connect(function(dt)
-		for _, s in spinners do
-			s.model:PivotTo(s.model:GetPivot() * CFrame.Angles(0, 0, s.speed * dt))
+		for model, speed in spinners do
+			if model.PrimaryPart then
+				model:PivotTo(model:GetPivot() * CFrame.Angles(0, 0, speed * dt))
+			end
 		end
 		local clock = os.clock()
-		for _, b in bobbers do
-			local speed = if b.spin then 1.2 else 0.35
-			local offset = math.sin(clock * speed + b.phase) * b.height
-			local turn = if b.spin then clock * 0.6 + b.phase else 0
-			b.model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, turn, 0))
+		for model, b in bobbers do
+			if model.PrimaryPart then
+				local speed = if b.spin then 1.2 else 0.35
+				local offset = math.sin(clock * speed + b.phase) * b.height
+				local turn = if b.spin then clock * 0.6 + b.phase else 0
+				model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, turn, 0))
+			end
 		end
 	end)
 end)

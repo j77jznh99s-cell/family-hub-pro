@@ -580,6 +580,7 @@ function PlotService.teleportHome(session: State.Session)
 		return
 	end
 	local spawnPoint = plot:FindFirstChild("SpawnPoint") :: BasePart
+	pcall(session.player.RequestStreamAroundAsync, session.player, spawnPoint.Position, 3)
 	character:PivotTo(spawnPoint.CFrame + Vector3.new(0, 3, 0))
 end
 
