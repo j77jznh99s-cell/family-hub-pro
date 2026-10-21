@@ -16,10 +16,15 @@ local Landscape = {}
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
 Landscape.LagoonFloor = -8
-Landscape.Extent = 760 -- terrain covers |x|, |z + 30| <= Extent
+-- Terrain covers this rectangle.
+Landscape.Bounds = { x0 = -800, x1 = 800, z0 = -800, z1 = 1420 }
 
--- The play island's sand edge. No terrain is generated inside it.
-Landscape.Play = { x0 = -262, x1 = 262, z0 = -412, z1 = 352 }
+-- Flat areas built from parts by MapBuilder/CityBuilder. No terrain is generated inside them;
+-- the lagoon wraps around all three.
+Landscape.Play = { x0 = -262, x1 = 262, z0 = -412, z1 = 352 } -- the garden island (sand edge)
+Landscape.City = { x0 = -345, x1 = 345, z0 = 465, z1 = 1155 }
+Landscape.Airport = { x0 = -760, x1 = -425, z0 = 540, z1 = 1120 }
+Landscape.Areas = { Landscape.Play, Landscape.City, Landscape.Airport }
 
 -- Flat-topped sites the scenery is built on: centre, plateau radius and height. Ordered, because
 -- overlapping sites (the waterfall cliff and its pool) are blended in this order.
@@ -31,8 +36,8 @@ Landscape.SiteList = {
 	{ name = "falls", x = 0, z = -585, r = 48, h = 62 },
 	{ name = "fallsPool", x = 0, z = -515, r = 22, h = -6 },
 	{ name = "cape", x = 585, z = -60, r = 26, h = 38 },
-	{ name = "watch", x = -170, z = 590, r = 30, h = 44 },
-	{ name = "ruins", x = 250, z = 560, r = 26, h = 30 },
+	{ name = "watch", x = -560, z = 330, r = 30, h = 44 },
+	{ name = "ruins", x = 620, z = 430, r = 26, h = 30 },
 }
 Landscape.Sites = {} :: { [string]: { name: string, x: number, z: number, r: number, h: number } }
 for _, s in Landscape.SiteList do
@@ -42,7 +47,7 @@ end
 -- Gaps in the hill ring where the sea comes through (harbour bay to the east, a south inlet).
 local BAYS = {
 	{ x = 360, z = 20, r = 95 },
-	{ x = 120, z = 470, r = 70 },
+	{ x = 440, z = 820, r = 130 }, -- city harbour
 	{ x = -330, z = -560, r = 80 },
 }
 
@@ -56,15 +61,13 @@ Landscape.Paths = {
 	{ { 362, -240 }, { 380, -262 }, { 398, -275 }, { 408, -288 } },
 	-- south-east shore up to the farm
 	{ { 340, 222 }, { 352, 240 }, { 356, 255 } },
-	-- south bridge up to the watchtower
-	{ { -150, 440 }, { -138, 480 }, { -158, 525 }, { -166, 562 } },
 }
 
 -- Lagoon bridges: from the island's beach to the hill shore (x, z, x, z).
 Landscape.Bridges = {
 	{ -262, 60, -352, 60 },
 	{ -262, -250, -360, -250 },
-	{ -150, 352, -150, 440 },
+	{ -150, 352, -150, 465 }, -- footbridge to the city
 }
 
 -- Fenced crop fields on the farm plateau (centre x, z and size w along x, d along z).
@@ -111,17 +114,25 @@ function Landscape.fbm(x: number, z: number): number
 	return total / norm
 end
 
--- Distance from (x, z) to the play island's sand edge (0 inside).
+-- Distance from (x, z) to the nearest flat area's edge (0 inside one).
 function Landscape.outside(x: number, z: number): number
-	local p = Landscape.Play
-	local dx = math.max(p.x0 - x, 0, x - p.x1)
-	local dz = math.max(p.z0 - z, 0, z - p.z1)
-	return math.sqrt(dx * dx + dz * dz)
+	local best = math.huge
+	for _, p in Landscape.Areas do
+		local dx = math.max(p.x0 - x, 0, x - p.x1)
+		local dz = math.max(p.z0 - z, 0, z - p.z1)
+		best = math.min(best, math.sqrt(dx * dx + dz * dz))
+	end
+	return best
 end
 
+-- True inside the island, the city or the airport (built from parts, no terrain).
 function Landscape.inPlayArea(x: number, z: number): boolean
-	local p = Landscape.Play
-	return x >= p.x0 and x <= p.x1 and z >= p.z0 and z <= p.z1
+	for _, p in Landscape.Areas do
+		if x >= p.x0 and x <= p.x1 and z >= p.z0 and z <= p.z1 then
+			return true
+		end
+	end
+	return false
 end
 
 -- Terrain surface height at (x, z).

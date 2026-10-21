@@ -47,26 +47,28 @@ function TerrainBuilder.build(map: Instance?)
 	style(terrain)
 	terrain:Clear()
 
-	local extent = Landscape.Extent
-	local span = extent * 2 + 900
-	local centreZ = -30
+	local b = Landscape.Bounds
+	local margin = 450
+	local centre = Vector3.new((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2)
+	local span = Vector3.new(b.x1 - b.x0 + margin * 2, 0, b.z1 - b.z0 + margin * 2)
 	-- open sea: sand floor, then water up to the waterline
-	terrain:FillBlock(CFrame.new(0, Landscape.SeaFloor - 4, centreZ), Vector3.new(span, 8, span), Enum.Material.Sand)
+	terrain:FillBlock(CFrame.new(centre.X, Landscape.SeaFloor - 4, centre.Z), Vector3.new(span.X, 8, span.Z), Enum.Material.Sand)
 	local waterDepth = Landscape.WaterLevel - Landscape.SeaFloor
-	terrain:FillBlock(CFrame.new(0, Landscape.SeaFloor + waterDepth / 2, centreZ), Vector3.new(span, waterDepth, span), Enum.Material.Water)
-	-- a sand base under the play island so its edge doesn't float over deep water
-	local p = Landscape.Play
+	terrain:FillBlock(CFrame.new(centre.X, Landscape.SeaFloor + waterDepth / 2, centre.Z), Vector3.new(span.X, waterDepth, span.Z), Enum.Material.Water)
+	-- a sand base under each flat area so its edge doesn't float over deep water
 	local baseTop = -3
-	terrain:FillBlock(
-		CFrame.new((p.x0 + p.x1) / 2, (Landscape.SeaFloor + baseTop) / 2, (p.z0 + p.z1) / 2),
-		Vector3.new(p.x1 - p.x0 - 4, baseTop - Landscape.SeaFloor, p.z1 - p.z0 - 4),
-		Enum.Material.Sand
-	)
+	for _, p in Landscape.Areas do
+		terrain:FillBlock(
+			CFrame.new((p.x0 + p.x1) / 2, (Landscape.SeaFloor + baseTop) / 2, (p.z0 + p.z1) / 2),
+			Vector3.new(p.x1 - p.x0 - 4, baseTop - Landscape.SeaFloor, p.z1 - p.z0 - 4),
+			Enum.Material.Sand
+		)
+	end
 
 	-- hills, one column at a time
 	local count = 0
-	for z = -extent + centreZ, extent + centreZ, STEP do
-		for x = -extent, extent, STEP do
+	for z = b.z0, b.z1, STEP do
+		for x = b.x0, b.x1, STEP do
 			if not Landscape.inPlayArea(x, z) then
 				local h = Landscape.height(x, z)
 				if h > Landscape.SeaFloor + 0.5 then

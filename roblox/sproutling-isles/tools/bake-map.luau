@@ -14,6 +14,9 @@ local workspace = game:GetService("Workspace")
 
 MapBuilder.useApi(roblox)
 MapBuilder.useLandscape(require("../src/shared/Landscape"))
+local CityBuilder = require("../src/shared/CityBuilder")
+CityBuilder.useApi(roblox)
+MapBuilder.useCity(CityBuilder)
 local map = MapBuilder.Build(workspace)
 
 -- Bake the lighting look too, so edit mode in Studio matches play mode.

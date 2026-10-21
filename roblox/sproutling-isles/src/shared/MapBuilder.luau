@@ -51,6 +51,12 @@ function MapBuilder.useLandscape(module: any)
 	Landscape = module
 end
 
+-- Shared.CityBuilder (Sproutling City and the airport), same arrangement.
+local City: any = nil
+function MapBuilder.useCity(module: any)
+	City = module
+end
+
 MapBuilder.PlotSize = 100
 MapBuilder.PlotColors = {
 	{ "Red", 235, 80, 80 },
@@ -1511,8 +1517,8 @@ local function buildLandscape(scenery: Instance)
 	horizon.Name = "Horizon"
 	horizon.Parent = scenery
 	local peaks = {
-		{ -820, -500, 1.2 }, { -900, 100, 1.5 }, { -760, 600, 1.1 }, { 850, -300, 1.4 },
-		{ 900, 350, 1.2 }, { -200, -1000, 1.6 }, { 350, -950, 1.3 }, { 150, 950, 1.2 },
+		{ -820, -500, 1.2 }, { -900, 100, 1.5 }, { -1150, 800, 1.3 }, { 850, -300, 1.4 },
+		{ 900, 350, 1.2 }, { -200, -1000, 1.6 }, { 350, -950, 1.3 }, { 150, 1750, 1.4 }, { -600, 1650, 1.2 },
 	}
 	for i, pk in peaks do
 		peak(horizon, pk[1], pk[2], pk[3], i)
@@ -1890,12 +1896,12 @@ local function buildHills(scenery: Instance)
 	local wild = Instance.new("Folder")
 	wild.Name = "Wilds"
 	wild.Parent = hills
-	local extent = Landscape.Extent
+	local bounds = Landscape.Bounds
 	local step = 21
 	local pines, broadleaf, rocks = 0, 0, 0
 	local i = 0
-	for gz = -extent - 30, extent - 30, step do
-		for gx = -extent, extent, step do
+	for gz = bounds.z0, bounds.z1, step do
+		for gx = bounds.x0, bounds.x1, step do
 			i += 1
 			local x = gx + (hash(i * 1.3) - 0.5) * step * 0.8
 			local z = gz + (hash(i * 2.7) - 0.5) * step * 0.8
@@ -2017,7 +2023,7 @@ local function buildScenery(map: Instance)
 	})
 
 	-- Sky Garden waterfall pouring off its south edge.
-	waterfall(fx, 0, 86, 341, 8, Vector3.new(0, 0, -1))
+	waterfall(fx, -30, 86, 328, 8, Vector3.new(0, 0, -1))
 
 	-- Out over the sea: floating islets (some with waterfalls) and clouds, for depth.
 	local sky = Instance.new("Folder")
@@ -2026,7 +2032,7 @@ local function buildScenery(map: Instance)
 	local islets = {
 		{ -340, 110, -120, 38, true }, { 360, 140, 60, 45, true }, { -300, 170, 260, 30, false },
 		{ 320, 95, -330, 28, true }, { -150, 190, -520, 34, true }, { 180, 150, -500, 26, false },
-		{ 60, 210, 520, 32, true }, { -420, 230, -380, 22, false }, { 440, 210, 330, 24, false },
+		{ 520, 210, 1250, 32, false }, { -420, 230, -380, 22, false }, { 440, 210, 330, 24, false },
 		{ 75, 125, 375, 10, false }, { -70, 112, 330, 8, false },
 	}
 	for i, it in islets do
@@ -2056,6 +2062,14 @@ function MapBuilder.Build(parent: Instance): Instance
 			Landscape = module
 		end
 	end
+	if not City then
+		local ok, module = pcall(function()
+			return require((script :: any).Parent.CityBuilder)
+		end)
+		if ok then
+			City = module
+		end
+	end
 	local existing = parent:FindFirstChild("Map")
 	if existing then
 		existing:Destroy()
@@ -2075,6 +2089,9 @@ function MapBuilder.Build(parent: Instance): Instance
 	buildPond(map)
 	buildSkyGarden(map)
 	buildScenery(map)
+	if City then
+		City.Build(map)
+	end
 
 	map.Parent = parent
 	return map
