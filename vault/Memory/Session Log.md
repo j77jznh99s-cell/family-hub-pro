@@ -17,6 +17,7 @@ tags: [memory, log]
 - Owner then asked for a whole city game (boats, planes, pets, shops, weapons, abilities; ~100k parts). Decided: turn Sproutling into the city game, cartoon combat, phone-safe budget. Built phase 1 (`86c76d7`): Sproutling City + airport, 16,330 parts total. Phases 2-6 planned in [[Sproutling Isles]].
 - Owner then changed direction again: open-world fantasy RPG (dungeons + overworld bosses, action combat, gardens grow ingredients). Rebuilt the city as a walled fantasy city (`34cac1a`), 18,371 parts. RPG plan in [[Sproutling Isles]].
 - Higgsfield material kit (`3773671`): 12 royal Renaissance textures (~3 of 1,000 credits), MaterialKit module applies them by role once Roblox asset ids are pasted in. Image host blocked by sandbox network policy, so files not in the repo yet.
+- Combat core (RPG step 2) pushed: weapons, dodge, abilities, enemies, camps, dummies. Type-checked with luau-lsp (downloaded to scratch, not committed). Untested in Studio.
 - selene/rojo/lune clean; place rebuilt and baked; `docs/map-preview.png` refreshed.
 
 **Not verified**
