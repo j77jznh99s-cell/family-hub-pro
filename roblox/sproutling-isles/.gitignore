@@ -1,2 +1,6 @@
 build/parts.json
 build/landscape.json
+build/roads.json
+build/city_region.json
+build/parts_old.json
+build/parts_empty.json

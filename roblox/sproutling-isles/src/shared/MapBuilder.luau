@@ -266,6 +266,19 @@ local function pine(parent: Instance, x: number, z: number, scale: number, seed:
 	end
 end
 
+-- A lighter pine for the far forests: a trunk and two four-sided tiers.
+local function lightPine(parent: Instance, x: number, z: number, scale: number, seed: number, y0: number?)
+	local model = Instance.new("Model")
+	model.Name = "Pine"
+	model.Parent = parent
+	local base = y0 or 0
+	cylinder(model, "Trunk", 5 * scale, 1.6 * scale, x, base + 2.5 * scale, z, rgb(105, 75, 55), Enum.Material.Wood)
+	local g = math.floor(hash(seed + 0.3) * 30)
+	local color = rgb(40 + g, 120 + g, 70 + math.floor(g / 2))
+	cone(model, "Needles", x, base + 2.6 * scale, z, 5 * scale, 9 * scale, color, Enum.Material.Grass, 4)
+	cone(model, "Needles", x, base + 8 * scale, z, 3.4 * scale, 7 * scale, color, Enum.Material.Grass, 4)
+end
+
 -- Moves every part under container up by dy (for groups built at y = 0 and placed on a hill).
 local function lift(container: Instance, dy: number)
 	for _, d in container:GetDescendants() do
@@ -1435,24 +1448,6 @@ local function boat(parent: Instance, x: number, z: number, heading: number, sai
 	part(model, "Stripe", Vector3.new(0.35, 2, 8), base * CFrame.new(0.45, 11, 3) * CFrame.Angles(0, math.rad(90), 0), rgb(255, 255, 255), Enum.Material.Fabric)
 end
 
--- Distant snow-capped peak (out past the sea edge, mostly seen through the haze).
-local function peak(parent: Instance, x: number, z: number, scale: number, seed: number)
-	local model = Instance.new("Model")
-	model.Name = "Peak"
-	model.Parent = parent
-	local y = -10
-	local r = 140 * scale
-	for i = 1, 11 do
-		local h = 15 * scale
-		local snow = i >= 9
-		local color = if snow then rgb(245, 248, 255) elseif i >= 7 then rgb(165 + i * 2, 160 + i * 2, 175) else rgb(110 + i * 8, 140 + i * 6, 115)
-		local ox, oz = (hash(seed + i) - 0.5) * 24 * scale, (hash(seed * 2 + i) - 0.5) * 24 * scale
-		deco(cylinder(model, "Layer", h, r * 2, x + ox, y + h / 2, z + oz, color, if snow then Enum.Material.Snow else Enum.Material.Rock))
-		y += h
-		r *= 0.82
-	end
-end
-
 local function bush(parent: Instance, x: number, z: number, seed: number)
 	local green = rgb(70 + math.floor(hash(seed) * 30), 150 + math.floor(hash(seed + 1) * 40), 70)
 	ball(parent, "Bush", 4.5, x, 1.6, z, green, Enum.Material.Grass)
@@ -1527,17 +1522,7 @@ local function buildLandscape(scenery: Instance)
 	boat(coast, 318, 2, math.rad(100), rgb(90, 150, 240))
 	boat(coast, 380, 70, math.rad(30), rgb(255, 210, 80))
 
-	-- distant mountains ringing the horizon
-	local horizon = Instance.new("Folder")
-	horizon.Name = "Horizon"
-	horizon.Parent = scenery
-	local peaks = {
-		{ -820, -500, 1.2 }, { -900, 100, 1.5 }, { -1150, 800, 1.3 }, { 850, -300, 1.4 },
-		{ 900, 350, 1.2 }, { -200, -1000, 1.6 }, { 350, -950, 1.3 }, { 150, 1750, 1.4 }, { -600, 1650, 1.2 },
-	}
-	for i, pk in peaks do
-		peak(horizon, pk[1], pk[2], pk[3], i)
-	end
+	-- (the old distant prop mountains are gone: real terrain mountains ring the land now)
 end
 
 ----------------------------------------------------------------------------------------------
@@ -1860,16 +1845,8 @@ local function bridge(parent: Instance, x0: number, z0: number, x1: number, z1: 
 end
 
 local function nearPath(x: number, z: number, margin: number): boolean
-	for _, path in Landscape.Paths do
-		for i = 1, #path - 1 do
-			local a, b = path[i], path[i + 1]
-			local abx, abz = b[1] - a[1], b[2] - a[2]
-			local t = math.clamp(((x - a[1]) * abx + (z - a[2]) * abz) / (abx * abx + abz * abz), 0, 1)
-			local dx, dz = x - (a[1] + abx * t), z - (a[2] + abz * t)
-			if dx * dx + dz * dz < margin * margin then
-				return true
-			end
-		end
+	if Landscape.onRoad(x, z, margin) then
+		return true
 	end
 	for _, br in Landscape.Bridges do
 		local dx, dz = x - br[3], z - br[4]
@@ -1899,6 +1876,11 @@ local function buildHills(scenery: Instance)
 	ruinsFolder.Name = "Ruins"
 	ruinsFolder.Parent = hills
 	ruins(ruinsFolder, sites.ruins.x, sites.ruins.h, sites.ruins.z)
+	ruins(ruinsFolder, sites.oldfort.x, sites.oldfort.h, sites.oldfort.z)
+	-- villages out in the wider land
+	hamlet(hills, sites.southvale, 3, "Cheesemonger", rgb(250, 210, 90))
+	hamlet(hills, sites.eastmere, 4, "Weaver", rgb(120, 170, 240))
+	hamlet(hills, sites.pinecrest, 5, "Woodcutter", rgb(150, 110, 70))
 	for _, br in Landscape.Bridges do
 		bridge(hills, br[1], br[2], br[3], br[4])
 	end
@@ -1936,7 +1918,9 @@ local function buildHills(scenery: Instance)
 			i += 1
 			local x = gx + (hash(i * 1.3) - 0.5) * step * 0.8
 			local z = gz + (hash(i * 2.7) - 0.5) * step * 0.8
-			if not Landscape.inPlayArea(x, z) then
+			-- the city plants its own trees; the far land gets lighter trees and fewer flowers
+			local far = math.sqrt(x * x + (z - 300) ^ 2) > 800
+			if not Landscape.inPlayArea(x, z) and Landscape.cityWeight(x, z) < 0.15 then
 				local h = Landscape.height(x, z)
 				local slope = Landscape.slope(x, z)
 				local dense = Landscape.fbm(x / 90 + 11, z / 90 - 4)
@@ -1944,12 +1928,20 @@ local function buildHills(scenery: Instance)
 					if dense > 0.55 and hash(i + 0.5) < 0.45 then
 						if hash(i + 0.9) < (if h > 28 then 0.6 else 0.3) then
 							pines += 1
-							pine(wild, x, z, 0.9 + hash(i) * 0.7, i, h - 0.6)
+							if far then
+								lightPine(wild, x, z, 1 + hash(i) * 0.8, i, h - 0.6)
+							else
+								pine(wild, x, z, 0.9 + hash(i) * 0.7, i, h - 0.6)
+							end
 						else
 							broadleaf += 1
-							tree(wild, x, z, 0.9 + hash(i) * 0.6, i, h - 0.6)
+							tree(wild, x, z, 0.9 + hash(i) * (if far then 0.9 else 0.6), i, h - 0.6)
 						end
-					elseif hash(i + 0.2) < 0.12 then
+					elseif far and dense > 0.45 and hash(i + 0.6) < 0.25 then
+						-- scattered trees between the far forests
+						broadleaf += 1
+						tree(wild, x, z, 0.8 + hash(i) * 0.7, i, h - 0.6)
+					elseif hash(i + 0.2) < (if far then 0.03 else 0.12) then
 						local flowers = { rgb(255, 120, 160), rgb(255, 230, 100), rgb(255, 255, 255), rgb(180, 140, 255) }
 						for k = 1, 4 do
 							ball(wild, "Wildflower", 0.9, x + (hash(i + k) - 0.5) * 4, h + 0.3, z + (hash(i + k * 3) - 0.5) * 4, flowers[(i + k) % 4 + 1])
@@ -2129,7 +2121,7 @@ function MapBuilder.Build(parent: Instance): Instance
 	buildSkyGarden(map)
 	buildScenery(map)
 	if City then
-		City.Build(map)
+		City.Build(map, Landscape)
 	end
 	if Dungeon then
 		Dungeon.Build(map, Landscape)

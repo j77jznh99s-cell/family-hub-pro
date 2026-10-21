@@ -1,33 +1,43 @@
 --!strict
--- The hills around Sproutling Isles, as pure maths.
+-- The land around Sproutling Isles, as pure maths.
 --
--- The play area (the flat island built from parts by MapBuilder) sits in a shallow lagoon. Beyond
--- the lagoon, Roblox Terrain rises into a ring of grassy hills with a few flat-topped sites for the
--- castle, hamlets, farm and waterfall cliff, then falls away to open sea.
+-- The garden island (the flat play area built from parts by MapBuilder) sits in a shallow lagoon
+-- with a ragged sandy shore. Beyond it a large landmass rolls away in every direction: low hills
+-- near the island, a gently rolling site for the walled city to the south, and high ridges and
+-- mountains towards the coast. Curvy roads of different widths wind across all of it; the ground
+-- is cut and banked so each road climbs and dips with the hills instead of lying flat.
 --
 -- Both sides use this module so they always agree:
---   * server/TerrainBuilder.luau fills Terrain from height()/material() at server start,
---   * MapBuilder places buildings and trees on the hills with height(),
+--   * server/TerrainBuilder.luau fills Terrain from height()/material() and paints the roads,
+--   * MapBuilder and CityBuilder place buildings, trees and props with height() and the road
+--     samples,
 --   * tools can sample it under Lune for previews.
 -- It touches no services and no Roblox types, so it runs anywhere.
 
 local Landscape = {}
 
+-- Bump when the terrain shape changes, so a terrain baked into the place in Studio is rebuilt.
+Landscape.Version = 2
+
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
 Landscape.LagoonFloor = -8
 -- Terrain covers this rectangle.
-Landscape.Bounds = { x0 = -800, x1 = 800, z0 = -800, z1 = 1420 }
+Landscape.Bounds = { x0 = -1500, x1 = 1500, z0 = -1350, z1 = 2350 }
 
--- Flat areas built from parts by MapBuilder/CityBuilder. No terrain is generated inside them;
--- the lagoon wraps around all three.
-Landscape.Play = { x0 = -262, x1 = 262, z0 = -412, z1 = 352 } -- the garden island (sand edge)
-Landscape.City = { x0 = -345, x1 = 345, z0 = 465, z1 = 1155 }
-Landscape.Airport = { x0 = -760, x1 = -425, z0 = 540, z1 = 1120 }
-Landscape.Areas = { Landscape.Play, Landscape.City, Landscape.Airport }
+-- The garden island: built from parts, so no terrain is generated inside it.
+Landscape.Play = { x0 = -262, x1 = 262, z0 = -412, z1 = 352 }
+Landscape.Areas = { Landscape.Play }
 
--- Flat-topped sites the scenery is built on: centre, plateau radius and height. Ordered, because
--- overlapping sites (the waterfall cliff and its pool) are blended in this order.
+-- The walled city: centre and rough radius (the outline wobbles, see cityRadiusAt).
+Landscape.CityCentre = { x = 20, z = 870 }
+Landscape.CityRadius = 400
+
+-- The landmass: an ellipse with a noisy coast. Mountains rise towards its edge.
+local LAND = { x = -150, z = 480, rx = 1180, rz = 1760 }
+
+-- Flat-topped sites the scenery is built on: centre, plateau radius and height (h = nil: the
+-- natural ground height at the centre). Ordered, because overlapping sites are blended in order.
 Landscape.SiteList = {
 	{ name = "castle", x = -495, z = 60, r = 50, h = 50 },
 	{ name = "hamletWest", x = -400, z = -330, r = 50, h = 26 },
@@ -39,39 +49,66 @@ Landscape.SiteList = {
 	{ name = "watch", x = -560, z = 330, r = 30, h = 44 },
 	{ name = "ruins", x = 620, z = 430, r = 26, h = 30 },
 	{ name = "grove", x = -495, z = -445, r = 40, h = 34 }, -- Ironbark's clearing (field boss)
-}
-Landscape.Sites = {} :: { [string]: { name: string, x: number, z: number, r: number, h: number } }
-for _, s in Landscape.SiteList do
-	Landscape.Sites[s.name] = s
-end
+	-- the city's waterfront and the airship port
+	{ name = "harbour", x = 282, z = 880, r = 58, h = 1.2 },
+	{ name = "docks", x = 334, z = 640, r = 52, h = 1.2 },
+	{ name = "airport", x = -660, z = 860, r = 125 },
+	-- the wider world
+	{ name = "southvale", x = 90, z = 1690, r = 52 },
+	{ name = "eastmere", x = 780, z = 430, r = 48 },
+	{ name = "pinecrest", x = -1000, z = 290, r = 50 },
+	{ name = "oldfort", x = 560, z = 1420, r = 30 },
+} :: { { name: string, x: number, z: number, r: number, h: number? } }
 
--- Gaps in the hill ring where the sea comes through (harbour bay to the east, a south inlet).
+export type Site = { name: string, x: number, z: number, r: number, h: number }
+Landscape.Sites = {} :: { [string]: Site }
+
+-- Sea inlets: the east bay by the island, the city harbour and its channel out to the open sea,
+-- the fishers' cove, the cape bay and a south inlet.
 local BAYS = {
 	{ x = 360, z = 20, r = 95 },
-	{ x = 440, z = 820, r = 130 }, -- city harbour
+	{ x = 480, z = 880, r = 170 }, -- city harbour
+	{ x = 640, z = 905, r = 130 },
+	{ x = 800, z = 925, r = 135 },
+	{ x = 960, z = 945, r = 150 },
+	{ x = 470, z = 640, r = 100 }, -- fishers' cove
+	{ x = 780, z = -60, r = 170 }, -- cape bay
 	{ x = -330, z = -560, r = 80 },
 }
 
--- Winding cobblestone paths (lists of x, z points), painted into the terrain surface.
-Landscape.Paths = {
-	-- west bridge up to the castle gate
-	{ { -352, 60 }, { -378, 70 }, { -405, 62 }, { -430, 60 } },
-	-- north-west bridge up to the west hamlet
-	{ { -360, -250 }, { -372, -280 }, { -385, -300 }, { -392, -312 } },
-	-- west hamlet on to Ironbark's grove
-	{ { -415, -365 }, { -440, -395 }, { -465, -420 } },
-	-- north-east shore up to the east hamlet
-	{ { 362, -240 }, { 380, -262 }, { 398, -275 }, { 408, -288 } },
-	-- south-east shore up to the farm
-	{ { 340, 222 }, { 352, 240 }, { 356, 255 } },
+-- Lagoon bridges: start on the island's beach and run outwards until they reach dry land.
+-- { x, z, dx, dz }; the far end is worked out below. Landscape.Bridges holds { x0, z0, x1, z1 }.
+local BRIDGE_STARTS = {
+	{ -262, 60, -1, 0 },
+	{ -262, -250, -1, 0 },
+	{ -150, 352, 0, 1 }, -- footbridge to the city's west side
 }
+local GRAND_BRIDGE_START = { 0, 352, 0, 1 } -- the stone bridge to the city's north gate
 
--- Lagoon bridges: from the island's beach to the hill shore (x, z, x, z).
-Landscape.Bridges = {
-	{ -262, 60, -352, 60 },
-	{ -262, -250, -360, -250 },
-	{ -150, 352, -150, 465 }, -- footbridge to the city
-}
+-- Roads: control points (x, z) joined by smooth curves. `from` starts the road at the far end of
+-- a bridge ("grand" or a Bridges index). Materials are Terrain material names.
+export type RoadDef = { name: string, width: number, material: string, points: { { number } }, from: (string | number)? }
+Landscape.Roads = {
+	-- the city
+	{ name = "Grand Way", width = 28, material = "Cobblestone", from = "grand", points = { { 15, 560 }, { -10, 650 }, { -25, 760 }, { 10, 860 }, { 32, 960 }, { 0, 1060 }, { -22, 1160 }, { 12, 1265 }, { 62, 1385 }, { 112, 1500 }, { 95, 1640 } } },
+	{ name = "Market Street", width = 18, material = "Pavement", points = { { -25, 760 }, { 60, 742 }, { 150, 768 }, { 225, 822 }, { 268, 870 } } },
+	{ name = "Old Town Lane", width = 14, material = "Cobblestone", points = { { 10, 860 }, { -80, 892 }, { -170, 932 }, { -238, 1002 }, { -305, 1058 }, { -385, 1056 }, { -470, 990 }, { -560, 905 } } },
+	{ name = "Temple Road", width = 12, material = "Pavement", points = { { 0, 1060 }, { 92, 1092 }, { 182, 1062 }, { 248, 992 }, { 268, 930 } } },
+	{ name = "Crescent", width = 10, material = "Cobblestone", points = { { -10, 650 }, { -100, 615 }, { -192, 655 }, { -245, 740 }, { -232, 842 }, { -170, 932 } } },
+	{ name = "Fishers' Lane", width = 9, material = "Ground", points = { { 60, 742 }, { 110, 682 }, { 190, 632 }, { 300, 640 } } },
+	{ name = "Hill Lane", width = 8, material = "Ground", points = { { -238, 1002 }, { -222, 1100 }, { -132, 1182 }, { -22, 1160 } } },
+	{ name = "Footbridge Path", width = 7, material = "Ground", from = 3, points = { { -128, 560 }, { -100, 615 } } },
+	-- out in the country
+	{ name = "Castle Road", width = 8, material = "Cobblestone", from = 1, points = { { -405, 62 }, { -430, 60 } } },
+	{ name = "Hamlet Road", width = 7, material = "Ground", from = 2, points = { { -385, -300 }, { -392, -312 } } },
+	{ name = "Grove Path", width = 6, material = "Ground", points = { { -415, -365 }, { -440, -395 }, { -465, -420 } } },
+	{ name = "East Hamlet Path", width = 7, material = "Ground", points = { { 362, -240 }, { 380, -262 }, { 398, -275 }, { 408, -288 } } },
+	{ name = "Farm Road", width = 9, material = "Ground", points = { { 190, 632 }, { 232, 560 }, { 330, 520 }, { 425, 440 }, { 432, 345 } } },
+	{ name = "Eastmere Road", width = 8, material = "Ground", points = { { 432, 345 }, { 560, 330 }, { 680, 392 }, { 752, 428 } } },
+	{ name = "Watch Road", width = 8, material = "Ground", points = { { -560, 905 }, { -625, 760 }, { -640, 610 }, { -600, 470 }, { -566, 362 } } },
+	{ name = "Pinecrest Road", width = 7, material = "Ground", points = { { -566, 362 }, { -700, 380 }, { -840, 330 }, { -985, 295 } } },
+	{ name = "Old Fort Track", width = 7, material = "Ground", points = { { 95, 1640 }, { 260, 1610 }, { 420, 1540 }, { 545, 1440 } } },
+} :: { RoadDef }
 
 -- Fenced crop fields on the farm plateau (centre x, z and size w along x, d along z).
 Landscape.Fields = {
@@ -80,6 +117,9 @@ Landscape.Fields = {
 	{ x = 372, z = 300, w = 34, d = 26 },
 	{ x = 414, z = 300, w = 34, d = 26 },
 }
+
+----------------------------------------------------------------------------------------------
+-- noise
 
 local function clamp(v: number, lo: number, hi: number): number
 	return if v < lo then lo elseif v > hi then hi else v
@@ -116,52 +156,277 @@ function Landscape.fbm(x: number, z: number): number
 	end
 	return total / norm
 end
+local fbm = Landscape.fbm
 
--- Distance from (x, z) to the nearest flat area's edge (0 inside one).
+----------------------------------------------------------------------------------------------
+-- shape
+
+-- Distance from (x, z) to the island's edge (0 inside it).
 function Landscape.outside(x: number, z: number): number
-	local best = math.huge
-	for _, p in Landscape.Areas do
-		local dx = math.max(p.x0 - x, 0, x - p.x1)
-		local dz = math.max(p.z0 - z, 0, z - p.z1)
-		best = math.min(best, math.sqrt(dx * dx + dz * dz))
-	end
-	return best
+	local p = Landscape.Play
+	local dx = math.max(p.x0 - x, 0, x - p.x1)
+	local dz = math.max(p.z0 - z, 0, z - p.z1)
+	return math.sqrt(dx * dx + dz * dz)
 end
 
--- True inside the island, the city or the airport (built from parts, no terrain).
+-- True inside the garden island (built from parts, no terrain).
 function Landscape.inPlayArea(x: number, z: number): boolean
-	for _, p in Landscape.Areas do
-		if x >= p.x0 and x <= p.x1 and z >= p.z0 and z <= p.z1 then
-			return true
-		end
-	end
-	return false
+	local p = Landscape.Play
+	return x >= p.x0 and x <= p.x1 and z >= p.z0 and z <= p.z1
 end
 
--- Terrain surface height at (x, z).
-function Landscape.height(x: number, z: number): number
-	local d = Landscape.outside(x, z)
-	if d <= 0 then
-		return Landscape.LagoonFloor
+-- The city wall's distance from the centre in direction `angle` (radians): a wobbly ring.
+function Landscape.cityRadiusAt(angle: number): number
+	return Landscape.CityRadius + 42 * math.sin(3 * angle + 1.1) + 26 * math.sin(5 * angle + 2.3) + 14 * math.sin(9 * angle + 0.4)
+end
+
+-- 1 inside the city, fading to 0 just past its walls.
+function Landscape.cityWeight(x: number, z: number): number
+	local dx, dz = x - Landscape.CityCentre.x, z - Landscape.CityCentre.z
+	local dist = math.sqrt(dx * dx + dz * dz)
+	if dist < Landscape.CityRadius - 90 then
+		return 1
 	end
-	local n1 = Landscape.fbm(x / 170, z / 170)
-	local n2 = Landscape.fbm(x / 260 + 40, z / 260 - 13)
-	local hill = 12 + 66 * n1 ^ 1.35
-	local rise = smoothstep(50, 200, d) -- lagoon first, then a gentle slope up
-	local edge = 250 + 110 * n2
-	local fall = 1 - smoothstep(edge - 40, edge + 70, d) -- outer coast
-	local bay = 1
+	local r = Landscape.cityRadiusAt(math.atan2(dz, dx))
+	return 1 - smoothstep(r - 30, r + 90, dist)
+end
+
+-- How far (x, z) is towards the coast: 0 at the land's centre, about 1 at the shore.
+local function landRadius(x: number, z: number): number
+	local ex, ez = (x - LAND.x) / LAND.rx, (z - LAND.z) / LAND.rz
+	return math.sqrt(ex * ex + ez * ez) + (fbm(x / 260 - 31, z / 260 + 12) - 0.5) * 0.22
+end
+
+-- Inland ground before the lagoon, the sea, sites and roads are applied.
+local function landHeight(x: number, z: number): number
+	local n1 = fbm(x / 170, z / 170)
+	local h = 12 + 66 * n1 ^ 1.35
+	-- small bumps everywhere so nothing is perfectly smooth
+	local bumps = (fbm(x / 45 + 9, z / 45 + 2) - 0.5) * 8
+	-- ridges and mountains towards the coast
+	local e = landRadius(x, z)
+	local ridge = 1 - math.abs(2 * fbm(x / 320 + 5, z / 320 - 8) - 1)
+	h += 170 * smoothstep(0.6, 0.9, e) * ridge * ridge
+	-- the city: gently rolling ground, still uneven
+	local c = Landscape.cityWeight(x, z)
+	if c > 0 then
+		local hc = 7 + 22 * fbm(x / 230 - 4, z / 230 + 6)
+		h += (hc - h) * c
+		bumps *= 1 - 0.6 * c
+	end
+	return h + bumps
+end
+
+-- Ground with the lagoon, coast and bays, before sites and roads.
+local function baseHeight(x: number, z: number): number
+	local h = landHeight(x, z)
+	local lagoon = Landscape.LagoonFloor
+	-- the lagoon round the island, with a ragged sandy shore
+	local d = Landscape.outside(x, z) + (fbm(x / 80 + 21, z / 80 - 3) - 0.5) * 90
+	if d < 20 then
+		h = -0.5
+	elseif d < 46 then
+		h = -0.5 + (lagoon + 0.5) * smoothstep(20, 46, d)
+	else
+		h = lagoon + (h - lagoon) * smoothstep(46, 200, d)
+	end
+	-- coast and inlets
+	local k = 1 - smoothstep(0.93, 1.03, landRadius(x, z))
 	for _, b in BAYS do
 		local dist = math.sqrt((x - b.x) ^ 2 + (z - b.z) ^ 2)
-		bay = math.min(bay, smoothstep(b.r * 0.55, b.r * 1.25, dist))
+		if dist < b.r * 1.25 then
+			k = math.min(k, smoothstep(b.r * 0.55, b.r * 1.25, dist))
+		end
 	end
-	local land = (hill - Landscape.LagoonFloor) * rise * fall * bay
-	local h = Landscape.LagoonFloor + land - (Landscape.LagoonFloor - Landscape.SeaFloor) * (1 - fall)
+	return Landscape.SeaFloor + (h - Landscape.SeaFloor) * k
+end
+
+-- Sites get their height (natural ground at the centre unless given).
+for _, s in Landscape.SiteList do
+	local site = s :: any
+	if site.h == nil then
+		site.h = math.floor(baseHeight(s.x, s.z) + 0.5)
+	end
+	Landscape.Sites[s.name] = site :: Site
+end
+
+-- Ground with the site plateaus, before roads.
+local function siteHeight(x: number, z: number): number
+	local h = baseHeight(x, z)
 	for _, s in Landscape.SiteList do
 		local dist = math.sqrt((x - s.x) ^ 2 + (z - s.z) ^ 2)
 		if dist < s.r * 1.9 then
 			local w = 1 - smoothstep(s.r, s.r * 1.9, dist)
-			h += (s.h - h) * w
+			h += ((s.h :: number) - h) * w
+		end
+	end
+	return h
+end
+
+----------------------------------------------------------------------------------------------
+-- bridges
+
+local function bridgeEnd(start: { number }): { number }
+	local x, z, dx, dz = start[1], start[2], start[3], start[4]
+	local run = 0
+	for step = 1, 120 do
+		local px, pz = x + dx * step * 4, z + dz * step * 4
+		if siteHeight(px, pz) > 1.6 then
+			run += 1
+			if run >= 3 then
+				return { x, z, px, pz }
+			end
+		else
+			run = 0
+		end
+	end
+	return { x, z, x + dx * 120, z + dz * 120 }
+end
+
+Landscape.Bridges = {} :: { { number } }
+for i, b in BRIDGE_STARTS do
+	Landscape.Bridges[i] = bridgeEnd(b)
+end
+Landscape.GrandBridge = bridgeEnd(GRAND_BRIDGE_START)
+
+----------------------------------------------------------------------------------------------
+-- roads
+
+export type RoadSample = { x: number, z: number, y: number, tx: number, tz: number, hw: number, s: number, road: number }
+Landscape.RoadSamples = {} :: { { RoadSample } } -- per road, in Landscape.Roads order
+Landscape.RoadMaterial = {} :: { string }
+
+local SPACING = 3.5
+local SHOULDER = 26 -- widest bank either side of a road
+local CELL = 32
+local grid: { [number]: { RoadSample } } = {}
+
+local function cellKey(ix: number, iz: number): number
+	return ix * 65536 + iz
+end
+
+local function catmull(p0: { number }, p1: { number }, p2: { number }, p3: { number }, t: number): (number, number)
+	local t2, t3 = t * t, t * t * t
+	local function c(a: number, b: number, cc: number, d: number): number
+		return 0.5 * ((2 * b) + (-a + cc) * t + (2 * a - 5 * b + 4 * cc - d) * t2 + (-a + 3 * b - 3 * cc + d) * t3)
+	end
+	return c(p0[1], p1[1], p2[1], p3[1]), c(p0[2], p1[2], p2[2], p3[2])
+end
+
+local function buildRoad(index: number, def: RoadDef)
+	local pts = table.clone(def.points)
+	if def.from == "grand" then
+		local b = Landscape.GrandBridge
+		table.insert(pts, 1, { b[3], b[4] })
+	elseif type(def.from) == "number" then
+		local b = Landscape.Bridges[def.from :: number]
+		table.insert(pts, 1, { b[3], b[4] })
+	end
+	-- dense points along the curve
+	local raw: { { number } } = {}
+	for i = 1, #pts - 1 do
+		local p0, p1, p2, p3 = pts[math.max(1, i - 1)], pts[i], pts[i + 1], pts[math.min(#pts, i + 2)]
+		local len = math.sqrt((p2[1] - p1[1]) ^ 2 + (p2[2] - p1[2]) ^ 2)
+		local n = math.max(2, math.ceil(len / SPACING))
+		for k = 0, n - 1 do
+			local x, z = catmull(p0, p1, p2, p3, k / n)
+			table.insert(raw, { x, z })
+		end
+	end
+	table.insert(raw, pts[#pts])
+	-- heights follow the ground, smoothed so the road rolls instead of jumping
+	local hs = {}
+	for i, p in raw do
+		hs[i] = siteHeight(p[1], p[2])
+	end
+	for _ = 1, 3 do
+		local out = {}
+		for i = 1, #hs do
+			local sum, n = 0, 0
+			for j = math.max(1, i - 9), math.min(#hs, i + 9) do
+				sum += hs[j]
+				n += 1
+			end
+			out[i] = sum / n
+		end
+		hs = out
+	end
+	local samples: { RoadSample } = {}
+	local s = 0
+	local seed = index * 1.7
+	for i, p in raw do
+		local q = raw[math.min(#raw, i + 1)]
+		local r = raw[math.max(1, i - 1)]
+		local tx, tz = q[1] - r[1], q[2] - r[2]
+		local tl = math.sqrt(tx * tx + tz * tz)
+		if tl < 1e-6 then
+			tx, tz, tl = 0, 1, 1
+		end
+		if i > 1 then
+			s += math.sqrt((p[1] - raw[i - 1][1]) ^ 2 + (p[2] - raw[i - 1][2]) ^ 2)
+		end
+		-- the width swells and narrows a little along the way
+		local hw = def.width / 2 * (1 + 0.14 * math.sin(s / 37 + seed) + 0.06 * math.sin(s / 11 + seed * 3))
+		local sample: RoadSample = { x = p[1], z = p[2], y = math.max(hs[i], 0.8), tx = tx / tl, tz = tz / tl, hw = hw, s = s, road = index }
+		table.insert(samples, sample)
+		local reach = hw + SHOULDER
+		for ix = math.floor((p[1] - reach) / CELL), math.floor((p[1] + reach) / CELL) do
+			for iz = math.floor((p[2] - reach) / CELL), math.floor((p[2] + reach) / CELL) do
+				local key = cellKey(ix, iz)
+				local list = grid[key]
+				if not list then
+					list = {}
+					grid[key] = list
+				end
+				table.insert(list, sample)
+			end
+		end
+	end
+	Landscape.RoadSamples[index] = samples
+	Landscape.RoadMaterial[index] = def.material
+end
+
+for i, def in Landscape.Roads do
+	buildRoad(i, def)
+end
+
+-- The nearest road to (x, z): distance from its edge (negative on the road) and the sample.
+function Landscape.nearestRoad(x: number, z: number): (number, RoadSample?)
+	local list = grid[cellKey(math.floor(x / CELL), math.floor(z / CELL))]
+	if not list then
+		return math.huge, nil
+	end
+	local best, bestSample = math.huge, nil
+	for _, sample in list do
+		local d = math.sqrt((x - sample.x) ^ 2 + (z - sample.z) ^ 2) - sample.hw
+		if d < best then
+			best, bestSample = d, sample
+		end
+	end
+	return best, bestSample
+end
+
+-- True if (x, z) is on a road or within `margin` studs of one.
+function Landscape.onRoad(x: number, z: number, margin: number?): boolean
+	local d = Landscape.nearestRoad(x, z)
+	return d < (margin or 0)
+end
+
+----------------------------------------------------------------------------------------------
+-- the surface
+
+-- Terrain surface height at (x, z).
+function Landscape.height(x: number, z: number): number
+	local h = siteHeight(x, z)
+	local d, sample = Landscape.nearestRoad(x, z)
+	if sample and d < SHOULDER then
+		if d <= 0 then
+			return sample.y
+		end
+		-- deeper cuts and fills get wider banks
+		local bank = math.min(SHOULDER, 5 + math.abs(h - sample.y) * 1.4)
+		if d < bank then
+			return sample.y + (h - sample.y) * smoothstep(0, bank, d)
 		end
 	end
 	return h
@@ -177,13 +442,17 @@ end
 
 -- Surface material name for (x, z) at height h ("Sand", "Grass", "LeafyGrass", "Rock", ...).
 function Landscape.material(x: number, z: number, h: number): string
+	local d, sample = Landscape.nearestRoad(x, z)
+	if sample and d < -0.5 then
+		return Landscape.RoadMaterial[sample.road]
+	end
 	if h < 1.5 then
 		return "Sand"
 	end
 	local s = Landscape.slope(x, z)
-	if s > 0.95 then
+	if s > 0.95 or h > 150 then
 		return "Rock"
-	elseif s > 0.7 then
+	elseif s > 0.7 or (sample ~= nil and d < 1.5) or h > 120 then
 		return "Ground"
 	end
 	if Landscape.fbm(x / 60 + 3, z / 60 + 7) > 0.58 then

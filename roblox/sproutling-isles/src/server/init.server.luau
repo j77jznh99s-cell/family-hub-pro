@@ -64,7 +64,7 @@ BuffService.init() -- RPG step 5: meal buffs
 ForageService.init() -- RPG step 5: wild herb patches
 DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
 CompanionService.init() -- RPG step 6: Sproutling companions (P) and horses (V)
-TravelService.init() -- RPG step 6: airship and boat fast travel
+TravelService.init(map) -- RPG step 6: airship and boat fast travel
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle

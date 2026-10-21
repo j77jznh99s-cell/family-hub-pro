@@ -7,12 +7,13 @@
 -- under Map.City. Shops, steeds, ships and airships carry attributes (Shop, Vehicle, Arena) that
 -- the RPG systems look up; for now they are scenery.
 --
--- Layout (studs, +Z = south). The city ground is a flat slab at y = 0 inside Landscape.City
--- (x -345..345, z 465..1155): a grid of cobbled streets with the 44-stud Grand Way on x = 0
--- lined up with the island's avenue. Blocks are zoned as the market row, the guild quarter
--- (Adventurers' Guild, cathedral, mage tower, market square, treasury, arena), townhouses,
--- cottages, the royal gardens, town hall and library, barracks, temple, fishing docks and the
--- harbour. Walls with towers and gates ring the landward sides. The airship port lies west.
+-- Layout (studs, +Z = south). The city sits on gently rolling terrain round
+-- Landscape.CityCentre, inside a wobbly wall that climbs and dips with the ground. Its streets
+-- are the curved Landscape.Roads (different widths and heights). Landmarks take the nearest free
+-- ground to where they're wanted; shops, townhouses and cottages then line every road, set back
+-- and turned by varying amounts, each on a stone plinth that becomes a terrace on a slope.
+-- Lanterns, carts, riders and trees fill the gaps. The waterfront and the airship port sit on
+-- their own flat sites.
 
 local CityBuilder = {}
 
@@ -265,33 +266,8 @@ end
 ----------------------------------------------------------------------------------------------
 -- layout
 
-local CITY = { x0 = -345, x1 = 345, z0 = 465, z1 = 1155 }
-local AVENUES = { { x = -240, w = 24 }, { x = -120, w = 24 }, { x = 0, w = 44 }, { x = 120, w = 24 }, { x = 240, w = 24 } }
-local STREETS = { { z = 490, w = 24 }, { z = 590, w = 24 }, { z = 700, w = 24 }, { z = 810, w = 24 }, { z = 920, w = 24 }, { z = 1030, w = 24 }, { z = 1130, w = 24 } }
-local PAVE = 0.4 -- block flagstones sit this far above the street cobbles
-local EDGE = 4 -- flagstone margin before buildings start
-
--- Blocks between the streets: { x0, x1, z0, z1, ix, iz }.
-local function blocks(): { { number } }
-	local xs = { CITY.x0 }
-	for _, a in AVENUES do
-		table.insert(xs, a.x - a.w / 2)
-		table.insert(xs, a.x + a.w / 2)
-	end
-	table.insert(xs, CITY.x1)
-	local zs = {}
-	for _, s in STREETS do
-		table.insert(zs, s.z - s.w / 2)
-		table.insert(zs, s.z + s.w / 2)
-	end
-	local out = {}
-	for iz = 1, #STREETS - 1 do
-		for ix = 1, #AVENUES + 1 do
-			table.insert(out, { xs[ix * 2 - 1], xs[ix * 2], zs[iz * 2], zs[iz * 2 + 1], ix, iz })
-		end
-	end
-	return out
-end
+local PAVE = 0.4 -- floors sit this far above a lot's base
+local EDGE = 4 -- margin inside a waterfront or garden lot
 
 ----------------------------------------------------------------------------------------------
 -- street furniture
@@ -910,73 +886,7 @@ local function gardens(parent: Instance, x0: number, x1: number, z0: number, z1:
 end
 
 ----------------------------------------------------------------------------------------------
--- districts
-
-local MARKET = {
-	{ "Blacksmith", "blacksmith" }, { "Armorer", "armorer" }, { "Alchemist", "alchemist" }, { "Beast Tamer", "tamer" },
-	{ "Stables", "stable" }, { "The Gilded Tankard", "tavern" }, { "Fletcher", "fletcher" }, { "Enchanter", "enchanter" },
-	{ "Cook & Larder", "cook" }, { "Tailor", "tailor" }, { "Herbalist", "herbalist" }, { "Cartographer", "maps" },
-}
-
-local function furnish(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	for _, c in { { x0 + 1.5, z0 + 1.5 }, { x1 - 1.5, z0 + 1.5 }, { x0 + 1.5, z1 - 1.5 }, { x1 - 1.5, z1 - 1.5 } } do
-		lanternPost(f, c[1], c[2])
-	end
-	local w = x1 - x0
-	local n = math.max(1, math.floor(w / 34))
-	for k = 1, n do
-		local x = x0 + k * w / (n + 1)
-		cityTree(f, x, z0 + 2, seed * 7 + k)
-		cityTree(f, x, z1 - 2, seed * 11 + k)
-	end
-	bench(f, x0 + w * 0.5 + 6, z0 + 2, Vector3.new(0, 0, -1))
-	barrel(f, x0 + w * 0.5 - 5, PAVE, z0 + 2)
-end
-
-local function marketRow(f: Instance, b: { number }, index: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local inner = x1 - x0 - 2 * EDGE
-	local count = if inner > 80 then 3 else 2
-	local shopW = inner / count - 3
-	for k = 1, count do
-		local n = (index - 1) * 2 + k
-		local x = x0 + EDGE + (k - 0.5) * (inner / count)
-		local a = MARKET[(n - 1) % #MARKET + 1]
-		local c = MARKET[(n + 5) % #MARKET + 1]
-		shop(f, x, z0 + EDGE + 9, shopW, Vector3.new(0, 0, -1), a[1], a[2], n)
-		shop(f, x, z1 - EDGE - 9, shopW, Vector3.new(0, 0, 1), c[1], c[2] .. "2", n + 3)
-	end
-end
-
-local function townhouseRow(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local inner = x1 - x0 - 2 * EDGE
-	local count = math.floor(inner / 15)
-	local w = inner / count - 1
-	for k = 1, count do
-		local x = x0 + EDGE + (k - 0.5) * (inner / count)
-		townhouse(f, x, z0 + EDGE + 8, w, 14, 3 + (seed + k) % 2, Vector3.new(0, 0, -1), seed * 13 + k)
-		townhouse(f, x, z1 - EDGE - 8, w, 14, 2 + (seed * 3 + k) % 3, Vector3.new(0, 0, 1), seed * 17 + k)
-	end
-	box(f, "Courtyard", (x0 + x1) / 2, PAVE, (z0 + z1) / 2, inner, 0.15, (z1 - z0) - 2 * EDGE - 34, rgb(110, 180, 85), Enum.Material.Grass)
-	well(f, (x0 + x1) / 2, (z0 + z1) / 2)
-end
-
-local function cottageRow(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local inner = x1 - x0 - 2 * EDGE
-	local count = math.max(2, math.floor(inner / 24))
-	for k = 1, count do
-		local x = x0 + EDGE + (k - 0.5) * (inner / count)
-		cottageHome(f, x, z0 + EDGE + 16, Vector3.new(0, 0, -1), seed * 3 + k)
-		cottageHome(f, x, z1 - EDGE - 16, Vector3.new(0, 0, 1), seed * 5 + k)
-	end
-	box(f, "Orchard", (x0 + x1) / 2, PAVE, (z0 + z1) / 2, inner, 0.15, 12, rgb(110, 185, 85), Enum.Material.Grass)
-	for k = 0, 3 do
-		cityTree(f, x0 + EDGE + 8 + k * (inner - 16) / 3, (z0 + z1) / 2, seed * 19 + k)
-	end
-end
+-- waterfront
 
 local function harbour(f: Instance, x0: number, x1: number, z0: number, z1: number, seed: number)
 	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
@@ -1062,41 +972,6 @@ end
 ----------------------------------------------------------------------------------------------
 -- streets, walls and bridges
 
-local function buildStreets(city: Instance)
-	local streets = folder(city, "Streets")
-	local w, d = CITY.x1 - CITY.x0, CITY.z1 - CITY.z0
-	local cx, cz = (CITY.x0 + CITY.x1) / 2, (CITY.z0 + CITY.z1) / 2
-	box(streets, "Cobbles", cx, -1, cz, w, 1, d, COBBLE, Enum.Material.Cobblestone)
-	for _, e in { { cx, CITY.z0, w + 2, 2 }, { cx, CITY.z1, w + 2, 2 }, { CITY.x0, cz, 2, d }, { CITY.x1, cz, 2, d } } do
-		box(streets, "SeaWall", e[1], -10, e[2], e[3], 10.8, e[4], DARKSTONE, Enum.Material.Cobblestone)
-	end
-	-- a paler gutter line down the middle of every street
-	local main = AVENUES[3]
-	for _, a in AVENUES do
-		box(streets, "Gutter", a.x, 0, cz, if a == main then 3 else 1.6, 0.05, d - 4, rgb(150, 145, 138), Enum.Material.Slate)
-	end
-	for _, s in STREETS do
-		box(streets, "Gutter", cx, 0, s.z, w - 4, 0.05, 1.6, rgb(150, 145, 138), Enum.Material.Slate)
-	end
-end
-
-local function wallRun(f: Instance, a: Vector3, b: Vector3)
-	local dir = (b - a).Unit
-	local length = (b - a).Magnitude
-	if length < 2 then
-		return
-	end
-	local mid = (a + b) / 2
-	local cf = CFrame.lookAt(Vector3.new(mid.X, 0, mid.Z), Vector3.new(mid.X, 0, mid.Z) + dir)
-	part(f, "Wall", Vector3.new(5, 16, length), cf * CFrame.new(0, 8, 0), STONE, Enum.Material.Cobblestone)
-	part(f, "WallWalk", Vector3.new(5.6, 0.6, length), cf * CFrame.new(0, 16.3, 0), DARKSTONE, Enum.Material.Cobblestone)
-	local n = math.floor(length / 5)
-	for k = 0, n - 1 do
-		local v = -length / 2 + (k + 0.5) * (length / n)
-		part(f, "Merlon", Vector3.new(1.2, 2.4, 2.4), cf * CFrame.new(2.2, 17.8, v), STONE, Enum.Material.Cobblestone)
-	end
-end
-
 local function wallTower(f: Instance, x: number, z: number, banner_: Color3)
 	cylinder(f, "WallTower", 24, 12, x, 12, z, STONE, Enum.Material.Cobblestone)
 	cylinder(f, "TowerRim", 1.4, 13.4, x, 24.2, z, DARKSTONE, Enum.Material.Cobblestone)
@@ -1109,7 +984,7 @@ local function gatehouse(f: Instance, x: number, z: number, along: Vector3, open
 	local side = Vector3.new(-along.Z, 0, along.X)
 	for _, s in { -1, 1 } do
 		local p = Vector3.new(x, 0, z) + along * s * (opening / 2 + 6)
-		box(f, "GateTower", p.X, 0, p.Z, 12, 28, 12, STONE, Enum.Material.Cobblestone)
+		box(f, "GateTower", p.X, -4, p.Z, 12, 32, 12, STONE, Enum.Material.Cobblestone)
 		cone(f, "GateRoof", p.X, 28, p.Z, 8.6, 12, ROOFS[1], Enum.Material.Slate, 4)
 		local torch = box(f, "GateTorch", p.X + side.X * 6.4 - along.X * s * 3, 9, p.Z + side.Z * 6.4 - along.Z * s * 3, 1, 1.6, 1, LANTERN, Enum.Material.Neon)
 		glowLight(torch, 18, 1.2, LANTERN)
@@ -1125,49 +1000,52 @@ local function gatehouse(f: Instance, x: number, z: number, along: Vector3, open
 	end
 end
 
-local function buildWalls(city: Instance)
-	local f = folder(city, "Walls")
-	local x0, x1, z0, z1 = CITY.x0 + 2.5, CITY.x1 - 2.5, CITY.z0 + 2.5, CITY.z1 - 2.5
-	local main = 30 -- half width of the north gate opening (main bridge)
-	-- north wall with the main gate and a postern for the footbridge
-	wallRun(f, Vector3.new(x0, 0, z0), Vector3.new(-156, 0, z0))
-	wallRun(f, Vector3.new(-144, 0, z0), Vector3.new(-main - 12, 0, z0))
-	wallRun(f, Vector3.new(main + 12, 0, z0), Vector3.new(x1 - 92, 0, z0))
-	gatehouse(f, 0, z0, Vector3.new(1, 0, 0), main * 2)
-	-- west wall with the gate to the airship port bridge
-	wallRun(f, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, 700 - 32))
-	wallRun(f, Vector3.new(x0, 0, 700 + 32), Vector3.new(x0, 0, z1))
-	gatehouse(f, x0, 700, Vector3.new(0, 0, 1), 40)
-	-- south wall (the east side is open harbour)
-	wallRun(f, Vector3.new(x0, 0, z1), Vector3.new(x1 - 92, 0, z1))
-	for i, p in { { x0, z0 }, { x0, z1 }, { -172, z0 }, { x1 - 92, z0 }, { x1 - 92, z1 }, { x0, 900 }, { -200, z1 }, { 0, z1 }, { 150, z1 } } do
-		wallTower(f, p[1], p[2], BANNERS[i % #BANNERS + 1])
+-- Moves every part under `root` up by dy.
+local function lift(root: Instance, dy: number)
+	for _, d in root:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CFrame = d.CFrame + Vector3.new(0, dy, 0)
+		end
 	end
 end
 
--- Stone bridge with arches underneath, parapets, lanterns and statues at the ends.
+-- Builds something made for flat ground at y = 0, then raises it by dy into `parent`.
+local function raised(parent: Instance, dy: number, build: (Instance) -> ())
+	local tmp = Instance.new("Folder")
+	build(tmp)
+	lift(tmp, dy)
+	for _, c in tmp:GetChildren() do
+		c.Parent = parent
+	end
+	tmp:Destroy()
+end
+
+-- Stone bridge from a to b (Y = deck height at each end) with arches, parapets, lanterns and lions.
 local function stoneBridge(city: Instance, a: Vector3, b: Vector3, width: number)
 	local f = model(city, "StoneBridge")
-	local dir = (b - a).Unit
+	local flat = Vector3.new(b.X - a.X, 0, b.Z - a.Z)
+	local dir = flat.Unit
 	local side = Vector3.new(-dir.Z, 0, dir.X)
 	local length = (b - a).Magnitude
 	local mid = (a + b) / 2
-	local cf = CFrame.lookAt(Vector3.new(mid.X, 0, mid.Z), Vector3.new(mid.X, 0, mid.Z) + dir)
+	local cf = CFrame.lookAt(mid, mid + (b - a))
 	part(f, "Deck", Vector3.new(width, 2, length), cf * CFrame.new(0, -0.6, 0), COBBLE, Enum.Material.Cobblestone)
 	for _, s in { -1, 1 } do
 		part(f, "Parapet", Vector3.new(1.4, 3, length), cf * CFrame.new(s * (width / 2 - 0.7), 1.9, 0), STONE, Enum.Material.Cobblestone)
 		local n = math.floor(length / 26)
 		for k = 0, n do
-			local v = -length / 2 + k * (length / n)
-			local p = (cf * CFrame.new(s * (width / 2 - 0.7), 0, v)).Position
-			lanternPost(f, p.X, p.Z)
+			local p = (cf * CFrame.new(s * (width / 2 - 0.7), 0, -length / 2 + k * (length / n))).Position
+			raised(f, p.Y, function(t)
+				lanternPost(t, p.X, p.Z)
+			end)
 		end
 	end
-	-- arches: piers in the water and curved spans between them
+	-- piers down into the water, with arched ribs between them
 	local spans = math.max(2, math.floor(length / 34))
 	for k = 0, spans do
-		local v = -length / 2 + k * (length / spans)
-		part(f, "Pier", Vector3.new(width - 4, 12, 6), cf * CFrame.new(0, -7.6, v), DARKSTONE, Enum.Material.Cobblestone)
+		local p = (cf * CFrame.new(0, -1.6, -length / 2 + k * (length / spans))).Position
+		local bottom = -14
+		part(f, "Pier", Vector3.new(width - 4, p.Y - bottom, 6), CFrame.lookAt(Vector3.new(p.X, (p.Y + bottom) / 2, p.Z), Vector3.new(p.X, (p.Y + bottom) / 2, p.Z) + dir), DARKSTONE, Enum.Material.Cobblestone)
 	end
 	for k = 0, spans - 1 do
 		local v0 = -length / 2 + k * (length / spans) + 3
@@ -1175,26 +1053,24 @@ local function stoneBridge(city: Instance, a: Vector3, b: Vector3, width: number
 		local segs = 6
 		for i = 0, segs - 1 do
 			local t0, t1 = i / segs, (i + 1) / segs
-			local y0 = -1.6 - math.sin(t0 * math.pi) * 0 - (1 - math.sin(t0 * math.pi)) * 5
-			local y1 = -1.6 - (1 - math.sin(t1 * math.pi)) * 5
-			local p0 = cf * CFrame.new(0, y0, v0 + (v1 - v0) * t0)
-			local p1 = cf * CFrame.new(0, y1, v0 + (v1 - v0) * t1)
+			local p0 = cf * CFrame.new(0, -1.6 - (1 - math.sin(t0 * math.pi)) * 5, -(v0 + (v1 - v0) * t0))
+			local p1 = cf * CFrame.new(0, -1.6 - (1 - math.sin(t1 * math.pi)) * 5, -(v0 + (v1 - v0) * t1))
 			part(f, "ArchRib", Vector3.new(width - 2, 1.4, (p1.Position - p0.Position).Magnitude + 0.4), CFrame.lookAt((p0.Position + p1.Position) / 2, p1.Position), STONE, Enum.Material.Cobblestone)
 		end
 	end
-	-- statues of lions at both ends
+	-- lions at both ends
 	for _, e in { a + dir * 3, b - dir * 3 } do
 		for _, s in { -1, 1 } do
 			local p = e + side * s * (width / 2 + 2)
-			box(f, "StatuePlinth", p.X, 0, p.Z, 4, 4, 4, STONE, Enum.Material.Marble)
-			box(f, "LionBody", p.X, 4, p.Z, 2.4, 2.4, 3.6, GOLD, Enum.Material.Metal)
-			ball(f, "LionMane", 2.8, p.X, 7, p.Z, GOLD, Enum.Material.Metal)
+			box(f, "StatuePlinth", p.X, p.Y - 1, p.Z, 4, 5, 4, STONE, Enum.Material.Marble)
+			box(f, "LionBody", p.X, p.Y + 4, p.Z, 2.4, 2.4, 3.6, GOLD, Enum.Material.Metal)
+			ball(f, "LionMane", 2.8, p.X, p.Y + 7, p.Z, GOLD, Enum.Material.Metal)
 		end
 	end
 end
 
 ----------------------------------------------------------------------------------------------
--- the airship port (Landscape.Airport)
+-- the airship port, built round (cx, cz) on flat ground at y = 0
 
 local function mooringTower(f: Instance, x: number, z: number, h: number)
 	for _, c in { { -4, -4 }, { 4, -4 }, { -4, 4 }, { 4, 4 } } do
@@ -1212,26 +1088,17 @@ local function mooringTower(f: Instance, x: number, z: number, h: number)
 	glowLight(beacon, 24, 1.2, LANTERN)
 end
 
-local function airshipPort(city: Instance)
-	local f = folder(city, "AirshipPort")
-	local A = { x0 = -760, x1 = -425, z0 = 540, z1 = 1120 }
-	local cx, cz = (A.x0 + A.x1) / 2, (A.z0 + A.z1) / 2
-	box(f, "Field", cx, -1, cz, A.x1 - A.x0, 1, A.z1 - A.z0, rgb(115, 185, 85), Enum.Material.Grass)
-	for _, e in { { cx, A.z0, A.x1 - A.x0 + 2, 2 }, { cx, A.z1, A.x1 - A.x0 + 2, 2 }, { A.x0, cz, 2, A.z1 - A.z0 }, { A.x1, cz, 2, A.z1 - A.z0 } } do
-		box(f, "SeaWall", e[1], -10, e[2], e[3], 10.4, e[4], DARKSTONE, Enum.Material.Cobblestone)
-	end
-	-- cobbled road from the bridge, and a plaza
-	box(f, "Road", -510, 0, 700, 170, 0.2, 22, COBBLE, Enum.Material.Cobblestone)
-	box(f, "Plaza", -560, 0, 830, 120, 0.2, 280, rgb(190, 180, 160), Enum.Material.Cobblestone)
+local function airshipPort(f: Instance, cx: number, cz: number)
+	box(f, "Plaza", cx + 25, -0.6, cz, 90, 1, 190, rgb(190, 180, 160), Enum.Material.Cobblestone)
 	-- mooring towers with airships
 	local colors = { rgb(200, 60, 60), rgb(60, 110, 200), rgb(220, 170, 50), rgb(120, 70, 170) }
-	for k, p in { { -600, 650 }, { -660, 790 }, { -600, 930 }, { -660, 1060 } } do
-		mooringTower(f, p[1], p[2], 40)
-		airship(f, p[1], 32, p[2] + 2, Vector3.new(0, 0, 1), colors[k])
+	for k, p in { { -45, -105 }, { -95, -35 }, { -45, 35 }, { -95, 105 } } do
+		mooringTower(f, cx + p[1], cz + p[2], 40)
+		airship(f, cx + p[1], 32, cz + p[2] + 2, Vector3.new(0, 0, 1), colors[k])
 	end
 	-- the shipyard hall and the port inn
 	local hall = model(f, "Skyward Shipyard")
-	local rel = frame(-470, 870, Vector3.new(-1, 0, 0))
+	local rel = frame(cx + 92, cz + 25, Vector3.new(-1, 0, 0))
 	part(hall, "Walls", Vector3.new(90, 22, 40), rel(0, 11, 0), rgb(150, 100, 65), Enum.Material.WoodPlanks)
 	gableSide(hall, rel, 90, 40, 22, rgb(150, 100, 65), ROOFS[2], Enum.Material.WoodPlanks)
 	part(hall, "BayDoor", Vector3.new(30, 18, 0.5), rel(0, 9, 20.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
@@ -1240,132 +1107,577 @@ local function airshipPort(city: Instance)
 	hall:SetAttribute("Shop", "airships")
 	local yardAnchor = part(hall, "ShopAnchor", Vector3.new(4, 4, 4), rel(-12, 2.5, 23), WHITE, nil, { Transparency = 1, CanCollide = false })
 	yardAnchor:SetAttribute("Shop", "airships")
-	shop(f, -500, 620, 22, Vector3.new(-1, 0, 0), "The Cloud's Rest Inn", "inn", 2)
-	for _, p in f:GetChildren() do
-		if p:IsA("Model") and p.Name == "Shop" then
-			for _, q in p:GetDescendants() do
-				if q:IsA("BasePart") then
-					q.CFrame = q.CFrame - Vector3.new(0, PAVE, 0)
+	raised(f, -PAVE, function(t)
+		shop(t, cx + 80, cz - 75, 22, Vector3.new(-1, 0, 0), "The Cloud's Rest Inn", "inn", 2)
+	end)
+	-- cargo, carts and a windsock
+	for k = 0, 7 do
+		crate(f, cx + 10 + (k % 4) * 5, 0, cz - 60 + (k // 4) * 5, 4, hash(k) * 0.5)
+	end
+	cart(f, cx + 40, cz + 80, Vector3.new(0, 0, -1), 2)
+	cart(f, cx + 20, cz + 95, Vector3.new(0, 0, 1), 4)
+	cylinder(f, "WindsockPole", 12, 0.4, cx - 100, 6, cz - 100, IRON, Enum.Material.Metal)
+	part(f, "Windsock", Vector3.new(1.6, 1.6, 5), CFrame.new(cx - 100, 11.6, cz - 97) * CFrame.Angles(math.rad(-10), 0, 0), rgb(250, 120, 40), Enum.Material.Fabric)
+end
+
+----------------------------------------------------------------------------------------------
+-- placing things on the rolling ground
+
+local L: any = nil -- Shared.Landscape, passed to Build
+local C = { x = 0, z = 0 }
+local WALL_IN = 15 -- the wall runs this far inside Landscape.cityRadiusAt
+
+local counter = 0
+local function rand(): number
+	counter += 1
+	return hash(counter * 0.6180339 + 0.37)
+end
+
+-- occupancy: 3-stud cells taken by lots, so nothing overlaps
+local OCC = 3
+local occupied: { [number]: boolean } = {}
+local function occKey(x: number, z: number): number
+	return math.floor(x / OCC) * 100000 + math.floor(z / OCC)
+end
+
+type Lot = { x: number, z: number, facing: Vector3, w: number, back: number, front: number }
+
+-- Calls fn at points over a lot's footprint (u across, v from back to front); stops on false.
+local function eachPoint(lot: Lot, step: number, pad: number, fn: (number, number) -> boolean): boolean
+	local rx, rz = -lot.facing.Z, lot.facing.X
+	local fx, fz = lot.facing.X, lot.facing.Z
+	local u0, u1 = -lot.w / 2 - pad, lot.w / 2 + pad
+	local v0, v1 = lot.back - pad, lot.front + pad
+	local nu = math.max(1, math.ceil((u1 - u0) / step))
+	local nv = math.max(1, math.ceil((v1 - v0) / step))
+	for i = 0, nu do
+		local u = u0 + (u1 - u0) * i / nu
+		for j = 0, nv do
+			local v = v0 + (v1 - v0) * j / nv
+			if not fn(lot.x + rx * u + fx * v, lot.z + rz * u + fz * v) then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+local function insideWalls(x: number, z: number, margin: number): boolean
+	local dx, dz = x - C.x, z - C.z
+	return math.sqrt(dx * dx + dz * dz) < L.cityRadiusAt(math.atan2(dz, dx)) - WALL_IN - margin
+end
+
+local function distFromCentre(x: number, z: number): number
+	return math.sqrt((x - C.x) ^ 2 + (z - C.z) ^ 2)
+end
+
+type Survey = { clear: number?, maxRange: number?, water: boolean?, inside: boolean? }
+
+-- Is the lot free, off the roads, dry and not too steep? Also returns the lowest and highest ground.
+local function survey(lot: Lot, opts: Survey): (boolean, number, number)
+	local lo, hi = math.huge, -math.huge
+	local clear = opts.clear or 1.5
+	local ok = eachPoint(lot, 3, 0, function(x, z)
+		if occupied[occKey(x, z)] then
+			return false
+		end
+		if (L.nearestRoad(x, z)) < clear then
+			return false
+		end
+		if opts.inside and not insideWalls(x, z, 4) then
+			return false
+		end
+		local h = L.height(x, z)
+		if not opts.water and h < 1.4 then
+			return false
+		end
+		lo, hi = math.min(lo, h), math.max(hi, h)
+		return true
+	end)
+	if ok and hi - lo > (opts.maxRange or 9) then
+		ok = false
+	end
+	return ok, lo, hi
+end
+
+local function claim(lot: Lot)
+	eachPoint(lot, 1.5, 1.5, function(x, z)
+		occupied[occKey(x, z)] = true
+		return true
+	end)
+end
+
+local function towardRoad(x: number, z: number): Vector3
+	local _, sample = L.nearestRoad(x, z)
+	if sample then
+		local d = Vector3.new(sample.x - x, 0, sample.z - z)
+		if d.Magnitude > 0.1 then
+			return d.Unit
+		end
+	end
+	return Vector3.new(0, 0, -1)
+end
+
+-- Builds a lot (made for flat ground at y = 0) at the top of its slope, on a stone plinth that
+-- levels it: on a hillside the plinth becomes a terrace wall. Ships stay down on the water.
+local function buildLot(parent: Instance, name: string, lot: Lot, lo: number, hi: number, builder: (Instance) -> (), plinthColor: Color3?, plinthMaterial: any?, fixedY: number?): Instance
+	local unit = folder(parent, name)
+	builder(unit)
+	local y = fixedY or (hi + 0.1)
+	lift(unit, y)
+	for _, d in unit:GetDescendants() do
+		if d:IsA("Model") and d.Name == "Ship" then
+			lift(d, -y)
+		end
+	end
+	if not fixedY then
+		local bottom = lo - 3
+		local top = y + PAVE - 0.05
+		local cv = (lot.back + lot.front) / 2
+		local cf = CFrame.lookAt(Vector3.new(lot.x, 0, lot.z), Vector3.new(lot.x + lot.facing.X, 0, lot.z + lot.facing.Z)) * CFrame.new(0, (top + bottom) / 2, -cv)
+		part(unit, "Plinth", Vector3.new(lot.w + 1, top - bottom, lot.front - lot.back + 1), cf, plinthColor or FLAGSTONE, plinthMaterial or Enum.Material.Slate)
+	end
+	return unit
+end
+
+type LandmarkOpts = { fixed: Vector3?, maxRange: number?, y: number?, water: boolean?, force: boolean?, inside: boolean? }
+
+-- A big building near (x, z): searches outward in rings for the first free, dry spot.
+local function landmark(parent: Instance, name: string, x: number, z: number, w: number, back: number, front: number, builder: (Instance, number, number, Vector3) -> (), opts: LandmarkOpts?): Lot?
+	local o: LandmarkOpts = opts or {}
+	for ring = 0, 16 do
+		local count = if ring == 0 then 1 else 8 + ring * 2
+		for k = 0, count - 1 do
+			local a = k / count * math.pi * 2 + ring
+			local px, pz = x + math.cos(a) * ring * 12, z + math.sin(a) * ring * 12
+			local facing = o.fixed or towardRoad(px, pz)
+			local lot: Lot = { x = px, z = pz, facing = facing, w = w, back = back, front = front }
+			local ok, lo, hi = true, 0, 0
+			if not o.force then
+				ok, lo, hi = survey(lot, { clear = 3, maxRange = o.maxRange or 16, water = o.water, inside = if o.inside == nil then true else o.inside })
+			end
+			if ok then
+				claim(lot)
+				buildLot(parent, name, lot, lo, hi, function(u)
+					builder(u, px, pz, facing)
+				end, DARKSTONE, Enum.Material.Cobblestone, o.y)
+				return lot
+			end
+			if o.force then
+				return nil
+			end
+		end
+	end
+	print("[CityBuilder] no room for " .. name)
+	return nil
+end
+
+-- An invisible marker the server looks up by attribute (fast travel, training dummies).
+local function marker(parent: Instance, name: string, x: number, y: number, z: number, attribute: string, value: any)
+	local p = part(parent, name, Vector3.new(1, 1, 1), CFrame.new(x, y + 0.5, z), WHITE, nil, { Transparency = 1, CanCollide = false, CanQuery = false, CanTouch = false })
+	p:SetAttribute(attribute, value)
+end
+
+----------------------------------------------------------------------------------------------
+-- districts
+
+local MARKET = {
+	{ "Blacksmith", "blacksmith" }, { "Armorer", "armorer" }, { "Alchemist", "alchemist" }, { "Beast Tamer", "tamer" },
+	{ "Stables", "stable" }, { "The Gilded Tankard", "tavern" }, { "Fletcher", "fletcher" }, { "Enchanter", "enchanter" },
+	{ "Cook & Larder", "cook" }, { "Tailor", "tailor" }, { "Herbalist", "herbalist" }, { "Cartographer", "maps" },
+}
+local shopsPlaced = 0
+
+local KINDS = {
+	shop = { w0 = 20, w1 = 26, back = -9.5, front = 10.6, set0 = 3.5, set1 = 6, range = 8 },
+	townhouse = { w0 = 12, w1 = 16, back = -7.5, front = 9.6, set0 = 1.5, set1 = 5, range = 8 },
+	cottage = { w0 = 18, w1 = 18, back = -6.5, front = 15.5, set0 = 1, set1 = 7, range = 10 },
+}
+
+-- Which kind of house goes beside a road at (x, z), or nil for none.
+local function cityPick(main: boolean): (number, number) -> string?
+	return function(x: number, z: number): string?
+		if not insideWalls(x, z, 6) then
+			return nil
+		end
+		local d = distFromCentre(x, z)
+		local r = rand()
+		if d < 200 then
+			if shopsPlaced < #MARKET * 2 and (main or r < 0.3) then
+				return "shop"
+			end
+			return "townhouse"
+		elseif d < 300 then
+			return if r < 0.6 then "townhouse" else "cottage"
+		end
+		return if r < 0.85 then "cottage" elseif r < 0.95 then "townhouse" else nil
+	end
+end
+
+local function countryPick(x: number, z: number): string?
+	if L.cityWeight(x, z) > 0.05 or L.onSite(x, z, 40) or rand() > 0.09 then
+		return nil
+	end
+	return "cottage"
+end
+
+-- Houses along both sides of a road, set back by varying amounts and turned a little, so the
+-- frontage follows the curve without lining up.
+local function frontage(parent: Instance, roadIndex: number, pick: (number, number) -> string?, inside: boolean)
+	local samples = L.RoadSamples[roadIndex]
+	local total = samples[#samples].s
+	for _, side in { 1, -1 } do
+		local idx = 1
+		local s = rand() * 8
+		while s < total do
+			while idx < #samples and samples[idx].s < s do
+				idx += 1
+			end
+			local smp = samples[idx]
+			local nx, nz = -smp.tz * side, smp.tx * side
+			local kind = pick(smp.x + nx * (smp.hw + 12), smp.z + nz * (smp.hw + 12))
+			if not kind then
+				s += if inside then 8 else 30
+				continue
+			end
+			local K = KINDS[kind]
+			local w = K.w0 + (K.w1 - K.w0) * rand()
+			local setback = K.set0 + (K.set1 - K.set0) * rand()
+			local off = smp.hw + setback + K.front
+			local turn = (rand() - 0.5) * 0.2
+			local c, sn = math.cos(turn), math.sin(turn)
+			local fx, fz = -nx, -nz
+			local facing = Vector3.new(fx * c - fz * sn, 0, fx * sn + fz * c)
+			local lot: Lot = { x = smp.x + nx * off, z = smp.z + nz * off, facing = facing, w = w, back = K.back, front = K.front }
+			local ok, lo, hi = survey(lot, { clear = 1, maxRange = K.range, inside = inside })
+			if ok then
+				claim(lot)
+				local seed = math.floor(rand() * 1000)
+				if kind == "shop" then
+					shopsPlaced += 1
+					local entry = MARKET[(shopsPlaced - 1) % #MARKET + 1]
+					local id = if shopsPlaced > #MARKET then entry[2] .. "2" else entry[2]
+					buildLot(parent, "Shop", lot, lo, hi, function(u)
+						shop(u, lot.x, lot.z, w, facing, entry[1], id, seed)
+					end)
+				elseif kind == "townhouse" then
+					buildLot(parent, "Townhouse", lot, lo, hi, function(u)
+						townhouse(u, lot.x, lot.z, w, 14, 2 + seed % 3, facing, seed)
+					end)
+				else
+					buildLot(parent, "Cottage", lot, lo, hi, function(u)
+						cottageHome(u, lot.x, lot.z, facing, seed)
+					end, rgb(110, 175, 85), Enum.Material.Grass)
+				end
+				s += w + 1 + rand() * (if kind == "cottage" then 12 elseif kind == "shop" then 2 else 4)
+			else
+				s += 4
+			end
+		end
+	end
+end
+
+-- Back lanes: houses in the gaps behind the street fronts, turned every which way, the way old
+-- towns fill in over the centuries.
+local function backfill(parent: Instance)
+	local i = 0
+	for gz = C.z - 440, C.z + 440, 19 do
+		for gx = C.x - 440, C.x + 440, 19 do
+			i += 1
+			local x, z = gx + (hash(i * 3.1) - 0.5) * 12, gz + (hash(i * 5.3) - 0.5) * 12
+			if hash(i + 0.13) < 0.75 and insideWalls(x, z, 10) then
+				local d = distFromCentre(x, z)
+				local kind = if d < 260 and hash(i + 0.29) < 0.7 then "townhouse" else "cottage"
+				local K = KINDS[kind]
+				local base = towardRoad(x, z)
+				local turn = (hash(i + 0.53) - 0.5) * 1.4
+				local c, sn = math.cos(turn), math.sin(turn)
+				local facing = Vector3.new(base.X * c - base.Z * sn, 0, base.X * sn + base.Z * c)
+				local w = K.w0 + (K.w1 - K.w0) * hash(i + 0.71)
+				local lot: Lot = { x = x, z = z, facing = facing, w = w, back = K.back, front = K.front }
+				local ok, lo, hi = survey(lot, { clear = 2, maxRange = K.range, inside = true })
+				if ok then
+					claim(lot)
+					local seed = 500 + i
+					if kind == "townhouse" then
+						buildLot(parent, "Townhouse", lot, lo, hi, function(u)
+							townhouse(u, x, z, w, 14, 2 + seed % 2, facing, seed)
+						end)
+					else
+						buildLot(parent, "Cottage", lot, lo, hi, function(u)
+							cottageHome(u, x, z, facing, seed)
+						end, rgb(110, 175, 85), Enum.Material.Grass)
+					end
 				end
 			end
 		end
 	end
-	-- cargo, carts and a windsock
-	for k = 0, 7 do
-		crate(f, -540 + (k % 4) * 5, 0, 760 + (k // 4) * 5, 4, hash(k) * 0.5)
+end
+
+-- Lanterns along the city roads, carts and riders on them.
+local function streetLife(city: Instance)
+	local lamps = folder(city, "Lanterns")
+	local traffic = folder(city, "Traffic")
+	local n = 0
+	for roadIndex, samples in L.RoadSamples do
+		local cityRoad = roadIndex <= 8
+		local total = samples[#samples].s
+		local idx = 1
+		local s = 10
+		while s < total do
+			while idx < #samples and samples[idx].s < s do
+				idx += 1
+			end
+			local smp = samples[idx]
+			n += 1
+			local side = if n % 2 == 0 then 1 else -1
+			local nx, nz = -smp.tz * side, smp.tx * side
+			if cityRoad and insideWalls(smp.x, smp.z, 0) then
+				local lx, lz = smp.x + nx * (smp.hw + 1.4), smp.z + nz * (smp.hw + 1.4)
+				if not occupied[occKey(lx, lz)] then
+					raised(lamps, L.height(lx, lz) - PAVE, function(t)
+						lanternPost(t, lx, lz)
+					end)
+				end
+			end
+			if n % 3 == 0 and (cityRoad or rand() < 0.25) then
+				local px, pz = smp.x + nx * smp.hw * 0.45, smp.z + nz * smp.hw * 0.45
+				local heading = Vector3.new(smp.tx * side, 0, smp.tz * side)
+				local roll = rand()
+				raised(traffic, smp.y, function(t)
+					if roll < 0.3 and smp.hw > 6 then
+						carriage(t, px, pz, heading, BANNERS[n % #BANNERS + 1])
+					elseif roll < 0.65 then
+						cart(t, px, pz, heading, n)
+					else
+						horse(t, px, pz, heading, COATS[n % #COATS + 1], true)
+					end
+				end)
+			end
+			s += if cityRoad then 30 + rand() * 12 else 90 + rand() * 60
+		end
 	end
-	cart(f, -520, 980, Vector3.new(0, 0, -1), 2)
-	cart(f, -540, 1000, Vector3.new(0, 0, 1), 4)
-	cylinder(f, "WindsockPole", 12, 0.4, -720, 6, 600, IRON, Enum.Material.Metal)
-	part(f, "Windsock", Vector3.new(1.6, 1.6, 5), CFrame.new(-720, 11.6, 603) * CFrame.Angles(math.rad(-10), 0, 0), rgb(250, 120, 40), Enum.Material.Fabric)
-	-- a few trees round the field edge
-	for k = 0, 9 do
-		cityTree(f, -740 + (k % 2) * 20, 580 + k * 55, 300 + k)
+end
+
+-- Trees, wells and benches in the gaps between houses.
+local function greenery(city: Instance)
+	local f = folder(city, "Greenery")
+	local i = 0
+	for gz = C.z - 440, C.z + 440, 17 do
+		for gx = C.x - 440, C.x + 440, 17 do
+			i += 1
+			local x, z = gx + (hash(i * 1.7) - 0.5) * 12, gz + (hash(i * 2.3) - 0.5) * 12
+			if insideWalls(x, z, 4) then
+				local lot: Lot = { x = x, z = z, facing = Vector3.new(0, 0, 1), w = 6, back = -3, front = 3 }
+				local roll = hash(i + 0.41)
+				local ok = roll < 0.42 and survey(lot, { clear = 2.5, maxRange = 3 })
+				if ok then
+					claim(lot)
+					local h = L.height(x, z)
+					raised(f, h - PAVE, function(t)
+						if roll < 0.035 then
+							well(t, x, z)
+						elseif roll < 0.06 then
+							bench(t, x, z, towardRoad(x, z))
+						else
+							cityTree(t, x, z, i)
+						end
+					end)
+				end
+			end
+		end
+	end
+end
+
+-- The wall: a wobbly ring that climbs and dips with the ground, open to the harbour, with a
+-- gatehouse wherever a road passes through.
+local function buildWalls(city: Instance)
+	local f = folder(city, "Walls")
+	local n = 92
+	local pts = {}
+	for i = 0, n - 1 do
+		local a = i / n * math.pi * 2
+		local r = L.cityRadiusAt(a) - WALL_IN
+		pts[i + 1] = Vector3.new(C.x + math.cos(a) * r, 0, C.z + math.sin(a) * r)
+	end
+	local status: { [number]: string } = {}
+	local crossing: { [number]: any } = {}
+	for i = 1, n do
+		local p0, p1 = pts[i], pts[i % n + 1]
+		local why = "wall"
+		for t = 0, 1, 0.25 do
+			local x, z = p0.X + (p1.X - p0.X) * t, p0.Z + (p1.Z - p0.Z) * t
+			local d, smp = L.nearestRoad(x, z)
+			if L.height(x, z) < 1.4 then
+				why = "water"
+				break
+			elseif d < 7 then
+				why = "road"
+				crossing[i] = smp
+				break
+			end
+		end
+		status[i] = why
+		if why == "wall" then
+			local h0, h1 = L.height(p0.X, p0.Z), L.height(p1.X, p1.Z)
+			local len = (p1 - p0).Magnitude + 1.5
+			local mid = (p0 + p1) / 2
+			local base, top = math.min(h0, h1) - 4, math.max(h0, h1) + 15
+			local cf = CFrame.lookAt(Vector3.new(mid.X, 0, mid.Z), Vector3.new(p1.X, 0, p1.Z))
+			part(f, "Wall", Vector3.new(5, top - base, len), cf * CFrame.new(0, (top + base) / 2, 0), STONE, Enum.Material.Cobblestone)
+			part(f, "WallWalk", Vector3.new(5.6, 0.6, len), cf * CFrame.new(0, top + 0.3, 0), DARKSTONE, Enum.Material.Cobblestone)
+			local m = math.floor(len / 5)
+			for k = 0, m - 1 do
+				part(f, "Merlon", Vector3.new(1.2, 2.4, 2.4), cf * CFrame.new(2.2, top + 1.8, -len / 2 + (k + 0.5) * (len / m)), STONE, Enum.Material.Cobblestone)
+			end
+		end
+	end
+	for i = 1, n do
+		local prev = status[(i - 2) % n + 1]
+		local p = pts[i]
+		local h = L.height(p.X, p.Z)
+		if h > 1.4 and (status[i] == "wall" or prev == "wall") and (status[i] ~= prev or i % 5 == 0) then
+			raised(f, h - 2, function(t)
+				wallTower(t, p.X, p.Z, BANNERS[i % #BANNERS + 1])
+			end)
+		end
+	end
+	-- one gatehouse per run of road gaps, centred on the road
+	for i = 1, n do
+		if status[i] == "road" and status[(i - 2) % n + 1] ~= "road" then
+			local j = i
+			while status[j % n + 1] == "road" and j - i < 4 do
+				j += 1
+			end
+			local smp = crossing[(i + (j - i) // 2 - 1) % n + 1] or crossing[i]
+			if smp then
+				local along = Vector3.new(-smp.tz, 0, smp.tx)
+				raised(f, smp.y, function(t)
+					gatehouse(t, smp.x, smp.z, along, smp.hw * 2 + 6)
+				end)
+			end
+		end
 	end
 end
 
 ----------------------------------------------------------------------------------------------
 
-function CityBuilder.Build(map: Instance): Instance
+function CityBuilder.Build(map: Instance, landscape: any): Instance
 	local existing = map:FindFirstChild("City")
 	if existing then
 		existing:Destroy()
 	end
+	L = landscape
+	C = { x = L.CityCentre.x, z = L.CityCentre.z }
+	counter = 0
+	shopsPlaced = 0
+	table.clear(occupied)
 	local city = Instance.new("Folder")
 	city.Name = "City"
+	local sites = L.Sites
 
-	buildStreets(city)
-	local blocksFolder = folder(city, "Blocks")
-	for i, b in blocks() do
-		local ix, iz = b[5], b[6]
-		local f = folder(blocksFolder, string.format("Block_%d_%d", ix, iz))
-		local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-		local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-		box(f, "Flagstones", cx, 0, cz, x1 - x0, PAVE, z1 - z0, FLAGSTONE, Enum.Material.Slate)
-		local special = false
-		if iz == 1 then
-			marketRow(f, b, ix)
-		elseif ix == 6 and iz == 2 then
-			fishingDocks(f, x0, x1, z0, z1)
-			special = true
-		elseif ix == 6 then
-			harbour(f, x0, x1, z0, z1, iz)
-			special = true
-		elseif ix == 2 and (iz == 3 or iz == 4) then
-			gardens(f, x0, x1, z0, z1)
-			special = true
-		elseif ix == 3 and iz == 2 then
-			local hall = guildHall(f, cx, cz + 6, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Adventurers' Guild", BANNERS[1])
-			hall:SetAttribute("Shop", "guild")
-			marketStall(f, x0 + EDGE + 8, z1 - EDGE - 6, Vector3.new(0, 0, -1), BANNERS[4], 1)
-		elseif ix == 4 and iz == 2 then
-			mageTower(f, cx, cz)
-		elseif ix == 3 and iz == 3 then
-			cathedral(f, cx, cz + 4, Vector3.new(0, 0, -1))
-			special = true
-		elseif ix == 4 and iz == 3 then
-			marketSquare(f, x0, x1, z0, z1)
-			special = true
-		elseif ix == 3 and iz == 4 then
-			local hall = guildHall(f, cx, cz, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Royal Treasury", BANNERS[4])
-			hall:SetAttribute("Shop", "bank")
-		elseif ix == 4 and iz == 4 then
-			arena(f, x0, x1, z0, z1)
-			special = true
-		elseif ix == 3 and iz == 5 then
-			guildHall(f, cx - 6, cz, x1 - x0 - 2 * EDGE - 24, 30, Vector3.new(0, 0, -1), "Town Hall", BANNERS[3])
-			clockTower(f, x1 - EDGE - 8, cz, Vector3.new(0, 0, -1))
-		elseif ix == 4 and iz == 5 then
-			local lib = guildHall(f, cx, cz, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Grand Library", BANNERS[5])
-			lib:SetAttribute("Shop", "library")
-		elseif ix == 5 and iz == 5 then
-			local barracks = guildHall(f, cx, z0 + EDGE + 16, x1 - x0 - 2 * EDGE - 8, 26, Vector3.new(0, 0, -1), "Barracks", BANNERS[2])
-			barracks:SetAttribute("Shop", "trainer")
-			trainingYard(f, cx, z1 - EDGE - 18, x1 - x0 - 2 * EDGE - 8, 28)
-		elseif ix == 5 and iz == 6 then
-			temple(f, cx, cz, Vector3.new(0, 0, -1))
-		elseif ix == 1 or (ix == 2 and iz >= 5) then
-			cottageRow(f, b, i)
-		else
-			townhouseRow(f, b, i)
+	-- landmarks first, each on the nearest free ground to where it's wanted
+	local quarter = folder(city, "Landmarks")
+	landmark(quarter, "MarketSquare", 118, 832, 100, -45, 45, function(u, x, z)
+		marketSquare(u, x - 50, x + 50, z - 45, z + 45)
+		marker(u, "TravelPoint", x, PAVE, z - 30, "TravelPoint", "market")
+	end, { fixed = Vector3.new(0, 0, 1) })
+	landmark(quarter, "Arena", -120, 760, 96, -43, 43, function(u, x, z)
+		arena(u, x - 48, x + 48, z - 43, z + 43)
+	end, { fixed = Vector3.new(0, 0, 1), maxRange = 18 })
+	landmark(quarter, "Cathedral", 150, 965, 56, -50, 41, function(u, x, z, facing)
+		cathedral(u, x, z, facing)
+	end, { maxRange = 18 })
+	landmark(quarter, "MageTower", -45, 990, 40, -20, 20, function(u, x, z)
+		mageTower(u, x, z)
+	end, { fixed = Vector3.new(0, 0, 1) })
+	landmark(quarter, "Guild", 85, 612, 74, -16, 19, function(u, x, z, facing)
+		local hall = guildHall(u, x, z, 66, 30, facing, "Adventurers' Guild", BANNERS[1])
+		hall:SetAttribute("Shop", "guild")
+	end)
+	landmark(quarter, "Treasury", 60, 905, 64, -16, 19, function(u, x, z, facing)
+		local hall = guildHall(u, x, z, 56, 30, facing, "Royal Treasury", BANNERS[4])
+		hall:SetAttribute("Shop", "bank")
+	end)
+	landmark(quarter, "TownHall", -115, 1060, 78, -16, 19, function(u, x, z, facing)
+		local rel = frame(x, z, facing)
+		guildHall(u, (rel(-8, 0, 0)).Position.X, (rel(-8, 0, 0)).Position.Z, 52, 30, facing, "Town Hall", BANNERS[3])
+		clockTower(u, (rel(29, 0, 0)).Position.X, (rel(29, 0, 0)).Position.Z, facing)
+	end)
+	landmark(quarter, "Library", -170, 820, 64, -16, 19, function(u, x, z, facing)
+		local lib = guildHall(u, x, z, 56, 30, facing, "Grand Library", BANNERS[5])
+		lib:SetAttribute("Shop", "library")
+	end)
+	landmark(quarter, "Barracks", 110, 1185, 88, -36, 36, function(u, x, z)
+		local barracks = guildHall(u, x, z - 20, 80, 26, Vector3.new(0, 0, -1), "Barracks", BANNERS[2])
+		barracks:SetAttribute("Shop", "trainer")
+		trainingYard(u, x, z + 18, 80, 28)
+		for k = 0, 3 do
+			marker(u, "DummySpot", x - 30 + k * 20, PAVE, z + 12, "DummySpot", true)
 		end
-		if not special then
-			furnish(f, b, i)
-		end
+	end, { fixed = Vector3.new(0, 0, 1) })
+	landmark(quarter, "Temple", 230, 1100, 42, -18, 18, function(u, x, z, facing)
+		temple(u, x, z, facing)
+	end)
+	landmark(quarter, "RoyalGardens", -60, 700, 66, -36, 36, function(u, x, z)
+		gardens(u, x - 33, x + 33, z - 36, z + 36)
+	end, { fixed = Vector3.new(0, 0, 1), maxRange = 22 })
+	-- the waterfront sits on its own flat shore sites
+	local hs, ds = sites.harbour, sites.docks
+	landmark(quarter, "Harbour", hs.x, hs.z, 96, -40, 40, function(u, x, z)
+		harbour(u, x - 48, x + 48, z - 40, z + 40, 3)
+		marker(u, "TravelPoint", x - 20, PAVE, z, "TravelPoint", "harbour")
+	end, { fixed = Vector3.new(0, 0, 1), force = true, y = hs.h - PAVE + 0.1 })
+	landmark(quarter, "FishingDocks", ds.x, ds.z, 88, -35, 35, function(u, x, z)
+		fishingDocks(u, x - 44, x + 44, z - 35, z + 35)
+		marker(u, "TravelPoint", x - 20, PAVE, z, "TravelPoint", "docks")
+	end, { fixed = Vector3.new(0, 0, 1), force = true, y = ds.h - PAVE + 0.1 })
+
+	-- houses and shops along every road, the main streets first
+	local houses = folder(city, "Houses")
+	for i = 1, 8 do
+		frontage(houses, i, cityPick(i <= 2), true)
+	end
+	backfill(houses)
+	-- farmsteads here and there along the country roads
+	local farms = folder(city, "Farmsteads")
+	for i = 1, #L.Roads do
+		frontage(farms, i, countryPick, false)
 	end
 
-	-- traffic: carriages, carts and saddled horses at hitching posts
-	local traffic = folder(city, "Traffic")
-	local n = 0
-	for _, a in AVENUES do
-		for si = 1, #STREETS - 1 do
-			local z0, z1 = STREETS[si].z + STREETS[si].w / 2, STREETS[si + 1].z - STREETS[si + 1].w / 2
-			n += 1
-			local roll = hash(n + 0.3)
-			local sgn = if n % 2 == 0 then 1 else -1
-			local px, pz = a.x + sgn * (a.w / 2 - 4), z0 + 20 + hash(n) * (z1 - z0 - 40)
-			if roll < 0.35 then
-				carriage(traffic, px, pz, Vector3.new(0, 0, sgn), BANNERS[n % #BANNERS + 1])
-			elseif roll < 0.7 then
-				cart(traffic, px, pz, Vector3.new(0, 0, sgn), n)
-			elseif roll < 0.9 then
-				horse(traffic, px, pz, Vector3.new(sgn, 0, 0), COATS[n % #COATS + 1], true)
-			end
-		end
-	end
-
+	streetLife(city)
+	greenery(city)
 	buildWalls(city)
-	stoneBridge(city, Vector3.new(0, 0, 330), Vector3.new(0, 0, CITY.z0), 40)
-	stoneBridge(city, Vector3.new(CITY.x0, 0, 700), Vector3.new(-425, 0, 700), 26)
 
-	-- out in the harbour bay: a galleon under sail, a sloop and fishing boats
+	-- the stone bridge from the island to the north gate
+	local gb = L.GrandBridge
+	local first = L.RoadSamples[1][1]
+	stoneBridge(city, Vector3.new(gb[1], 0.6, gb[2]), Vector3.new(gb[3], first.y + 0.4, gb[4]), 34)
+
+	-- out on the water: a galleon in the harbour channel, a sloop and fishing boats
 	local bay = folder(city, "Bay")
-	ship(bay, 430, 900, Vector3.new(0, 0, -1), "galleon", BANNERS[1])
-	ship(bay, 405, 1040, Vector3.new(-0.4, 0, -1).Unit, "sloop", BANNERS[3])
-	ship(bay, 400, 760, Vector3.new(0.3, 0, 1).Unit, "rowboat", WHITE)
-	ship(bay, 415, 720, Vector3.new(-0.6, 0, 1).Unit, "rowboat", WHITE)
+	ship(bay, 470, 900, Vector3.new(0, 0, -1), "galleon", BANNERS[1])
+	ship(bay, 660, 930, Vector3.new(1, 0, -0.2).Unit, "sloop", BANNERS[3])
+	ship(bay, 440, 640, Vector3.new(0.3, 0, 1).Unit, "rowboat", WHITE)
+	ship(bay, 470, 680, Vector3.new(-0.6, 0, 1).Unit, "rowboat", WHITE)
+	ship(bay, 880, 960, Vector3.new(-1, 0, 0.1).Unit, "galleon", BANNERS[2])
 
-	airshipPort(city)
+	-- the airship port on its plateau west of the city
+	local port = folder(city, "AirshipPort")
+	local ps = sites.airport
+	raised(port, ps.h, function(t)
+		airshipPort(t, ps.x, ps.z)
+		marker(t, "TravelPoint", ps.x + 25, 0, ps.z, "TravelPoint", "port")
+	end)
+	for k = 0, 9 do
+		local a = k / 10 * math.pi * 2 + 0.3
+		local x, z = ps.x + math.cos(a) * 150, ps.z + math.sin(a) * 150
+		if not L.onRoad(x, z, 4) then
+			raised(port, L.height(x, z) - PAVE, function(t)
+				cityTree(t, x, z, 300 + k)
+			end)
+		end
+	end
 
 	city.Parent = map
 	return city

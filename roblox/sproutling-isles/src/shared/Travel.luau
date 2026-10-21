@@ -13,18 +13,24 @@ local sites = Landscape.Sites
 
 Travel.Prices = { air = 40, sea = 25 }
 
+-- City positions are fallbacks: the server moves them to the TravelPoint markers CityBuilder
+-- leaves in the map (see TravelService).
 Travel.Destinations = {
 	{ id = "plaza", name = "Garden Island Plaza", modes = { air = true }, pos = Vector3.new(0, 1, 30) },
-	{ id = "market", name = "Sproutling City Market Square", modes = { air = true }, pos = Vector3.new(65, 1, 772) },
-	{ id = "port", name = "Airship Port", modes = { air = true }, pos = Vector3.new(-560, 1, 760) },
+	{ id = "market", name = "Sproutling City Market Square", modes = { air = true }, pos = Vector3.new(118, 20, 832) },
+	{ id = "port", name = "Airship Port", modes = { air = true }, pos = Vector3.new(sites.airport.x + 25, sites.airport.h + 1, sites.airport.z) },
 	{ id = "castle", name = "Hilltop Castle Gate", modes = { air = true }, pos = Vector3.new(sites.castle.x + 48, sites.castle.h + 1, sites.castle.z) },
 	{ id = "hamletWest", name = "West Hamlet", modes = { air = true }, pos = Vector3.new(sites.hamletWest.x + 6, sites.hamletWest.h + 1, sites.hamletWest.z + 6) },
 	{ id = "hamletEast", name = "East Hamlet", modes = { air = true }, pos = Vector3.new(sites.hamletEast.x + 6, sites.hamletEast.h + 1, sites.hamletEast.z + 6) },
 	{ id = "farm", name = "The Farm", modes = { air = true }, pos = Vector3.new(sites.farm.x, sites.farm.h + 1, sites.farm.z + 50) },
 	{ id = "grove", name = "Edge of Ironbark's Grove", modes = { air = true }, pos = Vector3.new(sites.grove.x + 34, sites.grove.h + 1, sites.grove.z) },
+	{ id = "southvale", name = "Southvale (highland village)", modes = { air = true }, pos = Vector3.new(sites.southvale.x + 6, sites.southvale.h + 1, sites.southvale.z + 6) },
+	{ id = "eastmere", name = "Eastmere (mountain village)", modes = { air = true }, pos = Vector3.new(sites.eastmere.x + 6, sites.eastmere.h + 1, sites.eastmere.z + 6) },
+	{ id = "pinecrest", name = "Pinecrest (western woods)", modes = { air = true }, pos = Vector3.new(sites.pinecrest.x + 6, sites.pinecrest.h + 1, sites.pinecrest.z + 6) },
+	{ id = "oldfort", name = "The Old Fort", modes = { air = true }, pos = Vector3.new(sites.oldfort.x + 30, sites.oldfort.h + 1, sites.oldfort.z) },
 	{ id = "cape", name = "Lighthouse Cape", modes = { air = true, sea = true }, pos = Vector3.new(sites.cape.x - 10, sites.cape.h + 1, sites.cape.z) },
-	{ id = "harbour", name = "City Harbour", modes = { sea = true, air = true }, pos = Vector3.new(300, 1, 880) },
-	{ id = "docks", name = "Fishing Docks", modes = { sea = true }, pos = Vector3.new(300, 1, 645) },
+	{ id = "harbour", name = "City Harbour", modes = { sea = true, air = true }, pos = Vector3.new(sites.harbour.x - 20, sites.harbour.h + 1, sites.harbour.z) },
+	{ id = "docks", name = "Fishing Docks", modes = { sea = true }, pos = Vector3.new(sites.docks.x - 20, sites.docks.h + 1, sites.docks.z) },
 	{ id = "pier", name = "Garden Island Pier", modes = { sea = true }, pos = Vector3.new(262, 2, 20) },
 } :: { Destination }
 

@@ -1,7 +1,10 @@
--- Fills Roblox Terrain with the hills, lagoon and sea described by Shared.Landscape.
+-- Fills Roblox Terrain with the land, lagoon, sea and roads described by Shared.Landscape.
 --
--- Runs once at server start (Terrain can't be written offline by the Lune bake), in the
--- background so it never delays players joining. Takes a few seconds; the hills appear as it goes.
+-- Runs at server start (Terrain can't be written offline by the Lune bake), in the background so
+-- it never delays players joining; the land appears as it goes. To see the terrain while editing,
+-- and skip the build at start-up, bake it into the place once from Studio's command bar:
+--   require(game.ServerScriptService.Server.TerrainBuilder).build(workspace.Map, true)
+-- then save. A baked terrain is kept until Landscape.Version changes.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -21,6 +24,7 @@ local function style(terrain: Terrain)
 		[Enum.Material.Sand] = Color3.fromRGB(236, 214, 158),
 		[Enum.Material.Cobblestone] = Color3.fromRGB(190, 180, 165),
 		[Enum.Material.Mud] = Color3.fromRGB(115, 80, 55),
+		[Enum.Material.Pavement] = Color3.fromRGB(178, 170, 160),
 	}
 	for material, color in colors do
 		terrain:SetMaterialColor(material, color)
@@ -42,8 +46,29 @@ local function paint(terrain: Terrain, x: number, z: number, size: Vector3, mate
 	terrain:FillBlock(cf, size, material)
 end
 
-function TerrainBuilder.build(map: Instance?)
+local function hideSeaParts(map: Instance?)
+	-- the terrain sea replaces the old glass sea parts
+	local island = map and map:FindFirstChild("Island")
+	if island then
+		for _, name in { "Sea", "Seabed" } do
+			local seaPart = island:FindFirstChild(name)
+			if seaPart and seaPart:IsA("BasePart") then
+				seaPart.Transparency = 1
+				seaPart.CanCollide = false
+			end
+		end
+	end
+end
+
+-- bake = true when run from Studio's command bar: marks the terrain as baked into the place.
+function TerrainBuilder.build(map: Instance?, bake: boolean?)
 	local terrain = workspace.Terrain
+	if not bake and workspace:GetAttribute("TerrainBakedVersion") == Landscape.Version then
+		hideSeaParts(map)
+		workspace:SetAttribute("TerrainReady", true)
+		return
+	end
+	workspace:SetAttribute("TerrainReady", false)
 	style(terrain)
 	terrain:Clear()
 
@@ -90,18 +115,18 @@ function TerrainBuilder.build(map: Instance?)
 		end
 	end
 
-	-- cobblestone paths
-	for _, path in Landscape.Paths do
-		for i = 1, #path - 1 do
-			local a, b = path[i], path[i + 1]
-			local dx, dz = b[1] - a[1], b[2] - a[2]
-			local length = math.sqrt(dx * dx + dz * dz)
-			local turn = math.atan2(dx, dz)
-			for s = 0, length, 3 do
-				local f = s / length
-				paint(terrain, a[1] + dx * f, a[2] + dz * f, Vector3.new(7, 3, 4), Enum.Material.Cobblestone, turn)
+	-- roads: overlapping slabs along every curve, at the road's own (rolling) height
+	for i, samples in Landscape.RoadSamples do
+		local material = Enum.Material[Landscape.RoadMaterial[i]]
+		for k, sample in samples do
+			if k % 2 == 1 or k == #samples then
+				local cf = CFrame.lookAt(Vector3.new(sample.x, sample.y - 2, sample.z), Vector3.new(sample.x + sample.tx, sample.y - 2, sample.z + sample.tz))
+				terrain:FillBlock(cf, Vector3.new(sample.hw * 2, 4, 9), material)
+				-- clear anything poking above the road surface
+				terrain:FillBlock(cf + Vector3.new(0, 6, 0), Vector3.new(sample.hw * 2, 8, 9), Enum.Material.Air)
 			end
 		end
+		task.wait()
 	end
 	-- cobbled squares in the castle courtyard and the hamlets, ploughed farm fields
 	local sites = Landscape.Sites
@@ -114,19 +139,11 @@ function TerrainBuilder.build(map: Instance?)
 		paint(terrain, field.x, field.z, Vector3.new(field.w, 3, field.d), Enum.Material.Mud)
 	end
 
-	workspace:SetAttribute("TerrainReady", true) -- EnemyService waits for this before spawning camps
-
-	-- the terrain sea replaces the old glass sea parts
-	local island = map and map:FindFirstChild("Island")
-	if island then
-		for _, name in { "Sea", "Seabed" } do
-			local seaPart = island:FindFirstChild(name)
-			if seaPart and seaPart:IsA("BasePart") then
-				seaPart.Transparency = 1
-				seaPart.CanCollide = false
-			end
-		end
+	if bake then
+		workspace:SetAttribute("TerrainBakedVersion", Landscape.Version)
 	end
+	workspace:SetAttribute("TerrainReady", true) -- EnemyService waits for this before spawning camps
+	hideSeaParts(map)
 end
 
 return TerrainBuilder

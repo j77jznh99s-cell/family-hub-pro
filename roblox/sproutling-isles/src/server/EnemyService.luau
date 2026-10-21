@@ -292,7 +292,7 @@ function EnemyService.despawn(enemy: any)
 	enemy.model:Destroy()
 end
 
--- Ground height at (x, z): the terrain hills, or the flat city/island (y = 0.4 for flagstones).
+-- Ground height at (x, z): the terrain, or the flat island (y = 0.4 for flagstones).
 local function groundAt(x: number, z: number): number
 	if Landscape.inPlayArea(x, z) then
 		return 0.4
@@ -486,14 +486,28 @@ function EnemyService.init()
 	CombatService.register(EnemyService)
 
 	-- training dummies in the city barracks yard are always available
-	for _, d in Combat.Dummies do
-		spawnEnemy(Combat.Enemies.dummy, Vector3.new(d.x, groundAt(d.x, d.z), d.z))
+	local map = Workspace:FindFirstChild("Map")
+	local spots = {}
+	if map then
+		for _, d in map:GetDescendants() do
+			if d:IsA("BasePart") and d:GetAttribute("DummySpot") then
+				table.insert(spots, d.Position - Vector3.new(0, 0.5, 0))
+			end
+		end
+	end
+	if #spots == 0 then
+		for _, d in Combat.Dummies do
+			table.insert(spots, Vector3.new(d.x, groundAt(d.x, d.z), d.z))
+		end
+	end
+	for _, spot in spots do
+		spawnEnemy(Combat.Enemies.dummy, spot)
 	end
 
 	-- hill camps wait for the terrain so monsters don't drop into the sea
 	task.spawn(function()
 		local waited = 0
-		while not Workspace:GetAttribute("TerrainReady") and waited < 90 do
+		while not Workspace:GetAttribute("TerrainReady") and waited < 180 do
 			task.wait(1)
 			waited += 1
 		end

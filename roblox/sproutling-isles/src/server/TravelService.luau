@@ -55,7 +55,17 @@ local function go(player: Player, id: any)
 	end)
 end
 
-function TravelService.init()
+function TravelService.init(map: Instance?)
+	-- city destinations land on the markers CityBuilder placed (the city sits on rolling ground)
+	if map then
+		for _, d in map:GetDescendants() do
+			local id = d:GetAttribute("TravelPoint")
+			local dest = typeof(id) == "string" and Travel.get(id)
+			if dest and d:IsA("BasePart") then
+				dest.pos = d.Position - Vector3.new(0, 0.5, 0)
+			end
+		end
+	end
 	TravelRemote.OnServerEvent:Connect(go)
 	game:GetService("Players").PlayerRemoving:Connect(function(player)
 		busy[player] = nil

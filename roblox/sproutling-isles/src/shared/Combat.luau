@@ -121,11 +121,17 @@ Combat.Camps = {
 	{ x = 470, z = 450, kind = "wolf", count = 3 },
 	{ x = 200, z = -520, kind = "slime", count = 4 },
 	{ x = -200, z = -520, kind = "slime", count = 4 },
-	{ x = -200, z = 1300, kind = "goblin", count = 5 },
-	{ x = 200, z = 1300, kind = "wolf", count = 4 },
+	-- south of the city walls and out in the wider land
+	{ x = -300, z = 1420, kind = "goblin", count = 5 },
+	{ x = 330, z = 1420, kind = "wolf", count = 4 },
+	{ x = -700, z = 1300, kind = "slime", count = 5 },
+	{ x = -880, z = -300, kind = "wolf", count = 4 },
+	{ x = 1000, z = 600, kind = "goblin", count = 5 },
+	{ x = 720, z = 1180, kind = "wolf", count = 3 },
 }
 
--- Training dummies in the barracks yard (city block x 132..228, yard centred on z = 996).
+-- Training dummies: the server uses the DummySpot markers in the barracks yard (CityBuilder);
+-- these are a fallback for a map without them.
 Combat.Dummies = { { x = 150, z = 990 }, { x = 170, z = 990 }, { x = 190, z = 990 }, { x = 210, z = 990 } }
 
 Combat.LeashRange = 90 -- enemies give up and walk home past this distance from their camp
