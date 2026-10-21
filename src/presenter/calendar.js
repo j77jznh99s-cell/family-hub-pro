@@ -25,8 +25,9 @@ function dayIndex(date) {
 }
 
 // Slots are numbered continuously (day * perDay + slot), so lanes rotate evenly across
-// the week and consecutive days never open with the same lane. With one video a day
-// this matches the lane `--niche auto` picks for that date.
+// the week. Consecutive days open with different lanes unless perDay is a multiple of the
+// lane count (e.g. 4 a day with 4 lanes: every day runs the same order). With one video
+// a day this matches the lane `--niche auto` picks for that date.
 // Upper bounds for planning; the CLI checks --days / --per-day against these too.
 const MAX_DAYS = 31;
 const MAX_PER_DAY = 6;

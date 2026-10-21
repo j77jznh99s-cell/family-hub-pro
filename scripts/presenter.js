@@ -19,6 +19,7 @@ const { createPresenterVideo, OUTPUT_DIR } = require('../src/presenter');
 const calendar = require('../src/presenter/calendar');
 const { burnText } = require('../src/presenter/overlay');
 const { parseArgs } = require('../src/presenter/args');
+const { writeFileAtomic } = require('../src/presenter/fsutil');
 
 (async () => {
   const args = parseArgs(process.argv.slice(2));
@@ -41,7 +42,7 @@ const { parseArgs } = require('../src/presenter/args');
     const md = await buildWeeklyReport(OUTPUT_DIR, { times: process.env.PRESENTER_POST_TIMES });
     await fs.mkdir(OUTPUT_DIR, { recursive: true });
     const out = path.join(OUTPUT_DIR, `weekly-${new Date().toISOString().slice(0, 10)}.md`);
-    await fs.writeFile(out, md, 'utf8');
+    await writeFileAtomic(out, md, 'utf8');
     console.log(md);
     console.log(`Saved ${out}`);
     return;
@@ -95,7 +96,7 @@ const { parseArgs } = require('../src/presenter/args');
     const md = calendar.toMarkdown(await calendar.attachRuns(slots, OUTPUT_DIR));
     await fs.mkdir(OUTPUT_DIR, { recursive: true });
     const out = path.join(OUTPUT_DIR, 'calendar.md');
-    await fs.writeFile(out, md, 'utf8');
+    await writeFileAtomic(out, md, 'utf8');
     console.log(md);
     console.log(`Saved ${out}`);
     return;
