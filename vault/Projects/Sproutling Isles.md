@@ -51,6 +51,8 @@ code that can't be run in the sandbox, so expect a bug-fix round after each Stud
 6. **Companions and mounts** — Sproutlings fight beside you; horses/ships/airships become rideable.
 7. **Performance** — StreamingEnabled after auditing client lookups; keep under ~40k parts.
 
+All 7 steps built 2026-10-21 (branch `claude/roblox-popular-game-trends-6u7sie`); none Studio-tested yet.
+
 ## Tasks
 Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner decisions are collected in [[Decisions]].
 
@@ -86,7 +88,10 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [ ] **owner:** play-test combat in Studio: hit the dummies in the barracks yard, then fight a hill camp; paste any red Output errors.
 - [x] **roblox-engineer:** RPG step 3, 2026-10-21: The Hollow Crypt (6 rooms, entrance in the castle courtyard, Bone Warden boss), Ironbark field boss (new `grove` site past the NW hamlet), loot with 5 rarities, gear upgrades/salvage, materials, saved in player data. Owner chose to skip play-tests until the game is done; all steps 2-3 untested in Studio.
 - [x] **roblox-engineer:** RPG step 4, 2026-10-21: inventory (bag, equip, salvage, B/H/J keys), armour tiers, 8 open trade shops (weapons, armour, potions, meals), sell materials. Untested in Studio.
-- [ ] **roblox-engineer:** RPG step 5 (cooking + garden ingredients).
+- [x] **roblox-engineer:** RPG step 5, 2026-10-21 (`e85c985`): cooking (8 recipes, cooking pots + tavern/cook/inn/herbalist), timed meal buffs (`BuffService`), wild herb patches (`ForageService`), herbs from garden hatches. Untested in Studio.
+- [x] **roblox-engineer:** RPG step 6, 2026-10-21 (`772dd37`): Beast Tamer (250 Dew) unlocks a Sproutling companion (P: best Sproutling zaps nearby monsters, damage scales with its Dew/s); Stables (800 Dew) unlock a horse (V: +14 speed, not in the crypt); airship (40 Dew) and boat (25 Dew) fast travel from the Skyward Shipyard and Shipwright shop windows (`Shared/Travel.luau`). Phone buttons. Untested in Studio.
+- [x] **roblox-engineer:** RPG step 7, 2026-10-21 (`ca13ad5`): StreamingEnabled (target 640, min 128, PauseOutsideLoadedArea); plaza HUD models Persistent, plots + animated props Atomic; scenery animation follows stream-in/out; teleports call `RequestStreamAroundAsync`. 18,851 parts. **RPG plan complete.** Baked place `7271749`.
+- [ ] **owner:** first full Studio play-test of the finished RPG (city, combat, crypt, field boss, shops, cooking, companion, horse, travel). Expect a bug-fix round: none of steps 2-7 has run in real Roblox. Paste red Output errors.
 - [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs

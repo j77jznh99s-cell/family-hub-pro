@@ -7,6 +7,10 @@ updated: 2026-10-21
 > Rewrite this note at the end of every session so it's true *now*. Keep it short.
 
 ## Current focus
+**2026-10-21: Sproutling Isles open-world RPG is fully built** (all 7 plan steps, branch
+`claude/roblox-popular-game-trends-6u7sie`, place file `7271749`). Next: the owner's first Studio play-test of
+the whole thing, then a bug-fix round. Texture asset IDs still pending. Details in [[Sproutling Isles]].
+
 **Hourly workflow is PAUSED (owner, 2026-09-27 ~15:04 UTC).** The "Hourly project work (worker)" Routine
 (`trig_012vmVxmbAkxxY59wCnKaG1J`) is disabled — it will not fire until the owner re-enables it. The morning-summary
 Routine (~7:45 am Eastern, writes [[Morning Summary]] + one push notification) is untouched and still runs.
@@ -64,7 +68,7 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).
-- [ ] **Sproutling Isles is becoming an open-world fantasy RPG** (2026-10-21): step 1 (fantasy city) and step 2 (combat core) are pushed, both untested in Studio. Test: Play, go to the barracks yard in the city and hit the dummies, then a hill camp; paste Output errors. Also pending: Higgsfield texture IDs (see [[Sproutling Isles]]). Plan in [[Sproutling Isles]].
+- [ ] **Play-test the finished Sproutling Isles RPG** (all 7 steps done 2026-10-21, none tested in Studio). Pull the branch, open `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`, press Play, paste red Output errors. Also pending: the 12 texture asset IDs (see [[Sproutling Isles]]).
 - [ ] **Look at the new Sproutling Isles map in Studio** (2026-10-21): first play-test done ("looks good"), then a big atmosphere/buildings/landscape upgrade was pushed (`544640a`). Now includes terrain hills (`3e61f50`, only visible after pressing Play; first real test of TerrainBuilder). On the laptop: `cd $HOME\Documents\family-hub-pro`, `git pull`, then reopen `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`. Check phone frame rate; say what to change.
 - [x] ~~Run the Sproutling Isles Studio play-test~~ (owner ran it 2026-10-21, no errors reported; old note follows) ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date

@@ -1,6 +1,21 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-21 (later): Sproutling Isles RPG finished (steps 6-7)
+**Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- "Stop asking me for approval and continue the process until it is finished." No check-ins until done.
+
+**What was done**
+- Step 6 (`772dd37`): `CompanionService` (P companion, V horse), `TravelService` + `Shared/Travel.luau` (airship 40 / boat 25 Dew), tamer/stable unlock items, shop-window travel list, phone buttons.
+- Step 7 (`ca13ad5`): StreamingEnabled with Persistent plaza HUD models, Atomic plots/animated props, stream-before-teleport.
+- Baked place rebuilt (`7271749`), 18,851 parts. selene clean, luau-lsp shows only known pre-existing noise.
+
+**Not verified**
+- Nothing from RPG steps 2-7 has run in real Roblox. Streaming behaviour, horse seat height and companion welds need a Studio look.
+- Texture asset IDs still pending from the owner (kit stays off until then).
+
 ## 2026-10-21: owner request — Sproutling Isles play-test + map atmosphere upgrade
 **Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
 
