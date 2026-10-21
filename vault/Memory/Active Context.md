@@ -64,7 +64,8 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 
 ## Waiting on the owner
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).
-- [ ] **Run the Sproutling Isles Studio play-test** ([[Sproutling Isles - QA Review]]) — polished and
+- [ ] **Look at the new Sproutling Isles map in Studio** (2026-10-21): first play-test done ("looks good"), then a big atmosphere/buildings/landscape upgrade was pushed (`544640a`). On the laptop: `cd $HOME\Documents\family-hub-pro`, `git pull`, then reopen `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`. Check phone frame rate; say what to change.
+- [x] ~~Run the Sproutling Isles Studio play-test~~ (owner ran it 2026-10-21, no errors reported; old note follows) ([[Sproutling Isles - QA Review]]) — polished and
   re-verified 2026-10-03 (zero code drift since last review; stale citations and a week-old date
   table fixed), ready to pull on the laptop and run with no known blockers left on this end.
 - [ ] video-analyst: first real attempt (`youtu.be/FwOTs4UxQS4`, 2026-09-27) failed — Descript's importer got back an HTML page, not a media file. Confirm the video's public/accessible, or send the file as a direct upload instead. See [[Video Analyst Runs]]. **Note for next time:** a direct-link upload to Dropbox (file-level share link, `dl=1`, and specifically the `dl.dropboxusercontent.com` host — `www.dropbox.com` with `dl=1` still returned an HTML page) worked cleanly on 2026-10-08 for a 53MB video when the chat's own upload limit (~30MB) was the blocker.

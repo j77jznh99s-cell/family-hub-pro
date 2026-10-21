@@ -1,6 +1,29 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-21: owner request — Sproutling Isles play-test + map atmosphere upgrade
+**Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- Walked through cloning the repo on the Windows laptop (PowerShell doesn't take `&&`; Documents shown in Studio's dialog is the OneDrive one, real clone is `C:\Users\benit\Documents\family-hub-pro`).
+- Ran the Studio play-test: "it looks good".
+- Sent 2 reference screenshots and asked for a more vibrant, involving map: effects, more structures, buildings and landscape.
+
+**What was done**
+- `5d8fa89`: Ambience lighting module, weather tints the Atmosphere, scenery pass (cottages, lantern towers, windmill, festoons, beams, crystals, motes, waterfalls, floating islets, clouds, tree colours).
+- `544640a`: shop houses, more cottages, hills, bushes, boulders, lighthouse, castle keep, pier and boats, horizon mountains.
+- selene/rojo/lune clean; place rebuilt and baked; `docs/map-preview.png` refreshed.
+
+**Not verified**
+- Not seen in Studio yet. Previews were rough offline renders. Frame rate on phones unknown (parts 1241 → 2886).
+- Full QA test-plan checklist not confirmed item by item.
+
+**Decisions** (also add to [[Decisions]])
+- Owner: reference images are for mood; keep everything original.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-16: owner request — Graphify installed
 **Device:** phone · **Branch:** `claude/graphify-setup` → merged to `main` · **Agents used:** none
 

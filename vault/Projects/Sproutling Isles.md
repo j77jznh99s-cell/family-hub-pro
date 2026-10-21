@@ -35,7 +35,7 @@ Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch in
 ## Tasks
 Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner decisions are collected in [[Decisions]].
 
-- [ ] **owner:** play-test the `.rbxlx` in Studio using the test plan in [[Sproutling Isles - QA Review]] (Bonk is now **R**; the Studio shield is off automatically) and paste errors from the Output window
+- [x] **owner:** first Studio play-test done 2026-10-21 (owner: "it looks good"; no errors reported; full test-plan checklist not confirmed item by item). Original task: play-test the `.rbxlx` in Studio using the test plan in [[Sproutling Isles - QA Review]] (Bonk is now **R**; the Studio shield is off automatically) and paste errors from the Output window
 - [x] **qa-tester:** re-review the 2026-09-23 fixes and update the test plan — done 2026-09-26, all confirmed fixed, see [[Sproutling Isles - QA Review]]
 - [ ] **owner:** answer the pending decisions in [[Decisions]] (snatching, Starter Pack, gate cooldown, pond payout, trading rules, launch dates and budget)
 - [ ] **owner:** create 5 game passes + 8 dev products (steps in [[Sproutling Isles - Launch & Live Ops]]); **roblox-engineer:** paste the IDs into `Products.luau`
@@ -54,6 +54,9 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **game-designer:** m11 pond water surface, and check the Halloween numbers — done 2026-09-26. m11 fixed (`397cc4e`, `Rim.CanCollide = false` so players wade in the pond instead of walking across it dry — see [[Sproutling Isles - QA Review]]). Halloween species/Moonberry numbers checked against the game's payback curve, all consistent (Hollowisp runs ~11% above the one existing Mythic reference point, judged fine given its rarer acquisition); earn-rate estimate stays unverified pending live measurement — see [[Sproutling Isles - Launch & Live Ops]].
 - [x] **market-researcher:** verify rewarded-ads eligibility and Ads Manager pricing — done 2026-09-26, see [[Sproutling Isles - Launch & Live Ops]] section 4 caution box and section 6 note (corrections found, not just re-confirmed; sources listed there)
 - [ ] **market-researcher:** monthly trend refresh (not part of the 2026-09-26 ads-verification pass; still open)
+
+- [x] **roblox-engineer:** atmosphere + scenery upgrade, 2026-10-21 (`5d8fa89`, `544640a` on `claude/roblox-popular-game-trends-6u7sie`). Owner sent 2 reference screenshots (cosy village, floating islands, light beams) and asked for more vibrant effects, more buildings and more landscape; used for mood only, all designs original. New `src/shared/Ambience.luau` (Atmosphere, Bloom, ColorCorrection, SunRays, light DoF), `WeatherService` now tints the Atmosphere. `Map.Scenery`: 19 cottages/shop houses, 4 lantern towers, windmill + lighthouse (client-spun), castle keep, harbour pier + 3 boats, light beams, crystals, motes, pond mist, waterfalls, 11 floating islets, clouds, terraced hills, bushes, boulders, horizon mountains. Lint/build/bake clean, 1241 → 2886 parts, 63 PointLights, ~50 particle emitters. **Not yet seen in Studio**: previews were rough offline renders only.
+- [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs
 Full details, file:line references and the Studio test plan are in [[Sproutling Isles - QA Review]] (2026-09-23, static review; nothing has been run in Studio yet).
