@@ -30,6 +30,7 @@
   "28": "CLAUDE.md — read this first, every session",
   "29": "storage.test.js",
   "30": "db/index.js",
+  "31": "dependencies",
   "32": "knowledgeGraph.test.js",
   "33": "db.test.js",
   "34": "AI Memory Export",
@@ -37,7 +38,6 @@
   "36": "routes/billing.js",
   "37": "3. Analytics event spec",
   "38": "config.js",
-  "39": "jobs.js",
   "40": "Hourly Workflow (the standing rule)",
   "41": "Trading Agent (forex setups)",
   "42": "install-graphify.sh",
@@ -66,6 +66,5 @@
   "65": "Clip Studio",
   "66": "6. Marketing",
   "67": ".claude/CLAUDE.md",
-  "68": "transcription.js",
-  "71": "Decisions"
+  "68": "transcription.js"
 }

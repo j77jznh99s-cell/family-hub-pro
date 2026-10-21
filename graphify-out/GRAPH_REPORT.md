@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-21)
 
 ## Corpus Check
-- 87 files · ~92,698 words
+- 87 files · ~92,904 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 782 nodes · 1124 edges · 69 communities (66 shown, 3 thin omitted)
+- 783 nodes · 1125 edges · 68 communities (66 shown, 2 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 126 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `09f04572`
+- Built from commit: `63ce0bcd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -47,6 +47,7 @@
 - CLAUDE.md — read this first, every session
 - storage.test.js
 - db/index.js
+- dependencies
 - knowledgeGraph.test.js
 - db.test.js
 - AI Memory Export
@@ -54,7 +55,6 @@
 - routes/billing.js
 - 3. Analytics event spec
 - config.js
-- jobs.js
 - Hourly Workflow (the standing rule)
 - Trading Agent (forex setups)
 - install-graphify.sh
@@ -84,7 +84,6 @@
 - 6. Marketing
 - .claude/CLAUDE.md
 - transcription.js
-- Decisions
 
 ## God Nodes (most connected - your core abstractions)
 1. `main()` - 60 edges
@@ -113,19 +112,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (69 total, 3 thin omitted)
+## Communities (68 total, 2 thin omitted)
 
 ### Community 0 - "Session Log.md"
 Cohesion: 0.15
-Nodes (14): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), Bybit Trading Bot, Hard rules for every agent, Tasks, Claude Code Add-ons, How to install (approve once) (+6 more)
+Nodes (15): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, Bybit Trading Bot, Hard rules for every agent, Tasks, Claude Code Add-ons (+7 more)
 
 ### Community 1 - "main"
-Cohesion: 0.07
-Nodes (48): main(), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: agent platform comparison (StarNet alternatives) (+40 more)
+Cohesion: 0.06
+Nodes (50): main(), Decisions, Pending owner decisions (answer any time; recommendations in brackets), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided (+42 more)
 
 ### Community 2 - "upload.js"
-Cohesion: 0.06
-Nodes (33): dependencies, @anthropic-ai/sdk, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, better-sqlite3, bullmq, cors, dotenv (+25 more)
+Cohesion: 0.11
+Nodes (17): description, engines, node, main, name, scripts, dev, start (+9 more)
 
 ### Community 3 - "graph.js"
 Cohesion: 0.07
@@ -253,8 +252,12 @@ Cohesion: 0.20
 Nodes (9): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, assert, fs, os, path, presigner, { S3Client } (+1 more)
 
 ### Community 30 - "db/index.js"
-Cohesion: 0.20
-Nodes (5): { DATABASE_URL }, db, express, router, storage
+Cohesion: 0.12
+Nodes (9): express, { DATABASE_URL }, db, express, router, storage, db, express (+1 more)
+
+### Community 31 - "dependencies"
+Cohesion: 0.12
+Nodes (16): dependencies, @anthropic-ai/sdk, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, better-sqlite3, bullmq, cors, dotenv (+8 more)
 
 ### Community 32 - "knowledgeGraph.test.js"
 Cohesion: 0.22
@@ -283,10 +286,6 @@ Nodes (9): start(), 2026-10-21 (late): Sproutling Isles world reshape, 3. Analyt
 ### Community 38 - "config.js"
 Cohesion: 0.29
 Nodes (3): path, ROOT, { REDIS_URL }
-
-### Community 39 - "jobs.js"
-Cohesion: 0.29
-Nodes (4): express, db, express, router
 
 ### Community 40 - "Hourly Workflow (the standing rule)"
 Cohesion: 0.29
@@ -398,8 +397,8 @@ Nodes (9): Transcript-based scoring + captions: off (default) or Whisper, openai
 
 ## Knowledge Gaps
 - **1 isolated node(s):** `dotenv`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 495 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 496 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -410,11 +409,11 @@ _Questions this graph is uniquely positioned to answer:_
   _`main()` has 56 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `dotenv` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `main` be split into smaller, more focused modules?**
-  _Cohesion score 0.06648936170212766 - nodes in this community are weakly interconnected._
+- **Should `Session Log.md` be split into smaller, more focused modules?**
+  _Cohesion score 0.14804964539007093 - nodes in this community are weakly interconnected._
 - **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
   _High betweenness centrality (0.283) - this node is a cross-community bridge._
-- **Should `upload.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
-- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Morning Summary`, `Decisions`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+- **Should `main` be split into smaller, more focused modules?**
+  _Cohesion score 0.06285714285714286 - nodes in this community are weakly interconnected._
+- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
   _High betweenness centrality (0.214) - this node is a cross-community bridge._
