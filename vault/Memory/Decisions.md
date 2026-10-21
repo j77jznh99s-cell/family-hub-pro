@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-21 | Sproutling Isles | Build all remaining RPG steps (5 cooking, 6 companions/mounts/travel, 7 performance) without stopping for approval; report only when finished | Owner: "Stop asking me for approval and continue the process until it is finished" | Owner |
 | 2026-10-21 | Sproutling Isles | No Studio play-tests until the RPG is done; keep building steps in order | Owner: "not trying to do any playtest before it's done" (warned that bugs will pile up) | Owner |
 | 2026-10-21 | Sproutling Isles | **Open-world fantasy RPG** (Renaissance style, older dungeon-crawl feel; genre ideas from Elden Ring, Shangri-La Frontier, Delicious in Dungeon, Diablo, nothing copied). Replaces the modern-city direction from earlier the same day | Owner | Owner |
 | 2026-10-21 | Sproutling Isles | City rebuilt as a fantasy city (horses/carriages, ships, airships instead of cars/boats/planes) | Owner picked the recommended option | Owner |
