@@ -1,6 +1,6 @@
 ---
 tags: [project, trading, high-risk]
-updated: 2026-10-18
+updated: 2026-10-20
 ---
 # Bybit Trading Bot
 
@@ -46,4 +46,5 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   as "outcome unknown" instead of "rejected" (wording only, on the safe side; revert in `gate.ts` `messageLooksUncertain` if not)
 - [ ] **qa-tester / owner:** (`test:scripts` now passes) one testnet
   `position-check` run against an old-format `state` snapshot: expect no alerts and a file re-keyed to `symbol:side`
-- [ ] **app-engineer:** if `position-check` keeps failing (bad data / outage), nothing tells the owner (cron only logs); send one Telegram alert on repeated failures
+- [x] **app-engineer:** if `position-check` keeps failing (bad data / outage), nothing tells the owner (cron only logs); send one Telegram alert on repeated failures —
+  `0ba3a2b`, 2026-10-20 20:03: one alert after 3 failed runs in a row, one on recovery (`failureStep`, counter in `scripts/.state/`); scripts 49/49; real Telegram send not tested; not pushed

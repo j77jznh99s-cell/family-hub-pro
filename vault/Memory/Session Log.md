@@ -1,6 +1,17 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-20 20:03: local hourly run — Bybit Trading Bot: alert when position-check keeps failing
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `0ba3a2b`) · **Agents used:** none (orchestrator inline; small change)
+
+- Rotation: Bybit Trading Bot (after Family Hub). Did the app-engineer task "if position-check keeps failing, nothing tells the owner".
+- Now (`0ba3a2b`): pure `failureStep()` in `scripts/lib/positions.js` + counter file `scripts/.state/position_failures.json` (git-ignored). One Telegram alert when 3 runs in a row fail ("positions are NOT being monitored", with the last error), one when a run succeeds again. A broken counter or Telegram never changes the run's own exit code.
+- Checked: `test:scripts` 49/49 (3 new); ran `position-check.js` 4 times with no keys set (no network calls): counts 1→4, alert only on run 3, missing Telegram token caught. Read-only script; gate untouched; no exchange calls.
+- **Not verified:** a real Telegram send. Not pushed (GitHub not signed in).
+
+**Next:** qa-tester/owner: testnet `position-check` run (old snapshot re-key + this alert).
+
+---
 ## 2026-10-20 13:05: local hourly run — Family Hub: don't save over an unreadable data file
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `6823a74`) · **Agents used:** none (orchestrator inline; small change)
 
