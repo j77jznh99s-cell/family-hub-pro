@@ -1,7 +1,7 @@
 # Graph Report - family-hub-pro  (2026-10-21)
 
 ## Corpus Check
-- 87 files · ~91,438 words
+- 87 files · ~92,020 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b41f90e1`
+- Built from commit: `ad0e6383`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -306,7 +306,7 @@ Nodes (6): Bottom line, Genre leaders (third-party trackers, Aug–Sep 2026), Mo
 
 ### Community 45 - "Sproutling Isles"
 Cohesion: 0.29
-Nodes (7): Bugs, City game plan (owner decision 2026-10-21), Gotchas for agents, Key numbers (full tables in the design doc and `src/shared/*.luau`), Sproutling Isles, Status, Tasks
+Nodes (7): Bugs, Gotchas for agents, Key numbers (full tables in the design doc and `src/shared/*.luau`), RPG plan (owner decisions 2026-10-21), Sproutling Isles, Status, Tasks
 
 ### Community 46 - "Start Here: laptop"
 Cohesion: 0.33

@@ -85,7 +85,8 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **roblox-engineer:** RPG step 2, combat core, 2026-10-21: `Shared/Combat.luau`, `CombatService`, `EnemyService`, `client/Combat.luau`. Sword/bow/staff, dodge, Q/X/C abilities, slimes/goblins/wolves at 9 hill camps, training dummies in the barracks yard. Lint + luau-lsp strict clean. **Not run in Studio** — expect a bug-fix round.
 - [ ] **owner:** play-test combat in Studio: hit the dummies in the barracks yard, then fight a hill camp; paste any red Output errors.
 - [x] **roblox-engineer:** RPG step 3, 2026-10-21: The Hollow Crypt (6 rooms, entrance in the castle courtyard, Bone Warden boss), Ironbark field boss (new `grove` site past the NW hamlet), loot with 5 rarities, gear upgrades/salvage, materials, saved in player data. Owner chose to skip play-tests until the game is done; all steps 2-3 untested in Studio.
-- [ ] **roblox-engineer:** RPG step 4 (inventory UI, gear slots, trade shops selling/buying).
+- [x] **roblox-engineer:** RPG step 4, 2026-10-21: inventory (bag, equip, salvage, B/H/J keys), armour tiers, 8 open trade shops (weapons, armour, potions, meals), sell materials. Untested in Studio.
+- [ ] **roblox-engineer:** RPG step 5 (cooking + garden ingredients).
 - [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs
