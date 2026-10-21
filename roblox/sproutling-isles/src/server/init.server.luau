@@ -31,6 +31,10 @@ local TerrainBuilder = require(script.TerrainBuilder)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
+-- royal material kit (no-op until texture asset ids are filled in, see Shared/MaterialKit.luau)
+local MaterialKit = require(Shared.MaterialKit)
+pcall(MaterialKit.ensureVariants, game:GetService("MaterialService"))
+MaterialKit.paint(map)
 
 WeatherService.init()
 PlotService.init(map)

@@ -23,6 +23,13 @@ local map = MapBuilder.Build(workspace)
 Ambience.useApi(roblox)
 Ambience.Apply(game:GetService("Lighting"))
 
+-- Royal material kit: variants for uploaded textures, then paint the map by role.
+local MaterialKit = require("../src/shared/MaterialKit")
+MaterialKit.useApi(roblox)
+local variants = MaterialKit.ensureVariants(game:GetService("MaterialService"))
+local painted = MaterialKit.paint(map)
+print(string.format("Material kit: %d variants, %d parts painted", variants, painted))
+
 local count = 0
 for _, descendant in map:GetDescendants() do
 	if descendant:IsA("BasePart") then
