@@ -653,7 +653,7 @@ end
 ----------------------------------------------------------------------------------------------
 -- scenery: atmosphere pieces with no gameplay role (all under Map.Scenery)
 
-local function cottage(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
+local function cottage(parent: Instance, x: number, z: number, facing: Vector3, seed: number, storeys: number?, awning: Color3?)
 	local model = Instance.new("Model")
 	model.Name = "Cottage"
 	model.Parent = parent
@@ -666,7 +666,8 @@ local function cottage(parent: Instance, x: number, z: number, facing: Vector3, 
 	local wall = walls[seed % #walls + 1]
 	local roof = roofs[(seed * 3) % #roofs + 1]
 	local beam = rgb(110, 75, 50)
-	local W, D, H, rise = 16, 12, 10, 6
+	local floors = storeys or 1
+	local W, D, H, rise = 16, 12, 10 * floors, 6
 
 	part(model, "Footing", Vector3.new(W + 1, 1.4, D + 1), rel(0, 0.7, 0), rgb(150, 145, 140), Enum.Material.Cobblestone)
 	part(model, "Walls", Vector3.new(W, H, D), rel(0, H / 2 + 1, 0), wall, Enum.Material.Plaster)
@@ -679,6 +680,21 @@ local function cottage(parent: Instance, x: number, z: number, facing: Vector3, 
 	end
 	part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, H + 0.8, D / 2 + 0.1), beam, Enum.Material.Wood)
 	part(model, "Timber", Vector3.new(W, 0.6, 0.5), rel(0, 5.6, D / 2 + 0.1), beam, Enum.Material.Wood)
+	for floor = 2, floors do
+		local y0 = (floor - 1) * 10
+		part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, y0 + 1, D / 2 + 0.1), beam, Enum.Material.Wood)
+		for _, u in { -4.5, 0, 4.5 } do
+			part(model, "WindowFrame", Vector3.new(3, 3.4, 0.3), rel(u, y0 + 6.5, D / 2 + 0.15), beam, Enum.Material.Wood)
+			part(model, "Window", Vector3.new(2.2, 2.6, 0.3), rel(u, y0 + 6.5, D / 2 + 0.25), rgb(255, 215, 140), Enum.Material.Neon)
+			part(model, "Shutter", Vector3.new(1, 3.2, 0.25), rel(u - 2, y0 + 6.5, D / 2 + 0.2), roof, Enum.Material.WoodPlanks)
+		end
+	end
+	if awning then
+		for i = 1, 4 do
+			local u = -W / 2 + (i - 0.5) * (W / 4)
+			part(model, "Awning", Vector3.new(W / 4, 0.5, 4), rel(u, 9.4, D / 2 + 2) * CFrame.Angles(math.rad(-18), 0, 0), if i % 2 == 0 then rgb(255, 255, 255) else awning, Enum.Material.Fabric)
+		end
+	end
 	-- roof: two tilted slabs and a ridge
 	local slope = math.atan(rise / (D / 2))
 	local length = math.sqrt(rise * rise + (D / 2) ^ 2) + 2
@@ -942,6 +958,241 @@ local function motes(parent: Instance, name: string, cf: CFrame, size: Vector3, 
 	})
 end
 
+-- Terraced grassy hill: stacked, shrinking discs with a rocky skirt and a few trees on top.
+local function hill(parent: Instance, x: number, z: number, r: number, tiers: number, seed: number)
+	local model = Instance.new("Model")
+	model.Name = "Hill"
+	model.Parent = parent
+	local y = 0
+	local radius = r
+	for i = 1, tiers do
+		local h = 5 + hash(seed + i) * 3
+		local green = rgb(95 + i * 8, 175 + i * 6, 80)
+		cylinder(model, "Terrace", h, radius * 2, x + (hash(seed * 2 + i) - 0.5) * 4, y + h / 2 - 0.5, z + (hash(seed * 3 + i) - 0.5) * 4, green, Enum.Material.Grass)
+		-- rocks poking out of each terrace edge
+		for k = 1, 3 do
+			local a = hash(seed * 5 + i * 3 + k) * math.pi * 2
+			ball(model, "Rock", 3 + hash(seed + k + i) * 3, x + math.cos(a) * radius * 0.95, y + 1.5, z + math.sin(a) * radius * 0.95, rgb(150, 140, 130), Enum.Material.Rock)
+		end
+		y += h - 0.5
+		radius *= 0.72
+	end
+	for i = 1, 2 do
+		local a = hash(seed + i * 13) * math.pi * 2
+		tree(model, x + math.cos(a) * radius * 0.5, z + math.sin(a) * radius * 0.5, 0.9 + hash(seed + i) * 0.4, seed * 7 + i, y)
+	end
+	return y
+end
+
+-- Rocky island rising out of the sea with a grassy cap; returns the cap height.
+local function cliffIsle(parent: Instance, x: number, z: number, r: number, h: number, seed: number): number
+	local model = Instance.new("Model")
+	model.Name = "CliffIsle"
+	model.Parent = parent
+	cylinder(model, "Cliff", h + 10, r * 2, x, (h - 10) / 2, z, rgb(150, 135, 120), Enum.Material.Rock)
+	cylinder(model, "Ledge", h * 0.5, r * 2 + 8, x + 3, -5 + h * 0.25, z - 2, rgb(135, 120, 108), Enum.Material.Rock)
+	cylinder(model, "Cap", 2, r * 2 + 1, x, h + 1, z, rgb(110, 185, 85), Enum.Material.Grass)
+	for i = 1, 8 do
+		local a = i / 8 * math.pi * 2 + hash(seed + i)
+		local d = r + 3 + hash(seed * 2 + i) * 6
+		ball(model, "Boulder", 6 + hash(seed + i * 3) * 8, x + math.cos(a) * d, -1, z + math.sin(a) * d, rgb(140, 128, 118), Enum.Material.Rock)
+	end
+	return h + 2
+end
+
+-- Striped lighthouse whose beam the client sweeps round (SpinSpeed on the Beam model).
+local function lighthouse(parent: Instance, x: number, y: number, z: number)
+	local model = Instance.new("Model")
+	model.Name = "Lighthouse"
+	model.Parent = parent
+	for i = 1, 6 do
+		cylinder(model, "Tower", 7, 11 - i * 0.8, x, y + (i - 0.5) * 7, z, if i % 2 == 1 then rgb(245, 245, 245) else rgb(215, 65, 60), Enum.Material.SmoothPlastic)
+	end
+	local top = y + 42
+	cylinder(model, "Gallery", 1, 11, x, top + 0.5, z, rgb(60, 60, 70), Enum.Material.Metal)
+	local lamp = cylinder(model, "LampRoom", 6, 6, x, top + 4, z, rgb(255, 235, 160), Enum.Material.Neon)
+	glowLight(lamp, 60, 2, rgb(255, 230, 160))
+	for i, d in { 7.5, 5, 2.5 } do
+		cylinder(model, "Roof", 1.4, d, x, top + 7 + i * 1.3, z, rgb(215, 65, 60), Enum.Material.Slate)
+	end
+	local beam = Instance.new("Model")
+	beam.Name = "Beam"
+	beam.Parent = model
+	local hubCf = CFrame.new(x, top + 4, z) * CFrame.Angles(-math.pi / 2, 0, 0) -- local Z points up
+	local hub = deco(part(beam, "Hub", Vector3.new(1, 1, 1), hubCf, rgb(255, 240, 180), Enum.Material.Neon, { Transparency = 1 }))
+	beam.PrimaryPart = hub
+	for _, side in { 1, -1 } do
+		local ray = deco(part(beam, "Ray", Vector3.new(120, 4, 4), hubCf * CFrame.new(side * 62, 0, 0), rgb(255, 240, 180), Enum.Material.Neon))
+		ray.Transparency = 0.75
+	end
+	beam:SetAttribute("SpinSpeed", 40)
+end
+
+-- Small stone keep with corner towers, battlements and banners.
+local function keep(parent: Instance, x: number, y: number, z: number, banner: Color3)
+	local model = Instance.new("Model")
+	model.Name = "Keep"
+	model.Parent = parent
+	local stone, dark = rgb(200, 195, 185), rgb(165, 158, 150)
+	part(model, "Hall", Vector3.new(30, 22, 30), at(x, y + 11, z), stone, Enum.Material.Cobblestone)
+	-- battlements
+	for i = 0, 6 do
+		local o = -13.5 + i * 4.5
+		for _, e in { { o, -14.5 }, { o, 14.5 }, { -14.5, o }, { 14.5, o } } do
+			part(model, "Merlon", Vector3.new(2.2, 3, 2.2), at(x + e[1], y + 23.5, z + e[2]), dark, Enum.Material.Cobblestone)
+		end
+	end
+	for _, c in { { -15, -15 }, { 15, -15 }, { -15, 15 }, { 15, 15 } } do
+		local tx, tz = x + c[1], z + c[2]
+		cylinder(model, "Tower", 32, 10, tx, y + 16, tz, stone, Enum.Material.Cobblestone)
+		for i, d in { 12, 9, 6, 3 } do
+			cylinder(model, "Spire", 3, d, tx, y + 32 + i * 3 - 1.5, tz, rgb(70, 95, 170), Enum.Material.Slate)
+		end
+		cylinder(model, "Pole", 6, 0.4, tx, y + 47, tz, rgb(90, 80, 70), Enum.Material.Wood)
+		part(model, "Banner", Vector3.new(0.2, 3, 5), at(tx, y + 48.5, tz + 2.7), banner, Enum.Material.Fabric)
+	end
+	-- gate and lit windows facing the main island (east, +X)
+	part(model, "Gate", Vector3.new(1, 10, 8), at(x + 15.2, y + 5, z), rgb(110, 75, 50), Enum.Material.WoodPlanks)
+	for _, oz in { -8, 8 } do
+		part(model, "Window", Vector3.new(0.5, 4, 2.4), at(x + 15.2, y + 15, z + oz), rgb(255, 210, 130), Enum.Material.Neon)
+	end
+	local brazier = ball(model, "Brazier", 3, x + 18, y + 25, z, rgb(255, 170, 70), Enum.Material.Neon)
+	glowLight(brazier, 40, 1.4, rgb(255, 180, 90))
+	emitter(brazier, "Embers", {
+		Color = ColorSequence.new(rgb(255, 220, 120), rgb(255, 110, 40)),
+		Size = fade(0.6, 0),
+		Rate = 12,
+		Lifetime = NumberRange.new(1.5, 2.5),
+		Speed = NumberRange.new(4, 7),
+		SpreadAngle = Vector2.new(20, 20),
+		LightEmission = 1,
+	})
+end
+
+local function boat(parent: Instance, x: number, z: number, heading: number, sail: Color3)
+	local model = Instance.new("Model")
+	model.Name = "Boat"
+	model.Parent = parent
+	local base = CFrame.new(x, 0, z) * CFrame.Angles(0, heading, 0)
+	part(model, "Hull", Vector3.new(7, 3, 18), base * CFrame.new(0, 0.5, 0), rgb(140, 95, 60), Enum.Material.WoodPlanks)
+	part(model, "Bow", Vector3.new(4.9, 3, 4.9), base * CFrame.new(0, 0.5, -9) * CFrame.Angles(0, math.rad(45), 0), rgb(140, 95, 60), Enum.Material.WoodPlanks)
+	part(model, "Deck", Vector3.new(6, 0.4, 16), base * CFrame.new(0, 2.1, 0), rgb(190, 150, 100), Enum.Material.WoodPlanks)
+	part(model, "Mast", Vector3.new(0.7, 16, 0.7), base * CFrame.new(0, 10, -1), rgb(110, 75, 50), Enum.Material.Wood)
+	part(model, "Sail", Vector3.new(0.3, 11, 8), base * CFrame.new(0.4, 11, 3) * CFrame.Angles(0, math.rad(90), 0), sail, Enum.Material.Fabric)
+	part(model, "Stripe", Vector3.new(0.35, 2, 8), base * CFrame.new(0.45, 11, 3) * CFrame.Angles(0, math.rad(90), 0), rgb(255, 255, 255), Enum.Material.Fabric)
+end
+
+-- Distant snow-capped peak (out past the sea edge, mostly seen through the haze).
+local function peak(parent: Instance, x: number, z: number, scale: number, seed: number)
+	local model = Instance.new("Model")
+	model.Name = "Peak"
+	model.Parent = parent
+	local y = -10
+	local r = 140 * scale
+	for i = 1, 11 do
+		local h = 15 * scale
+		local snow = i >= 9
+		local color = if snow then rgb(245, 248, 255) elseif i >= 7 then rgb(165 + i * 2, 160 + i * 2, 175) else rgb(110 + i * 8, 140 + i * 6, 115)
+		local ox, oz = (hash(seed + i) - 0.5) * 24 * scale, (hash(seed * 2 + i) - 0.5) * 24 * scale
+		deco(cylinder(model, "Layer", h, r * 2, x + ox, y + h / 2, z + oz, color, if snow then Enum.Material.Snow else Enum.Material.Rock))
+		y += h
+		r *= 0.82
+	end
+end
+
+local function bush(parent: Instance, x: number, z: number, seed: number)
+	local green = rgb(70 + math.floor(hash(seed) * 30), 150 + math.floor(hash(seed + 1) * 40), 70)
+	ball(parent, "Bush", 4.5, x, 1.6, z, green, Enum.Material.Grass)
+	ball(parent, "Bush", 3.4, x + 2.2, 1.3, z + 1, green, Enum.Material.Grass)
+	local flowers = { rgb(255, 120, 160), rgb(255, 230, 100), rgb(255, 255, 255), rgb(180, 140, 255) }
+	for i = 1, 3 do
+		local a = hash(seed * 3 + i) * math.pi * 2
+		ball(parent, "BushFlower", 0.8, x + math.cos(a) * 2, 3.2, z + math.sin(a) * 2, flowers[(seed + i) % 4 + 1])
+	end
+end
+
+local function buildLandscape(scenery: Instance)
+	local land = Instance.new("Folder")
+	land.Name = "Landscape"
+	land.Parent = scenery
+
+	-- terraced hills in the island's four empty corners (outside the shoreline tree ring)
+	hill(land, -205, -355, 34, 4, 1)
+	hill(land, 205, -355, 30, 4, 2)
+	hill(land, -210, 300, 30, 3, 3)
+	hill(land, 205, 305, 26, 3, 4)
+
+	-- town: two-storey shop houses beside the Plaza, more cottages at the north corners
+	local town = scenery:FindFirstChild("Village") or land
+	cottage(town, -80, -95, Vector3.new(1, 0, 0), 21, 2, rgb(90, 190, 110))
+	cottage(town, 80, -95, Vector3.new(-1, 0, 0), 22, 2, rgb(240, 120, 150))
+	cottage(town, -80, 120, Vector3.new(1, 0, 0), 23, 2, rgb(90, 160, 255))
+	cottage(town, 80, 120, Vector3.new(-1, 0, 0), 24, 2, rgb(255, 180, 60))
+	cottage(town, -160, -250, Vector3.new(0, 0, 1), 25)
+	cottage(town, 160, -250, Vector3.new(0, 0, 1), 26)
+	cottage(town, -138, -300, Vector3.new(0.6, 0, 0.8).Unit, 27, 2)
+	cottage(town, 138, -300, Vector3.new(-0.6, 0, 0.8).Unit, 28, 2)
+
+	-- bushes lining the avenue (clear of the Plaza and the Parade)
+	local n = 0
+	for z = -240, 240, 30 do
+		if math.abs(z) > 75 and not (z > 60 and z < 100) then
+			for _, side in { -1, 1 } do
+				n += 1
+				bush(land, side * 50, z + side * 7, n)
+			end
+		end
+	end
+
+	-- boulders along the beach
+	for i = 1, 28 do
+		local f = i / 28
+		local x, z
+		if i % 2 == 0 then
+			x, z = (f * 2 - 1) * 250, if i % 4 == 0 then -402 else 342
+		else
+			x, z = if i % 4 == 1 then -253 else 253, -400 + f * 740
+		end
+		ball(land, "Boulder", 4 + hash(i) * 6, x + (hash(i + 2) - 0.5) * 6, -0.5, z, rgb(160, 150, 140), Enum.Material.Rock)
+	end
+
+	-- out at sea: lighthouse isle, a keep on a cliff island, a harbour pier with boats
+	local coast = Instance.new("Folder")
+	coast.Name = "Coast"
+	coast.Parent = scenery
+	local lighthouseTop = cliffIsle(coast, 345, -150, 22, 14, 31)
+	lighthouse(coast, 345, lighthouseTop, -150)
+	local keepTop = cliffIsle(coast, -360, 140, 34, 18, 32)
+	keep(coast, -360, keepTop, 140, rgb(220, 70, 90))
+	local smallTop = cliffIsle(coast, -330, -260, 16, 9, 33)
+	tree(coast, -333, -258, 1.1, 77, smallTop)
+	tree(coast, -324, -266, 0.8, 78, smallTop)
+	cliffIsle(coast, 310, 230, 12, 6, 34)
+
+	part(coast, "Pier", Vector3.new(80, 1, 10), at(290, 1.5, 20), rgb(160, 115, 75), Enum.Material.WoodPlanks)
+	for i = 0, 7 do
+		for _, side in { -1, 1 } do
+			cylinder(coast, "Piling", 8, 1.2, 254 + i * 10, -2.5, 20 + side * 5.2, rgb(110, 80, 55), Enum.Material.Wood)
+		end
+	end
+	lamp(coast, 328, 26)
+	boat(coast, 300, 38, math.rad(80), rgb(240, 90, 90))
+	boat(coast, 318, 2, math.rad(100), rgb(90, 150, 240))
+	boat(coast, 380, 70, math.rad(30), rgb(255, 210, 80))
+
+	-- distant mountains ringing the horizon
+	local horizon = Instance.new("Folder")
+	horizon.Name = "Horizon"
+	horizon.Parent = scenery
+	local peaks = {
+		{ -820, -500, 1.2 }, { -900, 100, 1.5 }, { -760, 600, 1.1 }, { 850, -300, 1.4 },
+		{ 900, 350, 1.2 }, { -200, -1000, 1.6 }, { 350, -950, 1.3 }, { 150, 950, 1.2 },
+	}
+	for i, pk in peaks do
+		peak(horizon, pk[1], pk[2], pk[3], i)
+	end
+end
+
 local function buildScenery(map: Instance)
 	local scenery = Instance.new("Folder")
 	scenery.Name = "Scenery"
@@ -1052,6 +1303,7 @@ local function buildScenery(map: Instance)
 	for i, c in clouds do
 		cloud(sky, c[1], c[2], c[3], c[4], i)
 	end
+	buildLandscape(scenery)
 end
 
 ----------------------------------------------------------------------------------------------
