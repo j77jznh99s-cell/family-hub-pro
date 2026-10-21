@@ -36,6 +36,9 @@ Loot.Materials = {
 	wing = { id = "wing", name = "Gloom Wing", color = Color3.fromRGB(90, 70, 110), value = 4 },
 	skull = { id = "skull", name = "Warden's Skull", color = Color3.fromRGB(250, 245, 230), value = 120 },
 	heartwood = { id = "heartwood", name = "Ironbark Heartwood", color = Color3.fromRGB(150, 100, 60), value = 150 },
+	ore = { id = "ore", name = "Crag Ore", color = Color3.fromRGB(150, 160, 175), value = 9 },
+	stormglass = { id = "stormglass", name = "Stormglass", color = Color3.fromRGB(140, 220, 255), value = 10 },
+	galecore = { id = "galecore", name = "Gale Core", color = Color3.fromRGB(200, 240, 255), value = 180 },
 	-- herbs: gathered from wild herb patches and harvested alongside garden hatches
 	sunleaf = { id = "sunleaf", name = "Sunleaf", color = Color3.fromRGB(240, 220, 90), value = 2 },
 	moonmint = { id = "moonmint", name = "Moonmint", color = Color3.fromRGB(150, 210, 255), value = 3 },
@@ -55,12 +58,16 @@ Loot.Drops = {
 	bat = { material = "wing", materialChance = 0.5, weaponChance = 0.06, minRarity = 1 },
 	warden = { material = "skull", materialChance = 1, weaponChance = 1, minRarity = 3 },
 	treant = { material = "heartwood", materialChance = 1, weaponChance = 1, minRarity = 3 },
+	golem = { material = "ore", materialChance = 0.6, weaponChance = 0.14, minRarity = 2 },
+	wisp = { material = "stormglass", materialChance = 0.55, weaponChance = 0.12, minRarity = 2 },
+	stormcaller = { material = "galecore", materialChance = 1, weaponChance = 1, minRarity = 4 },
 } :: { [string]: DropTable }
 
 -- Chests in the crypt: how many weapons and their minimum rarity.
 Loot.Chests = {
 	vault = { weapons = 2, minRarity = 2, dew = 60 },
 	boss = { weapons = 1, minRarity = 4, dew = 250 },
+	sky = { weapons = 1, minRarity = 3, dew = 120 }, -- a Sky Cache on each sky isle, once per player
 }
 
 -- Picks a rarity index at or above minRarity, weighted by Loot.Rarities[].weight.

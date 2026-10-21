@@ -100,6 +100,30 @@ the client code `src/client/Combat.luau`.
   window: 40 Dew by air, 25 by sea. Destinations: `src/shared/Travel.luau`.
 - Phones get Pet / Ride buttons once bought. Server: `CompanionService.luau`, `TravelService.luau`.
 
+## Quests, the wilds and the sky isles
+
+- **11 quest givers** live in camps out in the land and on two sky isles (`src/shared/Quests.luau`):
+  Bryn the Forest Warden, Old Maple the woodcutter, Sister Ilsa the herbalist, Tamsin the shepherd,
+  Gorrim the miner, Oswin the hermit and Aeronaut Pell up in the mountains, Captain Dorran at the
+  Old Fort, Pip the lost courier, and Lyra and Sage Vael in the sky. A gold **!** over a head
+  means a quest for you; a green **?** means one to hand in.
+- **18 quests** (all original): defeat monsters, gather quest items (satchels, amberwood, ghostcaps,
+  lambs, glowstone, relics, starfall shards), visit the three peak cairns, bring herbs, deliver a letter.
+  Rewards are Dew, materials, weapons, Healing Draughts and the **Skyward Charm**.
+- **Sky isles:** finish Gorrim's and Oswin's quests, then Pell's "Ride the Wind" to earn the Skyward
+  Charm. Every **wind shrine** (one below each named isle) then lifts you up; a **Wind Stone** on the
+  isle takes you back down. Each isle has a once-per-player **Sky Cache**, starfall shards and storm
+  wisps; Stormcrown holds the Stormcaller boss.
+- New monsters: Crag Golems, Storm Wisps and the Stormcaller. (Crypt skeletons and bats also got
+  their proper models; before this they were standing in as training dummies.)
+- The tracker (top right) lists active quests; tap one to follow it and a beam of light marks the
+  spot. **L** hides the tracker. Mountain tracks lead to the three mountain camps, which are also
+  airship stops.
+- The open land also has 23 homesteads (including extensions round the villages) and about 90
+  discoveries: campsites, mushroom rings, fallen logs, standing stones, wrecked wagons, wayside shrines.
+- Code: `src/shared/WildsBuilder.luau` (builds it all), `src/server/QuestService.luau`,
+  `src/client/QuestLog.luau`.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).
@@ -117,7 +141,7 @@ the client code `src/client/Combat.luau`.
 
 ### Performance (phones)
 
-About 30,000 baked parts (the land itself is Terrain, which costs no parts). **Streaming is on** (`default.project.json`: target radius 640, min 128), so
+About 34,000 baked parts (the land itself is Terrain, which costs no parts). **Streaming is on** (`default.project.json`: target radius 640, min 128), so
 phones load only what's near them. The plaza shop, Rebirth Shrine and Sprout Supply are Persistent,
 because the HUD reads their labels from anywhere. Plots and animated props are Atomic. Server teleports
 (home, crypt, fast travel) call `RequestStreamAroundAsync` before moving you.

@@ -37,6 +37,7 @@ local LootService = require(script.LootService)
 local DungeonService = require(script.DungeonService)
 local CompanionService = require(script.CompanionService)
 local TravelService = require(script.TravelService)
+local QuestService = require(script.QuestService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
@@ -65,6 +66,7 @@ ForageService.init() -- RPG step 5: wild herb patches
 DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
 CompanionService.init() -- RPG step 6: Sproutling companions (P) and horses (V)
 TravelService.init(map) -- RPG step 6: airship and boat fast travel
+QuestService.init(map) -- quest givers in the wilds, wind shrines to the sky isles
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle

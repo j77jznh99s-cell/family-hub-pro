@@ -45,6 +45,12 @@ export type SpawnOptions = {
 }
 
 local enemies: { Enemy } = {}
+local killHooks: { (Player, string) -> () } = {}
+
+-- Calls fn(killer, enemyKindId) whenever a player defeats an enemy (QuestService counts kills).
+function EnemyService.onKill(fn: (Player, string) -> ())
+	table.insert(killHooks, fn)
+end
 local folder: Folder
 local bossAttack: (any, Vector3, Vector3) -> () -- defined below, used by think()
 
@@ -138,6 +144,80 @@ local function build(kind: Combat.EnemyType, at: Vector3): (Model, BasePart, num
 		end
 		piece(m, root, "Tail", Vector3.new(0.6, 0.6, 2.4), CFrame.new(0, 0.6, 3.8) * CFrame.Angles(math.rad(25), 0, 0), fur, Enum.Material.Fabric)
 		radius = 3
+	elseif id == "skeleton" then
+		root.Size = Vector3.new(2.2, 2.4, 1.2)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local bone = Color3.fromRGB(230, 224, 205)
+		piece(m, root, "Ribcage", Vector3.new(2.2, 2.4, 1.2), CFrame.new(), bone)
+		piece(m, root, "Skull", Vector3.new(1.8, 1.8, 1.8), CFrame.new(0, 2.1, 0), bone, nil, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.35, 0.2), CFrame.new(s * 0.4, 2.2, -0.85), Color3.fromRGB(120, 220, 255), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(0.45, 2.4, 0.45), CFrame.new(s * 1.4, -0.2, 0), bone)
+			piece(m, root, "Leg", Vector3.new(0.5, 2.3, 0.5), CFrame.new(s * 0.55, -2.3, 0), bone)
+		end
+		piece(m, root, "Blade", Vector3.new(0.25, 3.2, 0.7), CFrame.new(1.6, -0.4, -1.2) * CFrame.Angles(math.rad(-50), 0, 0), Color3.fromRGB(140, 110, 90), Enum.Material.CorrodedMetal)
+		radius = 2
+	elseif id == "bat" then
+		-- flies: a high hip height keeps it fluttering above the ground
+		root.Size = Vector3.new(2, 1.4, 2)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.7, 0))
+		humanoid.HipHeight = 5
+		local fur = Color3.fromRGB(70, 55, 90)
+		piece(m, root, "Body", Vector3.new(1.8, 1.8, 1.8), CFrame.new(), fur, Enum.Material.Fabric, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Wing", Vector3.new(2.6, 0.2, 1.6), CFrame.new(s * 2, 0.3, 0) * CFrame.Angles(0, 0, s * math.rad(20)), Color3.fromRGB(55, 40, 70), Enum.Material.Fabric)
+			piece(m, root, "Ear", Vector3.new(0.3, 0.7, 0.3), CFrame.new(s * 0.45, 1.1, 0), fur, Enum.Material.Fabric)
+			piece(m, root, "Eye", Vector3.new(0.3, 0.3, 0.2), CFrame.new(s * 0.35, 0.3, -0.85), Color3.fromRGB(255, 80, 80), Enum.Material.Neon)
+		end
+		radius = 2
+	elseif id == "golem" then
+		root.Size = Vector3.new(4, 4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.4, 0))
+		humanoid.HipHeight = 3.4
+		local rock = Color3.fromRGB(125, 120, 112)
+		piece(m, root, "Body", Vector3.new(4.4, 4, 3.2), CFrame.new(), rock, Enum.Material.Slate)
+		piece(m, root, "Head", Vector3.new(2.2, 1.8, 2), CFrame.new(0, 2.8, -0.2), rock, Enum.Material.Slate)
+		piece(m, root, "Core", Vector3.new(1.2, 1.2, 0.4), CFrame.new(0, 0.3, -1.6), Color3.fromRGB(110, 230, 255), Enum.Material.Neon)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.45, 0.3, 0.2), CFrame.new(s * 0.5, 2.9, -1.2), Color3.fromRGB(110, 230, 255), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(1.6, 4.4, 1.6), CFrame.new(s * 3.1, -0.8, 0), rock, Enum.Material.Slate)
+			piece(m, root, "Fist", Vector3.new(2, 1.8, 2), CFrame.new(s * 3.1, -3.4, 0), Color3.fromRGB(105, 100, 95), Enum.Material.Slate)
+			piece(m, root, "Leg", Vector3.new(1.6, 2.6, 1.6), CFrame.new(s * 1.2, -3.2, 0), rock, Enum.Material.Slate)
+		end
+		piece(m, root, "Moss", Vector3.new(3, 0.5, 2.4), CFrame.new(0.4, 2.1, 0.4), Color3.fromRGB(90, 140, 70), Enum.Material.Grass)
+		radius = 3
+	elseif id == "wisp" then
+		-- a floating ball of storm-light
+		root.Size = Vector3.new(2.4, 2.4, 2.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.2, 0))
+		humanoid.HipHeight = 4
+		piece(m, root, "Core", Vector3.new(1.8, 1.8, 1.8), CFrame.new(), Color3.fromRGB(170, 235, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		piece(m, root, "Shell", Vector3.new(3.4, 3.4, 3.4), CFrame.new(), Color3.fromRGB(120, 200, 255), Enum.Material.Glass, Enum.PartType.Ball).Transparency = 0.5
+		for k = 0, 2 do
+			local a = k / 3 * math.pi * 2
+			piece(m, root, "Spark", Vector3.new(0.6, 0.6, 0.6), CFrame.new(math.cos(a) * 2.4, math.sin(a * 2) * 0.6, math.sin(a) * 2.4), Color3.fromRGB(255, 255, 200), Enum.Material.Neon, Enum.PartType.Ball)
+		end
+		radius = 2
+	elseif id == "stormcaller" then
+		-- the storm's heart: a crackling core inside spinning rings
+		local s = kind.size or 2
+		root.Size = Vector3.new(3, 3, 3) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.5 * s, 0))
+		humanoid.HipHeight = 4 * s
+		piece(m, root, "Core", Vector3.new(3, 3, 3) * s, CFrame.new(), Color3.fromRGB(190, 240, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		piece(m, root, "Cloud", Vector3.new(5, 5, 5) * s, CFrame.new(0, 0.4 * s, 0), Color3.fromRGB(90, 100, 130), Enum.Material.SmoothPlastic, Enum.PartType.Ball).Transparency = 0.45
+		for k = 0, 2 do
+			piece(m, root, "Ring", Vector3.new(0.3, 7, 7) * s, CFrame.Angles(k * math.rad(60), math.rad(90), k * math.rad(35)), Color3.fromRGB(255, 230, 120), Enum.Material.Neon, Enum.PartType.Cylinder).Transparency = 0.2
+		end
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.6, 0.4, 0.2) * s, CFrame.new(side * 0.6 * s, 0.4 * s, -2.55 * s), Color3.fromRGB(255, 255, 255), Enum.Material.Neon)
+		end
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2
+			piece(m, root, "Bolt", Vector3.new(0.3, 2.4, 0.3) * s, CFrame.new(math.cos(a) * 2.8 * s, -2.2 * s, math.sin(a) * 2.8 * s) * CFrame.Angles(0, 0, math.rad(25)), Color3.fromRGB(255, 240, 130), Enum.Material.Neon)
+		end
+		radius = 3.5 * s
 	elseif id == "warden" then
 		-- a towering skeleton in an iron crown with a rusted cleaver
 		local s = kind.size or 2
@@ -247,6 +327,9 @@ local function spawnEnemy(kind: Combat.EnemyType, home: Vector3, opts: SpawnOpti
 		if killer and killer.Parent then
 			CombatService.reward(killer, kind.reward, kind.name)
 			LootService.drop(killer, kind.id, deathPos)
+			for _, hook in killHooks do
+				task.spawn(hook, killer, kind.id)
+			end
 		end
 		CombatService.fx("defeat", { pos = deathPos, kind = kind.id, boss = kind.boss })
 		if enemy.onDeath then
@@ -307,6 +390,28 @@ local function spawnCamps()
 			local a = (k / camp.count) * math.pi * 2 + ci
 			local x, z = camp.x + math.cos(a) * 10, camp.z + math.sin(a) * 10
 			spawnEnemy(kind, Vector3.new(x, groundAt(x, z), z))
+		end
+	end
+	-- camps the map builder marked (quest areas, sky isles): CampKind, CampCount, CampLeash and
+	-- Sky (stand on the marker's height instead of the terrain)
+	local map = Workspace:FindFirstChild("Map")
+	if not map then
+		return
+	end
+	for ci, marker in map:GetDescendants() do
+		local kindId = marker:GetAttribute("CampKind")
+		local kind = typeof(kindId) == "string" and Combat.Enemies[kindId]
+		if kind and marker:IsA("BasePart") then
+			local count = marker:GetAttribute("CampCount") or 3
+			local spread = marker:GetAttribute("CampSpread") or 10
+			local sky = marker:GetAttribute("Sky") == true
+			local centre = marker.Position - Vector3.new(0, 0.5, 0)
+			for k = 1, count do
+				local a = (k / count) * math.pi * 2 + ci
+				local x, z = centre.X + math.cos(a) * spread, centre.Z + math.sin(a) * spread
+				local y = if sky or count == 1 then centre.Y else groundAt(x, z)
+				spawnEnemy(kind, Vector3.new(x, y, z), { leash = marker:GetAttribute("CampLeash") or Combat.LeashRange, respawn = true })
+			end
 		end
 	end
 end
@@ -413,6 +518,13 @@ local function think(e: Enemy, t: number)
 		return
 	end
 	local pos = e.root.Position
+	if pos.Y < e.home.Y - 60 then
+		-- fell off a sky isle or a cliff: back home
+		e.root.CFrame = CFrame.new(e.home + Vector3.new(0, 6, 0))
+		e.root.AssemblyLinearVelocity = Vector3.zero
+		e.target = nil
+		return
+	end
 	local fromHome = (Vector3.new(pos.X, 0, pos.Z) - Vector3.new(e.home.X, 0, e.home.Z)).Magnitude
 	-- pick or keep a target
 	local targetRoot: BasePart? = nil
@@ -435,7 +547,11 @@ local function think(e: Enemy, t: number)
 			e.nextWander = t + 3 + math.random() * 4
 			local a = math.random() * math.pi * 2
 			local x, z = e.home.X + math.cos(a) * 12, e.home.Z + math.sin(a) * 12
-			e.humanoid:MoveTo(Vector3.new(x, groundAt(x, z), z))
+			local y = groundAt(x, z)
+			if e.home.Y > y + 15 then
+				y = e.home.Y -- up on a sky isle
+			end
+			e.humanoid:MoveTo(Vector3.new(x, y, z))
 		end
 		return
 	end

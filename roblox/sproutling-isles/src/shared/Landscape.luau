@@ -17,7 +17,7 @@
 local Landscape = {}
 
 -- Bump when the terrain shape changes, so a terrain baked into the place in Studio is rebuilt.
-Landscape.Version = 2
+Landscape.Version = 3
 
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
@@ -58,6 +58,10 @@ Landscape.SiteList = {
 	{ name = "eastmere", x = 780, z = 430, r = 48 },
 	{ name = "pinecrest", x = -1000, z = 290, r = 50 },
 	{ name = "oldfort", x = 560, z = 1420, r = 30 },
+	-- mountain camps for the quests (Shared/Quests)
+	{ name = "minecamp", x = -260, z = -960, r = 30 },
+	{ name = "hermitage", x = 720, z = -420, r = 28 },
+	{ name = "observatory", x = 280, z = -860, r = 30 },
 } :: { { name: string, x: number, z: number, r: number, h: number? } }
 
 export type Site = { name: string, x: number, z: number, r: number, h: number }
@@ -108,6 +112,10 @@ Landscape.Roads = {
 	{ name = "Watch Road", width = 8, material = "Ground", points = { { -560, 905 }, { -625, 760 }, { -640, 610 }, { -600, 470 }, { -566, 362 } } },
 	{ name = "Pinecrest Road", width = 7, material = "Ground", points = { { -566, 362 }, { -700, 380 }, { -840, 330 }, { -985, 295 } } },
 	{ name = "Old Fort Track", width = 7, material = "Ground", points = { { 95, 1640 }, { 260, 1610 }, { 420, 1540 }, { 545, 1440 } } },
+	-- mountain tracks up to the quest camps
+	{ name = "Miners' Track", width = 7, material = "Ground", points = { { -465, -420 }, { -420, -560 }, { -380, -700 }, { -320, -850 }, { -275, -935 } } },
+	{ name = "Observatory Trail", width = 7, material = "Ground", points = { { 362, -240 }, { 330, -420 }, { 250, -600 }, { 300, -760 }, { 285, -835 } } },
+	{ name = "Hermit's Climb", width = 6, material = "Ground", points = { { 408, -288 }, { 520, -340 }, { 620, -400 }, { 700, -420 } } },
 } :: { RoadDef }
 
 -- Fenced crop fields on the farm plateau (centre x, z and size w along x, d along z).
@@ -459,6 +467,39 @@ function Landscape.material(x: number, z: number, h: number): string
 		return "LeafyGrass"
 	end
 	return "Grass"
+end
+
+----------------------------------------------------------------------------------------------
+-- sky isles
+
+-- Floating islets (MapBuilder builds them). Named ones can be reached through the wind shrines
+-- once a player earns the Skyward Charm, and hold quests, caches and storm wisps (WildsBuilder).
+-- { x, base y, z, radius, waterfall?, name? }; y rises to stay well clear of the land below.
+local ISLETS: { { any } } = {
+	{ -340, 170, -120, 38, true, "Windward Isle" },
+	{ 360, 200, 60, 45, true, "Cloudkeeper's Rest" },
+	{ -300, 230, 260, 30, false },
+	{ 320, 155, -330, 28, true },
+	{ -150, 250, -520, 34, true, "Starfall Isle" },
+	{ 180, 210, -500, 26, false },
+	{ 520, 270, 1250, 32, false, "Gale Rock" },
+	{ -420, 290, -380, 22, false },
+	{ 440, 270, 330, 24, false },
+	{ 75, 185, 375, 10, false },
+	{ -70, 172, 330, 8, false },
+	{ -640, 380, 1480, 60, true, "Stormcrown" },
+}
+
+export type Islet = { x: number, y: number, z: number, r: number, falls: boolean, name: string? }
+Landscape.SkyIslets = {} :: { Islet }
+for _, it in ISLETS do
+	local x, z, r = it[1], it[3], it[4]
+	local ground = Landscape.height(x, z)
+	for k = 0, 7 do
+		local a = k / 8 * math.pi * 2
+		ground = math.max(ground, Landscape.height(x + math.cos(a) * r * 1.3, z + math.sin(a) * r * 1.3))
+	end
+	table.insert(Landscape.SkyIslets, { x = x, y = math.max(it[2], ground + 75), z = z, r = r, falls = it[5], name = it[6] })
 end
 
 -- True if (x, z) is inside a site's plateau (keep trees off building sites).

@@ -57,6 +57,14 @@ function MapBuilder.useCity(module: any)
 	City = module
 end
 
+-- Shared.WildsBuilder and Shared.Quests (quest camps, homesteads, sky isle content), same arrangement.
+local Wilds: any = nil
+local QuestData: any = nil
+function MapBuilder.useWilds(module: any, quests: any)
+	Wilds = module
+	QuestData = quests
+end
+
 -- Shared.DungeonBuilder (The Hollow Crypt), same arrangement.
 local Dungeon: any = nil
 function MapBuilder.useDungeon(module: any)
@@ -2052,14 +2060,8 @@ local function buildScenery(map: Instance)
 	local sky = Instance.new("Folder")
 	sky.Name = "Skyline"
 	sky.Parent = scenery
-	local islets = {
-		{ -340, 110, -120, 38, true }, { 360, 140, 60, 45, true }, { -300, 170, 260, 30, false },
-		{ 320, 95, -330, 28, true }, { -150, 190, -520, 34, true }, { 180, 150, -500, 26, false },
-		{ 520, 210, 1250, 32, false }, { -420, 230, -380, 22, false }, { 440, 210, 330, 24, false },
-		{ 75, 125, 375, 10, false }, { -70, 112, 330, 8, false },
-	}
-	for i, it in islets do
-		floatingIslet(sky, it[1], it[2] + 60, it[3], it[4], i, it[5]) -- +60 clears the terrain hills
+	for i, it in Landscape.SkyIslets do
+		floatingIslet(sky, it.x, it.y, it.z, it.r, i, it.falls)
 	end
 	local clouds = {
 		{ -260, 260, -300, 1.4 }, { 250, 280, -150, 1.2 }, { -380, 240, 100, 1.6 }, { 380, 300, 250, 1.3 },
@@ -2101,6 +2103,14 @@ function MapBuilder.Build(parent: Instance): Instance
 			Dungeon = module
 		end
 	end
+	if not Wilds then
+		local ok, wildsModule, questModule = pcall(function()
+			return require((script :: any).Parent.WildsBuilder), require((script :: any).Parent.Quests)
+		end)
+		if ok then
+			Wilds, QuestData = wildsModule, questModule
+		end
+	end
 	local existing = parent:FindFirstChild("Map")
 	if existing then
 		existing:Destroy()
@@ -2125,6 +2135,22 @@ function MapBuilder.Build(parent: Instance): Instance
 	end
 	if Dungeon then
 		Dungeon.Build(map, Landscape)
+	end
+	if Wilds and QuestData and Landscape then
+		Wilds.Build(map, Landscape, QuestData, {
+			cottage = cottage,
+			tree = tree,
+			lamp = lamp,
+			barrel = barrel,
+			crate = crate,
+			bench = bench,
+			cart = cart,
+			haystack = haystack,
+			well = well,
+			signpost = signpost,
+			crystal = crystal,
+			flowerBed = flowerBed,
+		})
 	end
 
 	map.Parent = parent

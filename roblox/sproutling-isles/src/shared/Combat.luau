@@ -89,8 +89,20 @@ Combat.Enemies = {
 	slime = { id = "slime", name = "Bog Slime", health = 40, damage = 8, speed = 10, attackRange = 5, attackWindup = 0.6, attackCooldown = 1.6, aggroRange = 35, reward = 4, respawn = 18 },
 	goblin = { id = "goblin", name = "Thornback Goblin", health = 70, damage = 12, speed = 15, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.3, aggroRange = 45, reward = 9, respawn = 25 },
 	wolf = { id = "wolf", name = "Ashen Wolf", health = 55, damage = 10, speed = 21, attackRange = 6, attackWindup = 0.35, attackCooldown = 1.1, aggroRange = 55, reward = 7, respawn = 22 },
-	skeleton = { id = "skeleton", name = "Crypt Skeleton", health = 60, damage = 11, speed = 13, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 50, reward = 8, respawn = 0 },
-	bat = { id = "bat", name = "Gloom Bat", health = 25, damage = 6, speed = 24, attackRange = 5, attackWindup = 0.3, attackCooldown = 1, aggroRange = 60, reward = 3, respawn = 0 },
+	skeleton = { id = "skeleton", name = "Crypt Skeleton", health = 60, damage = 11, speed = 13, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 50, reward = 8, respawn = 30 },
+	bat = { id = "bat", name = "Gloom Bat", health = 25, damage = 6, speed = 24, attackRange = 5, attackWindup = 0.3, attackCooldown = 1, aggroRange = 60, reward = 3, respawn = 25 },
+	-- the mountains and the sky isles (quest areas)
+	golem = { id = "golem", name = "Crag Golem", health = 150, damage = 16, speed = 9, attackRange = 7, attackWindup = 0.8, attackCooldown = 2, aggroRange = 40, reward = 14, respawn = 30 },
+	wisp = { id = "wisp", name = "Storm Wisp", health = 45, damage = 9, speed = 18, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 50, reward = 8, respawn = 25 },
+	stormcaller = {
+		id = "stormcaller", name = "Stormcaller, Eye of the Gale", health = 1700, damage = 24, speed = 12, attackRange = 12, attackWindup = 1, attackCooldown = 2.2, aggroRange = 70, reward = 260, respawn = 240,
+		boss = true, size = 2.2,
+		attacks = {
+			{ kind = "slam", damage = 30, radius = 16, windup = 1.2 },
+			{ kind = "roots", damage = 22, radius = 9, windup = 1 },
+			{ kind = "swipe", damage = 26, radius = 16, windup = 0.8, arc = 75 },
+		},
+	},
 	warden = {
 		id = "warden", name = "The Bone Warden", health = 1400, damage = 22, speed = 11, attackRange = 12, attackWindup = 1, attackCooldown = 2.2, aggroRange = 70, reward = 150, respawn = 0,
 		boss = true, size = 2.2,
