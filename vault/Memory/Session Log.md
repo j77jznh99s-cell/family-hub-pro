@@ -1,6 +1,20 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-21 (late): Sproutling Isles world reshape
+**Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- Laptop was 18 commits behind (a paste joined `git pull` and `start` into one line); fixed with a plain `git pull`, now on the newest file.
+- "Make the lands less uniform and more vast... roads different sizes, directions, heights."
+
+**What was done**
+- `d393a2b`: Landscape v2 (vast landmass, mountains, ragged shores, curvy graded roads), organic city layout, new villages, camps, travel markers. ~30k parts.
+- README: command-bar line to bake terrain into the place so it shows in edit mode (otherwise terrain only appears after Play).
+
+**Not verified**
+- Not run in Studio. Terrain build time at server start is untested (bigger world); baking it from the command bar avoids it.
+
 ## 2026-10-21 (later): Sproutling Isles RPG finished (steps 6-7)
 **Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
 
