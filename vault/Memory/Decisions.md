@@ -7,6 +7,9 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-10-21 | Sproutling Isles | **Turn Sproutling Isles into a city game**: whole city with boats, planes, pets, shops, weapons, tools and abilities. Gardening plots kept for now as player homes (whether to keep the gardening loop is still open) | Owner chose this over a separate new game or a city district add-on | Owner |
+| 2026-10-21 | Sproutling Isles | Combat: cartoon, no blood (blasters, swords, abilities with knockback and respawns) | Fits Roblox's widest age rating | Owner (recommended option) |
+| 2026-10-21 | Sproutling Isles | Part budget: big but phone-safe, ~25-40k parts with streaming, not 100k | Owner asked for 100k; 100k would crash phones | Owner (recommended option) |
 | 2026-10-21 | Sproutling Isles | Visual upgrade: more vibrant effects, buildings and landscape, using owner's reference screenshots for mood only (original designs) | Owner: "more vibrant effects... more structures, more buildings, more landscape" after a play-test that "looks good" | Owner |
 | 2026-10-16 | Workspace | Installed Graphify (code knowledge graph) in the repo, with hooks and a SessionStart installer | Owner ran the install command and said "whatever you need to do to get it done" | Owner |
 | 2026-10-08 | Workspace | Declined the standalone VPS-based agent project (from a tutorial video); built a [[Knowledge Graph]] memory layer instead, inside the existing sandbox, no new server/cost | Confirms #21: matches the already-researched recommendation (cost, security, duplicates existing setup); gets the real learning/recall benefit without the VPS/Tailscale/messaging-bridge parts | Owner asked for pros/cons, then chose |

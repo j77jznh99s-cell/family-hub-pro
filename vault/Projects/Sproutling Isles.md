@@ -32,6 +32,19 @@ Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch in
 - Gate lock 60 s (90 s with a pass); snatch carry window 45 s; new-player shield 15 min.
 - Rebirth 250k Dew (x4 each time), +50% Dew permanently.
 
+## City game plan (owner decision 2026-10-21)
+
+Sproutling Isles is becoming a city game. Built in phases; the owner tests each in Studio before the next.
+
+1. **City map** — done 2026-10-21 (`86c76d7`): `src/shared/CityBuilder.luau`, Map.City south of the island + airport. Shops carry `Shop` attributes and a `ShopAnchor`; cars/boats/planes carry a `Vehicle` attribute. All anchored scenery so far.
+2. **Shops + currency** — prompts at each `ShopAnchor`, a shop UI, prices in Dew (or a new city currency, decide).
+3. **Vehicles** — drivable cars and boats (VehicleSeat), then planes/helicopters; vehicle dealer sells them.
+4. **Pets** — follow-the-player pets from the Pet Shop, with rarities.
+5. **Tools, weapons, abilities** — cartoon blasters/swords (knockback, respawn, safe zones), dash, double jump, grapple.
+6. **Performance** — turn on StreamingEnabled after auditing client lookups of map parts; keep under ~40k parts.
+
+Open questions for the owner: keep the gardening loop or drop it; one currency or two; where PvP is allowed.
+
 ## Tasks
 Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner decisions are collected in [[Decisions]].
 
@@ -58,6 +71,8 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [x] **roblox-engineer:** atmosphere + scenery upgrade, 2026-10-21 (`5d8fa89`, `544640a` on `claude/roblox-popular-game-trends-6u7sie`). Owner sent 2 reference screenshots (cosy village, floating islands, light beams) and asked for more vibrant effects, more buildings and more landscape; used for mood only, all designs original. New `src/shared/Ambience.luau` (Atmosphere, Bloom, ColorCorrection, SunRays, light DoF), `WeatherService` now tints the Atmosphere. `Map.Scenery`: 19 cottages/shop houses, 4 lantern towers, windmill + lighthouse (client-spun), castle keep, harbour pier + 3 boats, light beams, crystals, motes, pond mist, waterfalls, 11 floating islets, clouds, terraced hills, bushes, boulders, horizon mountains. Lint/build/bake clean, 1241 → 2886 parts, 63 PointLights, ~50 particle emitters. **Not yet seen in Studio**: previews were rough offline renders only.
 - [x] **roblox-engineer:** detail pass, 2026-10-21 (owner: "more"): yards, paths, market props, well, haystacks, signposts, palms, sea arch/stacks, ruins, giant Elder blossom tree, 5 hot-air balloons. 3528 parts. Not seen in Studio.
 - [x] **roblox-engineer:** terrain hills pass, 2026-10-21 (`3e61f50`; owner sent a reference screenshot and asked for "astronomically" more detail). New `Shared/Landscape.luau` (heightfield maths) + `server/TerrainBuilder.luau` (fills Terrain at server start, background task) give a ring of hills around the island in a lagoon. On the hills: walled castle, 2 hamlets, fenced farm with barn/silo/windmill, watchtower, lighthouse, ruins, waterfall cliff with rainbow, 3 bridges, ~300 trees incl. new wedge-cone pines. 8,713 parts. **Terrain code never run in real Roblox** (Lune can't write Terrain) — first Play in Studio is its test; hills only show in Play mode.
+- [x] **roblox-engineer:** city phase 1 (map), 2026-10-21 (`86c76d7`): roads, 24 shops, towers, apartments, houses, park, civic buildings, harbour, marina, airport, bridges, cars, boats, planes. 16,330 parts. Not seen in Studio.
+- [ ] **roblox-engineer:** city phase 2 (shops + currency) — waits for the owner's Studio check of phase 1.
 - [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs

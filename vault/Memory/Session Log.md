@@ -14,6 +14,7 @@ tags: [memory, log]
 - `544640a`: shop houses, more cottages, hills, bushes, boulders, lighthouse, castle keep, pier and boats, horizon mountains.
 - Detail pass (owner: "more"): yards, paths, props, well, signposts, palms, sea arch, ruins, giant Elder tree, hot-air balloons. Parts now 3528.
 - Terrain pass (owner: reference image, "increase the detail astronomically"): Landscape + TerrainBuilder modules, castle, hamlets, farm, waterfall cliff, bridges, ~300 trees. 8,713 parts. Terrain generation untested in real Roblox.
+- Owner then asked for a whole city game (boats, planes, pets, shops, weapons, abilities; ~100k parts). Decided: turn Sproutling into the city game, cartoon combat, phone-safe budget. Built phase 1 (`86c76d7`): Sproutling City + airport, 16,330 parts total. Phases 2-6 planned in [[Sproutling Isles]].
 - selene/rojo/lune clean; place rebuilt and baked; `docs/map-preview.png` refreshed.
 
 **Not verified**
