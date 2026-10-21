@@ -958,8 +958,293 @@ local function motes(parent: Instance, name: string, cf: CFrame, size: Vector3, 
 	})
 end
 
+-- A cylinder running from point a to point b (for trunks, branches and posts at an angle).
+local function segment(parent: Instance, name: string, a: Vector3, b: Vector3, diameter: number, color: Color3, material: any?): BasePart
+	local length = (b - a).Magnitude
+	local p = part(parent, name, Vector3.new(length, diameter, diameter), CFrame.lookAt((a + b) / 2, b) * CFrame.Angles(0, math.rad(90), 0), color, material)
+	p.Shape = Enum.PartType.Cylinder
+	return p
+end
+
+-- Flat stone path between two ground points.
+local function path(parent: Instance, a: Vector3, b: Vector3, width: number)
+	local mid = (a + b) / 2
+	part(parent, "Path", Vector3.new(width, 0.25, (b - a).Magnitude), CFrame.lookAt(Vector3.new(mid.X, 0.12, mid.Z), Vector3.new(b.X, 0.12, b.Z)), rgb(200, 190, 170), Enum.Material.Cobblestone, { CanCollide = false })
+end
+
+local function barrel(parent: Instance, x: number, z: number)
+	cylinder(parent, "Barrel", 3.6, 3, x, 1.8, z, rgb(150, 100, 60), Enum.Material.WoodPlanks)
+	cylinder(parent, "Hoop", 0.4, 3.15, x, 2.8, z, rgb(80, 80, 85), Enum.Material.Metal)
+	cylinder(parent, "Hoop", 0.4, 3.15, x, 0.8, z, rgb(80, 80, 85), Enum.Material.Metal)
+end
+
+local function crate(parent: Instance, x: number, y: number, z: number, size: number, turn: number)
+	part(parent, "Crate", Vector3.new(size, size, size), CFrame.new(x, y + size / 2, z) * CFrame.Angles(0, turn, 0), rgb(190, 145, 90), Enum.Material.WoodPlanks)
+end
+
+local function bench(parent: Instance, x: number, z: number, facing: Vector3)
+	local base = CFrame.lookAt(Vector3.new(x, 0, z), Vector3.new(x, 0, z) + facing)
+	part(parent, "BenchSeat", Vector3.new(6, 0.5, 2), base * CFrame.new(0, 1.8, 0), rgb(170, 120, 75), Enum.Material.WoodPlanks)
+	part(parent, "BenchBack", Vector3.new(6, 2, 0.4), base * CFrame.new(0, 3, 0.9), rgb(170, 120, 75), Enum.Material.WoodPlanks)
+	for _, u in { -2.5, 2.5 } do
+		part(parent, "BenchLeg", Vector3.new(0.5, 1.8, 2), base * CFrame.new(u, 0.9, 0), rgb(70, 70, 75), Enum.Material.Metal)
+	end
+end
+
+local function cart(parent: Instance, x: number, z: number, turn: number, produce: Color3)
+	local base = CFrame.new(x, 0, z) * CFrame.Angles(0, turn, 0)
+	part(parent, "CartBed", Vector3.new(5, 1, 8), base * CFrame.new(0, 2.6, 0), rgb(160, 110, 70), Enum.Material.WoodPlanks)
+	for _, s in { -1, 1 } do
+		part(parent, "CartSide", Vector3.new(0.4, 1.6, 8), base * CFrame.new(s * 2.5, 3.6, 0), rgb(140, 95, 60), Enum.Material.WoodPlanks)
+		local wheel = part(parent, "Wheel", Vector3.new(0.6, 4, 4), base * CFrame.new(s * 2.9, 2, 1), rgb(110, 75, 50), Enum.Material.Wood)
+		wheel.Shape = Enum.PartType.Cylinder
+	end
+	for i = 1, 6 do
+		local fruit = part(parent, "Produce", Vector3.new(1.6, 1.6, 1.6), base * CFrame.new(((i - 1) % 2 - 0.5) * 2, 3.8, (i - 3.5) * 1.1), produce, Enum.Material.SmoothPlastic)
+		fruit.Shape = Enum.PartType.Ball
+	end
+end
+
+local function haystack(parent: Instance, x: number, z: number, d: number)
+	cylinder(parent, "Hay", d * 0.6, d, x, d * 0.3, z, rgb(235, 200, 100), Enum.Material.Fabric)
+	ball(parent, "HayTop", d * 0.9, x, d * 0.6, z, rgb(240, 210, 110), Enum.Material.Fabric)
+end
+
+local function well(parent: Instance, x: number, z: number)
+	cylinder(parent, "WellWall", 3, 7, x, 1.5, z, rgb(170, 165, 160), Enum.Material.Cobblestone)
+	cylinder(parent, "WellWater", 0.4, 5.6, x, 2.8, z, rgb(80, 170, 220), Enum.Material.Glass)
+	for _, s in { -1, 1 } do
+		part(parent, "WellPost", Vector3.new(0.6, 7, 0.6), at(x + s * 3, 5, z), rgb(110, 75, 50), Enum.Material.Wood)
+	end
+	for _, s in { -1, 1 } do
+		part(parent, "WellRoof", Vector3.new(8, 0.5, 4.4), at(x, 9.3, z + s * 1.6) * CFrame.Angles(s * math.rad(35), 0, 0), rgb(205, 85, 70), Enum.Material.Slate)
+	end
+	cylinder(parent, "Bucket", 1.4, 1.4, x, 4.2, z, rgb(150, 100, 60), Enum.Material.WoodPlanks)
+end
+
+local function signpost(parent: Instance, x: number, z: number, text: string, color: Color3)
+	cylinder(parent, "SignPole", 9, 0.6, x, 4.5, z, rgb(110, 75, 50), Enum.Material.Wood)
+	local board = part(parent, "SignBoard", Vector3.new(6, 1.6, 0.4), at(x, 8, z), rgb(200, 160, 110), Enum.Material.WoodPlanks)
+	label(board, text, 1.6, UDim2.fromOffset(220, 50), color)
+end
+
+-- Front-yard picket fence with a gate gap and two vegetable patches.
+local function yard(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
+	local base = CFrame.lookAt(Vector3.new(x, 0, z), Vector3.new(x, 0, z) + facing)
+	local function rel(u: number, y: number, v: number): CFrame
+		return base * CFrame.new(u, y, -v)
+	end
+	local white = rgb(250, 248, 240)
+	local front, half = 13, 10
+	for _, s in { -1, 1 } do
+		-- front rail either side of the gate, and the side rails
+		part(parent, "FenceRail", Vector3.new(8, 0.4, 0.3), rel(s * 6, 2, front), white, Enum.Material.WoodPlanks)
+		part(parent, "FenceRail", Vector3.new(0.3, 0.4, 7), rel(s * half, 2, front - 3.5), white, Enum.Material.WoodPlanks)
+		for i = 0, 3 do
+			part(parent, "Picket", Vector3.new(0.5, 3, 0.4), rel(s * (2.5 + i * 2.5), 1.5, front), white, Enum.Material.WoodPlanks)
+		end
+		part(parent, "Picket", Vector3.new(0.5, 3, 0.4), rel(s * half, 1.5, front - 3.5), white, Enum.Material.WoodPlanks)
+		-- vegetable patch
+		part(parent, "VegBed", Vector3.new(4, 0.5, 5), rel(s * 6, 0.25, front - 4), rgb(110, 75, 50), Enum.Material.Ground)
+		local crop = if (seed + s) % 3 == 0 then rgb(245, 140, 40) elseif (seed + s) % 3 == 1 then rgb(90, 180, 70) else rgb(220, 60, 70)
+		for k = 0, 2 do
+			local veg = part(parent, "Veg", Vector3.new(1.4, 1.4, 1.4), rel(s * 6, 1, front - 5.5 + k * 1.5), crop, Enum.Material.SmoothPlastic)
+			veg.Shape = Enum.PartType.Ball
+		end
+	end
+	-- stepping stones from the door to the gate
+	for i = 1, 3 do
+		cylinder(parent, "Stone", 0.25, 2.2, 0, 0, 0, rgb(185, 180, 170), Enum.Material.Slate).CFrame = rel((i % 2 - 0.5) * 0.6, 0.15, 6.5 + i * 2) * CFrame.Angles(0, 0, math.rad(90))
+	end
+end
+
+local function palm(parent: Instance, x: number, z: number, lean: Vector3, seed: number)
+	local model = Instance.new("Model")
+	model.Name = "Palm"
+	model.Parent = parent
+	local prev = Vector3.new(x, 0, z)
+	for i = 1, 6 do
+		local nxt = Vector3.new(x, 0, z) + lean * (0.35 * i * i) + Vector3.new(0, i * 3.6, 0)
+		segment(model, "Trunk", prev, nxt, 1.9 - i * 0.12, if i % 2 == 0 then rgb(150, 115, 80) else rgb(165, 128, 90), Enum.Material.Wood)
+		prev = nxt
+	end
+	for i = 1, 7 do
+		local a = i / 7 * math.pi * 2 + hash(seed + i)
+		local dir = Vector3.new(math.cos(a), -0.35, math.sin(a)).Unit
+		part(model, "Frond", Vector3.new(2, 0.3, 9), CFrame.lookAt(prev + dir * 4.2, prev + dir * 9), rgb(60, 165 + math.floor(hash(seed + i * 2) * 40), 70), Enum.Material.Grass, { CanCollide = false })
+	end
+	for i = 1, 3 do
+		ball(model, "Coconut", 1.2, prev.X + (i - 2) * 0.9, prev.Y - 0.9, prev.Z + ((i % 2) - 0.5) * 0.8, rgb(110, 80, 50), Enum.Material.Wood)
+	end
+end
+
+local function seaArch(parent: Instance, x: number, z: number, turn: number)
+	local model = Instance.new("Model")
+	model.Name = "SeaArch"
+	model.Parent = parent
+	local base = CFrame.new(x, 0, z) * CFrame.Angles(0, turn, 0)
+	local rock = rgb(160, 145, 130)
+	for _, s in { -1, 1 } do
+		local leg = part(model, "ArchLeg", Vector3.new(44, 14, 14), base * CFrame.new(s * 20, 12, 0) * CFrame.Angles(0, 0, math.rad(90)), rock, Enum.Material.Rock)
+		leg.Shape = Enum.PartType.Cylinder
+		ball(model, "ArchRock", 16, (base * CFrame.new(s * 22, 0, 2)).Position.X, -2, (base * CFrame.new(s * 22, 0, 2)).Position.Z, rock, Enum.Material.Rock)
+	end
+	part(model, "ArchTop", Vector3.new(58, 10, 15), base * CFrame.new(0, 37, 0), rock, Enum.Material.Rock)
+	part(model, "ArchGrass", Vector3.new(54, 1.5, 13), base * CFrame.new(0, 42.6, 0), rgb(110, 185, 85), Enum.Material.Grass)
+	tree(model, (base * CFrame.new(-12, 0, 0)).Position.X, (base * CFrame.new(-12, 0, 0)).Position.Z, 0.7, 501, 43)
+	tree(model, (base * CFrame.new(14, 0, 2)).Position.X, (base * CFrame.new(14, 0, 2)).Position.Z, 0.6, 502, 43)
+end
+
+local function seaStack(parent: Instance, x: number, z: number, h: number, seed: number)
+	cylinder(parent, "SeaStack", h + 10, 12 + hash(seed) * 6, x, h / 2 - 5, z, rgb(150, 138, 125), Enum.Material.Rock)
+	cylinder(parent, "SeaStackTop", 1.5, 11 + hash(seed) * 6, x, h + 0.5, z, rgb(110, 185, 85), Enum.Material.Grass)
+	ball(parent, "SeaStackRock", 9, x + 6, -1, z - 4, rgb(140, 128, 118), Enum.Material.Rock)
+end
+
+local function ruins(parent: Instance, x: number, y: number, z: number)
+	local marble = rgb(235, 230, 220)
+	for i = 0, 5 do
+		local a = i / 6 * math.pi * 2
+		local h = 4 + hash(i + 40) * 9
+		cylinder(parent, "Column", h, 1.8, x + math.cos(a) * 7, y + h / 2, z + math.sin(a) * 7, marble, Enum.Material.Marble)
+	end
+	part(parent, "Lintel", Vector3.new(10, 1.2, 2.2), at(x + 3.5, y + 13.6, z + 6.1) * CFrame.Angles(0, math.rad(-30), math.rad(4)), marble, Enum.Material.Marble)
+	segment(parent, "FallenColumn", Vector3.new(x - 6, y + 1, z - 4), Vector3.new(x + 2, y + 1, z - 8), 1.8, marble, Enum.Material.Marble)
+	local orb = ball(parent, "RuinOrb", 2.4, x, y + 3, z, rgb(140, 255, 210), Enum.Material.Neon)
+	glowLight(orb, 22, 1.2, rgb(140, 255, 210))
+end
+
+-- Landmark: an enormous blossom tree with hanging lanterns and drifting petals.
+local function elderTree(parent: Instance, x: number, y: number, z: number)
+	local model = Instance.new("Model")
+	model.Name = "ElderTree"
+	model.Parent = parent
+	local bark = rgb(120, 85, 65)
+	ball(model, "RootFlare", 16, x, y + 1, z, bark, Enum.Material.Wood)
+	local top = Vector3.new(x + 2, y + 34, z - 1)
+	segment(model, "Trunk", Vector3.new(x, y, z), top, 9, bark, Enum.Material.Wood)
+	local canopyColors = { rgb(255, 170, 205), rgb(255, 195, 220), rgb(250, 150, 195) }
+	ball(model, "Crown", 30, top.X, top.Y + 8, top.Z, canopyColors[1], Enum.Material.Grass)
+	for i = 1, 5 do
+		local a = i / 5 * math.pi * 2
+		local tip = top + Vector3.new(math.cos(a) * 18, 2 + hash(i + 60) * 8, math.sin(a) * 18)
+		segment(model, "Branch", top - Vector3.new(0, 6, 0), tip, 3.2, bark, Enum.Material.Wood)
+		ball(model, "Canopy", 18 + hash(i + 70) * 6, tip.X, tip.Y + 3, tip.Z, canopyColors[i % 3 + 1], Enum.Material.Grass)
+		-- hanging lantern under each canopy
+		local lx, lz = tip.X * 0.8 + top.X * 0.2, tip.Z * 0.8 + top.Z * 0.2
+		deco(part(model, "LanternCord", Vector3.new(0.15, 6, 0.15), at(lx, tip.Y - 6, lz), rgb(60, 50, 40)))
+		local lantern = deco(ball(model, "Lantern", 1.8, lx, tip.Y - 9.5, lz, if i % 2 == 0 then rgb(255, 210, 120) else rgb(255, 150, 200), Enum.Material.Neon))
+		glowLight(lantern, 16, 1, rgb(255, 200, 170))
+	end
+	local crown = model:FindFirstChild("Crown") :: BasePart
+	glowLight(crown, 40, 0.8, rgb(255, 170, 210))
+	emitter(crown, "Petals", {
+		Shape = Enum.ParticleEmitterShape.Sphere,
+		Color = ColorSequence.new(rgb(255, 190, 215), rgb(255, 150, 195)),
+		Size = NumberSequence.new(0.5),
+		Rate = 14,
+		Lifetime = NumberRange.new(6, 9),
+		Speed = NumberRange.new(1, 3),
+		Acceleration = Vector3.new(0.6, -1.4, 0.3),
+		Rotation = NumberRange.new(0, 360),
+		RotSpeed = NumberRange.new(-90, 90),
+		SpreadAngle = Vector2.new(180, 180),
+		LightEmission = 0.2,
+	})
+end
+
+local function balloon(parent: Instance, x: number, y: number, z: number, a: Color3, b: Color3)
+	local model = Instance.new("Model")
+	model.Name = "Balloon"
+	model.Parent = parent
+	local envelope = deco(ball(model, "Envelope", 20, x, y, z, a, Enum.Material.Fabric))
+	model.PrimaryPart = envelope
+	deco(cylinder(model, "Band", 4, 20.4, x, y, z, b, Enum.Material.Fabric))
+	deco(cylinder(model, "Band", 2, 17.4, x, y + 6, z, b, Enum.Material.Fabric))
+	deco(cylinder(model, "Skirt", 4, 7, x, y - 10.5, z, b, Enum.Material.Fabric))
+	deco(part(model, "Basket", Vector3.new(5, 3.5, 5), at(x, y - 19, z), rgb(170, 120, 70), Enum.Material.WoodPlanks))
+	for _, c in { { -2.2, -2.2 }, { 2.2, -2.2 }, { -2.2, 2.2 }, { 2.2, 2.2 } } do
+		deco(segment(model, "Rope", Vector3.new(x + c[1], y - 17.2, z + c[2]), Vector3.new(x + c[1] * 1.2, y - 12.4, z + c[2] * 1.2), 0.2, rgb(90, 75, 60)))
+	end
+	local flame = deco(ball(model, "Burner", 1.6, x, y - 14.5, z, rgb(255, 170, 60), Enum.Material.Neon))
+	glowLight(flame, 14, 1, rgb(255, 180, 90))
+	model:SetAttribute("Bob", "float")
+end
+
+local function buildDetails(scenery: Instance)
+	local details = Instance.new("Folder")
+	details.Name = "Details"
+	details.Parent = scenery
+
+	-- yards and paths for the village row (cottages at x = +-75 facing the avenue)
+	local seed = 0
+	for _, z in { -195, -145, 145, 195 } do
+		for _, side in { -1, 1 } do
+			seed += 1
+			yard(details, side * 75, z, Vector3.new(-side, 0, 0), seed)
+			path(details, Vector3.new(side * 62, 0, z), Vector3.new(side * 22, 0, z), 3.5)
+		end
+	end
+	yard(details, -160, -250, Vector3.new(0, 0, 1), 25)
+	yard(details, 160, -250, Vector3.new(0, 0, 1), 26)
+	-- shop fronts: path, barrels, crates and a bench
+	for _, s in { { -80, -95, 1 }, { 80, -95, -1 }, { -80, 120, 1 }, { 80, 120, -1 } } do
+		local x, z, d = s[1], s[2], s[3]
+		path(details, Vector3.new(x + d * 6, 0, z), Vector3.new(if x < 0 then -22 else 22, 0, z), 4)
+		barrel(details, x + d * 9, z - 9)
+		barrel(details, x + d * 9.5, z - 5.8)
+		crate(details, x + d * 9, 0, z + 8, 2.6, 0.3)
+		crate(details, x + d * 9.2, 2.6, z + 8.2, 2, 0.8)
+		bench(details, x + d * 15, z + 12, Vector3.new(d, 0, 0))
+	end
+	cart(details, -66, -118, math.rad(20), rgb(230, 60, 60))
+	cart(details, 66, 98, math.rad(-15), rgb(245, 150, 40))
+	-- north village square
+	well(details, -135, -262)
+	cart(details, 135, -264, math.rad(70), rgb(120, 200, 80))
+	bench(details, -125, -248, Vector3.new(0, 0, -1))
+	-- farm by the windmill
+	haystack(details, 90, 272, 6)
+	haystack(details, 96, 282, 4.5)
+	haystack(details, 132, 238, 5)
+	-- signposts
+	signpost(details, -30, -232, "Wishing Pond", rgb(160, 230, 255))
+	signpost(details, 30, 104, "Sky Garden", rgb(220, 200, 255))
+	signpost(details, -30, -78, "Seed Shop", rgb(200, 255, 200))
+
+	-- beach palms leaning out to sea
+	local palms = { { -252, -300, -1 }, { -254, -120, -1 }, { -252, 200, -1 }, { 252, -260, 1 }, { 254, -80, 1 }, { 252, 150, 1 }, { 253, 290, 1 } }
+	for i, pt in palms do
+		palm(details, pt[1], pt[2], Vector3.new(pt[3], 0, (hash(i) - 0.5) * 0.6).Unit, i)
+	end
+	for i, x in { -150, -40, 70, 180 } do
+		palm(details, x, -404, Vector3.new((hash(i + 9) - 0.5) * 0.6, 0, -1).Unit, i + 10)
+	end
+
+	-- sea features
+	local sea = Instance.new("Folder")
+	sea.Name = "SeaFeatures"
+	sea.Parent = scenery
+	seaArch(sea, 140, -490, math.rad(15))
+	seaStack(sea, -200, -470, 30, 1)
+	seaStack(sea, -240, -445, 18, 2)
+	seaStack(sea, 260, 420, 26, 3)
+	seaStack(sea, -150, 430, 22, 4)
+	ruins(sea, 310, 8, 230)
+
+	-- hot-air balloons drifting over the island (the client bobs them)
+	local balloons = Instance.new("Folder")
+	balloons.Name = "Balloons"
+	balloons.Parent = scenery
+	balloon(balloons, -150, 150, -120, rgb(255, 90, 110), rgb(255, 220, 80))
+	balloon(balloons, 190, 175, -40, rgb(80, 170, 255), rgb(255, 255, 255))
+	balloon(balloons, -80, 140, 170, rgb(150, 110, 240), rgb(130, 230, 200))
+	balloon(balloons, 110, 160, -260, rgb(255, 160, 60), rgb(255, 90, 110))
+	balloon(balloons, 260, 190, 260, rgb(110, 210, 110), rgb(255, 230, 120))
+end
+
 -- Terraced grassy hill: stacked, shrinking discs with a rocky skirt and a few trees on top.
-local function hill(parent: Instance, x: number, z: number, r: number, tiers: number, seed: number)
+local function hill(parent: Instance, x: number, z: number, r: number, tiers: number, seed: number, trees: boolean?): number
 	local model = Instance.new("Model")
 	model.Name = "Hill"
 	model.Parent = parent
@@ -977,7 +1262,7 @@ local function hill(parent: Instance, x: number, z: number, r: number, tiers: nu
 		y += h - 0.5
 		radius *= 0.72
 	end
-	for i = 1, 2 do
+	for i = 1, if trees == false then 0 else 2 do
 		local a = hash(seed + i * 13) * math.pi * 2
 		tree(model, x + math.cos(a) * radius * 0.5, z + math.sin(a) * radius * 0.5, 0.9 + hash(seed + i) * 0.4, seed * 7 + i, y)
 	end
@@ -1119,7 +1404,8 @@ local function buildLandscape(scenery: Instance)
 	-- terraced hills in the island's four empty corners (outside the shoreline tree ring)
 	hill(land, -205, -355, 34, 4, 1)
 	hill(land, 205, -355, 30, 4, 2)
-	hill(land, -210, 300, 30, 3, 3)
+	local elderBase = hill(land, -210, 300, 30, 3, 3, false)
+	elderTree(land, -210, elderBase, 300)
 	hill(land, 205, 305, 26, 3, 4)
 
 	-- town: two-storey shop houses beside the Plaza, more cottages at the north corners
@@ -1304,6 +1590,7 @@ local function buildScenery(map: Instance)
 		cloud(sky, c[1], c[2], c[3], c[4], i)
 	end
 	buildLandscape(scenery)
+	buildDetails(scenery)
 end
 
 ----------------------------------------------------------------------------------------------

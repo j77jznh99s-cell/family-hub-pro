@@ -648,14 +648,16 @@ task.spawn(function()
 		return
 	end
 	local spinners: { { model: Model, speed: number } } = {}
-	local bobbers: { { model: Model, base: CFrame, phase: number } } = {}
+	-- Bob = true: small crystals that bob and turn; Bob = "float": balloons that rise and sink slowly
+	local bobbers: { { model: Model, base: CFrame, phase: number, spin: boolean, height: number } } = {}
 	for _, d in scenery:GetDescendants() do
 		if d:IsA("Model") and d.PrimaryPart then
 			local speed = d:GetAttribute("SpinSpeed")
 			if typeof(speed) == "number" then
 				table.insert(spinners, { model = d, speed = math.rad(speed) })
 			elseif d:GetAttribute("Bob") then
-				table.insert(bobbers, { model = d, base = d:GetPivot(), phase = #bobbers * 1.7 })
+				local spin = d:GetAttribute("Bob") == true
+				table.insert(bobbers, { model = d, base = d:GetPivot(), phase = #bobbers * 1.7, spin = spin, height = if spin then 1.2 else 4 })
 			end
 		end
 	end
@@ -665,8 +667,10 @@ task.spawn(function()
 		end
 		local clock = os.clock()
 		for _, b in bobbers do
-			local offset = math.sin(clock * 1.2 + b.phase) * 1.2
-			b.model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, clock * 0.6 + b.phase, 0))
+			local speed = if b.spin then 1.2 else 0.35
+			local offset = math.sin(clock * speed + b.phase) * b.height
+			local turn = if b.spin then clock * 0.6 + b.phase else 0
+			b.model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, turn, 0))
 		end
 	end)
 end)
