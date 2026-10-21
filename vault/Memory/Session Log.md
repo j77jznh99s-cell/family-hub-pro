@@ -12,6 +12,7 @@ tags: [memory, log]
 **What was done**
 - `5d8fa89`: Ambience lighting module, weather tints the Atmosphere, scenery pass (cottages, lantern towers, windmill, festoons, beams, crystals, motes, waterfalls, floating islets, clouds, tree colours).
 - `544640a`: shop houses, more cottages, hills, bushes, boulders, lighthouse, castle keep, pier and boats, horizon mountains.
+- Detail pass (owner: "more"): yards, paths, props, well, signposts, palms, sea arch, ruins, giant Elder tree, hot-air balloons. Parts now 3528.
 - selene/rojo/lune clean; place rebuilt and baked; `docs/map-preview.png` refreshed.
 
 **Not verified**

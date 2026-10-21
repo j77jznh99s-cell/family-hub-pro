@@ -56,6 +56,7 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [ ] **market-researcher:** monthly trend refresh (not part of the 2026-09-26 ads-verification pass; still open)
 
 - [x] **roblox-engineer:** atmosphere + scenery upgrade, 2026-10-21 (`5d8fa89`, `544640a` on `claude/roblox-popular-game-trends-6u7sie`). Owner sent 2 reference screenshots (cosy village, floating islands, light beams) and asked for more vibrant effects, more buildings and more landscape; used for mood only, all designs original. New `src/shared/Ambience.luau` (Atmosphere, Bloom, ColorCorrection, SunRays, light DoF), `WeatherService` now tints the Atmosphere. `Map.Scenery`: 19 cottages/shop houses, 4 lantern towers, windmill + lighthouse (client-spun), castle keep, harbour pier + 3 boats, light beams, crystals, motes, pond mist, waterfalls, 11 floating islets, clouds, terraced hills, bushes, boulders, horizon mountains. Lint/build/bake clean, 1241 → 2886 parts, 63 PointLights, ~50 particle emitters. **Not yet seen in Studio**: previews were rough offline renders only.
+- [x] **roblox-engineer:** detail pass, 2026-10-21 (owner: "more"): yards, paths, market props, well, haystacks, signposts, palms, sea arch/stacks, ruins, giant Elder blossom tree, 5 hot-air balloons. 3528 parts. Not seen in Studio.
 - [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs
