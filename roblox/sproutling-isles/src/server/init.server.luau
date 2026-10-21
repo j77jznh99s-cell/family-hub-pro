@@ -35,6 +35,8 @@ local ForageService = require(script.ForageService)
 local InventoryService = require(script.InventoryService)
 local LootService = require(script.LootService)
 local DungeonService = require(script.DungeonService)
+local CompanionService = require(script.CompanionService)
+local TravelService = require(script.TravelService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
@@ -61,6 +63,8 @@ InventoryService.init(map) -- RPG step 4: bag, equip, potions, armour, shop prom
 BuffService.init() -- RPG step 5: meal buffs
 ForageService.init() -- RPG step 5: wild herb patches
 DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
+CompanionService.init() -- RPG step 6: Sproutling companions (P) and horses (V)
+TravelService.init() -- RPG step 6: airship and boat fast travel
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle

@@ -55,6 +55,7 @@ local function normalise(data)
 	data.armor = data.armor or 0
 	data.consumables = data.consumables or {}
 	data.materials = data.materials or {}
+	data.unlocks = data.unlocks or {}
 	return data
 end
 
@@ -73,6 +74,9 @@ function InventoryService.push(player: Player)
 	end
 	player:SetAttribute("Armor", data.armor)
 	player:SetAttribute("Potions", data.consumables.potion_health or 0)
+	for id, on in data.unlocks do
+		player:SetAttribute("Unlock_" .. id, on == true)
+	end
 	InventoryRemote:FireClient(player, {
 		bag = data.bag,
 		gear = data.gear,
@@ -171,7 +175,8 @@ end
 ----------------------------------------------------------------------------------------------
 -- actions
 
-local function nearShop(player: Player): string?
+-- The shop key the player opened and is still standing near, or nil.
+function InventoryService.nearShop(player: Player): string?
 	local shop = openShop[player]
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -230,7 +235,7 @@ local function onAction(player: Player, action: any, arg: any)
 			State.notify(session, "Ate " .. item.name .. (if item.blurb then " - " .. item.blurb else ""), "#9affc4")
 		end
 	elseif action == "cook" then
-		local key = nearShop(player)
+		local key = InventoryService.nearShop(player)
 		local shop = key and Shops.Catalog[key]
 		local recipe = if typeof(arg) == "string" then Recipes.get(arg) else nil
 		if not shop or not shop.cooking then
@@ -254,13 +259,15 @@ local function onAction(player: Player, action: any, arg: any)
 			end
 		end
 	elseif action == "buy" then
-		local key = nearShop(player)
+		local key = InventoryService.nearShop(player)
 		local shop = key and Shops.Catalog[key]
 		local item = if typeof(arg) == "string" then Shops.item(arg) else nil
 		if not shop or not item or not table.find(shop.items, item) then
 			State.notify(session, "Walk back to the shop to buy that.", "#ff9a9a")
 		elseif item.kind == "armor" and (item.tier or 0) <= data.armor then
 			State.notify(session, "You already wear armour that good.", "#d8d8d8")
+		elseif item.kind == "unlock" and data.unlocks[item.unlock or ""] then
+			State.notify(session, "You already have that.", "#d8d8d8")
 		elseif item.kind == "weapon" and #data.bag >= Shops.BagSize then
 			State.notify(session, "Your bag is full.", "#ff9a9a")
 		elseif not State.spendDew(session, item.price, "Shop:" .. item.id) then
@@ -274,10 +281,14 @@ local function onAction(player: Player, action: any, arg: any)
 			elseif item.kind == "consumable" then
 				data.consumables[item.id] = (data.consumables[item.id] or 0) + 1
 				State.notify(session, "Bought " .. item.name, "#9affc4")
+			elseif item.kind == "unlock" then
+				data.unlocks[item.unlock :: string] = true
+				player:SetAttribute("Unlock_" .. (item.unlock :: string), true)
+				State.notify(session, if item.unlock == "horse" then "Your horse is ready! Press V to ride." else "Your best Sproutling will fight beside you! Press P to call it.", "#ffd27a")
 			end
 		end
 	elseif action == "sellMaterials" then
-		if not nearShop(player) then
+		if not InventoryService.nearShop(player) then
 			State.notify(session, "Walk back to the shop to sell.", "#ff9a9a")
 		else
 			local total = 0

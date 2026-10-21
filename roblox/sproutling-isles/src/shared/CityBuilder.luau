@@ -1040,6 +1040,8 @@ local function fishingDocks(f: Instance, x0: number, x1: number, z0: number, z1:
 	local board = part(hut, "NameBoard", Vector3.new(12, 2, 0.4), rel(0, PAVE + 8.6, 8.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
 	sign(board, "Shipwright", GOLD)
 	hut:SetAttribute("Shop", "shipwright")
+	local wrightAnchor = part(hut, "ShopAnchor", Vector3.new(4, 4, 4), rel(-6, PAVE + 2.5, 11), WHITE, nil, { Transparency = 1, CanCollide = false })
+	wrightAnchor:SetAttribute("Shop", "shipwright")
 	-- finger piers with rowboats and a sloop
 	for k = 0, 3 do
 		local pz = z0 + 10 + k * (z1 - z0 - 20) / 3
@@ -1234,6 +1236,8 @@ local function airshipPort(city: Instance)
 	local board = part(hall, "NameBoard", Vector3.new(30, 3, 0.5), rel(0, 20, 20.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
 	sign(board, "Skyward Shipyard", GOLD)
 	hall:SetAttribute("Shop", "airships")
+	local yardAnchor = part(hall, "ShopAnchor", Vector3.new(4, 4, 4), rel(-12, 2.5, 23), WHITE, nil, { Transparency = 1, CanCollide = false })
+	yardAnchor:SetAttribute("Shop", "airships")
 	shop(f, -500, 620, 22, Vector3.new(-1, 0, 0), "The Cloud's Rest Inn", "inn", 2)
 	for _, p in f:GetChildren() do
 		if p:IsA("Model") and p.Name == "Shop" then

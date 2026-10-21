@@ -92,6 +92,7 @@ function DataService.defaultData()
 		bag = {}, -- weapons carried: { u = uid, b = base, r = rarity } (InventoryService)
 		armor = 0, -- worn armour tier, see Shared/Shops.Armor
 		consumables = {}, -- [itemId] = count (potions, meals)
+		unlocks = {}, -- [unlockId] = true: "companion" (Beast Tamer), "horse" (Stables)
 	}
 end
 

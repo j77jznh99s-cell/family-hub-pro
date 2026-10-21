@@ -3,6 +3,7 @@
 -- B (or the Bag button) opens the inventory: equipped gear, the weapon bag (equip / salvage),
 -- potions and meals (use), and materials. Shops open when you use a shop's prompt in the city:
 -- buy items and sell all your materials. H drinks a Healing Draught, J a Stamina Tonic.
+-- The airship and boat docks list fast-travel destinations. P calls your companion, V rides.
 -- The server sends a fresh snapshot after every change, so these screens only display it.
 
 local Players = game:GetService("Players")
@@ -13,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Loot = require(Shared:WaitForChild("Loot"))
 local Shops = require(Shared:WaitForChild("Shops"))
 local Recipes = require(Shared:WaitForChild("Recipes"))
+local Travel = require(Shared:WaitForChild("Travel"))
 
 local Inventory = {}
 
@@ -21,6 +23,8 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local InventoryRemote = remotes:WaitForChild("Inventory") :: RemoteEvent
 local ActionRemote = remotes:WaitForChild("InventoryAction") :: RemoteEvent
 local OpenShopRemote = remotes:WaitForChild("OpenShop") :: RemoteEvent
+local TravelRemote = remotes:WaitForChild("Travel") :: RemoteEvent
+local CompanionRemote = remotes:WaitForChild("Companion") :: RemoteEvent
 
 local FONT = Enum.Font.FredokaOne
 local TITLE = Enum.Font.Fantasy
@@ -265,6 +269,8 @@ local function describe(item: Shops.Item): (string, Color3)
 		return string.format("%s weapon, x%.2f damage", r.name, r.power), r.color
 	elseif item.kind == "armor" then
 		return string.format("Armour, blocks %d%% of damage", math.floor((item.reduce or 0) * 100)), Color3.fromRGB(190, 210, 255)
+	elseif item.kind == "unlock" then
+		return if item.unlock == "horse" then "Ride with V: much faster travel" else "Call with P: your best Sproutling fights beside you", Color3.fromRGB(255, 210, 140)
 	end
 	local parts = {}
 	if item.heal then
@@ -295,6 +301,22 @@ local function renderShop()
 	sellButton.Text = string.format("Sell all materials (+%d Dew)", value)
 	clear(shopList)
 	local nextOrder = #shop.items
+	if shop.travel then
+		local price = Travel.Prices[shop.travel] or 0
+		local j = 0
+		for _, dest in Travel.Destinations do
+			if dest.modes[shop.travel] then
+				j += 1
+				local r = make("Frame", { BackgroundColor3 = Color3.fromRGB(46, 58, 78), Size = UDim2.new(1, 0, 0, 44), LayoutOrder = nextOrder + j, Parent = shopList }, { corner(6) })
+				label(dest.name, UDim2.new(0.62, -8, 0, 24), UDim2.fromOffset(8, 10), Color3.fromRGB(190, 225, 255)).Parent = r
+				button(string.format("Go %d", price), UDim2.new(0.34, 0, 0, 32), UDim2.new(0.64, 0, 0, 6), Color3.fromRGB(60, 110, 170), function()
+					TravelRemote:FireServer(dest.id)
+					shopWin.Visible = false
+				end).Parent = r
+			end
+		end
+		nextOrder += j
+	end
 	if shop.cooking then
 		for j, recipe in Recipes.List do
 			local have = true
@@ -323,7 +345,8 @@ local function renderShop()
 		local r = make("Frame", { BackgroundColor3 = CARD, Size = UDim2.new(1, 0, 0, 52), LayoutOrder = i, Parent = shopList }, { corner(6) })
 		label(item.name, UDim2.new(0.62, -8, 0, 24), UDim2.fromOffset(8, 3), color).Parent = r
 		label(text, UDim2.new(0.62, -8, 0, 18), UDim2.fromOffset(8, 28), Color3.fromRGB(210, 200, 185)).Parent = r
-		local owned = item.kind == "armor" and (item.tier or 0) <= (snapshot.armor or 0)
+		local owned = (item.kind == "armor" and (item.tier or 0) <= (snapshot.armor or 0))
+			or (item.kind == "unlock" and player:GetAttribute("Unlock_" .. (item.unlock or "")) == true)
 		local b = button(if owned then "Owned" else string.format("Buy %d", item.price), UDim2.new(0.34, 0, 0, 34), UDim2.new(0.64, 0, 0, 9), if owned then Color3.fromRGB(80, 80, 80) else Color3.fromRGB(70, 140, 80), function()
 			if not owned then
 				ActionRemote:FireServer("buy", item.id)
@@ -367,8 +390,35 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		ActionRemote:FireServer("use", "potion_health")
 	elseif input.KeyCode == Enum.KeyCode.J then
 		ActionRemote:FireServer("use", "potion_stamina")
+	elseif input.KeyCode == Enum.KeyCode.P then
+		CompanionRemote:FireServer("pet")
+	elseif input.KeyCode == Enum.KeyCode.V then
+		CompanionRemote:FireServer("horse")
 	end
 end)
+
+-- Pet / Ride buttons (for phones), shown once bought
+local petButton = button("Pet (P)", UDim2.fromOffset(78, 40), UDim2.new(0.5, 242, 1, -182), Color3.fromRGB(70, 130, 80), function()
+	CompanionRemote:FireServer("pet")
+end)
+petButton.Parent = gui
+local rideButton = button("Ride (V)", UDim2.fromOffset(78, 40), UDim2.new(0.5, 242, 1, -136), Color3.fromRGB(130, 90, 50), function()
+	CompanionRemote:FireServer("horse")
+end)
+rideButton.Parent = gui
+local function updateUnlockButtons()
+	petButton.Visible = player:GetAttribute("Unlock_companion") == true
+	rideButton.Visible = player:GetAttribute("Unlock_horse") == true
+	petButton.Text = if player:GetAttribute("PetOut") then "Dismiss (P)" else "Pet (P)"
+	rideButton.Text = if player:GetAttribute("Mounted") then "Dismount" else "Ride (V)"
+end
+for _, attr in { "Unlock_companion", "Unlock_horse", "PetOut", "Mounted" } do
+	player:GetAttributeChangedSignal(attr):Connect(function()
+		updateUnlockButtons()
+		renderShop()
+	end)
+end
+updateUnlockButtons()
 
 -- active meal buffs, listed above the health bar
 local buffLabel = label("", UDim2.fromOffset(300, 18), UDim2.new(0.5, -150, 1, -158), Color3.fromRGB(255, 220, 150), FONT, Enum.TextXAlignment.Center)

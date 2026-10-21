@@ -69,6 +69,15 @@ the client code `src/client/Combat.luau`.
   say they open in a later update. Catalogue: `src/shared/Shops.luau`; server `InventoryService.luau`;
   client `src/client/Inventory.luau`.
 
+## Companions, horses and fast travel (RPG step 6)
+
+- **Beast Tamer** (250 Dew): press **P** to call your best Sproutling. It floats at your shoulder and
+  zaps the nearest monster every 1.8 s; its damage scales with that Sproutling's Dew/s.
+- **Stables** (800 Dew): press **V** to ride a horse (+14 walk speed). It can't enter the crypt.
+- **Skyward Shipyard** (airship port) and **Shipwright** (fishing docks) list destinations in their shop
+  window: 40 Dew by air, 25 by sea. Destinations: `src/shared/Travel.luau`.
+- Phones get Pet / Ride buttons once bought. Server: `CompanionService.luau`, `TravelService.luau`.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).

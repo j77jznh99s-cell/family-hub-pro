@@ -7,7 +7,8 @@ local Shops = {}
 
 export type Item = {
 	id: string,
-	kind: string, -- "weapon" | "armor" | "consumable"
+	kind: string, -- "weapon" | "armor" | "consumable" | "unlock"
+	unlock: string?, -- unlock: "companion" | "horse"
 	name: string,
 	price: number,
 	base: string?, -- weapon: sword | bow | staff
@@ -18,7 +19,8 @@ export type Item = {
 	stamina: number?, -- consumable
 }
 
-export type Shop = { name: string, greeting: string, items: { Item }, cooking: boolean? } -- cooking: has a kitchen (Shared/Recipes)
+-- cooking: has a kitchen (Shared/Recipes); travel: "air" | "sea" fast travel (Shared/Travel)
+export type Shop = { name: string, greeting: string, items: { Item }, cooking: boolean?, travel: string? }
 
 local function weapons(base: string, label: string): { Item }
 	return {
@@ -53,6 +55,18 @@ Shops.Catalog = {
 	tavern = { name = "The Gilded Tankard", greeting = "Sit, eat, rest your feet. Use the kitchen if you like.", items = { C.meal_stew, C.meal_pie }, cooking = true },
 	cook = { name = "Cook & Larder", greeting = "Bring me monster bits and herbs and we'll make a feast.", items = { C.meal_stew, C.meal_pie }, cooking = true },
 	inn = { name = "The Cloud's Rest Inn", greeting = "Welcome, sky-traveller. The stove's yours.", items = { C.meal_stew, C.potion_stamina }, cooking = true },
+	tamer = {
+		name = "Beast Tamer",
+		greeting = "Your Sproutlings could be more than garden friends.",
+		items = { { id = "unlock_companion", kind = "unlock", unlock = "companion", name = "Sproutling Bond (companion)", price = 250 } },
+	},
+	stable = {
+		name = "Stables",
+		greeting = "A good horse is worth its oats.",
+		items = { { id = "unlock_horse", kind = "unlock", unlock = "horse", name = "Riding Horse", price = 800 } },
+	},
+	airships = { name = "Skyward Shipyard", greeting = "Where to? The winds are fair.", items = {}, travel = "air" },
+	shipwright = { name = "Shipwright", greeting = "Hop aboard, we sail with the tide.", items = {}, travel = "sea" },
 	kitchen = { name = "Cooking Pot", greeting = "A bubbling pot over the fire.", items = {}, cooking = true },
 	herbalist = { name = "Herbalist", greeting = "Every herb has its use.", items = {}, cooking = true },
 } :: { [string]: Shop }
