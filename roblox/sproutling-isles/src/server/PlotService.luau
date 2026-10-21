@@ -14,6 +14,7 @@ local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
+local InventoryService = require(script.Parent.InventoryService)
 local WeatherService = require(script.Parent.WeatherService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
 local EventService = require(script.Parent.EventService)
@@ -320,6 +321,8 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		local species = Species.get(sprout.s) :: Species.Species
 		LeaderboardService.reportHatch(player, session, species)
 		WeatherService.registerHatch()
+		-- RPG: every hatch also yields a cooking herb (InventoryService.gardenHarvest)
+		InventoryService.gardenHarvest(player)
 		-- 7. Hollow Harvest hatch bonus: +1 Moonberry per hatch during the event, +5 if this hatch
 		-- came out Haunted (the event's own weather mutation, distinct from other mutations).
 		if Events.active(Events.Halloween2026, Events.now()) then

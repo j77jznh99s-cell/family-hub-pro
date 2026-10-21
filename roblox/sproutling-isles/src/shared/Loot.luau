@@ -36,6 +36,11 @@ Loot.Materials = {
 	wing = { id = "wing", name = "Gloom Wing", color = Color3.fromRGB(90, 70, 110), value = 4 },
 	skull = { id = "skull", name = "Warden's Skull", color = Color3.fromRGB(250, 245, 230), value = 120 },
 	heartwood = { id = "heartwood", name = "Ironbark Heartwood", color = Color3.fromRGB(150, 100, 60), value = 150 },
+	-- herbs: gathered from wild herb patches and harvested alongside garden hatches
+	sunleaf = { id = "sunleaf", name = "Sunleaf", color = Color3.fromRGB(240, 220, 90), value = 2 },
+	moonmint = { id = "moonmint", name = "Moonmint", color = Color3.fromRGB(150, 210, 255), value = 3 },
+	emberroot = { id = "emberroot", name = "Emberroot", color = Color3.fromRGB(240, 110, 60), value = 4 },
+	dewcap = { id = "dewcap", name = "Dewcap Mushroom", color = Color3.fromRGB(190, 140, 255), value = 12 },
 } :: { [string]: Material }
 
 -- What each enemy can drop: a material (with a chance), and a chance at a weapon with a minimum

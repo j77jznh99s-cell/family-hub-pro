@@ -30,6 +30,8 @@ local CodesService = require(script.CodesService)
 local TerrainBuilder = require(script.TerrainBuilder)
 local CombatService = require(script.CombatService)
 local EnemyService = require(script.EnemyService)
+local BuffService = require(script.BuffService)
+local ForageService = require(script.ForageService)
 local InventoryService = require(script.InventoryService)
 local LootService = require(script.LootService)
 local DungeonService = require(script.DungeonService)
@@ -56,6 +58,8 @@ CombatService.init() -- RPG step 2: weapons, stamina, dodge, abilities
 EnemyService.init() -- monsters at the hill camps + training dummies (camps wait for the terrain)
 LootService.init() -- RPG step 3: drops, pickups, gear upgrades
 InventoryService.init(map) -- RPG step 4: bag, equip, potions, armour, shop prompts
+BuffService.init() -- RPG step 5: meal buffs
+ForageService.init() -- RPG step 5: wild herb patches
 DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
 
 ----------------------------------------------------------------------------------------------

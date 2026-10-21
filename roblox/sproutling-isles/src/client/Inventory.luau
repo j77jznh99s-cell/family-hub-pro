@@ -12,6 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Loot = require(Shared:WaitForChild("Loot"))
 local Shops = require(Shared:WaitForChild("Shops"))
+local Recipes = require(Shared:WaitForChild("Recipes"))
 
 local Inventory = {}
 
@@ -169,7 +170,7 @@ local function renderInventory()
 	heading("Potions & meals")
 	local any = false
 	for id, count in snapshot.consumables do
-		local item = Shops.Consumables[id]
+		local item: any = Shops.Consumables[id] or Recipes.get(id)
 		if item and count > 0 then
 			any = true
 			order += 1
@@ -293,6 +294,30 @@ local function renderShop()
 	end
 	sellButton.Text = string.format("Sell all materials (+%d Dew)", value)
 	clear(shopList)
+	local nextOrder = #shop.items
+	if shop.cooking then
+		for j, recipe in Recipes.List do
+			local have = true
+			local parts = {}
+			for id, count in recipe.needs do
+				local m = Loot.Materials[id]
+				local owned = snapshot.materials[id] or 0
+				if owned < count then
+					have = false
+				end
+				table.insert(parts, string.format("%s %d/%d", if m then m.name else id, owned, count))
+			end
+			local r = make("Frame", { BackgroundColor3 = Color3.fromRGB(58, 48, 70), Size = UDim2.new(1, 0, 0, 70), LayoutOrder = nextOrder + j, Parent = shopList }, { corner(6) })
+			label(recipe.name, UDim2.new(0.62, -8, 0, 22), UDim2.fromOffset(8, 3), Color3.fromRGB(255, 210, 140)).Parent = r
+			label(recipe.blurb, UDim2.new(0.62, -8, 0, 18), UDim2.fromOffset(8, 26), Color3.fromRGB(210, 200, 185)).Parent = r
+			label(table.concat(parts, "  "), UDim2.new(0.62, -8, 0, 16), UDim2.fromOffset(8, 47), if have then Color3.fromRGB(150, 240, 160) else Color3.fromRGB(240, 150, 150)).Parent = r
+			button(if have then "Cook" else "Missing", UDim2.new(0.34, 0, 0, 34), UDim2.new(0.64, 0, 0, 18), if have then Color3.fromRGB(170, 100, 50) else Color3.fromRGB(80, 80, 80), function()
+				if have then
+					ActionRemote:FireServer("cook", recipe.id)
+				end
+			end).Parent = r
+		end
+	end
 	for i, item in shop.items do
 		local text, color = describe(item)
 		local r = make("Frame", { BackgroundColor3 = CARD, Size = UDim2.new(1, 0, 0, 52), LayoutOrder = i, Parent = shopList }, { corner(6) })
@@ -342,6 +367,28 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		ActionRemote:FireServer("use", "potion_health")
 	elseif input.KeyCode == Enum.KeyCode.J then
 		ActionRemote:FireServer("use", "potion_stamina")
+	end
+end)
+
+-- active meal buffs, listed above the health bar
+local buffLabel = label("", UDim2.fromOffset(300, 18), UDim2.new(0.5, -150, 1, -158), Color3.fromRGB(255, 220, 150), FONT, Enum.TextXAlignment.Center)
+buffLabel.Parent = gui
+task.spawn(function()
+	while true do
+		local now = workspace:GetServerTimeNow()
+		local seen = {}
+		local parts = {}
+		for _, kind in { "damage", "defense", "speed", "stamina", "regen" } do
+			local ends = player:GetAttribute("Buff_" .. kind)
+			local name = player:GetAttribute("BuffName_" .. kind)
+			if typeof(ends) == "number" and ends > now and typeof(name) == "string" and not seen[name] then
+				seen[name] = true
+				local left = math.floor(ends - now)
+				table.insert(parts, string.format("%s %d:%02d", name, left // 60, left % 60))
+			end
+		end
+		buffLabel.Text = table.concat(parts, "   ")
+		task.wait(0.5)
 	end
 end)
 

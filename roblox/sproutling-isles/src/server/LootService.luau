@@ -62,26 +62,13 @@ end
 ----------------------------------------------------------------------------------------------
 -- giving loot
 
-local function hex(c: Color3): string
-	return string.format("#%02x%02x%02x", math.floor(c.R * 255), math.floor(c.G * 255), math.floor(c.B * 255))
-end
-
 -- Weapons go into the bag (InventoryService), auto-equipping if better.
 function LootService.giveWeapon(player: Player, drop: Loot.WeaponDrop)
 	InventoryService.addWeapon(player, drop.base, drop.rarity)
 end
 
 function LootService.giveMaterial(player: Player, id: string, count: number)
-	local session = State.get(player)
-	local material = Loot.Materials[id]
-	if not session or not material then
-		return
-	end
-	session.data.materials = session.data.materials or {}
-	session.data.materials[id] = (session.data.materials[id] or 0) + count
-	player:SetAttribute("Mat_" .. id, session.data.materials[id])
-	State.notify(session, string.format("+%d %s", count, material.name), hex(material.color))
-	InventoryService.push(player)
+	InventoryService.addMaterial(player, id, count)
 end
 
 ----------------------------------------------------------------------------------------------

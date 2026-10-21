@@ -1688,6 +1688,22 @@ local function hamlet(parent: Instance, s: any, seed: number, stallName: string,
 	crate(model, sx - 6, 0, sz, 2.6, 0.5)
 	flowerBed(model, x + 10, z - 10, 6, 6, seed * 3)
 	flowerBed(model, x - 10, z + 10, 6, 6, seed * 3 + 1)
+	-- a cooking pot over a fire: a kitchen for Shared/Recipes (InventoryService finds ShopAnchor)
+	local px, pz = x - 9, z - 9
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		ball(model, "FireStone", 1.4, px + math.cos(a) * 2.6, 0.6, pz + math.sin(a) * 2.6, rgb(120, 115, 110), Enum.Material.Rock)
+	end
+	local embers = ball(model, "Embers", 2, px, 0.6, pz, rgb(255, 120, 40), Enum.Material.Neon)
+	glowLight(embers, 18, 1.4, rgb(255, 150, 70))
+	cylinder(model, "Pot", 2.6, 3.4, px, 2.6, pz, rgb(50, 48, 52), Enum.Material.Metal)
+	cylinder(model, "Stew", 0.3, 3, px, 3.9, pz, rgb(170, 110, 60), Enum.Material.SmoothPlastic)
+	for _, s2 in { -1, 1 } do
+		part(model, "PotPost", Vector3.new(0.4, 5, 0.4), at(px + s2 * 2.6, 2.5, pz), rgb(90, 65, 45), Enum.Material.Wood)
+	end
+	part(model, "PotBar", Vector3.new(5.6, 0.4, 0.4), at(px, 5, pz), rgb(90, 65, 45), Enum.Material.Wood)
+	local anchor = part(model, "ShopAnchor", Vector3.new(3, 3, 3), at(px, 2, pz + 3), rgb(255, 255, 255), nil, { Transparency = 1, CanCollide = false })
+	anchor:SetAttribute("Shop", "kitchen")
 	lift(model, s.h)
 end
 

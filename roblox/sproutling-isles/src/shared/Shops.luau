@@ -18,7 +18,7 @@ export type Item = {
 	stamina: number?, -- consumable
 }
 
-export type Shop = { name: string, greeting: string, items: { Item } }
+export type Shop = { name: string, greeting: string, items: { Item }, cooking: boolean? } -- cooking: has a kitchen (Shared/Recipes)
 
 local function weapons(base: string, label: string): { Item }
 	return {
@@ -50,9 +50,11 @@ Shops.Catalog = {
 	enchanter = { name = "Enchanter", greeting = "Staves humming with power.", items = weapons("staff", "Arcane Staff") },
 	armorer = { name = "Armorer", greeting = "Better to wear it than need it.", items = Shops.Armor },
 	alchemist = { name = "Alchemist", greeting = "Mind the fumes.", items = { C.potion_health, C.potion_stamina } },
-	tavern = { name = "The Gilded Tankard", greeting = "Sit, eat, rest your feet.", items = { C.meal_stew, C.meal_pie } },
-	cook = { name = "Cook & Larder", greeting = "Hungry? I can fix that.", items = { C.meal_stew, C.meal_pie } },
-	inn = { name = "The Cloud's Rest Inn", greeting = "Welcome, sky-traveller.", items = { C.meal_stew, C.potion_stamina } },
+	tavern = { name = "The Gilded Tankard", greeting = "Sit, eat, rest your feet. Use the kitchen if you like.", items = { C.meal_stew, C.meal_pie }, cooking = true },
+	cook = { name = "Cook & Larder", greeting = "Bring me monster bits and herbs and we'll make a feast.", items = { C.meal_stew, C.meal_pie }, cooking = true },
+	inn = { name = "The Cloud's Rest Inn", greeting = "Welcome, sky-traveller. The stove's yours.", items = { C.meal_stew, C.potion_stamina }, cooking = true },
+	kitchen = { name = "Cooking Pot", greeting = "A bubbling pot over the fire.", items = {}, cooking = true },
+	herbalist = { name = "Herbalist", greeting = "Every herb has its use.", items = {}, cooking = true },
 } :: { [string]: Shop }
 
 -- The catalogue for a Shop attribute value, or nil if that trade isn't open yet.

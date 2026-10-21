@@ -18,9 +18,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Loot = require(Shared.Loot)
 local Shops = require(Shared.Shops)
+local Recipes = require(Shared.Recipes)
 
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
+local BuffService = require(script.Parent.BuffService)
 
 local InventoryService = {}
 
@@ -81,12 +83,37 @@ function InventoryService.push(player: Player)
 	})
 end
 
--- Fraction of incoming damage blocked by worn armour (0..1).
+-- Fraction of incoming damage blocked by worn armour plus meal buffs (0..0.75).
 function InventoryService.armorReduction(player: Player): number
 	local session = State.get(player)
 	local tier = session and session.data.armor or 0
 	local armor = Shops.Armor[tier]
-	return armor and armor.reduce or 0
+	return math.min(0.75, (armor and armor.reduce or 0) + BuffService.get(player, "defense"))
+end
+
+-- Adds a material (herbs, monster parts) and tells the player.
+function InventoryService.addMaterial(player: Player, id: string, count: number)
+	local session = State.get(player)
+	local m = Loot.Materials[id]
+	if not session or not m then
+		return
+	end
+	local data = normalise(session.data)
+	data.materials[id] = (data.materials[id] or 0) + count
+	player:SetAttribute("Mat_" .. id, data.materials[id])
+	State.notify(session, string.format("+%d %s", count, m.name), hex(m.color))
+	InventoryService.push(player)
+end
+
+-- Garden bonus: every hatch on your plot also yields a herb for cooking.
+function InventoryService.gardenHarvest(player: Player)
+	local roll = math.random()
+	for _, h in Recipes.GardenHerbs do
+		if roll < h.chance then
+			InventoryService.addMaterial(player, h.id, 1)
+			return
+		end
+	end
 end
 
 function InventoryService.setStaminaHandler(fn: (Player, number) -> ())
@@ -185,7 +212,8 @@ local function onAction(player: Player, action: any, arg: any)
 			end
 		end
 	elseif action == "use" then
-		local item = if typeof(arg) == "string" then Shops.Consumables[arg] else nil
+		-- shop consumables and cooked meals share the consumables counter
+		local item: any = if typeof(arg) == "string" then (Shops.Consumables[arg] or Recipes.get(arg)) else nil
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		if item and humanoid and humanoid.Health > 0 and (data.consumables[arg] or 0) > 0 then
@@ -196,7 +224,34 @@ local function onAction(player: Player, action: any, arg: any)
 			if item.stamina and staminaHandler then
 				staminaHandler(player, item.stamina)
 			end
-			State.notify(session, "Used " .. item.name, "#9affc4")
+			if item.buff then
+				BuffService.apply(player, item.buff, item.duration or 60, item.name)
+			end
+			State.notify(session, "Ate " .. item.name .. (if item.blurb then " - " .. item.blurb else ""), "#9affc4")
+		end
+	elseif action == "cook" then
+		local key = nearShop(player)
+		local shop = key and Shops.Catalog[key]
+		local recipe = if typeof(arg) == "string" then Recipes.get(arg) else nil
+		if not shop or not shop.cooking then
+			State.notify(session, "You need a kitchen to cook.", "#ff9a9a")
+		elseif recipe then
+			local missing = false
+			for id, count in recipe.needs do
+				if (data.materials[id] or 0) < count then
+					missing = true
+				end
+			end
+			if missing then
+				State.notify(session, "You don't have the ingredients for that.", "#ff9a9a")
+			else
+				for id, count in recipe.needs do
+					data.materials[id] -= count
+					player:SetAttribute("Mat_" .. id, data.materials[id])
+				end
+				data.consumables[recipe.id] = (data.consumables[recipe.id] or 0) + 1
+				State.notify(session, "You cooked " .. recipe.name .. "! Eat it from your bag (B).", "#ffd27a")
+			end
 		end
 	elseif action == "buy" then
 		local key = nearShop(player)
@@ -263,17 +318,14 @@ function InventoryService.init(map: Instance)
 		openShop[player] = nil
 	end)
 
-	-- a prompt at every shop counter in the city (and the airship port inn)
-	local city = map:FindFirstChild("City")
-	if not city then
-		return
-	end
-	for _, d in city:GetDescendants() do
+	-- a prompt at every shop counter (city, airship port inn, hamlet cooking pots)
+	for _, d in map:GetDescendants() do
 		if d:IsA("BasePart") and d.Name == "ShopAnchor" then
 			local id = d:GetAttribute("Shop")
 			if typeof(id) == "string" then
 				local shop, key = Shops.get(id)
-				local prompt = Prompts.create(d, if shop then "Browse" else "Closed", if shop then shop.name else "Shop", 0)
+				local action = if not shop then "Closed" elseif key == "kitchen" then "Cook" else "Browse"
+				local prompt = Prompts.create(d, action, if shop then shop.name else "Shop", 0)
 				prompt.MaxActivationDistance = 12
 				prompt.Triggered:Connect(function(player)
 					local session = State.get(player)

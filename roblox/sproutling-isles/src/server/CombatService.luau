@@ -15,6 +15,7 @@ local Combat = require(ReplicatedStorage:WaitForChild("Shared").Combat)
 local State = require(script.Parent.State)
 local LootService = require(script.Parent.LootService)
 local InventoryService = require(script.Parent.InventoryService)
+local BuffService = require(script.Parent.BuffService)
 
 local CombatService = {}
 
@@ -252,7 +253,7 @@ local function onAttack(player: Player, aim: any)
 	end
 	f.nextAttack = t + weapon.cooldown
 	local dir = aimFrom(root, aim)
-	local damage = weapon.damage * LootService.power(player, weapon.id)
+	local damage = weapon.damage * LootService.power(player, weapon.id) * BuffService.get(player, "damage")
 	if weapon.kind == "melee" then
 		meleeAttack(player, root, weapon, dir, damage)
 	else
@@ -299,12 +300,12 @@ local function onAbility(player: Player, id: any, aim: any)
 			local offset = enemy.root.Position - root.Position
 			local flat = Vector3.new(offset.X, 0, offset.Z)
 			if flat.Magnitude <= radius + enemy.radius then
-				hitEnemy(player, enemy, (ability.damage or 20) * LootService.power(player, "sword"), if flat.Magnitude > 0.01 then flat.Unit else dir, 40)
+				hitEnemy(player, enemy, (ability.damage or 20) * LootService.power(player, "sword") * BuffService.get(player, "damage"), if flat.Magnitude > 0.01 then flat.Unit else dir, 40)
 			end
 		end
 		CombatService.fx("whirl", { pos = root.Position, radius = radius })
 	elseif ability.id == "firebolt" then
-		launch(player, root, dir, "firebolt", ability.speed or 100, ability.range or 120, 2.5, (ability.damage or 30) * LootService.power(player, "staff"), 30, ability.radius)
+		launch(player, root, dir, "firebolt", ability.speed or 100, ability.range or 120, 2.5, (ability.damage or 30) * LootService.power(player, "staff") * BuffService.get(player, "damage"), 30, ability.radius)
 	elseif ability.id == "secondwind" then
 		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + (ability.heal or 30))
 		f.stamina = Combat.Player.maxStamina
@@ -477,7 +478,7 @@ function CombatService.init()
 		for player, f in fighters do
 			if f.stamina < Combat.Player.maxStamina and t - f.spentAt > Combat.Player.staminaRegenDelay then
 				local before = math.floor(f.stamina)
-				f.stamina = math.min(Combat.Player.maxStamina, f.stamina + Combat.Player.staminaRegen * dt)
+				f.stamina = math.min(Combat.Player.maxStamina, f.stamina + Combat.Player.staminaRegen * BuffService.get(player, "stamina") * dt)
 				if math.floor(f.stamina) ~= before then
 					player:SetAttribute("Stamina", math.floor(f.stamina))
 				end
