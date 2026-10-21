@@ -27,6 +27,7 @@ local MonetizationService = require(script.MonetizationService)
 local LeaderboardService = require(script.LeaderboardService)
 local EventService = require(script.EventService)
 local CodesService = require(script.CodesService)
+local TerrainBuilder = require(script.TerrainBuilder)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
@@ -41,6 +42,7 @@ MonetizationService.init()
 LeaderboardService.init(map)
 EventService.init(map) -- after WeatherService.init so the Fog scheduler's onStart/onStop hooks are live
 CodesService.init() -- Week 5 live-ops: the in-world Codes box (client HUD), see CodesService.luau
+task.spawn(TerrainBuilder.build, map) -- hills, lagoon and sea around the island (cosmetic)
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle

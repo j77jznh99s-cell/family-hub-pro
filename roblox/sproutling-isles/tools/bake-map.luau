@@ -13,6 +13,7 @@ local game = roblox.deserializePlace(fs.readFile(path))
 local workspace = game:GetService("Workspace")
 
 MapBuilder.useApi(roblox)
+MapBuilder.useLandscape(require("../src/shared/Landscape"))
 local map = MapBuilder.Build(workspace)
 
 -- Bake the lighting look too, so edit mode in Studio matches play mode.
