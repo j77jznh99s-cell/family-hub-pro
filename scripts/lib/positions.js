@@ -84,3 +84,30 @@ export function diffPositions(previousSnapshot, currentPositions) {
 
   return { alerts, snapshot };
 }
+
+/** Consecutive failed runs (one per minute under cron) before the owner is told. */
+export const FAILURE_ALERT_AFTER = 3;
+
+/**
+ * Track consecutive position-check failures so a long outage or bad data
+ * sends ONE Telegram alert instead of none (cron only logs) or one a minute.
+ * Returns { count, alert }: the new count to save and the text to send, or
+ * null. Alerts once when the count reaches FAILURE_ALERT_AFTER, and once
+ * more when a run succeeds after that.
+ */
+export function failureStep(previousCount, failed, errorMessage = "") {
+  const prev = Number.isInteger(previousCount) && previousCount > 0 ? previousCount : 0;
+  if (!failed) {
+    const alert =
+      prev >= FAILURE_ALERT_AFTER
+        ? `position-check is working again after ${prev} failed runs. Check positions: changes during the outage were not alerted.`
+        : null;
+    return { count: 0, alert };
+  }
+  const count = prev + 1;
+  const alert =
+    count === FAILURE_ALERT_AFTER
+      ? `position-check has failed ${count} runs in a row, so positions are NOT being monitored. Last error: ${errorMessage}`
+      : null;
+  return { count, alert };
+}

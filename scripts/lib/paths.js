@@ -24,6 +24,7 @@ export const FUNDING_LOG = path.join(LOG_DIR, "funding.log");
 // memory/ schema, so it lives in its own hidden directory).
 export const STATE_DIR = path.join(BOT_DIR, "scripts", ".state");
 export const POSITION_SNAPSHOT_FILE = path.join(STATE_DIR, "positions.json");
+export const POSITION_FAILURES_FILE = path.join(STATE_DIR, "position_failures.json");
 export const TELEGRAM_OFFSET_FILE = path.join(STATE_DIR, "telegram_offset.json");
 
 /** Pairs traded by STRATEGY.md. Keep this in sync with that file's "Pairs" line. */

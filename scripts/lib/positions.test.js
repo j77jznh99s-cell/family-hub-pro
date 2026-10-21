@@ -1,6 +1,43 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { diffPositions, normaliseSnapshot, positionKey } from "./positions.js";
+import {
+  diffPositions,
+  failureStep,
+  FAILURE_ALERT_AFTER,
+  normaliseSnapshot,
+  positionKey,
+} from "./positions.js";
+
+describe("failureStep", () => {
+  it("alerts exactly once when failures reach the threshold, then once on recovery", () => {
+    let count = 0;
+    const alerts = [];
+    for (let i = 0; i < FAILURE_ALERT_AFTER + 5; i++) {
+      const step = failureStep(count, true, "HTTP 503");
+      count = step.count;
+      if (step.alert) alerts.push(step.alert);
+    }
+    assert.equal(count, FAILURE_ALERT_AFTER + 5);
+    assert.equal(alerts.length, 1);
+    assert.match(alerts[0], /NOT being monitored.*HTTP 503/);
+
+    const ok = failureStep(count, false);
+    assert.equal(ok.count, 0);
+    assert.match(ok.alert, /working again after 8 failed runs/);
+    assert.deepEqual(failureStep(0, false), { count: 0, alert: null });
+  });
+
+  it("stays quiet for short blips below the threshold", () => {
+    assert.deepEqual(failureStep(0, true, "x"), { count: 1, alert: null });
+    assert.deepEqual(failureStep(FAILURE_ALERT_AFTER - 1, false), { count: 0, alert: null });
+  });
+
+  it("treats a missing or corrupt stored count as 0", () => {
+    for (const bad of [undefined, null, -2, 1.5, "3", NaN]) {
+      assert.equal(failureStep(bad, true).count, 1);
+    }
+  });
+});
 
 function pos(symbol, side, extra = {}) {
   return {
