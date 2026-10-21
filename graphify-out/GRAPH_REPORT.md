@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-21)
 
 ## Corpus Check
-- 87 files · ~92,414 words
+- 87 files · ~92,698 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 781 nodes · 1121 edges · 69 communities (66 shown, 3 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.9)
+- 782 nodes · 1124 edges · 69 communities (66 shown, 3 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 126 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9451e091`
+- Built from commit: `09f04572`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -87,7 +87,7 @@
 - Decisions
 
 ## God Nodes (most connected - your core abstractions)
-1. `main()` - 59 edges
+1. `main()` - 60 edges
 2. `Session Log` - 39 edges
 3. `Morning Summary` - 27 edges
 4. `query()` - 15 edges
@@ -277,8 +277,8 @@ Cohesion: 0.25
 Nodes (5): { createCheckoutSession }, db, express, router, { STRIPE_SUCCESS_URL, STRIPE_CANCEL_URL }
 
 ### Community 37 - "3. Analytics event spec"
-Cohesion: 0.25
-Nodes (8): start(), 3. Analytics event spec, 3a. Onboarding funnel (`LogOnboardingFunnelStepEvent`), once per player, 3b. Recurring funnels (`LogFunnelStepEvent`), 3c. Economy events (`LogEconomyEvent`), 3d. Custom events (`LogCustomEvent`), Acceptance (for qa-tester), Build notes
+Cohesion: 0.22
+Nodes (9): start(), 2026-10-21 (late): Sproutling Isles world reshape, 3. Analytics event spec, 3a. Onboarding funnel (`LogOnboardingFunnelStepEvent`), once per player, 3b. Recurring funnels (`LogFunnelStepEvent`), 3c. Economy events (`LogEconomyEvent`), 3d. Custom events (`LogCustomEvent`), Acceptance (for qa-tester) (+1 more)
 
 ### Community 38 - "config.js"
 Cohesion: 0.29
@@ -404,17 +404,17 @@ Nodes (9): Transcript-based scoring + captions: off (default) or Whisper, openai
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `Morning Summary`, `Decisions`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+- **Why does `start()` connect `3. Analytics event spec` to `server.js`?**
   _High betweenness centrality (0.335) - this node is a cross-community bridge._
-- **Are the 55 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
-  _`main()` has 55 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 56 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
+  _`main()` has 56 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `dotenv` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `main` be split into smaller, more focused modules?**
   _Cohesion score 0.06648936170212766 - nodes in this community are weakly interconnected._
-- **Why does `Sproutling Isles: Launch & Live Ops` connect `Sproutling Isles: Launch & Live Ops` to `Session Log.md`, `6. Marketing`, `3. Analytics event spec`, `1. Pre-launch checklist`, `5. Week 1–8 live-ops calendar`, `4. Rewarded video ads plan`?**
-  _High betweenness centrality (0.178) - this node is a cross-community bridge._
+- **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
+  _High betweenness centrality (0.283) - this node is a cross-community bridge._
 - **Should `upload.js` be split into smaller, more focused modules?**
   _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
-- **Why does `3. Analytics event spec` connect `3. Analytics event spec` to `Sproutling Isles: Launch & Live Ops`?**
-  _High betweenness centrality (0.128) - this node is a cross-community bridge._
+- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Morning Summary`, `Decisions`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+  _High betweenness centrality (0.214) - this node is a cross-community bridge._
