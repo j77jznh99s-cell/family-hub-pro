@@ -1,0 +1,296 @@
+-- Inventory and shops.
+--
+-- Data (saved with the player):
+--   data.bag         = { { u = uid, b = base, r = rarity } }   weapons you carry (Shops.BagSize max)
+--   data.gear[base]  = { r = rarity, u = uid? }                 equipped weapon per type (r = 1 is
+--                                                               the starter weapon, never in the bag)
+--   data.armor       = tier (0 = none, see Shops.Armor)
+--   data.consumables = { [itemId] = count }
+--   data.materials   = { [materialId] = count }
+--
+-- The client gets a full snapshot through the Inventory remote whenever something changes and
+-- asks for changes through InventoryAction. Shops open from a ProximityPrompt on each city
+-- ShopAnchor; buying and selling only work while standing near the shop you opened.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Loot = require(Shared.Loot)
+local Shops = require(Shared.Shops)
+
+local State = require(script.Parent.State)
+local Prompts = require(script.Parent.Prompts)
+
+local InventoryService = {}
+
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local function remote(name: string): RemoteEvent
+	local event = Instance.new("RemoteEvent")
+	event.Name = name
+	event.Parent = remotes
+	return event
+end
+local InventoryRemote = remote("Inventory") -- server -> client: (snapshot)
+local ActionRemote = remote("InventoryAction") -- client -> server: (action, arg)
+local OpenShopRemote = remote("OpenShop") -- server -> client: (shopKey, displayName, greeting)
+
+local SHOP_RANGE = 22
+local openShop: { [Player]: { key: string, pos: Vector3 } } = {}
+local staminaHandler: ((Player, number) -> ())? = nil
+
+----------------------------------------------------------------------------------------------
+-- data
+
+local function normalise(data)
+	data.bag = data.bag or {}
+	data.gear = data.gear or {}
+	for _, id in Loot.WeaponIds do
+		if type(data.gear[id]) ~= "table" then
+			data.gear[id] = { r = 1 }
+		end
+	end
+	data.armor = data.armor or 0
+	data.consumables = data.consumables or {}
+	data.materials = data.materials or {}
+	return data
+end
+
+local function hex(c: Color3): string
+	return string.format("#%02x%02x%02x", math.floor(c.R * 255), math.floor(c.G * 255), math.floor(c.B * 255))
+end
+
+function InventoryService.push(player: Player)
+	local session = State.get(player)
+	if not session then
+		return
+	end
+	local data = normalise(session.data)
+	for _, id in Loot.WeaponIds do
+		player:SetAttribute("Gear_" .. id, data.gear[id].r)
+	end
+	player:SetAttribute("Armor", data.armor)
+	player:SetAttribute("Potions", data.consumables.potion_health or 0)
+	InventoryRemote:FireClient(player, {
+		bag = data.bag,
+		gear = data.gear,
+		armor = data.armor,
+		consumables = data.consumables,
+		materials = data.materials,
+		dew = data.dew,
+	})
+end
+
+-- Fraction of incoming damage blocked by worn armour (0..1).
+function InventoryService.armorReduction(player: Player): number
+	local session = State.get(player)
+	local tier = session and session.data.armor or 0
+	local armor = Shops.Armor[tier]
+	return armor and armor.reduce or 0
+end
+
+function InventoryService.setStaminaHandler(fn: (Player, number) -> ())
+	staminaHandler = fn
+end
+
+----------------------------------------------------------------------------------------------
+-- weapons
+
+local function equip(player: Player, data, item)
+	data.gear[item.b] = { r = item.r, u = item.u }
+	player:SetAttribute("Gear_" .. item.b, item.r)
+end
+
+-- Adds a weapon (from a drop, chest or shop). Auto-equips it if it beats what you're using.
+function InventoryService.addWeapon(player: Player, base: string, rarity: number, quiet: boolean?)
+	local session = State.get(player)
+	if not session then
+		return
+	end
+	local data = normalise(session.data)
+	local r = Loot.Rarities[rarity]
+	local name = Loot.weaponName(base, rarity)
+	if #data.bag >= Shops.BagSize then
+		-- full bag: salvage the incoming item instead of losing something you chose to keep
+		State.addDew(session, r.salvage, "Salvage:" .. base)
+		State.notify(session, string.format("Bag full! Salvaged %s for %d Dew", name, r.salvage), "#d8d8d8")
+		InventoryService.push(player)
+		return
+	end
+	local item = { u = State.newUid(), b = base, r = rarity }
+	table.insert(data.bag, item)
+	if rarity > data.gear[base].r then
+		equip(player, data, item)
+		State.notify(session, string.format("Equipped %s (%s, x%.2f damage)", name, r.name, r.power), hex(r.color))
+	elseif not quiet then
+		State.notify(session, string.format("%s added to your bag", name), hex(r.color))
+	end
+	InventoryService.push(player)
+end
+
+local function findItem(data, uid: any): (any, number?)
+	for i, item in data.bag do
+		if item.u == uid then
+			return item, i
+		end
+	end
+	return nil, nil
+end
+
+local function isEquipped(data, item): boolean
+	return data.gear[item.b] and data.gear[item.b].u == item.u
+end
+
+----------------------------------------------------------------------------------------------
+-- actions
+
+local function nearShop(player: Player): string?
+	local shop = openShop[player]
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if shop and root and (root.Position - shop.pos).Magnitude <= SHOP_RANGE then
+		return shop.key
+	end
+	return nil
+end
+
+local function onAction(player: Player, action: any, arg: any)
+	local session = State.get(player)
+	if not session or typeof(action) ~= "string" then
+		return
+	end
+	local data = normalise(session.data)
+	if action == "equip" then
+		local item = findItem(data, arg)
+		if item then
+			equip(player, data, item)
+			State.notify(session, "Equipped " .. Loot.weaponName(item.b, item.r), hex(Loot.Rarities[item.r].color))
+		end
+	elseif action == "unequip" then
+		-- back to the starter weapon of that type
+		if typeof(arg) == "string" and data.gear[arg] then
+			data.gear[arg] = { r = 1 }
+			player:SetAttribute("Gear_" .. arg, 1)
+		end
+	elseif action == "salvage" then
+		local item, index = findItem(data, arg)
+		if item and index then
+			if isEquipped(data, item) then
+				State.notify(session, "Unequip it first.", "#ff9a9a")
+			else
+				table.remove(data.bag, index)
+				local r = Loot.Rarities[item.r]
+				State.addDew(session, r.salvage, "Salvage:" .. item.b)
+				State.notify(session, string.format("Salvaged for %d Dew", r.salvage), "#d8d8d8")
+			end
+		end
+	elseif action == "use" then
+		local item = if typeof(arg) == "string" then Shops.Consumables[arg] else nil
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if item and humanoid and humanoid.Health > 0 and (data.consumables[arg] or 0) > 0 then
+			data.consumables[arg] -= 1
+			if item.heal then
+				humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + item.heal)
+			end
+			if item.stamina and staminaHandler then
+				staminaHandler(player, item.stamina)
+			end
+			State.notify(session, "Used " .. item.name, "#9affc4")
+		end
+	elseif action == "buy" then
+		local key = nearShop(player)
+		local shop = key and Shops.Catalog[key]
+		local item = if typeof(arg) == "string" then Shops.item(arg) else nil
+		if not shop or not item or not table.find(shop.items, item) then
+			State.notify(session, "Walk back to the shop to buy that.", "#ff9a9a")
+		elseif item.kind == "armor" and (item.tier or 0) <= data.armor then
+			State.notify(session, "You already wear armour that good.", "#d8d8d8")
+		elseif item.kind == "weapon" and #data.bag >= Shops.BagSize then
+			State.notify(session, "Your bag is full.", "#ff9a9a")
+		elseif not State.spendDew(session, item.price, "Shop:" .. item.id) then
+			State.notify(session, string.format("You need %d Dew for that.", item.price), "#ff9a9a")
+		else
+			if item.kind == "weapon" then
+				InventoryService.addWeapon(player, item.base :: string, item.rarity :: number)
+			elseif item.kind == "armor" then
+				data.armor = item.tier :: number
+				State.notify(session, "You put on the " .. item.name .. ".", "#c8d8ff")
+			elseif item.kind == "consumable" then
+				data.consumables[item.id] = (data.consumables[item.id] or 0) + 1
+				State.notify(session, "Bought " .. item.name, "#9affc4")
+			end
+		end
+	elseif action == "sellMaterials" then
+		if not nearShop(player) then
+			State.notify(session, "Walk back to the shop to sell.", "#ff9a9a")
+		else
+			local total = 0
+			for id, count in data.materials do
+				local m = Loot.Materials[id]
+				if m and count > 0 then
+					total += m.value * count
+					data.materials[id] = 0
+					player:SetAttribute("Mat_" .. id, 0)
+				end
+			end
+			if total > 0 then
+				State.addDew(session, total, "SellMaterials")
+				State.notify(session, string.format("Sold your materials for %d Dew", total), "#ffd27a")
+			else
+				State.notify(session, "You have no materials to sell.", "#d8d8d8")
+			end
+		end
+	end
+	-- every action (including "refresh") ends with a fresh snapshot
+	InventoryService.push(player)
+end
+
+----------------------------------------------------------------------------------------------
+
+function InventoryService.init(map: Instance)
+	ActionRemote.OnServerEvent:Connect(onAction)
+	Players.PlayerAdded:Connect(function(player)
+		for _ = 1, 40 do
+			if State.get(player) then
+				break
+			end
+			task.wait(0.25)
+		end
+		InventoryService.push(player)
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		openShop[player] = nil
+	end)
+
+	-- a prompt at every shop counter in the city (and the airship port inn)
+	local city = map:FindFirstChild("City")
+	if not city then
+		return
+	end
+	for _, d in city:GetDescendants() do
+		if d:IsA("BasePart") and d.Name == "ShopAnchor" then
+			local id = d:GetAttribute("Shop")
+			if typeof(id) == "string" then
+				local shop, key = Shops.get(id)
+				local prompt = Prompts.create(d, if shop then "Browse" else "Closed", if shop then shop.name else "Shop", 0)
+				prompt.MaxActivationDistance = 12
+				prompt.Triggered:Connect(function(player)
+					local session = State.get(player)
+					if not session then
+						return
+					end
+					if not shop then
+						State.notify(session, "This trade opens in a later update.", "#d8d8d8")
+						return
+					end
+					openShop[player] = { key = key, pos = d.CFrame.Position }
+					InventoryService.push(player)
+					OpenShopRemote:FireClient(player, key, shop.name, shop.greeting)
+				end)
+			end
+		end
+	end
+end
+
+return InventoryService

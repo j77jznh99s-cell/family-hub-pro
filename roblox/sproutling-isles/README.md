@@ -59,6 +59,16 @@ the client code `src/client/Combat.luau`.
   salvaged for Dew. Code: `src/shared/Loot.luau`, `DungeonBuilder.luau`, `src/server/LootService.luau`,
   `DungeonService.luau`.
 
+## Inventory and shops (RPG step 4)
+
+- **B** (or the Bag button) opens the inventory: equipped weapons and armour, the weapon bag (equip,
+  salvage), potions and meals (use), materials. **H** drinks a Healing Draught, **J** a Stamina Tonic.
+- Walk up to a shop in the city and press its prompt: Blacksmith (swords), Fletcher (bows), Enchanter
+  (staffs), Armorer (three armour tiers that block 8/16/25% of damage), Alchemist (potions), the
+  tavern, Cook and the airship-port inn (meals). Every open shop buys your materials. Other trades
+  say they open in a later update. Catalogue: `src/shared/Shops.luau`; server `InventoryService.luau`;
+  client `src/client/Inventory.luau`.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).

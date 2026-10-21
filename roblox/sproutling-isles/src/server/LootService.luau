@@ -15,6 +15,7 @@ local Workspace = game:GetService("Workspace")
 local Loot = require(ReplicatedStorage:WaitForChild("Shared").Loot)
 
 local State = require(script.Parent.State)
+local InventoryService = require(script.Parent.InventoryService)
 
 local LootService = {}
 
@@ -65,22 +66,9 @@ local function hex(c: Color3): string
 	return string.format("#%02x%02x%02x", math.floor(c.R * 255), math.floor(c.G * 255), math.floor(c.B * 255))
 end
 
+-- Weapons go into the bag (InventoryService), auto-equipping if better.
 function LootService.giveWeapon(player: Player, drop: Loot.WeaponDrop)
-	local session = State.get(player)
-	if not session then
-		return
-	end
-	local gear = gearOf(session)
-	local rarity = Loot.Rarities[drop.rarity]
-	local name = Loot.weaponName(drop.base, drop.rarity)
-	if drop.rarity > gear[drop.base].r then
-		gear[drop.base].r = drop.rarity
-		player:SetAttribute("Gear_" .. drop.base, drop.rarity)
-		State.notify(session, string.format("New weapon! %s (%s, x%.2f damage)", name, rarity.name, rarity.power), hex(rarity.color))
-	else
-		State.addDew(session, rarity.salvage, "Salvage:" .. drop.base)
-		State.notify(session, string.format("Salvaged %s for %d Dew", name, rarity.salvage), "#d8d8d8")
-	end
+	InventoryService.addWeapon(player, drop.base, drop.rarity)
 end
 
 function LootService.giveMaterial(player: Player, id: string, count: number)
@@ -93,6 +81,7 @@ function LootService.giveMaterial(player: Player, id: string, count: number)
 	session.data.materials[id] = (session.data.materials[id] or 0) + count
 	player:SetAttribute("Mat_" .. id, session.data.materials[id])
 	State.notify(session, string.format("+%d %s", count, material.name), hex(material.color))
+	InventoryService.push(player)
 end
 
 ----------------------------------------------------------------------------------------------
@@ -180,6 +169,7 @@ function LootService.openChest(player: Player, kind: string)
 	end
 	State.addDew(session, chest.dew, "Chest:" .. kind)
 	State.notify(session, string.format("The chest held %d Dew!", chest.dew), "#ffd27a")
+	InventoryService.push(player)
 end
 
 ----------------------------------------------------------------------------------------------

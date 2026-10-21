@@ -677,3 +677,5 @@ end)
 
 -- RPG step 2: combat input, HUD and effects (see Combat.luau)
 require(script:WaitForChild("Combat"))
+-- RPG step 4: inventory and shop screens (see Inventory.luau)
+require(script:WaitForChild("Inventory"))

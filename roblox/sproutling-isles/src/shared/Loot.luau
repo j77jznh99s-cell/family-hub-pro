@@ -26,16 +26,16 @@ function Loot.weaponName(base: string, rarity: number): string
 	return PREFIX[rarity] .. " " .. (BASE_NAME[base] or base)
 end
 
-export type Material = { id: string, name: string, color: Color3 }
+export type Material = { id: string, name: string, color: Color3, value: number } -- value = Dew a shop pays
 
 Loot.Materials = {
-	jelly = { id = "jelly", name = "Slime Jelly", color = Color3.fromRGB(120, 220, 100) },
-	tusk = { id = "tusk", name = "Goblin Tusk", color = Color3.fromRGB(235, 225, 190) },
-	pelt = { id = "pelt", name = "Ashen Pelt", color = Color3.fromRGB(140, 140, 150) },
-	bone = { id = "bone", name = "Old Bone", color = Color3.fromRGB(230, 225, 210) },
-	wing = { id = "wing", name = "Gloom Wing", color = Color3.fromRGB(90, 70, 110) },
-	skull = { id = "skull", name = "Warden's Skull", color = Color3.fromRGB(250, 245, 230) },
-	heartwood = { id = "heartwood", name = "Ironbark Heartwood", color = Color3.fromRGB(150, 100, 60) },
+	jelly = { id = "jelly", name = "Slime Jelly", color = Color3.fromRGB(120, 220, 100), value = 3 },
+	tusk = { id = "tusk", name = "Goblin Tusk", color = Color3.fromRGB(235, 225, 190), value = 6 },
+	pelt = { id = "pelt", name = "Ashen Pelt", color = Color3.fromRGB(140, 140, 150), value = 5 },
+	bone = { id = "bone", name = "Old Bone", color = Color3.fromRGB(230, 225, 210), value = 5 },
+	wing = { id = "wing", name = "Gloom Wing", color = Color3.fromRGB(90, 70, 110), value = 4 },
+	skull = { id = "skull", name = "Warden's Skull", color = Color3.fromRGB(250, 245, 230), value = 120 },
+	heartwood = { id = "heartwood", name = "Ironbark Heartwood", color = Color3.fromRGB(150, 100, 60), value = 150 },
 } :: { [string]: Material }
 
 -- What each enemy can drop: a material (with a chance), and a chance at a weapon with a minimum

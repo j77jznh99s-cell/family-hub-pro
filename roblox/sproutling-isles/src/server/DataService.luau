@@ -89,6 +89,9 @@ function DataService.defaultData()
 		-- RPG (LootService): best rarity owned per weapon, and monster materials for cooking
 		gear = { sword = { r = 1 }, bow = { r = 1 }, staff = { r = 1 } },
 		materials = {}, -- [materialId] = count
+		bag = {}, -- weapons carried: { u = uid, b = base, r = rarity } (InventoryService)
+		armor = 0, -- worn armour tier, see Shared/Shops.Armor
+		consumables = {}, -- [itemId] = count (potions, meals)
 	}
 end
 

@@ -14,6 +14,7 @@ local Combat = require(ReplicatedStorage:WaitForChild("Shared").Combat)
 
 local State = require(script.Parent.State)
 local LootService = require(script.Parent.LootService)
+local InventoryService = require(script.Parent.InventoryService)
 
 local CombatService = {}
 
@@ -118,6 +119,7 @@ function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3)
 		CombatService.fx("dodged", { pos = root.Position })
 		return
 	end
+	amount = math.max(1, math.floor(amount * (1 - InventoryService.armorReduction(player)) + 0.5))
 	humanoid:TakeDamage(amount)
 	local push = root.Position - from
 	push = Vector3.new(push.X, 0, push.Z)
@@ -446,6 +448,14 @@ function CombatService.reward(player: Player, amount: number, enemyName: string)
 end
 
 function CombatService.init()
+	-- potions and meals refill stamina through here
+	InventoryService.setStaminaHandler(function(player, amount)
+		local f = fighters[player]
+		if f then
+			f.stamina = math.min(Combat.Player.maxStamina, f.stamina + amount)
+			player:SetAttribute("Stamina", math.floor(f.stamina))
+		end
+	end)
 	local fxFolder = Instance.new("Folder")
 	fxFolder.Name = "CombatFx"
 	fxFolder.Parent = Workspace
