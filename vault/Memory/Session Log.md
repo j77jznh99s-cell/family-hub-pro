@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-21 14:11: local hourly run — Clip Studio: last two QA Review 2 minors (#7, #8)
+**Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `61971ad`) · **Agents used:** none (orchestrator inline; small change)
+
+- Rotation: AI Agent Team (after Bybit) skipped again (same uncommitted `agents/inbox/LOG.md` + `agents/newsletter/LOG.md`, no remote). Moved to Clip Studio; cloud branch unchanged at `965a4a3`.
+- #8: `calendar.md` and `weekly-<date>.md` now use `writeFileAtomic` like every other presenter output.
+- #7: post times repeating when `--per-day` > number of times is already documented in `docs/ai-presenter.md`, so left as is; the wrong `planWeek` comment is fixed (with 4 a day and 4 lanes, every day opens with the same lane).
+- Checked: full suite 126/126; `--calendar --days 2 --per-day 4` smoke run (no API calls) wrote `calendar.md` with no leftover temp file (file removed after).
+- Not pushed (GitHub not signed in).
+
+**Next:** Clip Studio has no agent tasks left; owner: QA Review 2 #3/#4 timing decisions and what's next.
+
+---
 ## 2026-10-20 20:03: local hourly run — Bybit Trading Bot: alert when position-check keeps failing
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `0ba3a2b`) · **Agents used:** none (orchestrator inline; small change)
 

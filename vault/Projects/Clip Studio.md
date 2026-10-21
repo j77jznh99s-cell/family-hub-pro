@@ -132,8 +132,8 @@ Open (not fixed):
    run in US time is filed under tomorrow.
 5. Minor, suspected — same day + lane + topic reuses the run folder and overwrites the earlier run (`index.js:81-85`).
 6. Minor — `--days 0`/`abc` and bad `--per-day` silently fall back to defaults (`scripts/presenter.js:35-36`).
-7. Minor — `--per-day` above the number of post times repeats times (`calendar.js:46`); a comment there is wrong for `--per-day 4`.
-8. Low — `calendar.md` / `weekly-*.md` written with plain `writeFile`, not `writeFileAtomic`.
+7. **Comment fixed 2026-10-21 (`61971ad`); repeating times kept (documented in `docs/ai-presenter.md`).** Minor — `--per-day` above the number of post times repeats times (`calendar.js:46`); a comment there is wrong for `--per-day 4`.
+8. **Fixed 2026-10-21 (`61971ad`).** Low — `calendar.md` / `weekly-*.md` written with plain `writeFile`, not `writeFileAtomic`.
 
 ## Tasks
 - [x] **qa-tester:** review the hourly branch (tests, CI, bugs); the owner decides whether to merge it. Done 2026-09-26 — see QA Review above.
@@ -148,5 +148,6 @@ Open (not fixed):
 - [x] **app-engineer:** unique run folder names; reject bad `--days`/`--per-day` values (QA Review 2 #5, #6). Done 2026-10-10 (`cd43c65`: `makeRunDir` adds `-2`, `-3` … instead of overwriting; `--days` 1–31 / `--per-day` 1–6 or exit 1; 10 tests, not run).
 - [x] **qa-tester:** run `tests/presenter.test.js` + `tests/presenterArgs.test.js` from `cd43c65` when Node is available. Done 2026-10-15, pass.
 - [x] **app-engineer:** bump `better-sqlite3` (11.10 → a version with Node 24 prebuilds) so the full suite also runs on the PC's Node 24, then re-run all tests (CI stays on Node 22). Done 2026-10-16 (`bb3f1d3`: `^12.11.1`; also fixed caption burn-in on Windows paths, `escapeForFilterPath` now escapes twice, and Windows temp-dir cleanup in 3 tests; 125/125 pass with ffmpeg, 0 skipped; CI/Docker not run, not pushed).
+- [x] **app-engineer:** QA Review 2 #7/#8 (wrong lane-rotation comment; atomic `calendar.md`/`weekly-*.md` writes). Done 2026-10-21 (`61971ad`, 126/126 pass, not pushed).
 - [ ] **owner:** which date spend counts under (spent vs slot date) and UTC vs local calendar days (QA Review 2 #3, #4).
 - [ ] **owner:** confirm what's next for Clip Studio (deploy? pricing? more features?) so an agent can pick it up
