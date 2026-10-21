@@ -115,13 +115,12 @@ function MaterialKit.ensureVariants(materialService: Instance): number
 	local count = 0
 	for _, e in MaterialKit.Kit do
 		if e.asset ~= "" and e.base ~= "Neon" then
-			local variant = materialService:FindFirstChild(e.name)
-			if not variant then
-				variant = Instance.new("MaterialVariant")
-				variant.Name = e.name
-				variant.Parent = materialService
+			local v: any = materialService:FindFirstChild(e.name)
+			if not v then
+				v = Instance.new("MaterialVariant")
+				v.Name = e.name
+				v.Parent = materialService
 			end
-			local v = variant :: any
 			v.BaseMaterial = (Enum.Material :: any)[e.base]
 			v.ColorMap = contentId(e)
 			v.StudsPerTile = e.studs

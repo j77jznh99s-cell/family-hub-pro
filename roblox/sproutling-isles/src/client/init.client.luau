@@ -674,3 +674,6 @@ task.spawn(function()
 		end
 	end)
 end)
+
+-- RPG step 2: combat input, HUD and effects (see Combat.luau)
+require(script:WaitForChild("Combat"))

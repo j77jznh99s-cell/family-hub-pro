@@ -114,6 +114,8 @@ function TerrainBuilder.build(map: Instance?)
 		paint(terrain, field.x, field.z, Vector3.new(field.w, 3, field.d), Enum.Material.Mud)
 	end
 
+	workspace:SetAttribute("TerrainReady", true) -- EnemyService waits for this before spawning camps
+
 	-- the terrain sea replaces the old glass sea parts
 	local island = map and map:FindFirstChild("Island")
 	if island then

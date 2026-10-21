@@ -1,0 +1,442 @@
+-- Combat on the client: input (mouse/keyboard, gamepad, on-screen buttons on phones), the
+-- health/stamina/ability HUD, and every combat visual (slashes, projectiles, impacts, damage
+-- numbers, enemy telegraphs). The server decides what actually hits; this only asks and shows.
+--
+-- Controls: click / R2 / Attack button = attack; Shift / B / Dodge button = dodge roll;
+-- 1 2 3 = sword, bow, staff; Q X C = Whirlwind, Firebolt, Second Wind.
+
+local ContextActionService = game:GetService("ContextActionService")
+local Debris = game:GetService("Debris")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local Combat = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Combat"))
+
+local CombatClient = {}
+
+local player = Players.LocalPlayer
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local AttackRemote = remotes:WaitForChild("Attack") :: RemoteEvent
+local DodgeRemote = remotes:WaitForChild("Dodge") :: RemoteEvent
+local AbilityRemote = remotes:WaitForChild("Ability") :: RemoteEvent
+local EquipRemote = remotes:WaitForChild("Equip") :: RemoteEvent
+local FxRemote = remotes:WaitForChild("CombatFx") :: RemoteEvent
+
+local FONT = Enum.Font.FredokaOne
+local fxFolder = Workspace:WaitForChild("CombatFx")
+
+----------------------------------------------------------------------------------------------
+-- helpers
+
+local function rootPart(): BasePart?
+	local character = player.Character
+	return character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+end
+
+local function humanoidOf(): Humanoid?
+	local character = player.Character
+	return character and character:FindFirstChildOfClass("Humanoid")
+end
+
+-- Where the player is aiming, as a flat direction from the character.
+local function aimDirection(screenPos: Vector2?): Vector3
+	local root = rootPart()
+	local camera = Workspace.CurrentCamera
+	if not root or not camera then
+		return Vector3.new(0, 0, -1)
+	end
+	local target: Vector3
+	if screenPos and UserInputService.MouseEnabled then
+		local ray = camera:ViewportPointToRay(screenPos.X, screenPos.Y)
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { player.Character :: Instance, fxFolder }
+		local hit = Workspace:Raycast(ray.Origin, ray.Direction * 600, params)
+		target = if hit then hit.Position else ray.Origin + ray.Direction * 200
+	else
+		target = root.Position + camera.CFrame.LookVector * 50
+	end
+	local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
+	return if flat.Magnitude > 0.01 then flat.Unit else Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z).Unit
+end
+
+local function face(dir: Vector3)
+	local root = rootPart()
+	if root then
+		root.CFrame = CFrame.lookAt(root.Position, root.Position + dir)
+	end
+end
+
+local function fxPart(size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartType?, transparency: number?): BasePart
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Material = Enum.Material.Neon
+	p.Size = size
+	p.CFrame = cf
+	p.Color = color
+	p.Transparency = transparency or 0.2
+	if shape then
+		p.Shape = shape
+	end
+	p.Parent = fxFolder
+	return p
+end
+
+local function fadeOut(p: BasePart, time: number, grow: Vector3?)
+	local goal: { [string]: any } = { Transparency = 1 }
+	if grow then
+		goal.Size = grow
+	end
+	TweenService:Create(p, TweenInfo.new(time, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal):Play()
+	Debris:AddItem(p, time + 0.05)
+end
+
+local function floatText(pos: Vector3, text: string, color: Color3, size: number?)
+	local anchor = fxPart(Vector3.new(0.2, 0.2, 0.2), CFrame.new(pos), color, nil, 1)
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromOffset(120, 40)
+	gui.AlwaysOnTop = true
+	gui.LightInfluence = 0
+	gui.Parent = anchor
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = FONT
+	label.TextScaled = true
+	label.TextColor3 = color
+	label.TextStrokeTransparency = 0.2
+	label.Text = text
+	label.Parent = gui
+	if size then
+		gui.Size = UDim2.fromOffset(120 * size, 40 * size)
+	end
+	TweenService:Create(anchor, TweenInfo.new(0.9), { CFrame = CFrame.new(pos + Vector3.new(math.random() * 2 - 1, 4, 0)) }):Play()
+	TweenService:Create(label, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	Debris:AddItem(anchor, 1)
+end
+
+local function flash(model: Instance, color: Color3, time: number)
+	local h = Instance.new("Highlight")
+	h.FillColor = color
+	h.OutlineColor = color
+	h.FillTransparency = 0.35
+	h.DepthMode = Enum.HighlightDepthMode.Occluded
+	h.Parent = model
+	TweenService:Create(h, TweenInfo.new(time), { FillTransparency = 1, OutlineTransparency = 1 }):Play()
+	Debris:AddItem(h, time + 0.05)
+end
+
+----------------------------------------------------------------------------------------------
+-- HUD
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "CombatHud"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local function bar(y: number, color: Color3, label: string): (Frame, TextLabel)
+	local back = Instance.new("Frame")
+	back.AnchorPoint = Vector2.new(0.5, 1)
+	back.Position = UDim2.new(0.5, 0, 1, y)
+	back.Size = UDim2.fromOffset(300, 16)
+	back.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+	back.BackgroundTransparency = 0.25
+	back.Parent = gui
+	Instance.new("UICorner", back).CornerRadius = UDim.new(0, 6)
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = color
+	fill.Parent = back
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
+	local text = Instance.new("TextLabel")
+	text.BackgroundTransparency = 1
+	text.Size = UDim2.fromScale(1, 1)
+	text.Font = FONT
+	text.TextScaled = true
+	text.TextColor3 = Color3.new(1, 1, 1)
+	text.TextStrokeTransparency = 0.4
+	text.Text = label
+	text.ZIndex = 2
+	text.Parent = back
+	return fill, text
+end
+
+local healthFill, healthText = bar(-118, Color3.fromRGB(220, 60, 70), "")
+local staminaFill, staminaText = bar(-98, Color3.fromRGB(240, 190, 60), "")
+
+local slots: { [string]: { frame: Frame, shade: Frame, label: TextLabel } } = {}
+local function slot(index: number, key: string, name: string, color: Color3): { frame: Frame, shade: Frame, label: TextLabel }
+	local frame = Instance.new("Frame")
+	frame.AnchorPoint = Vector2.new(0.5, 1)
+	frame.Position = UDim2.new(0.5, (index - 3.5) * 52, 1, -136)
+	frame.Size = UDim2.fromOffset(46, 46)
+	frame.BackgroundColor3 = color
+	frame.BackgroundTransparency = 0.15
+	frame.Parent = gui
+	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+	local stroke = Instance.new("UIStroke", frame)
+	stroke.Color = Color3.fromRGB(255, 230, 150)
+	stroke.Thickness = 0
+	stroke.Name = "Selected"
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(1, -4, 0.62, 0)
+	label.Position = UDim2.fromOffset(2, 2)
+	label.Font = FONT
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeTransparency = 0.3
+	label.Text = name
+	label.Parent = frame
+	local keyLabel = Instance.new("TextLabel")
+	keyLabel.BackgroundTransparency = 1
+	keyLabel.AnchorPoint = Vector2.new(0, 1)
+	keyLabel.Position = UDim2.new(0, 3, 1, -1)
+	keyLabel.Size = UDim2.new(1, -6, 0.34, 0)
+	keyLabel.Font = FONT
+	keyLabel.TextScaled = true
+	keyLabel.TextXAlignment = Enum.TextXAlignment.Left
+	keyLabel.TextColor3 = Color3.fromRGB(255, 230, 150)
+	keyLabel.Text = key
+	keyLabel.Parent = frame
+	local shade = Instance.new("Frame")
+	shade.AnchorPoint = Vector2.new(0, 1)
+	shade.Position = UDim2.fromScale(0, 1)
+	shade.Size = UDim2.fromScale(1, 0)
+	shade.BackgroundColor3 = Color3.new(0, 0, 0)
+	shade.BackgroundTransparency = 0.4
+	shade.ZIndex = 3
+	shade.Parent = frame
+	Instance.new("UICorner", shade).CornerRadius = UDim.new(0, 8)
+	return { frame = frame, shade = shade, label = label }
+end
+
+local weaponColors = { sword = Color3.fromRGB(120, 130, 150), bow = Color3.fromRGB(120, 90, 60), staff = Color3.fromRGB(110, 80, 170) }
+local weaponShort = { sword = "Sword", bow = "Bow", staff = "Staff" }
+for i, id in Combat.WeaponOrder do
+	slots[id] = slot(i, tostring(i), weaponShort[id], weaponColors[id])
+end
+local abilityColors = { whirlwind = Color3.fromRGB(70, 130, 200), firebolt = Color3.fromRGB(220, 100, 40), secondwind = Color3.fromRGB(60, 170, 110) }
+local abilityShort = { whirlwind = "Whirl", firebolt = "Fire", secondwind = "Heal" }
+for i, a in Combat.Abilities do
+	slots[a.id] = slot(i + 3, a.key, abilityShort[a.id], abilityColors[a.id])
+end
+
+RunService.RenderStepped:Connect(function()
+	local humanoid = humanoidOf()
+	if humanoid then
+		local h = math.clamp(humanoid.Health / math.max(humanoid.MaxHealth, 1), 0, 1)
+		healthFill.Size = UDim2.fromScale(h, 1)
+		healthText.Text = string.format("%d / %d", math.ceil(humanoid.Health), humanoid.MaxHealth)
+	end
+	local stamina = player:GetAttribute("Stamina") or 0
+	local maxStamina = player:GetAttribute("MaxStamina") or Combat.Player.maxStamina
+	staminaFill.Size = UDim2.fromScale(math.clamp(stamina / maxStamina, 0, 1), 1)
+	staminaText.Text = "Stamina " .. tostring(stamina)
+	local weapon = player:GetAttribute("Weapon") or "sword"
+	for _, id in Combat.WeaponOrder do
+		(slots[id].frame:FindFirstChild("Selected") :: UIStroke).Thickness = if id == weapon then 3 else 0
+	end
+	local t = Workspace:GetServerTimeNow()
+	for _, a in Combat.Abilities do
+		local ready = player:GetAttribute("CD_" .. a.id) or 0
+		local left = math.max(0, ready - t)
+		slots[a.id].shade.Size = UDim2.fromScale(1, math.clamp(left / a.cooldown, 0, 1))
+	end
+end)
+
+----------------------------------------------------------------------------------------------
+-- actions
+
+local lastDodge = 0
+
+local function attack(screenPos: Vector2?)
+	local dir = aimDirection(screenPos)
+	face(dir)
+	AttackRemote:FireServer(dir)
+end
+
+local function dodge()
+	local root = rootPart()
+	local humanoid = humanoidOf()
+	local t = os.clock()
+	if not root or not humanoid or t - lastDodge < Combat.Player.dodgeCooldown then
+		return
+	end
+	if (player:GetAttribute("Stamina") or 0) < Combat.Player.dodgeCost then
+		return
+	end
+	lastDodge = t
+	local move = humanoid.MoveDirection
+	local dir = if move.Magnitude > 0.1 then Vector3.new(move.X, 0, move.Z).Unit else -Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z).Unit
+	root.AssemblyLinearVelocity = dir * Combat.Player.dodgeSpeed + Vector3.new(0, 8, 0)
+	DodgeRemote:FireServer()
+	local trail = fxPart(Vector3.new(2.5, 4, 2.5), root.CFrame, Color3.fromRGB(200, 230, 255), Enum.PartType.Ball, 0.5)
+	fadeOut(trail, 0.3)
+end
+
+local function ability(id: string, screenPos: Vector2?)
+	local dir = aimDirection(screenPos)
+	face(dir)
+	AbilityRemote:FireServer(id, dir)
+end
+
+local function equip(id: string)
+	EquipRemote:FireServer(id)
+end
+
+-- keyboard and mouse
+local keyToAbility: { [Enum.KeyCode]: string } = {}
+for _, a in Combat.Abilities do
+	keyToAbility[(Enum.KeyCode :: any)[a.key]] = a.id
+end
+local keyToWeapon = { [Enum.KeyCode.One] = "sword", [Enum.KeyCode.Two] = "bow", [Enum.KeyCode.Three] = "staff" }
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then
+		return
+	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		attack(UserInputService:GetMouseLocation())
+	elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonB then
+		dodge()
+	elseif input.KeyCode == Enum.KeyCode.ButtonR2 then
+		attack(nil)
+	elseif keyToAbility[input.KeyCode] then
+		ability(keyToAbility[input.KeyCode], UserInputService:GetMouseLocation())
+	elseif keyToWeapon[input.KeyCode] then
+		equip(keyToWeapon[input.KeyCode])
+	end
+end)
+
+-- on-screen buttons for touch devices
+if UserInputService.TouchEnabled then
+	local function touchAction(name: string, title: string, position: UDim2, fn: () -> ())
+		ContextActionService:BindAction(name, function(_, state)
+			if state == Enum.UserInputState.Begin then
+				fn()
+			end
+			return Enum.ContextActionResult.Sink
+		end, true)
+		ContextActionService:SetTitle(name, title)
+		ContextActionService:SetPosition(name, position)
+	end
+	touchAction("CombatAttack", "Hit", UDim2.new(1, -150, 1, -150), function()
+		attack(nil)
+	end)
+	touchAction("CombatDodge", "Roll", UDim2.new(1, -210, 1, -100), dodge)
+	for i, a in Combat.Abilities do
+		touchAction("CombatAbility" .. i, abilityShort[a.id], UDim2.new(1, -230 + (i - 1) * 60, 1, -220), function()
+			ability(a.id, nil)
+		end)
+	end
+	touchAction("CombatSwap", "Swap", UDim2.new(1, -90, 1, -220), function()
+		local current = player:GetAttribute("Weapon") or "sword"
+		local index = table.find(Combat.WeaponOrder, current) or 1
+		equip(Combat.WeaponOrder[index % #Combat.WeaponOrder + 1])
+	end)
+end
+
+----------------------------------------------------------------------------------------------
+-- effects from the server
+
+local liveProjectiles: { [number]: { part: BasePart, dir: Vector3, speed: number, left: number } } = {}
+local projectileColors = { bow = Color3.fromRGB(240, 230, 200), staff = Color3.fromRGB(170, 120, 255), firebolt = Color3.fromRGB(255, 120, 40) }
+
+RunService.Heartbeat:Connect(function(dt)
+	for id, p in liveProjectiles do
+		local step = math.min(p.speed * dt, p.left)
+		p.left -= step
+		p.part.CFrame = p.part.CFrame + p.dir * step
+		if p.left <= 0 then
+			p.part:Destroy()
+			liveProjectiles[id] = nil
+		end
+	end
+end)
+
+FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
+	if kind == "slash" then
+		local dir = data.dir :: Vector3
+		local base = CFrame.lookAt(data.pos, data.pos + dir)
+		for k = -2, 2 do
+			local arc = fxPart(Vector3.new(0.4, 0.4, data.range * 0.6), base * CFrame.Angles(0, math.rad(k * 18), 0) * CFrame.new(0, 0.5, -data.range * 0.3), Color3.fromRGB(230, 240, 255), nil, 0.25)
+			fadeOut(arc, 0.18)
+		end
+	elseif kind == "projectile" then
+		local color = projectileColors[data.kind] or Color3.new(1, 1, 1)
+		local size = if data.kind == "bow" then Vector3.new(0.3, 0.3, 3) else Vector3.new(1.6, 1.6, 1.6)
+		local part = fxPart(size, CFrame.lookAt(data.from, data.from + data.dir), color, if data.kind == "bow" then nil else Enum.PartType.Ball, 0)
+		if data.kind ~= "bow" then
+			local light = Instance.new("PointLight")
+			light.Color = color
+			light.Range = 10
+			light.Parent = part
+		end
+		liveProjectiles[data.id] = { part = part, dir = data.dir, speed = data.speed, left = data.range }
+	elseif kind == "impact" then
+		local live = liveProjectiles[data.id]
+		if live then
+			live.part:Destroy()
+			liveProjectiles[data.id] = nil
+		end
+		local radius = data.radius or 2
+		local color = projectileColors[data.kind] or Color3.new(1, 1, 1)
+		local burst = fxPart(Vector3.new(1, 1, 1), CFrame.new(data.pos), color, Enum.PartType.Ball, 0.2)
+		fadeOut(burst, 0.35, Vector3.new(radius * 2, radius * 2, radius * 2))
+	elseif kind == "hit" then
+		if data.model then
+			flash(data.model, Color3.new(1, 1, 1), 0.15)
+		end
+		floatText(data.pos, tostring(data.amount), Color3.fromRGB(255, 240, 120))
+	elseif kind == "damage" then
+		if data.player then
+			floatText(data.pos, "-" .. tostring(data.amount), Color3.fromRGB(255, 90, 90))
+		end
+	elseif kind == "windup" then
+		if data.model then
+			flash(data.model, Color3.fromRGB(255, 60, 60), data.time or 0.5)
+		end
+	elseif kind == "strike" then
+		local ring = fxPart(Vector3.new(0.4, 3, 3), CFrame.new(data.pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 120, 90), Enum.PartType.Cylinder, 0.3)
+		fadeOut(ring, 0.2, Vector3.new(0.4, 7, 7))
+	elseif kind == "whirl" then
+		local ring = fxPart(Vector3.new(1, 2, 2), CFrame.new(data.pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(160, 210, 255), Enum.PartType.Cylinder, 0.3)
+		fadeOut(ring, 0.35, Vector3.new(1, data.radius * 2, data.radius * 2))
+	elseif kind == "heal" then
+		local glow = fxPart(Vector3.new(4, 4, 4), CFrame.new(data.pos), Color3.fromRGB(120, 255, 170), Enum.PartType.Ball, 0.4)
+		fadeOut(glow, 0.6, Vector3.new(9, 9, 9))
+		floatText(data.pos + Vector3.new(0, 3, 0), "+Heal", Color3.fromRGB(120, 255, 170))
+	elseif kind == "dodged" then
+		floatText(data.pos + Vector3.new(0, 3, 0), "Dodged!", Color3.fromRGB(180, 220, 255))
+	elseif kind == "defeat" then
+		local puff = fxPart(Vector3.new(2, 2, 2), CFrame.new(data.pos), Color3.fromRGB(255, 255, 255), Enum.PartType.Ball, 0.3)
+		fadeOut(puff, 0.5, Vector3.new(10, 10, 10))
+	elseif kind == "knock" then
+		local root = rootPart()
+		if root and data.vector then
+			root.AssemblyLinearVelocity = data.vector
+		end
+		local camera = Workspace.CurrentCamera
+		if camera then
+			-- a tiny camera shake
+			task.spawn(function()
+				for _ = 1, 4 do
+					camera.CFrame = camera.CFrame * CFrame.new((math.random() - 0.5) * 0.4, (math.random() - 0.5) * 0.4, 0)
+					task.wait()
+				end
+			end)
+		end
+	end
+end)
+
+return CombatClient

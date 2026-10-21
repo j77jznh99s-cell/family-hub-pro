@@ -36,6 +36,16 @@ Without Lune you can bake from Studio's command bar instead:
 `require(game.ReplicatedStorage.Shared.MapBuilder).Build(workspace)`. The server also builds
 the map at runtime if `Workspace.Map` is missing.
 
+## Combat (RPG step 2)
+
+Controls: **click** attack (R2 on gamepad), **Shift** dodge roll (B), **1 2 3** sword / bow / staff,
+**Q X C** Whirlwind / Firebolt / Second Wind. Phones get on-screen Hit, Roll, ability and Swap buttons.
+
+Try it: training dummies stand in the barracks yard in the city (south-east of the arena); monster
+camps (slimes, goblins, wolves) are out on the hills and spawn once the terrain has loaded. Tuning
+lives in `src/shared/Combat.luau`; the server code is `CombatService.luau` and `EnemyService.luau`,
+the client code `src/client/Combat.luau`.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).
