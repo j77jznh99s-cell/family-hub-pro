@@ -1,15 +1,18 @@
 --!strict
--- Builds Sproutling City (south of the garden island, across the lagoon) and its airport.
+-- Builds the walled fantasy city of Sproutling (south of the garden island, across the lagoon)
+-- and its airship port.
 --
 -- Like MapBuilder it touches no services, so it runs at server start, from the Studio command
 -- bar and offline under Lune (tools/bake-map.luau passes the Roblox API table). Everything sits
--- under Map.City. Shops, cars and boats carry attributes (Shop, Vehicle) that later gameplay
--- systems look up; for now they are scenery.
+-- under Map.City. Shops, steeds, ships and airships carry attributes (Shop, Vehicle, Arena) that
+-- the RPG systems look up; for now they are scenery.
 --
 -- Layout (studs, +Z = south). The city ground is a flat slab at y = 0 inside Landscape.City
--- (x -345..345, z 465..1155): a grid of roads with the 44-stud main avenue on x = 0 lined up
--- with the island's avenue, and blocks zoned as market street, downtown, park, apartments,
--- houses, civic, marina and harbour. The airport (Landscape.Airport) lies to the west.
+-- (x -345..345, z 465..1155): a grid of cobbled streets with the 44-stud Grand Way on x = 0
+-- lined up with the island's avenue. Blocks are zoned as the market row, the guild quarter
+-- (Adventurers' Guild, cathedral, mage tower, market square, treasury, arena), townhouses,
+-- cottages, the royal gardens, town hall and library, barracks, temple, fishing docks and the
+-- harbour. Walls with towers and gates ring the landward sides. The airship port lies west.
 
 local CityBuilder = {}
 
@@ -40,32 +43,34 @@ local function rgb(r: number, g: number, b: number): Color3
 end
 
 -- Colour constants, built once the Color3 API is available (Lune passes it in via useApi).
-local ASPHALT: Color3
-local CONCRETE: Color3
+local COBBLE: Color3
+local FLAGSTONE: Color3
+local STONE: Color3
+local DARKSTONE: Color3
+local TIMBER: Color3
 local WHITE: Color3
-local YELLOW: Color3
-local CAR_COLORS: { Color3 }
-local GLASS_TINTS: { Color3 }
-local STONE: { Color3 }
-local SHOP_STYLES: { { wall: Color3, accent: Color3 } }
+local IRON: Color3
+local GOLD: Color3
+local LANTERN: Color3
+local PLASTER: { Color3 }
+local ROOFS: { Color3 }
+local BANNERS: { Color3 }
+local COATS: { Color3 }
 initColors = function()
-	ASPHALT = rgb(58, 60, 66)
-	CONCRETE = rgb(205, 202, 195)
-	WHITE = rgb(245, 245, 240)
-	YELLOW = rgb(250, 205, 60)
-	CAR_COLORS = { rgb(220, 60, 60), rgb(60, 120, 220), rgb(245, 245, 245), rgb(40, 40, 45), rgb(250, 200, 60), rgb(90, 190, 120), rgb(240, 130, 50), rgb(170, 110, 220), rgb(150, 155, 165) }
-	GLASS_TINTS = { rgb(120, 175, 220), rgb(90, 200, 190), rgb(140, 150, 210), rgb(110, 190, 240), rgb(170, 200, 220) }
-	STONE = { rgb(230, 225, 215), rgb(205, 200, 190), rgb(185, 190, 200), rgb(240, 235, 225) }
-	SHOP_STYLES = {
-		{ wall = rgb(250, 235, 210), accent = rgb(240, 120, 150) },
-		{ wall = rgb(210, 235, 250), accent = rgb(60, 140, 220) },
-		{ wall = rgb(235, 250, 215), accent = rgb(80, 180, 90) },
-		{ wall = rgb(255, 225, 190), accent = rgb(245, 150, 50) },
-		{ wall = rgb(235, 220, 250), accent = rgb(150, 100, 220) },
-		{ wall = rgb(255, 245, 200), accent = rgb(220, 70, 70) },
-	}
+	COBBLE = rgb(128, 122, 116)
+	FLAGSTONE = rgb(196, 186, 168)
+	STONE = rgb(214, 206, 190)
+	DARKSTONE = rgb(170, 162, 150)
+	TIMBER = rgb(96, 66, 46)
+	WHITE = rgb(248, 245, 236)
+	IRON = rgb(55, 55, 60)
+	GOLD = rgb(235, 190, 70)
+	LANTERN = rgb(255, 205, 120)
+	PLASTER = { rgb(245, 232, 205), rgb(238, 214, 190), rgb(225, 235, 215), rgb(250, 240, 220), rgb(232, 220, 235), rgb(240, 222, 200) }
+	ROOFS = { rgb(170, 70, 55), rgb(70, 85, 120), rgb(85, 110, 90), rgb(120, 85, 70), rgb(150, 95, 60), rgb(95, 80, 110) }
+	BANNERS = { rgb(200, 55, 60), rgb(55, 90, 180), rgb(60, 140, 90), rgb(220, 170, 50), rgb(130, 70, 160) }
+	COATS = { rgb(120, 80, 50), rgb(60, 45, 35), rgb(230, 225, 215), rgb(160, 120, 80), rgb(90, 90, 95) }
 end
-
 
 local function hash(n: number): number
 	local s = math.sin(n * 12.9898) * 43758.5453
@@ -105,7 +110,7 @@ local function cylinder(parent: Instance, name: string, height: number, diameter
 	return p
 end
 
--- Cylinder lying along a direction (axles, fuselages): cframe's LookVector is the axis.
+-- Cylinder lying along a direction: cframe's LookVector is the axis.
 local function tube(parent: Instance, name: string, length: number, diameter: number, cframe: CFrame, color: Color3, material: any?): BasePart
 	local p = part(parent, name, Vector3.new(length, diameter, diameter), cframe * CFrame.Angles(0, math.rad(90), 0), color, material)
 	p.Shape = Enum.PartType.Cylinder
@@ -118,6 +123,7 @@ local function ball(parent: Instance, name: string, diameter: number, x: number,
 	return p
 end
 
+-- WedgePart: tall edge at the back (+Z), slope facing the front (-Z, the LookVector).
 local function wedge(parent: Instance, name: string, size: Vector3, cframe: CFrame, color: Color3, material: any?): BasePart
 	local w = Instance.new("WedgePart")
 	w.Name = name
@@ -130,6 +136,41 @@ local function wedge(parent: Instance, name: string, size: Vector3, cframe: CFra
 	w.BottomSurface = Enum.SurfaceType.Smooth
 	w.Parent = parent
 	return w
+end
+
+-- A solid-looking triangle (a, b, c) made of two thin WedgeParts (the usual Roblox technique).
+local function triangle(parent: Instance, name: string, a: Vector3, b: Vector3, c: Vector3, color: Color3, material: any?, thickness: number?)
+	local th = thickness or 0.6
+	local ab, ac, bc = b - a, c - a, c - b
+	local abd, acd, bcd = ab:Dot(ab), ac:Dot(ac), bc:Dot(bc)
+	-- make a the corner opposite the longest edge (bc)
+	if abd > acd and abd > bcd then
+		c, a = a, c
+	elseif acd > bcd and acd > abd then
+		a, b = b, a
+	end
+	ab, ac, bc = b - a, c - a, c - b
+	local right = ac:Cross(ab).Unit
+	local up = bc:Cross(right).Unit
+	local back = bc.Unit
+	local height = math.abs(ab:Dot(up))
+	wedge(parent, name, Vector3.new(th, height, math.abs(ab:Dot(back))), CFrame.fromMatrix((a + b) / 2, right, up, back), color, material)
+	wedge(parent, name, Vector3.new(th, height, math.abs(ac:Dot(back))), CFrame.fromMatrix((a + c) / 2, -right, up, -back), color, material)
+end
+
+-- Pointed roof/spire: an n-sided pyramid of triangles on a base whose half-width is `radius`,
+-- apex at y + height. Four-sided spires are aligned with the X/Z axes.
+local function cone(parent: Instance, name: string, x: number, y: number, z: number, radius: number, height: number, color: Color3, material: any?, sides: number?)
+	local n = sides or 6
+	local circum = radius / math.cos(math.pi / n)
+	local offset = if n == 4 then math.pi / 4 else 0
+	local apex = Vector3.new(x, y + height, z)
+	for i = 0, n - 1 do
+		local a0, a1 = offset + i / n * math.pi * 2, offset + (i + 1) / n * math.pi * 2
+		local p0 = Vector3.new(x + math.cos(a0) * circum, y, z + math.sin(a0) * circum)
+		local p1 = Vector3.new(x + math.cos(a1) * circum, y, z + math.sin(a1) * circum)
+		triangle(parent, name, p0, p1, apex, color, material)
+	end
 end
 
 local function deco(p: BasePart): BasePart
@@ -148,7 +189,7 @@ local function glowLight(parent: Instance, range: number, brightness: number, co
 	light.Parent = parent
 end
 
--- Text painted on one face of a part (shop signs, billboards, street signs).
+-- Text painted on one face of a part (shop signs, banners, plaques).
 local function sign(target: BasePart, text: string, textColor: Color3, face: any?, background: Color3?)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Sign"
@@ -165,11 +206,11 @@ local function sign(target: BasePart, text: string, textColor: Color3, face: any
 		label.BackgroundColor3 = background
 	end
 	label.BorderSizePixel = 0
-	label.Font = Enum.Font.FredokaOne
+	label.Font = Enum.Font.Fantasy
 	label.TextScaled = true
 	label.Text = text
 	label.TextColor3 = textColor
-	label.TextStrokeTransparency = 0.6
+	label.TextStrokeTransparency = 0.5
 	label.Parent = gui
 end
 
@@ -187,7 +228,7 @@ local function model(parent: Instance, name: string): Model
 	return m
 end
 
--- Local frame for a building at (x, z) whose front faces `facing`: rel(u, y, v) with u = right,
+-- Local frame for something at (x, z) whose front faces `facing`: rel(u, y, v) with u = right,
 -- v = forward (towards the street).
 local function frame(x: number, z: number, facing: Vector3): (number, number, number) -> CFrame
 	local base = CFrame.lookAt(Vector3.new(x, 0, z), Vector3.new(x, 0, z) + facing)
@@ -196,17 +237,41 @@ local function frame(x: number, z: number, facing: Vector3): (number, number, nu
 	end
 end
 
+-- Steep (45 degree) gable roof whose ridge runs along the local v axis, so the gable end faces
+-- the street. Sits on walls w wide (u) and d deep (v) whose top is at height y. An attic prism
+-- (a square turned 45 degrees about v, its lower half hidden in the walls) fills the gables.
+local function gableFront(parent: Instance, rel: (number, number, number) -> CFrame, w: number, d: number, y: number, wall: Color3, roof: Color3)
+	local rise = w / 2
+	local attic = math.sqrt(2) * rise
+	part(parent, "Attic", Vector3.new(attic, attic, d - 0.2), rel(0, y, 0) * CFrame.Angles(0, 0, math.rad(45)), wall, Enum.Material.Plaster)
+	local len = math.sqrt(2) * rise + 1.6
+	for _, side in { 1, -1 } do
+		part(parent, "Roof", Vector3.new(len, 0.8, d + 1.6), rel(side * w / 4, y + rise / 2 + 0.35, 0) * CFrame.Angles(0, 0, -side * math.rad(45)), roof, Enum.Material.Slate)
+	end
+	part(parent, "Ridge", Vector3.new(1, 1, d + 2), rel(0, y + rise + 0.4, 0), roof, Enum.Material.Wood)
+end
+
+-- Steep gable roof whose ridge runs along u (gables on the sides), for long halls.
+local function gableSide(parent: Instance, rel: (number, number, number) -> CFrame, w: number, d: number, y: number, wall: Color3, roof: Color3, wallMaterial: any?)
+	local rise = d / 2
+	local attic = math.sqrt(2) * rise
+	part(parent, "Attic", Vector3.new(w - 0.2, attic, attic), rel(0, y, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, wallMaterial or Enum.Material.Plaster)
+	local len = math.sqrt(2) * rise + 1.6
+	for _, side in { 1, -1 } do
+		part(parent, "Roof", Vector3.new(w + 1.6, 0.9, len), rel(0, y + rise / 2 + 0.35, side * d / 4) * CFrame.Angles(-side * math.rad(45), 0, 0), roof, Enum.Material.Slate)
+	end
+end
+
 ----------------------------------------------------------------------------------------------
 -- layout
 
 local CITY = { x0 = -345, x1 = 345, z0 = 465, z1 = 1155 }
-local AVENUES = { { x = -240, w = 28 }, { x = -120, w = 28 }, { x = 0, w = 44 }, { x = 120, w = 28 }, { x = 240, w = 28 } }
-local STREETS = { { z = 490, w = 28 }, { z = 590, w = 28 }, { z = 700, w = 28 }, { z = 810, w = 28 }, { z = 920, w = 28 }, { z = 1030, w = 28 }, { z = 1130, w = 28 } }
-local SIDEWALK = 6
-local CURB = 0.6
+local AVENUES = { { x = -240, w = 24 }, { x = -120, w = 24 }, { x = 0, w = 44 }, { x = 120, w = 24 }, { x = 240, w = 24 } }
+local STREETS = { { z = 490, w = 24 }, { z = 590, w = 24 }, { z = 700, w = 24 }, { z = 810, w = 24 }, { z = 920, w = 24 }, { z = 1030, w = 24 }, { z = 1130, w = 24 } }
+local PAVE = 0.4 -- block flagstones sit this far above the street cobbles
+local EDGE = 4 -- flagstone margin before buildings start
 
-
--- Blocks between the roads: { x0, x1, z0, z1, ix, iz }.
+-- Blocks between the streets: { x0, x1, z0, z1, ix, iz }.
 local function blocks(): { { number } }
 	local xs = { CITY.x0 }
 	for _, a in AVENUES do
@@ -231,905 +296,965 @@ end
 ----------------------------------------------------------------------------------------------
 -- street furniture
 
-local function streetlight(parent: Instance, x: number, z: number, arm: Vector3)
-	cylinder(parent, "LightPole", 16, 0.7, x, CURB + 8, z, rgb(70, 72, 80), Enum.Material.Metal)
-	local tip = Vector3.new(x, CURB + 15.6, z) + arm * 3.5
-	part(parent, "LightArm", Vector3.new(0.4, 0.4, 3.6), CFrame.lookAt(Vector3.new(x, CURB + 15.6, z) + arm * 1.8, tip), rgb(70, 72, 80), Enum.Material.Metal)
-	part(parent, "LightHead", Vector3.new(1.6, 0.5, 2.4), CFrame.lookAt(tip, tip + arm), rgb(255, 240, 200), Enum.Material.Neon)
-end
-
-local function trafficLight(parent: Instance, x: number, z: number, arm: Vector3)
-	cylinder(parent, "SignalPole", 14, 0.8, x, CURB + 7, z, rgb(60, 62, 70), Enum.Material.Metal)
-	local reach = 9
-	local tip = Vector3.new(x, CURB + 13.5, z) + arm * reach
-	part(parent, "SignalArm", Vector3.new(0.5, 0.5, reach), CFrame.lookAt(Vector3.new(x, CURB + 13.5, z) + arm * reach / 2, tip), rgb(60, 62, 70), Enum.Material.Metal)
-	local housing = part(parent, "SignalHousing", Vector3.new(1.4, 4, 1.2), CFrame.new(tip - Vector3.new(0, 2, 0)), rgb(40, 40, 45), Enum.Material.Metal)
-	for i, color in { rgb(255, 60, 50), rgb(255, 200, 40), rgb(60, 230, 90) } do
-		local lamp = ball(parent, "SignalLamp", 0.9, 0, 0, 0, color, Enum.Material.Neon)
-		lamp.CFrame = housing.CFrame * CFrame.new(0, 1.3 - (i - 1) * 1.3, -0.55)
-		if i ~= 3 then
-			lamp.Transparency = 0.55 -- only green lit
-		end
-	end
+local function lanternPost(parent: Instance, x: number, z: number)
+	cylinder(parent, "LanternPost", 11, 0.7, x, PAVE + 5.5, z, IRON, Enum.Material.Metal)
+	box(parent, "LanternCap", x, PAVE + 12.6, z, 1.8, 0.5, 1.8, IRON, Enum.Material.Metal)
+	box(parent, "Lantern", x, PAVE + 10.6, z, 1.3, 2, 1.3, LANTERN, Enum.Material.Neon)
+	cone(parent, "LanternRoof", x, PAVE + 13.1, z, 1.2, 1.2, IRON, Enum.Material.Metal, 4)
 end
 
 local function cityTree(parent: Instance, x: number, z: number, seed: number)
-	cylinder(parent, "Planter", 1, 4, x, CURB + 0.5, z, rgb(150, 145, 140), Enum.Material.Concrete)
-	cylinder(parent, "Trunk", 8, 0.9, x, CURB + 4.5, z, rgb(110, 80, 55), Enum.Material.Wood)
+	cylinder(parent, "TreeBed", 0.6, 4.4, x, PAVE + 0.3, z, rgb(110, 80, 55), Enum.Material.Ground)
+	cylinder(parent, "Trunk", 8, 1, x, PAVE + 4, z, rgb(105, 75, 52), Enum.Material.Wood)
 	local pick = hash(seed)
-	local leaf = if pick < 0.2 then rgb(255, 175, 205) elseif pick < 0.32 then rgb(240, 160, 60) else rgb(70 + math.floor(hash(seed + 1) * 40), 160 + math.floor(hash(seed + 2) * 40), 70)
-	ball(parent, "Canopy", 7, x, CURB + 10, z, leaf, Enum.Material.Grass)
-	ball(parent, "Canopy", 4.5, x + 1.5, CURB + 12.2, z - 1, leaf, Enum.Material.Grass)
+	local leaf = if pick < 0.18 then rgb(255, 178, 205) elseif pick < 0.3 then rgb(235, 160, 60) else rgb(70 + math.floor(hash(seed + 1) * 40), 155 + math.floor(hash(seed + 2) * 45), 70)
+	ball(parent, "Canopy", 7, x, PAVE + 9.5, z, leaf, Enum.Material.Grass)
+	ball(parent, "Canopy", 4.6, x + 1.5, PAVE + 11.8, z - 1, leaf, Enum.Material.Grass)
 end
 
 local function bench(parent: Instance, x: number, z: number, facing: Vector3)
 	local rel = frame(x, z, facing)
-	part(parent, "BenchSeat", Vector3.new(5, 0.4, 1.6), rel(0, CURB + 1.7, 0), rgb(150, 105, 70), Enum.Material.WoodPlanks)
-	part(parent, "BenchBack", Vector3.new(5, 1.6, 0.3), rel(0, CURB + 2.8, -0.75), rgb(150, 105, 70), Enum.Material.WoodPlanks)
+	part(parent, "BenchSeat", Vector3.new(5, 0.5, 1.6), rel(0, PAVE + 1.7, 0), rgb(140, 100, 65), Enum.Material.WoodPlanks)
+	part(parent, "BenchBack", Vector3.new(5, 1.6, 0.4), rel(0, PAVE + 2.8, -0.75), rgb(140, 100, 65), Enum.Material.WoodPlanks)
 	for _, u in { -2, 2 } do
-		part(parent, "BenchLeg", Vector3.new(0.4, 1.6, 1.6), rel(u, CURB + 0.8, 0), rgb(60, 60, 65), Enum.Material.Metal)
+		part(parent, "BenchLeg", Vector3.new(0.5, 1.6, 1.6), rel(u, PAVE + 0.8, 0), DARKSTONE, Enum.Material.Cobblestone)
 	end
 end
 
-local function hydrant(parent: Instance, x: number, z: number)
-	cylinder(parent, "Hydrant", 2.4, 1, x, CURB + 1.2, z, rgb(220, 50, 45), Enum.Material.Metal)
-	ball(parent, "HydrantCap", 1, x, CURB + 2.5, z, rgb(220, 50, 45), Enum.Material.Metal)
-	cylinder(parent, "HydrantNozzle", 0.6, 0.5, x, CURB + 1.6, z, rgb(200, 45, 40), Enum.Material.Metal).CFrame = CFrame.new(x + 0.6, CURB + 1.6, z)
+local function barrel(parent: Instance, x: number, y: number, z: number)
+	cylinder(parent, "Barrel", 3.4, 2.8, x, y + 1.7, z, rgb(145, 98, 58), Enum.Material.WoodPlanks)
+	cylinder(parent, "Hoop", 0.35, 2.95, x, y + 2.7, z, IRON, Enum.Material.Metal)
+	cylinder(parent, "Hoop", 0.35, 2.95, x, y + 0.7, z, IRON, Enum.Material.Metal)
 end
 
-local function trashBin(parent: Instance, x: number, z: number)
-	cylinder(parent, "Bin", 2.6, 1.8, x, CURB + 1.3, z, rgb(60, 110, 70), Enum.Material.Metal)
-	cylinder(parent, "BinLid", 0.3, 2, x, CURB + 2.75, z, rgb(50, 90, 60), Enum.Material.Metal)
+local function crate(parent: Instance, x: number, y: number, z: number, size: number, turn: number)
+	part(parent, "Crate", Vector3.new(size, size, size), CFrame.new(x, y + size / 2, z) * CFrame.Angles(0, turn, 0), rgb(185, 140, 88), Enum.Material.WoodPlanks)
 end
 
-local function busStop(parent: Instance, x: number, z: number, facing: Vector3)
+local function well(parent: Instance, x: number, z: number)
+	cylinder(parent, "WellWall", 3, 7, x, PAVE + 1.5, z, STONE, Enum.Material.Cobblestone)
+	cylinder(parent, "WellWater", 0.4, 5.6, x, PAVE + 2.8, z, rgb(70, 160, 210), Enum.Material.Glass)
+	for _, s in { -1, 1 } do
+		box(parent, "WellPost", x + s * 3, PAVE + 1.5, z, 0.6, 7, 0.6, TIMBER, Enum.Material.Wood)
+	end
+	cone(parent, "WellRoof", x, PAVE + 8.5, z, 5, 3.4, ROOFS[1], Enum.Material.Slate, 4)
+end
+
+local function marketStall(parent: Instance, x: number, z: number, facing: Vector3, color: Color3, seed: number)
 	local rel = frame(x, z, facing)
-	part(parent, "ShelterRoof", Vector3.new(10, 0.4, 4), rel(0, CURB + 8, 0), rgb(70, 140, 220), Enum.Material.Metal)
-	part(parent, "ShelterBack", Vector3.new(10, 6.5, 0.3), rel(0, CURB + 4.5, -1.8), rgb(200, 230, 255), Enum.Material.Glass, { Transparency = 0.4 })
-	for _, u in { -4.8, 4.8 } do
-		part(parent, "ShelterPost", Vector3.new(0.4, 7.6, 0.4), rel(u, CURB + 4, 1.7), rgb(70, 72, 80), Enum.Material.Metal)
+	part(parent, "StallCounter", Vector3.new(8, 3.2, 3), rel(0, PAVE + 1.6, 0), rgb(150, 105, 68), Enum.Material.WoodPlanks)
+	for _, u in { -3.8, 3.8 } do
+		for _, v in { -2.5, 1.4 } do
+			part(parent, "StallPost", Vector3.new(0.5, 8, 0.5), rel(u, PAVE + 4, v), TIMBER, Enum.Material.Wood)
+		end
 	end
-	part(parent, "ShelterSeat", Vector3.new(7, 0.4, 1.2), rel(0, CURB + 1.8, -1), rgb(150, 105, 70), Enum.Material.WoodPlanks)
-	local board = part(parent, "BusSign", Vector3.new(2.4, 1.6, 0.2), rel(-6, CURB + 7, 1.8), rgb(70, 140, 220), Enum.Material.SmoothPlastic)
-	sign(board, "BUS", WHITE)
-	cylinder(parent, "BusSignPole", 6, 0.3, 0, 0, 0, rgb(70, 72, 80), Enum.Material.Metal).CFrame = rel(-6, CURB + 3.3, 1.8) * CFrame.Angles(0, 0, math.rad(90))
+	for i = 1, 4 do
+		part(parent, "StallCanopy", Vector3.new(2.2, 0.3, 5.4), rel(-3.3 + (i - 1) * 2.2, PAVE + 8.2, -0.5) * CFrame.Angles(math.rad(-12), 0, 0), if i % 2 == 0 then WHITE else color, Enum.Material.Fabric)
+	end
+	local goods = { rgb(230, 60, 60), rgb(250, 200, 60), rgb(120, 200, 80), rgb(240, 140, 50), rgb(170, 120, 220) }
+	for i = 1, 5 do
+		local g = part(parent, "Goods", Vector3.new(1.3, 1.3, 1.3), rel(-3 + i * 1.2, PAVE + 3.8, 0.2), goods[(seed + i) % #goods + 1], Enum.Material.SmoothPlastic)
+		g.Shape = Enum.PartType.Ball
+	end
+end
+
+local function banner(parent: Instance, x: number, y: number, z: number, facing: Vector3, color: Color3, length: number)
+	local rel = frame(x, z, facing)
+	part(parent, "BannerRod", Vector3.new(4.6, 0.3, 0.3), rel(0, y, 0.4), IRON, Enum.Material.Metal)
+	part(parent, "Banner", Vector3.new(4, length, 0.2), rel(0, y - length / 2, 0.4), color, Enum.Material.Fabric)
+	part(parent, "BannerTrim", Vector3.new(4, 0.6, 0.25), rel(0, y - length + 0.3, 0.4), GOLD, Enum.Material.Fabric)
 end
 
 ----------------------------------------------------------------------------------------------
--- vehicles (anchored props for now; tagged Vehicle for the driving system to come)
+-- steeds, ships and airships (anchored props for now; tagged Vehicle for the riding system)
 
 
-local function car(parent: Instance, x: number, z: number, heading: Vector3, color: Color3, kind: string?)
-	local m = model(parent, "Car")
-	m:SetAttribute("Vehicle", kind or "car")
+local function horse(parent: Instance, x: number, z: number, heading: Vector3, coat: Color3, saddled: boolean): Model
+	local m = model(parent, "Horse")
+	m:SetAttribute("Vehicle", "horse")
 	local rel = frame(x, z, heading)
-	local body = part(m, "Body", Vector3.new(4.6, 1.8, 9.6), rel(0, 1.9, 0), color, Enum.Material.SmoothPlastic)
+	local body = part(m, "Body", Vector3.new(2.6, 2.8, 6.4), rel(0, 4.6, 0), coat, Enum.Material.SmoothPlastic)
 	m.PrimaryPart = body
-	part(m, "Cabin", Vector3.new(4.2, 1.8, 5), rel(0, 3.7, -0.4), rgb(60, 80, 100), Enum.Material.Glass, { Transparency = 0.2 })
-	part(m, "Roof", Vector3.new(4.3, 0.3, 4.4), rel(0, 4.7, -0.4), color, Enum.Material.SmoothPlastic)
-	for _, w in { { -2.2, 3 }, { 2.2, 3 }, { -2.2, -3 }, { 2.2, -3 } } do
-		local wheel = part(m, "Wheel", Vector3.new(0.9, 2.3, 2.3), rel(w[1], 1.15, w[2]), rgb(30, 30, 32), Enum.Material.SmoothPlastic)
-		wheel.Shape = Enum.PartType.Cylinder
+	part(m, "Neck", Vector3.new(1.6, 3.6, 1.8), rel(0, 6.6, 3.2) * CFrame.Angles(math.rad(-35), 0, 0), coat)
+	part(m, "Head", Vector3.new(1.4, 1.5, 3), rel(0, 8.1, 4.6) * CFrame.Angles(math.rad(25), 0, 0), coat)
+	part(m, "Mane", Vector3.new(0.5, 3.6, 1.8), rel(0, 7, 2.6) * CFrame.Angles(math.rad(-35), 0, 0), rgb(40, 32, 28), Enum.Material.Fabric)
+	part(m, "Tail", Vector3.new(0.6, 3, 0.8), rel(0, 4.4, -3.6) * CFrame.Angles(math.rad(25), 0, 0), rgb(40, 32, 28), Enum.Material.Fabric)
+	for _, l in { { -0.8, 2.4 }, { 0.8, 2.4 }, { -0.8, -2.4 }, { 0.8, -2.4 } } do
+		part(m, "Leg", Vector3.new(0.7, 3.4, 0.7), rel(l[1], 1.7, l[2]), coat)
+		part(m, "Hoof", Vector3.new(0.8, 0.5, 0.9), rel(l[1], 0.25, l[2]), rgb(40, 35, 30))
 	end
-	for _, u in { -1.6, 1.6 } do
-		part(m, "Headlight", Vector3.new(0.9, 0.5, 0.2), rel(u, 2.2, 4.85), rgb(255, 250, 220), Enum.Material.Neon)
-		part(m, "Taillight", Vector3.new(0.9, 0.5, 0.2), rel(u, 2.2, -4.85), rgb(255, 50, 50), Enum.Material.Neon)
+	if saddled then
+		part(m, "Saddle", Vector3.new(2.8, 0.6, 2.4), rel(0, 6.2, 0.2), rgb(120, 40, 35), Enum.Material.Fabric)
+		part(m, "Blanket", Vector3.new(2.9, 1.4, 2.8), rel(0, 5.6, 0.2), BANNERS[2], Enum.Material.Fabric)
 	end
-	part(m, "Bumper", Vector3.new(4.8, 0.6, 0.4), rel(0, 1.2, 5), rgb(70, 70, 75), Enum.Material.Metal)
-	part(m, "Bumper", Vector3.new(4.8, 0.6, 0.4), rel(0, 1.2, -5), rgb(70, 70, 75), Enum.Material.Metal)
-	if kind == "taxi" then
-		local roofSign = part(m, "TaxiSign", Vector3.new(2, 0.7, 0.8), rel(0, 5.2, -0.4), rgb(255, 255, 255), Enum.Material.Neon)
-		sign(roofSign, "TAXI", rgb(40, 40, 40))
-	elseif kind == "police" then
-		part(m, "Siren", Vector3.new(0.8, 0.5, 0.8), rel(-0.6, 5.1, -0.4), rgb(255, 50, 50), Enum.Material.Neon)
-		part(m, "Siren", Vector3.new(0.8, 0.5, 0.8), rel(0.6, 5.1, -0.4), rgb(60, 120, 255), Enum.Material.Neon)
-	end
+	return m
 end
 
-local function bus(parent: Instance, x: number, z: number, heading: Vector3)
-	local m = model(parent, "Bus")
-	m:SetAttribute("Vehicle", "bus")
+local function carriage(parent: Instance, x: number, z: number, heading: Vector3, trim: Color3)
+	local m = model(parent, "Carriage")
+	m:SetAttribute("Vehicle", "carriage")
 	local rel = frame(x, z, heading)
-	local body = part(m, "Body", Vector3.new(6, 7, 24), rel(0, 4.6, 0), rgb(70, 140, 220), Enum.Material.SmoothPlastic)
-	m.PrimaryPart = body
-	for _, u in { -3.05, 3.05 } do
-		part(m, "WindowStrip", Vector3.new(0.1, 2.4, 20), rel(u, 5.8, 0.5), rgb(40, 60, 80), Enum.Material.Glass)
+	local cab = part(m, "Cabin", Vector3.new(5, 5, 7), rel(0, 4.6, -2), rgb(70, 45, 35), Enum.Material.WoodPlanks)
+	m.PrimaryPart = cab
+	part(m, "CabinTrim", Vector3.new(5.2, 0.6, 7.2), rel(0, 7.2, -2), trim, Enum.Material.SmoothPlastic)
+	part(m, "Roof", Vector3.new(5.6, 0.5, 7.6), rel(0, 7.6, -2), rgb(50, 35, 30), Enum.Material.Wood)
+	for _, u in { -2.55, 2.55 } do
+		part(m, "Window", Vector3.new(0.1, 2, 2.6), rel(u, 5.4, -2), LANTERN, Enum.Material.Glass)
 	end
-	part(m, "Windshield", Vector3.new(5.4, 3, 0.1), rel(0, 5.8, 12.05), rgb(40, 60, 80), Enum.Material.Glass)
-	part(m, "Stripe", Vector3.new(6.1, 0.8, 24.1), rel(0, 3.2, 0), WHITE, Enum.Material.SmoothPlastic)
-	for _, w in { { -2.9, 8 }, { 2.9, 8 }, { -2.9, -8 }, { 2.9, -8 } } do
-		local wheel = part(m, "Wheel", Vector3.new(1, 2.8, 2.8), rel(w[1], 1.4, w[2]), rgb(30, 30, 32))
+	part(m, "DriverBench", Vector3.new(4.4, 0.6, 2), rel(0, 5.4, 2.4), rgb(70, 45, 35), Enum.Material.WoodPlanks)
+	for _, w in { { -2.8, 0.6, 1.6 }, { 2.8, 0.6, 1.6 }, { -2.8, -4.4, 2.2 }, { 2.8, -4.4, 2.2 } } do
+		local wheel = part(m, "Wheel", Vector3.new(0.5, w[3] * 2, w[3] * 2), rel(w[1], w[3], w[2]), TIMBER, Enum.Material.Wood)
 		wheel.Shape = Enum.PartType.Cylinder
 	end
-	local dest = part(m, "Destination", Vector3.new(4, 0.9, 0.1), rel(0, 7.6, 12.06), rgb(20, 20, 20), Enum.Material.SmoothPlastic)
-	sign(dest, "CITY LOOP", rgb(255, 200, 60))
+	part(m, "Shaft", Vector3.new(0.4, 0.4, 7), rel(0, 3.2, 6), TIMBER, Enum.Material.Wood)
+	local lamp = part(m, "Lamp", Vector3.new(0.8, 1, 0.8), rel(2.7, 6.6, 1.4), LANTERN, Enum.Material.Neon)
+	lamp.Name = "Lamp"
+	horse(m, (rel(-1.6, 0, 9)).Position.X, (rel(-1.6, 0, 9)).Position.Z, heading, COATS[1], false).Parent = m
+	horse(m, (rel(1.6, 0, 9)).Position.X, (rel(1.6, 0, 9)).Position.Z, heading, COATS[3], false).Parent = m
 end
 
-local function boat(parent: Instance, x: number, z: number, heading: Vector3, kind: string, color: Color3)
-	local m = model(parent, "Boat")
+local function cart(parent: Instance, x: number, z: number, heading: Vector3, seed: number)
+	local m = model(parent, "Cart")
+	m:SetAttribute("Vehicle", "cart")
+	local rel = frame(x, z, heading)
+	local bed = part(m, "CartBed", Vector3.new(4.6, 0.8, 7), rel(0, 2.4, -1), rgb(150, 105, 68), Enum.Material.WoodPlanks)
+	m.PrimaryPart = bed
+	for _, s in { -2.3, 2.3 } do
+		part(m, "CartSide", Vector3.new(0.4, 1.6, 7), rel(s, 3.4, -1), rgb(130, 90, 58), Enum.Material.WoodPlanks)
+		local wheel = part(m, "Wheel", Vector3.new(0.5, 3.6, 3.6), rel(s * 1.2, 1.8, -1), TIMBER, Enum.Material.Wood)
+		wheel.Shape = Enum.PartType.Cylinder
+	end
+	for i = 0, 2 do
+		crate(m, (rel(-1, 0, -3 + i * 2.4)).Position.X, 2.8, (rel(-1, 0, -3 + i * 2.4)).Position.Z, 1.8, hash(seed + i))
+	end
+	barrel(m, (rel(1.2, 0, -1)).Position.X, 2.8, (rel(1.2, 0, -1)).Position.Z)
+	part(m, "Shaft", Vector3.new(0.4, 0.4, 6), rel(0, 2.6, 4.8), TIMBER, Enum.Material.Wood)
+	horse(m, (rel(0, 0, 8.6)).Position.X, (rel(0, 0, 8.6)).Position.Z, heading, COATS[seed % #COATS + 1], false).Parent = m
+end
+
+-- Sailing ships: "rowboat", "sloop" or "galleon".
+local function ship(parent: Instance, x: number, z: number, heading: Vector3, kind: string, sailColor: Color3)
+	local m = model(parent, "Ship")
 	m:SetAttribute("Vehicle", kind)
 	local rel = frame(x, z, heading)
 	local water = -2
-	if kind == "speedboat" then
-		local hull = part(m, "Hull", Vector3.new(5, 2.4, 12), rel(0, water + 0.6, -1), color, Enum.Material.SmoothPlastic)
+	local hullColor = rgb(110, 72, 45)
+	if kind == "rowboat" then
+		local hull = part(m, "Hull", Vector3.new(4, 1.6, 8), rel(0, water + 0.4, 0), hullColor, Enum.Material.WoodPlanks)
 		m.PrimaryPart = hull
-		wedge(m, "Bow", Vector3.new(5, 2.4, 5), rel(0, water + 0.6, 7.5) * CFrame.Angles(0, 0, math.pi), color)
-		part(m, "Deck", Vector3.new(4.6, 0.3, 11), rel(0, water + 1.9, -1), WHITE, Enum.Material.SmoothPlastic)
-		part(m, "Windscreen", Vector3.new(4.2, 1.4, 0.2), rel(0, water + 2.7, 2.5) * CFrame.Angles(math.rad(-25), 0, 0), rgb(150, 200, 230), Enum.Material.Glass, { Transparency = 0.3 })
-		part(m, "Seat", Vector3.new(3.6, 1, 1.6), rel(0, water + 2.4, -1), rgb(240, 240, 240), Enum.Material.Fabric)
-		part(m, "Motor", Vector3.new(1.4, 2.6, 1.4), rel(0, water + 1.4, -7.4), rgb(40, 40, 45), Enum.Material.Metal)
-	elseif kind == "sailboat" then
-		local hull = part(m, "Hull", Vector3.new(6, 2.6, 16), rel(0, water + 0.7, -1), WHITE, Enum.Material.SmoothPlastic)
-		m.PrimaryPart = hull
-		wedge(m, "Bow", Vector3.new(6, 2.6, 6), rel(0, water + 0.7, 10) * CFrame.Angles(0, 0, math.pi), WHITE)
-		part(m, "Stripe", Vector3.new(6.1, 0.5, 16.1), rel(0, water + 1.4, -1), color, Enum.Material.SmoothPlastic)
-		part(m, "Deck", Vector3.new(5.6, 0.3, 15), rel(0, water + 2.05, -1), rgb(190, 150, 100), Enum.Material.WoodPlanks)
-		part(m, "Mast", Vector3.new(0.6, 22, 0.6), rel(0, water + 13, 1), rgb(200, 200, 205), Enum.Material.Metal)
-		wedge(m, "Sail", Vector3.new(0.2, 18, 9), rel(0, water + 12, -3.5) * CFrame.Angles(0, math.pi, 0), WHITE, Enum.Material.Fabric)
-		wedge(m, "Jib", Vector3.new(0.2, 14, 6), rel(0, water + 10, 4.6), color, Enum.Material.Fabric)
-	elseif kind == "yacht" then
-		local hull = part(m, "Hull", Vector3.new(12, 5, 40), rel(0, water + 1.5, -2), WHITE, Enum.Material.SmoothPlastic)
-		m.PrimaryPart = hull
-		wedge(m, "Bow", Vector3.new(12, 5, 12), rel(0, water + 1.5, 24) * CFrame.Angles(0, 0, math.pi), WHITE)
-		part(m, "HullStripe", Vector3.new(12.1, 0.8, 40.1), rel(0, water + 2.4, -2), color, Enum.Material.SmoothPlastic)
-		part(m, "Deck", Vector3.new(11, 0.4, 40), rel(0, water + 4.2, -2), rgb(190, 150, 100), Enum.Material.WoodPlanks)
-		part(m, "Cabin", Vector3.new(9, 4.5, 18), rel(0, water + 6.6, -3), WHITE, Enum.Material.SmoothPlastic)
-		part(m, "CabinGlass", Vector3.new(9.2, 1.6, 16), rel(0, water + 7.2, -3), rgb(40, 60, 80), Enum.Material.Glass)
-		part(m, "Bridge", Vector3.new(7, 3, 9), rel(0, water + 10.4, -1), WHITE, Enum.Material.SmoothPlastic)
-		part(m, "BridgeGlass", Vector3.new(7.2, 1.2, 7), rel(0, water + 10.8, -0.5), rgb(40, 60, 80), Enum.Material.Glass)
-		cylinder(m, "Radar", 3, 0.4, 0, 0, 0, rgb(200, 200, 205), Enum.Material.Metal).CFrame = rel(0, water + 13.4, -3) * CFrame.Angles(0, 0, math.rad(90))
-	elseif kind == "tug" then
-		local hull = part(m, "Hull", Vector3.new(9, 4, 20), rel(0, water + 1, 0), rgb(200, 60, 50), Enum.Material.SmoothPlastic)
-		m.PrimaryPart = hull
-		part(m, "Fender", Vector3.new(9.6, 1.4, 20.6), rel(0, water + 2.4, 0), rgb(30, 30, 32), Enum.Material.Fabric)
-		part(m, "House", Vector3.new(6.5, 5, 7), rel(0, water + 5.5, 2), WHITE, Enum.Material.SmoothPlastic)
-		part(m, "HouseGlass", Vector3.new(6.7, 1.4, 7.2), rel(0, water + 6.8, 2), rgb(40, 60, 80), Enum.Material.Glass)
-		cylinder(m, "Funnel", 5, 2.4, 0, 0, 0, rgb(250, 200, 60), Enum.Material.Metal).CFrame = rel(0, water + 9, -3) * CFrame.Angles(0, 0, math.rad(90))
-	elseif kind == "cargo" then
-		local hull = part(m, "Hull", Vector3.new(26, 10, 110), rel(0, water + 2, 0), rgb(40, 70, 120), Enum.Material.Metal)
-		m.PrimaryPart = hull
-		wedge(m, "Bow", Vector3.new(26, 10, 20), rel(0, water + 2, 65) * CFrame.Angles(0, 0, math.pi), rgb(40, 70, 120), Enum.Material.Metal)
-		part(m, "Waterline", Vector3.new(26.2, 2, 110.2), rel(0, water - 2, 0), rgb(170, 50, 45), Enum.Material.Metal)
-		part(m, "Deck", Vector3.new(25, 0.6, 108), rel(0, water + 7.2, 0), rgb(150, 50, 45), Enum.Material.Metal)
-		part(m, "Superstructure", Vector3.new(22, 16, 12), rel(0, water + 15.4, -44), WHITE, Enum.Material.Metal)
-		part(m, "BridgeWindows", Vector3.new(22.2, 2, 12.2), rel(0, water + 21, -44), rgb(40, 60, 80), Enum.Material.Glass)
-		cylinder(m, "Stack", 8, 4, 0, 0, 0, rgb(250, 200, 60), Enum.Material.Metal).CFrame = rel(0, water + 27, -48) * CFrame.Angles(0, 0, math.rad(90))
-		local colors = { rgb(220, 70, 60), rgb(60, 130, 220), rgb(250, 190, 50), rgb(90, 180, 110), rgb(240, 130, 50) }
-		for row = 0, 5 do
-			for col = -1, 1 do
-				for layer = 0, (row + col) % 2 do
-					part(m, "Container", Vector3.new(7.6, 7.6, 15.6), rel(col * 8, water + 11.4 + layer * 7.8, -24 + row * 16), colors[(row * 3 + col + layer) % #colors + 1], Enum.Material.Metal)
+		wedge(m, "Bow", Vector3.new(4, 1.6, 3), rel(0, water + 0.4, 5.5) * CFrame.Angles(0, 0, math.pi), hullColor, Enum.Material.WoodPlanks)
+		part(m, "Thwart", Vector3.new(3.6, 0.3, 1), rel(0, water + 1.2, 0), rgb(160, 120, 80), Enum.Material.WoodPlanks)
+		for _, s in { -1, 1 } do
+			part(m, "Oar", Vector3.new(6, 0.25, 0.4), rel(s * 3.2, water + 1.1, 0) * CFrame.Angles(0, 0, s * math.rad(-15)), rgb(160, 120, 80), Enum.Material.Wood)
+		end
+		return
+	end
+	local big = kind == "galleon"
+	local L, W, H = if big then 64 else 26, if big then 16 else 8, if big then 8 else 4
+	local hull = part(m, "Hull", Vector3.new(W, H, L), rel(0, water + H / 2 - 1.5, 0), hullColor, Enum.Material.WoodPlanks)
+	m.PrimaryPart = hull
+	wedge(m, "Bow", Vector3.new(W, H, L * 0.22), rel(0, water + H / 2 - 1.5, L / 2 + L * 0.11) * CFrame.Angles(0, 0, math.pi), hullColor, Enum.Material.WoodPlanks)
+	part(m, "Stripe", Vector3.new(W + 0.1, H * 0.15, L + 0.1), rel(0, water + H - 2.4, 0), GOLD, Enum.Material.SmoothPlastic)
+	part(m, "Deck", Vector3.new(W - 0.6, 0.4, L), rel(0, water + H - 1.3, 0), rgb(175, 135, 90), Enum.Material.WoodPlanks)
+	for _, s in { -1, 1 } do
+		part(m, "Rail", Vector3.new(0.4, 1.4, L), rel(s * (W / 2 - 0.2), water + H - 0.4, 0), hullColor, Enum.Material.WoodPlanks)
+	end
+	if big then
+		-- raised aftcastle with windows and lantern, and a forecastle
+		part(m, "Aftcastle", Vector3.new(W, 7, 14), rel(0, water + H + 2, -L / 2 + 7), hullColor, Enum.Material.WoodPlanks)
+		part(m, "SternWindows", Vector3.new(W - 3, 2, 0.3), rel(0, water + H + 2.4, -L / 2 - 0.1), LANTERN, Enum.Material.Neon)
+		part(m, "Forecastle", Vector3.new(W - 2, 4, 9), rel(0, water + H + 0.6, L / 2 - 6), hullColor, Enum.Material.WoodPlanks)
+		local sternLamp = part(m, "SternLantern", Vector3.new(1.4, 2, 1.4), rel(0, water + H + 7, -L / 2 - 0.8), LANTERN, Enum.Material.Neon)
+		glowLight(sternLamp, 18, 1, LANTERN)
+		for i, v in { -14, 4, 20 } do
+			local mh = if i == 2 then 46 else 36
+			part(m, "Mast", Vector3.new(1.2, mh, 1.2), rel(0, water + H + mh / 2 - 1, v), rgb(120, 85, 55), Enum.Material.Wood)
+			for k = 0, 1 do
+				local sy = water + H + 9 + k * (mh * 0.38)
+				local sw = 18 - k * 4
+				part(m, "Yard", Vector3.new(sw + 2, 0.6, 0.6), rel(0, sy + 5.5, v), rgb(120, 85, 55), Enum.Material.Wood)
+				part(m, "Sail", Vector3.new(sw, 10, 0.4), rel(0, sy, v + 0.6) * CFrame.Angles(math.rad(-6), 0, 0), WHITE, Enum.Material.Fabric)
+				if k == 0 then
+					part(m, "SailEmblem", Vector3.new(sw * 0.4, 4, 0.45), rel(0, sy, v + 0.65) * CFrame.Angles(math.rad(-6), 0, 0), sailColor, Enum.Material.Fabric)
 				end
 			end
+			part(m, "Pennant", Vector3.new(0.2, 1.4, 4), rel(0, water + H + mh, v - 2), sailColor, Enum.Material.Fabric)
 		end
+		part(m, "Bowsprit", Vector3.new(0.8, 0.8, 18), rel(0, water + H + 2, L / 2 + 10) * CFrame.Angles(math.rad(18), 0, 0), rgb(120, 85, 55), Enum.Material.Wood)
+	else
+		part(m, "Cabin", Vector3.new(W - 2, 3, 7), rel(0, water + H + 0.2, -L / 2 + 5), hullColor, Enum.Material.WoodPlanks)
+		part(m, "Mast", Vector3.new(0.8, 24, 0.8), rel(0, water + H + 11, 2), rgb(120, 85, 55), Enum.Material.Wood)
+		wedge(m, "Sail", Vector3.new(0.3, 18, 10), rel(0, water + H + 11, -3.5) * CFrame.Angles(0, math.pi, 0), WHITE, Enum.Material.Fabric)
+		wedge(m, "Jib", Vector3.new(0.3, 14, 7), rel(0, water + H + 9, 6), sailColor, Enum.Material.Fabric)
 	end
 end
 
-local function airliner(parent: Instance, x: number, z: number, heading: Vector3, livery: Color3)
-	local m = model(parent, "Plane")
-	m:SetAttribute("Vehicle", "plane")
+local function airship(parent: Instance, x: number, y: number, z: number, heading: Vector3, color: Color3)
+	local m = model(parent, "Airship")
+	m:SetAttribute("Vehicle", "airship")
+	m:SetAttribute("Bob", "float")
 	local rel = frame(x, z, heading)
-	local y = 7
-	local body = tube(m, "Fuselage", 56, 7, rel(0, y, 0), WHITE, Enum.Material.SmoothPlastic)
-	m.PrimaryPart = body
-	ball(m, "Nose", 7, 0, 0, 0, WHITE).CFrame = rel(0, y, 28)
-	part(m, "Cockpit", Vector3.new(4.4, 1.2, 1.4), rel(0, y + 1.6, 30.4) * CFrame.Angles(math.rad(25), 0, 0), rgb(40, 60, 80), Enum.Material.Glass)
-	wedge(m, "TailCone", Vector3.new(6.8, 6.8, 10), rel(0, y + 0.1, -33) * CFrame.Angles(0, math.pi, 0) * CFrame.Angles(0, 0, math.pi), WHITE)
-	part(m, "Windows", Vector3.new(7.1, 0.8, 46), rel(0, y + 1.3, 1), rgb(40, 60, 80), Enum.Material.Glass)
-	part(m, "Cheatline", Vector3.new(7.1, 0.9, 56), rel(0, y - 0.3, 0), livery, Enum.Material.SmoothPlastic)
-	for _, side in { -1, 1 } do
-		part(m, "Wing", Vector3.new(30, 1, 10), rel(side * 17, y - 1.6, -1) * CFrame.Angles(0, side * math.rad(-18), 0), rgb(220, 222, 228), Enum.Material.SmoothPlastic)
-		part(m, "Winglet", Vector3.new(0.6, 4, 3), rel(side * 31.5, y + 0.4, -6), livery, Enum.Material.SmoothPlastic)
-		tube(m, "Engine", 7, 3.6, rel(side * 11, y - 3.6, 2), rgb(200, 202, 208), Enum.Material.Metal)
-		part(m, "Stabilizer", Vector3.new(12, 0.6, 5), rel(side * 7, y + 1, -29) * CFrame.Angles(0, side * math.rad(-15), 0), rgb(220, 222, 228))
-		local gear = part(m, "Gear", Vector3.new(1, 2.2, 2.2), rel(side * 3, 1.1, -2), rgb(30, 30, 32))
-		gear.Shape = Enum.PartType.Cylinder
+	local envelope = tube(m, "Envelope", 48, 18, rel(0, y + 16, 0), color, Enum.Material.Fabric)
+	m.PrimaryPart = envelope
+	ball(m, "EnvelopeNose", 18, 0, 0, 0, color, Enum.Material.Fabric).CFrame = rel(0, y + 16, 24)
+	ball(m, "EnvelopeTail", 18, 0, 0, 0, color, Enum.Material.Fabric).CFrame = rel(0, y + 16, -24)
+	for k = -2, 2 do
+		tube(m, "Rib", 1, 18.4, rel(0, y + 16, k * 10), GOLD, Enum.Material.Fabric)
 	end
-	part(m, "Fin", Vector3.new(0.8, 11, 9), rel(0, y + 8, -29) * CFrame.Angles(math.rad(20), 0, 0), livery, Enum.Material.SmoothPlastic)
-	local noseGear = part(m, "Gear", Vector3.new(1, 2, 2), rel(0, 1, 22), rgb(30, 30, 32))
-	noseGear.Shape = Enum.PartType.Cylinder
-end
-
-local function propPlane(parent: Instance, x: number, z: number, heading: Vector3, color: Color3)
-	local m = model(parent, "Plane")
-	m:SetAttribute("Vehicle", "propplane")
-	local rel = frame(x, z, heading)
-	local y = 3.2
-	local body = part(m, "Fuselage", Vector3.new(3.4, 3.4, 16), rel(0, y, 0), color, Enum.Material.SmoothPlastic)
-	m.PrimaryPart = body
-	part(m, "Canopy", Vector3.new(3, 1.6, 4), rel(0, y + 2.2, 2), rgb(60, 90, 120), Enum.Material.Glass)
-	part(m, "Wing", Vector3.new(26, 0.5, 4.5), rel(0, y + 1.6, 2), WHITE, Enum.Material.SmoothPlastic)
-	part(m, "Tailplane", Vector3.new(9, 0.4, 2.6), rel(0, y + 0.6, -7), WHITE)
-	part(m, "Fin", Vector3.new(0.4, 4, 3), rel(0, y + 2.6, -7), color)
-	cylinder(m, "Spinner", 1.4, 1.4, 0, 0, 0, rgb(240, 240, 240)).CFrame = rel(0, y, 8.6) * CFrame.Angles(0, math.rad(90), 0)
-	part(m, "Propeller", Vector3.new(7, 0.6, 0.2), rel(0, y, 9.2), rgb(40, 40, 45), Enum.Material.Metal)
-	for _, u in { -2, 2 } do
-		local wheel = part(m, "Wheel", Vector3.new(0.6, 1.6, 1.6), rel(u, 0.8, 3), rgb(30, 30, 32))
-		wheel.Shape = Enum.PartType.Cylinder
+	-- tail fins
+	part(m, "FinTop", Vector3.new(0.6, 9, 9), rel(0, y + 26, -28), color, Enum.Material.Fabric)
+	part(m, "FinSide", Vector3.new(16, 0.6, 8), rel(0, y + 16, -29), color, Enum.Material.Fabric)
+	-- gondola: a small ship hull hung under the envelope
+	part(m, "Gondola", Vector3.new(7, 3.6, 24), rel(0, y + 2, 0), rgb(110, 72, 45), Enum.Material.WoodPlanks)
+	wedge(m, "GondolaBow", Vector3.new(7, 3.6, 5), rel(0, y + 2, 14.5) * CFrame.Angles(0, 0, math.pi), rgb(110, 72, 45), Enum.Material.WoodPlanks)
+	part(m, "GondolaRail", Vector3.new(7.2, 1, 24.2), rel(0, y + 4.3, 0), GOLD, Enum.Material.SmoothPlastic)
+	part(m, "Cabin", Vector3.new(5.6, 3, 8), rel(0, y + 5.3, -5), rgb(130, 90, 58), Enum.Material.WoodPlanks)
+	part(m, "CabinWindows", Vector3.new(5.8, 1, 6), rel(0, y + 5.6, -5), LANTERN, Enum.Material.Neon)
+	for _, c in { { -3.3, 9 }, { 3.3, 9 }, { -3.3, -9 }, { 3.3, -9 } } do
+		local a = rel(c[1], y + 4, c[2]).Position
+		local b = rel(c[1] * 1.8, y + 10, c[2] * 1.2).Position
+		deco(part(m, "Rigging", Vector3.new(0.2, 0.2, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), rgb(90, 80, 70), Enum.Material.Fabric))
 	end
-end
-
-local function helicopter(parent: Instance, x: number, z: number, heading: Vector3, color: Color3, y0: number?)
-	local m = model(parent, "Helicopter")
-	m:SetAttribute("Vehicle", "helicopter")
-	local rel = frame(x, z, heading)
-	local y = (y0 or 0) + 4
-	local body = ball(m, "Cabin", 7, 0, 0, 0, color, Enum.Material.SmoothPlastic)
-	body.CFrame = rel(0, y, 1)
-	m.PrimaryPart = body
-	ball(m, "Bubble", 5, 0, 0, 0, rgb(60, 90, 120), Enum.Material.Glass).CFrame = rel(0, y + 0.6, 3)
-	part(m, "Boom", Vector3.new(1, 1, 11), rel(0, y + 0.8, -6), color)
-	part(m, "TailFin", Vector3.new(0.3, 3, 2), rel(0, y + 2, -11.3), color)
-	part(m, "Rotor", Vector3.new(0.8, 0.2, 22), rel(0, y + 4.2, 1), rgb(40, 40, 45), Enum.Material.Metal)
-	part(m, "Rotor", Vector3.new(22, 0.2, 0.8), rel(0, y + 4.2, 1), rgb(40, 40, 45), Enum.Material.Metal)
-	cylinder(m, "Mast", 1.4, 0.6, 0, 0, 0, rgb(60, 60, 65)).CFrame = rel(0, y + 3.5, 1) * CFrame.Angles(0, 0, math.rad(90))
-	for _, u in { -2.4, 2.4 } do
-		part(m, "Skid", Vector3.new(0.4, 0.4, 8), rel(u, (y0 or 0) + 0.3, 1), rgb(60, 60, 65), Enum.Material.Metal)
-		part(m, "Strut", Vector3.new(0.3, 1.6, 0.3), rel(u, (y0 or 0) + 1.1, 1), rgb(60, 60, 65), Enum.Material.Metal)
+	for _, s in { -1, 1 } do
+		tube(m, "EngineArm", 6, 0.6, rel(s * 5, y + 4, -9) * CFrame.Angles(0, math.rad(90), 0), IRON, Enum.Material.Metal)
+		part(m, "Propeller", Vector3.new(1, 7, 0.3), rel(s * 8, y + 4, -12), rgb(150, 110, 70), Enum.Material.Wood)
+		part(m, "Propeller", Vector3.new(7, 1, 0.3), rel(s * 8, y + 4, -12), rgb(150, 110, 70), Enum.Material.Wood)
+	end
+	for _, p in m:GetDescendants() do
+		if p:IsA("BasePart") then
+			p.CanCollide = false
+		end
 	end
 end
 
 ----------------------------------------------------------------------------------------------
 -- buildings
 
-
-local function skyscraper(parent: Instance, x: number, z: number, w: number, d: number, height: number, seed: number)
-	local m = model(parent, "Tower")
-	local tint = GLASS_TINTS[seed % #GLASS_TINTS + 1]
-	local stone = STONE[(seed * 3) % #STONE + 1]
-	-- podium with lobby glass and an entrance canopy
-	box(m, "Podium", x, CURB, z, w, 10, d, stone, Enum.Material.Concrete)
-	box(m, "LobbyGlass", x, CURB + 1, z, w + 0.2, 6, d - 6, rgb(60, 90, 110), Enum.Material.Glass)
-	box(m, "LobbyGlass", x, CURB + 1, z, w - 6, 6, d + 0.2, rgb(60, 90, 110), Enum.Material.Glass)
-	box(m, "Canopy", x, CURB + 7.5, z - d / 2 - 2, 14, 0.6, 5, stone, Enum.Material.Concrete)
-	-- tower, optionally with a setback for the top third
-	local sections = if height > 90 then { { w - 4, d - 4, height * 0.66 }, { w - 12, d - 12, height * 0.34 } } else { { w - 4, d - 4, height } }
-	local y = CURB + 10
-	for si, sec in sections do
-		local sw, sd, sh = sec[1], sec[2], sec[3]
-		box(m, "Glass", x, y, z, sw, sh, sd, tint, Enum.Material.Glass)
-		local floors = math.floor(sh / 6)
-		for f = 1, floors do
-			box(m, "FloorBand", x, y + f * 6 - 0.6, z, sw + 0.6, 0.7, sd + 0.6, stone, Enum.Material.Concrete)
-		end
-		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-			box(m, "Fin", x + c[1] * (sw / 2), y, z + c[2] * (sd / 2), 1.4, sh, 1.4, stone, Enum.Material.Concrete)
-		end
-		for _, u in { -1, 1 } do
-			box(m, "Mullion", x + u * sw / 6, y, z - sd / 2, 0.5, sh, 0.5, stone, Enum.Material.Concrete)
-			box(m, "Mullion", x + u * sw / 6, y, z + sd / 2, 0.5, sh, 0.5, stone, Enum.Material.Concrete)
-		end
-		y += sh
-		if si < #sections then
-			box(m, "Setback", x, y - 0.6, z, sw + 1, 1.2, sd + 1, stone, Enum.Material.Concrete)
-		end
-	end
-	-- roof: parapet, plant, and either an antenna or a helipad
-	local top = sections[#sections]
-	box(m, "Parapet", x, y, z, top[1] + 1, 1.6, top[2] + 1, stone, Enum.Material.Concrete)
-	box(m, "RoofPlant", x - top[1] / 5, y + 1.6, z, 6, 3, 5, rgb(150, 150, 155), Enum.Material.Metal)
-	box(m, "RoofPlant", x + top[1] / 5, y + 1.6, z + 2, 4, 2.4, 4, rgb(150, 150, 155), Enum.Material.Metal)
-	if seed % 3 == 0 and top[1] >= 22 then
-		cylinder(m, "Helipad", 0.6, math.min(top[1], top[2]) - 4, x, y + 1.9, z, rgb(70, 72, 80), Enum.Material.Concrete)
-		for _, u in { -2.5, 2.5 } do
-			box(m, "HelipadH", x + u, y + 2.2, z, 1, 0.1, 8, WHITE)
-		end
-		box(m, "HelipadH", x, y + 2.2, z, 5, 0.1, 1, WHITE)
-		if seed % 2 == 0 then
-			helicopter(m, x, z, Vector3.new(0, 0, 1), rgb(220, 60, 60), y + 2.2)
-		end
-	else
-		cylinder(m, "Antenna", 22, 0.8, x, y + 1.6 + 11, z, rgb(200, 200, 205), Enum.Material.Metal)
-		ball(m, "AntennaLight", 1.4, x, y + 23.6, z, rgb(255, 50, 50), Enum.Material.Neon)
-	end
-	-- a vertical neon sign on some towers
-	if seed % 4 == 1 then
-		local signPart = deco(box(m, "NeonSign", x + w / 2 + 0.8, CURB + 16, z, 1.2, 26, 5, rgb(30, 30, 40), Enum.Material.SmoothPlastic))
-		sign(signPart, if seed % 8 == 1 then "HOTEL" else "SPROUT CO", rgb(255, 120, 200), Enum.NormalId.Right)
-		sign(signPart, if seed % 8 == 1 then "HOTEL" else "SPROUT CO", rgb(255, 120, 200), Enum.NormalId.Left)
-	end
-end
-
-local function apartment(parent: Instance, x: number, z: number, w: number, d: number, floors: number, facing: Vector3, seed: number)
-	local m = model(parent, "Apartment")
-	local rel = frame(x, z, facing)
-	local walls = { rgb(190, 100, 80), rgb(225, 200, 160), rgb(160, 175, 190), rgb(220, 160, 120), rgb(200, 210, 190) }
-	local wall = walls[seed % #walls + 1]
-	local trim = rgb(240, 238, 230)
-	local h = floors * 7 + 2
-	part(m, "Walls", Vector3.new(w, h, d), rel(0, CURB + h / 2, 0), wall, Enum.Material.Brick)
-	for f = 0, floors - 1 do
-		local fy = CURB + 2 + f * 7 + 3.5
-		part(m, "WindowBand", Vector3.new(w - 4, 3.4, 0.3), rel(0, fy, d / 2 + 0.1), rgb(60, 85, 110), Enum.Material.Glass)
-		part(m, "WindowBand", Vector3.new(w - 4, 3.4, 0.3), rel(0, fy, -d / 2 - 0.1), rgb(60, 85, 110), Enum.Material.Glass)
-		part(m, "WindowBand", Vector3.new(0.3, 3.4, d - 4), rel(w / 2 + 0.1, fy, 0), rgb(60, 85, 110), Enum.Material.Glass)
-		part(m, "WindowBand", Vector3.new(0.3, 3.4, d - 4), rel(-w / 2 - 0.1, fy, 0), rgb(60, 85, 110), Enum.Material.Glass)
-		if f > 0 then
-			part(m, "Ledge", Vector3.new(w + 0.6, 0.5, d + 0.6), rel(0, CURB + 2 + f * 7, 0), trim, Enum.Material.Concrete)
-			if f % 2 == 1 then
-				for _, u in { -w / 4, w / 4 } do
-					part(m, "Balcony", Vector3.new(6, 0.5, 2.6), rel(u, fy - 1.8, d / 2 + 1.3), trim, Enum.Material.Concrete)
-					part(m, "BalconyRail", Vector3.new(6, 1.6, 0.2), rel(u, fy - 0.8, d / 2 + 2.5), rgb(60, 62, 70), Enum.Material.Metal)
-				end
-			end
-		end
-	end
-	part(m, "Door", Vector3.new(4, 5.5, 0.3), rel(0, CURB + 2.75, d / 2 + 0.2), rgb(90, 60, 45), Enum.Material.WoodPlanks)
-	part(m, "Awning", Vector3.new(7, 0.4, 3), rel(0, CURB + 6.2, d / 2 + 1.5), rgb(40, 90, 70), Enum.Material.Fabric)
-	part(m, "Cornice", Vector3.new(w + 1.2, 1.2, d + 1.2), rel(0, CURB + h + 0.6, 0), trim, Enum.Material.Concrete)
-	-- a classic rooftop water tank
-	if seed % 2 == 0 then
-		local tx, tz = (rel(w / 4, 0, -d / 5)).Position.X, (rel(w / 4, 0, -d / 5)).Position.Z
-		for _, c in { { -1.6, -1.6 }, { 1.6, -1.6 }, { -1.6, 1.6 }, { 1.6, 1.6 } } do
-			box(m, "TankLeg", tx + c[1], CURB + h + 1.2, tz + c[2], 0.4, 3, 0.4, rgb(80, 70, 60), Enum.Material.Wood)
-		end
-		cylinder(m, "Tank", 5, 5, tx, CURB + h + 6.7, tz, rgb(150, 110, 75), Enum.Material.WoodPlanks)
-		cylinder(m, "TankLid", 0.6, 5.4, tx, CURB + h + 9.5, tz, rgb(110, 85, 60), Enum.Material.Wood)
-	end
-end
-
-
--- Two-storey shop. `id` is the Shop attribute later gameplay uses to find it.
+-- Timber-framed shop: plastered walls, a jettied upper floor, a front gable, a hanging sign and
+-- an invisible ShopAnchor where the shop system will put its prompt. `id` is the Shop attribute.
 local function shop(parent: Instance, x: number, z: number, w: number, facing: Vector3, name: string, id: string, seed: number)
 	local m = model(parent, "Shop")
 	m:SetAttribute("Shop", id)
-	local style = SHOP_STYLES[seed % #SHOP_STYLES + 1]
 	local rel = frame(x, z, facing)
+	local wall = PLASTER[seed % #PLASTER + 1]
+	local roof = ROOFS[(seed * 5) % #ROOFS + 1]
 	local d = 18
-	part(m, "Walls", Vector3.new(w, 17, d), rel(0, CURB + 8.5, 0), style.wall, Enum.Material.Plaster)
-	part(m, "Storefront", Vector3.new(w - 4, 7, 0.3), rel(0, CURB + 4.5, d / 2 + 0.1), rgb(170, 215, 240), Enum.Material.Glass, { Transparency = 0.2 })
-	part(m, "Door", Vector3.new(4, 7, 0.4), rel(0, CURB + 3.5, d / 2 + 0.25), rgb(60, 62, 70), Enum.Material.Glass)
-	part(m, "Frame", Vector3.new(w - 3, 0.8, 0.5), rel(0, CURB + 8.2, d / 2 + 0.2), style.accent, Enum.Material.SmoothPlastic)
-	local stripes = math.max(4, math.floor(w / 4))
-	for i = 1, stripes do
-		local u = -w / 2 + 1 + (i - 0.5) * ((w - 2) / stripes)
-		part(m, "Awning", Vector3.new((w - 2) / stripes, 0.4, 4.4), rel(u, CURB + 9.2, d / 2 + 2) * CFrame.Angles(math.rad(-16), 0, 0), if i % 2 == 0 then WHITE else style.accent, Enum.Material.Fabric)
+	-- ground floor (stone) and the jettied timber upper floor
+	part(m, "Ground", Vector3.new(w, 8, d), rel(0, PAVE + 4, 0), STONE, Enum.Material.Cobblestone)
+	part(m, "Upper", Vector3.new(w + 1, 8, d + 1.6), rel(0, PAVE + 12, 0.8), wall, Enum.Material.Plaster)
+	for _, u in { -w / 2 - 0.3, -w / 6, w / 6, w / 2 + 0.3 } do
+		part(m, "Post", Vector3.new(0.7, 8, 0.4), rel(u, PAVE + 12, d / 2 + 1.7), TIMBER, Enum.Material.Wood)
 	end
-	local board = part(m, "SignBoard", Vector3.new(w - 6, 3.2, 0.5), rel(0, CURB + 12.4, d / 2 + 0.3), style.accent, Enum.Material.SmoothPlastic)
-	sign(board, name, WHITE)
-	for _, u in { -w / 3, 0, w / 3 } do
-		part(m, "UpperWindow", Vector3.new(3.4, 3.4, 0.3), rel(u, CURB + 13, d / 2 + 0.1), rgb(70, 95, 120), Enum.Material.Glass).CFrame = rel(u, CURB + 14, d / 2 + 0.1)
+	part(m, "Beam", Vector3.new(w + 1.4, 0.8, 0.5), rel(0, PAVE + 8.2, d / 2 + 1.7), TIMBER, Enum.Material.Wood)
+	part(m, "Beam", Vector3.new(w + 1.4, 0.7, 0.5), rel(0, PAVE + 15.8, d / 2 + 1.7), TIMBER, Enum.Material.Wood)
+	for _, s in { -1, 1 } do
+		part(m, "Brace", Vector3.new(0.5, 8.6, 0.35), rel(s * w / 3, PAVE + 12, d / 2 + 1.75) * CFrame.Angles(0, 0, s * math.rad(35)), TIMBER, Enum.Material.Wood)
 	end
-	part(m, "Cornice", Vector3.new(w + 1, 1, d + 1), rel(0, CURB + 17.5, 0), style.accent, Enum.Material.SmoothPlastic)
-	-- where the shop's prompt/counter will go (invisible marker for the shop system)
-	local anchor = part(m, "ShopAnchor", Vector3.new(4, 4, 4), rel(0, CURB + 2.5, d / 2 + 4), WHITE, nil, { Transparency = 1, CanCollide = false })
+	gableFront(m, rel, w + 1, d + 1.6, PAVE + 16, wall, roof)
+	-- shop window, door and shutters
+	part(m, "ShopWindow", Vector3.new(w * 0.45, 4.2, 0.3), rel(-w * 0.18, PAVE + 4, d / 2 + 0.1), LANTERN, Enum.Material.Glass)
+	part(m, "WindowFrame", Vector3.new(w * 0.45 + 1, 0.6, 0.5), rel(-w * 0.18, PAVE + 1.8, d / 2 + 0.2), TIMBER, Enum.Material.Wood)
+	part(m, "Door", Vector3.new(3.6, 6.4, 0.4), rel(w * 0.28, PAVE + 3.2, d / 2 + 0.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	part(m, "DoorArch", Vector3.new(4.4, 0.8, 0.5), rel(w * 0.28, PAVE + 6.6, d / 2 + 0.25), DARKSTONE, Enum.Material.Cobblestone)
+	for _, u in { -w / 4, w / 4 } do
+		part(m, "UpperWindow", Vector3.new(2.6, 3, 0.3), rel(u, PAVE + 12.4, d / 2 + 1.75), rgb(80, 105, 130), Enum.Material.Glass)
+		part(m, "WindowBox", Vector3.new(3.2, 0.8, 1), rel(u, PAVE + 10.6, d / 2 + 2.1), TIMBER, Enum.Material.WoodPlanks)
+		local flowers = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255) }
+		for k = 1, 3 do
+			local bloom = part(m, "Bloom", Vector3.new(0.8, 0.8, 0.8), rel(u - 1.6 + k * 0.8, PAVE + 11.3, d / 2 + 2.2), flowers[(seed + k) % 3 + 1])
+			bloom.Shape = Enum.PartType.Ball
+		end
+	end
+	part(m, "Chimney", Vector3.new(2, 8, 2), rel(w / 3, PAVE + 20, -d / 4), rgb(150, 100, 85), Enum.Material.Brick)
+	-- hanging sign on an iron bracket, readable from both directions along the street
+	local bracket = part(m, "SignBracket", Vector3.new(0.3, 0.3, 4), rel(-w / 2 + 1, PAVE + 9.4, d / 2 + 3.6), IRON, Enum.Material.Metal)
+	bracket.Name = "SignBracket"
+	local board = part(m, "HangingSign", Vector3.new(0.4, 3, 6), rel(-w / 2 + 1, PAVE + 7.6, d / 2 + 4.6), rgb(150, 105, 65), Enum.Material.WoodPlanks)
+	sign(board, name, rgb(255, 235, 170), Enum.NormalId.Left)
+	sign(board, name, rgb(255, 235, 170), Enum.NormalId.Right)
+	local overDoor = part(m, "NameBoard", Vector3.new(w * 0.7, 2, 0.4), rel(0, PAVE + 7.2, d / 2 + 0.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(overDoor, name, GOLD)
+	local anchor = part(m, "ShopAnchor", Vector3.new(4, 4, 4), rel(w * 0.28, PAVE + 2.5, d / 2 + 4), WHITE, nil, { Transparency = 1, CanCollide = false })
 	anchor:SetAttribute("Shop", id)
-	-- window display: a few coloured boxes behind the glass
-	for i = 1, 3 do
-		part(m, "Display", Vector3.new(2, 2, 2), rel(-w / 2 + 3 + i * 2.6, CURB + 1.6, d / 2 - 1.5), Color3.new(style.accent.R + (1 - style.accent.R) * i * 0.2, style.accent.G + (1 - style.accent.G) * i * 0.2, style.accent.B + (1 - style.accent.B) * i * 0.2), Enum.Material.SmoothPlastic)
+	-- trade-specific details out front
+	if id == "blacksmith" then
+		box(m, "Anvil", (rel(-w * 0.2, 0, d / 2 + 4)).Position.X, PAVE, (rel(-w * 0.2, 0, d / 2 + 4)).Position.Z, 1.4, 2.2, 2.6, IRON, Enum.Material.Metal)
+		local forge = box(m, "Forge", (rel(-w * 0.38, 0, d / 2 + 3.4)).Position.X, PAVE, (rel(-w * 0.38, 0, d / 2 + 3.4)).Position.Z, 3, 2.6, 3, rgb(120, 110, 100), Enum.Material.Cobblestone)
+		local coals = box(m, "Coals", forge.CFrame.Position.X, PAVE + 2.6, forge.CFrame.Position.Z, 2.2, 0.4, 2.2, rgb(255, 120, 40), Enum.Material.Neon)
+		glowLight(coals, 14, 1.4, rgb(255, 140, 60))
+	elseif id == "alchemist" then
+		for k = 0, 2 do
+			local bottle = part(m, "Potion", Vector3.new(1, 1.6, 1), rel(-w * 0.3 + k * 1.6, PAVE + 7, d / 2 + 0.6), ({ rgb(120, 255, 160), rgb(255, 90, 160), rgb(120, 170, 255) })[k + 1], Enum.Material.Neon)
+			bottle.Shape = Enum.PartType.Cylinder
+		end
+	elseif id == "tavern" then
+		barrel(m, (rel(-w * 0.35, 0, d / 2 + 3)).Position.X, PAVE, (rel(-w * 0.35, 0, d / 2 + 3)).Position.Z)
+		barrel(m, (rel(-w * 0.2, 0, d / 2 + 3)).Position.X, PAVE, (rel(-w * 0.2, 0, d / 2 + 3)).Position.Z)
 	end
 	return m
 end
 
-local function house(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
-	local m = model(parent, "House")
+-- Tall, narrow timber townhouse with a jetty on every upper floor.
+local function townhouse(parent: Instance, x: number, z: number, w: number, d: number, floors: number, facing: Vector3, seed: number)
+	local m = model(parent, "Townhouse")
 	local rel = frame(x, z, facing)
-	local walls = { rgb(245, 240, 230), rgb(210, 230, 245), rgb(250, 230, 200), rgb(225, 245, 220), rgb(245, 215, 215) }
-	local roofs = { rgb(70, 75, 90), rgb(160, 70, 60), rgb(80, 110, 160), rgb(110, 90, 80) }
-	local wall = walls[seed % #walls + 1]
-	local roof = roofs[(seed * 7) % #roofs + 1]
-	local W, D, H, rise = 16, 13, 9, 5
-	part(m, "Walls", Vector3.new(W, H, D), rel(0, CURB + H / 2, 0), wall, Enum.Material.WoodPlanks)
-	local attic = math.sqrt(2) * rise
-	part(m, "Attic", Vector3.new(W - 0.2, attic, attic), rel(0, CURB + H, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, Enum.Material.WoodPlanks)
-	local slope = math.atan(rise / (D / 2))
-	local len = math.sqrt(rise * rise + (D / 2) ^ 2) + 1.5
-	for _, side in { 1, -1 } do
-		part(m, "Roof", Vector3.new(W + 1.6, 0.7, len), rel(0, CURB + H + rise / 2 + 0.3, side * D / 4) * CFrame.Angles(-side * slope, 0, 0), roof, Enum.Material.Slate)
+	local wall = PLASTER[(seed * 3) % #PLASTER + 1]
+	local roof = ROOFS[seed % #ROOFS + 1]
+	part(m, "Ground", Vector3.new(w, 7, d), rel(0, PAVE + 3.5, 0), STONE, Enum.Material.Cobblestone)
+	part(m, "Door", Vector3.new(3, 5.6, 0.3), rel(-w / 4, PAVE + 2.8, d / 2 + 0.15), rgb(105, 65, 42), Enum.Material.WoodPlanks)
+	part(m, "Window", Vector3.new(3, 2.6, 0.3), rel(w / 4, PAVE + 3.8, d / 2 + 0.15), rgb(80, 105, 130), Enum.Material.Glass)
+	local y = PAVE + 7
+	local jut = 0
+	for f = 1, floors - 1 do
+		jut += 0.8
+		part(m, "Floor", Vector3.new(w + jut * 0.6, 7, d + jut), rel(0, y + 3.5, jut / 2), wall, Enum.Material.Plaster)
+		part(m, "Beam", Vector3.new(w + jut * 0.6 + 0.4, 0.6, 0.4), rel(0, y + 0.3, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
+		for _, u in { -w / 2, 0, w / 2 } do
+			part(m, "Post", Vector3.new(0.6, 7, 0.35), rel(u, y + 3.5, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
+		end
+		for _, u in { -w / 4, w / 4 } do
+			part(m, "Window", Vector3.new(2.4, 2.8, 0.3), rel(u, y + 3.8, d / 2 + jut + 0.05), if (seed + f + u) % 3 == 0 then LANTERN else rgb(80, 105, 130), Enum.Material.Glass)
+		end
+		y += 7
 	end
-	part(m, "Door", Vector3.new(3, 6, 0.3), rel(-3, CURB + 3, D / 2 + 0.15), rgb(120, 70, 50), Enum.Material.WoodPlanks)
-	part(m, "Porch", Vector3.new(6, 0.5, 3), rel(-3, CURB + 0.25, D / 2 + 1.5), rgb(190, 185, 180), Enum.Material.Concrete)
-	for _, u in { 2.5, 6 } do
-		part(m, "Window", Vector3.new(2.6, 2.8, 0.3), rel(u, CURB + 5, D / 2 + 0.15), rgb(90, 130, 170), Enum.Material.Glass)
-		part(m, "Shutter", Vector3.new(0.8, 2.8, 0.2), rel(u - 1.8, CURB + 5, D / 2 + 0.2), roof, Enum.Material.WoodPlanks)
+	gableFront(m, rel, w + jut * 0.6, d + jut, y, wall, roof)
+	part(m, "Chimney", Vector3.new(1.8, 6, 1.8), rel(w / 4, y + w / 3, -d / 4), rgb(150, 100, 85), Enum.Material.Brick)
+end
+
+local function cottageHome(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
+	local m = model(parent, "Cottage")
+	local rel = frame(x, z, facing)
+	local wall = PLASTER[seed % #PLASTER + 1]
+	local roof = ROOFS[(seed * 7) % #ROOFS + 1]
+	local W, D, H = 16, 12, 9
+	part(m, "Walls", Vector3.new(W, H, D), rel(0, PAVE + H / 2, 0), wall, Enum.Material.Plaster)
+	for _, u in { -W / 2, -2.4, 2.4, W / 2 } do
+		part(m, "Timber", Vector3.new(0.7, H, 0.4), rel(u, PAVE + H / 2, D / 2 + 0.1), TIMBER, Enum.Material.Wood)
 	end
-	-- garage and driveway on the left
-	part(m, "Garage", Vector3.new(9, 7, 11), rel(-W / 2 - 4.5, CURB + 3.5, -1), wall, Enum.Material.WoodPlanks)
-	part(m, "GarageRoof", Vector3.new(9.6, 0.6, 11.6), rel(-W / 2 - 4.5, CURB + 7.3, -1), roof, Enum.Material.Slate)
-	part(m, "GarageDoor", Vector3.new(7, 5.5, 0.3), rel(-W / 2 - 4.5, CURB + 2.75, 4.6), rgb(235, 235, 230), Enum.Material.DiamondPlate)
-	part(m, "Driveway", Vector3.new(8, 0.2, 10), rel(-W / 2 - 4.5, CURB + 0.1, 9.5), rgb(175, 172, 168), Enum.Material.Concrete)
-	-- lawn, picket fence and mailbox
-	part(m, "Lawn", Vector3.new(W + 2, 0.2, 9), rel(1, CURB + 0.1, D / 2 + 5.5), rgb(110, 185, 85), Enum.Material.Grass)
-	part(m, "FenceRail", Vector3.new(W, 0.3, 0.2), rel(1, CURB + 2, D / 2 + 10), WHITE, Enum.Material.WoodPlanks)
-	for k = 0, 6 do
-		part(m, "Picket", Vector3.new(0.4, 2.6, 0.3), rel(-W / 2 + 2 + k * (W / 6), CURB + 1.3, D / 2 + 10), WHITE, Enum.Material.WoodPlanks)
+	part(m, "Timber", Vector3.new(W, 0.7, 0.4), rel(0, PAVE + H - 0.3, D / 2 + 0.1), TIMBER, Enum.Material.Wood)
+	gableSide(m, rel, W, D, PAVE + H, wall, roof)
+	part(m, "Door", Vector3.new(3.2, 6, 0.3), rel(0, PAVE + 3, D / 2 + 0.15), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	for _, u in { -5, 5 } do
+		part(m, "Window", Vector3.new(2.6, 2.6, 0.3), rel(u, PAVE + 5, D / 2 + 0.15), LANTERN, Enum.Material.Glass)
 	end
-	part(m, "MailboxPost", Vector3.new(0.4, 3.6, 0.4), rel(-W / 2 + 0.5, CURB + 1.8, D / 2 + 10.5), rgb(110, 80, 55), Enum.Material.Wood)
-	part(m, "Mailbox", Vector3.new(1, 1, 1.8), rel(-W / 2 + 0.5, CURB + 3.9, D / 2 + 10.5), rgb(60, 90, 160), Enum.Material.Metal)
-	if seed % 2 == 0 then
-		car(m, (rel(-W / 2 - 4.5, 0, 9)).Position.X, (rel(-W / 2 - 4.5, 0, 9)).Position.Z, facing, CAR_COLORS[seed % #CAR_COLORS + 1])
-		for _, p in m:GetChildren() do
-			if p:IsA("Model") and p.Name == "Car" then
-				for _, q in p:GetDescendants() do
-					if q:IsA("BasePart") then
-						q.CFrame = q.CFrame + Vector3.new(0, CURB, 0)
-					end
-				end
-			end
+	part(m, "Chimney", Vector3.new(2, 7, 2), rel(W / 3, PAVE + H + 4, -D / 4), rgb(150, 100, 85), Enum.Material.Brick)
+	-- front garden with a low stone wall and herb beds
+	part(m, "Garden", Vector3.new(W + 2, 0.2, 8), rel(0, PAVE + 0.1, D / 2 + 4.5), rgb(110, 180, 85), Enum.Material.Grass)
+	for _, s in { -1, 1 } do
+		part(m, "GardenWall", Vector3.new(W / 2 - 1.5, 1.6, 0.8), rel(s * (W / 4 + 1.1), PAVE + 0.8, D / 2 + 8.6), DARKSTONE, Enum.Material.Cobblestone)
+		part(m, "HerbBed", Vector3.new(4, 0.6, 3), rel(s * 5, PAVE + 0.3, D / 2 + 4), rgb(110, 75, 50), Enum.Material.Ground)
+		for k = 0, 2 do
+			local herb = part(m, "Herb", Vector3.new(1.1, 1.1, 1.1), rel(s * 5 - 1.4 + k * 1.4, PAVE + 1, D / 2 + 4), if (seed + k) % 2 == 0 then rgb(90, 180, 80) else rgb(170, 130, 230))
+			herb.Shape = Enum.PartType.Ball
 		end
 	end
 end
 
--- Civic building with columns and a pediment-ish roof (City Hall, Museum).
-local function civic(parent: Instance, x: number, z: number, w: number, d: number, facing: Vector3, name: string, color: Color3)
+-- Long stone hall with buttresses, a side-gabled roof, corner turrets and a sign board.
+local function guildHall(parent: Instance, x: number, z: number, w: number, d: number, facing: Vector3, name: string, accent: Color3): Model
 	local m = model(parent, name)
 	local rel = frame(x, z, facing)
-	local stone = rgb(240, 236, 226)
-	part(m, "Steps", Vector3.new(w * 0.7, 2, 6), rel(0, CURB + 1, d / 2 + 3), stone, Enum.Material.Marble)
-	part(m, "Base", Vector3.new(w, 2.4, d), rel(0, CURB + 1.2, 0), stone, Enum.Material.Marble)
-	part(m, "Hall", Vector3.new(w - 6, 22, d - 8), rel(0, CURB + 13.4, -2), color, Enum.Material.Concrete)
-	local cols = 8
-	for i = 0, cols - 1 do
-		local u = -w / 2 + 4 + i * (w - 8) / (cols - 1)
-		cylinder(m, "Column", 20, 2.2, 0, 0, 0, stone, Enum.Material.Marble).CFrame = rel(u, CURB + 12.4, d / 2 - 2) * CFrame.Angles(0, 0, math.rad(90))
+	local H = 18
+	part(m, "Walls", Vector3.new(w, H, d), rel(0, PAVE + H / 2, 0), STONE, Enum.Material.Cobblestone)
+	gableSide(m, rel, w, d, PAVE + H, STONE, ROOFS[2], Enum.Material.Cobblestone)
+	for k = 0, 4 do
+		local u = -w / 2 + 2 + k * (w - 4) / 4
+		part(m, "Buttress", Vector3.new(2, H - 2, 3), rel(u, PAVE + (H - 2) / 2, d / 2 + 1.2), DARKSTONE, Enum.Material.Cobblestone)
+		if k < 4 then
+			local wu = u + (w - 4) / 8
+			part(m, "TallWindow", Vector3.new(2.6, 8, 0.3), rel(wu, PAVE + 10, d / 2 + 0.15), rgb(90, 120, 170), Enum.Material.Glass)
+			part(m, "WindowArch", Vector3.new(3.2, 0.8, 0.4), rel(wu, PAVE + 14.2, d / 2 + 0.2), DARKSTONE, Enum.Material.Cobblestone)
+		end
 	end
-	part(m, "Entablature", Vector3.new(w, 3, d), rel(0, CURB + 24, 0), stone, Enum.Material.Marble)
-	local attic = math.sqrt(2) * 5
-	part(m, "Pediment", Vector3.new(attic, attic, w - 1), rel(0, CURB + 27.5, d / 2 - 3) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(0, 0, math.rad(45)), stone, Enum.Material.Marble)
-	cylinder(m, "Drum", 6, 16, 0, 0, 0, stone, Enum.Material.Marble).CFrame = rel(0, CURB + 28.5, -4) * CFrame.Angles(0, 0, math.rad(90))
-	ball(m, "Dome", 16, 0, 0, 0, color, Enum.Material.Metal).CFrame = rel(0, CURB + 31.5, -4)
-	local plaque = part(m, "Plaque", Vector3.new(w * 0.5, 2.4, 0.4), rel(0, CURB + 24, d / 2 + 0.3), rgb(40, 50, 70), Enum.Material.SmoothPlastic)
-	sign(plaque, name, rgb(255, 225, 140))
-	cylinder(m, "FlagPole", 16, 0.4, 0, 0, 0, rgb(200, 200, 205), Enum.Material.Metal).CFrame = rel(w / 2 - 2, CURB + 8, d / 2 + 4) * CFrame.Angles(0, 0, math.rad(90))
-	part(m, "Flag", Vector3.new(5, 3, 0.15), rel(w / 2 + 0.6, CURB + 14.5, d / 2 + 4), rgb(90, 190, 110), Enum.Material.Fabric)
+	part(m, "Doors", Vector3.new(7, 10, 0.5), rel(0, PAVE + 5, d / 2 + 0.25), rgb(95, 60, 40), Enum.Material.WoodPlanks)
+	part(m, "DoorArch", Vector3.new(9, 1.4, 0.8), rel(0, PAVE + 10.6, d / 2 + 0.4), DARKSTONE, Enum.Material.Cobblestone)
+	part(m, "Steps", Vector3.new(12, 1, 4), rel(0, PAVE + 0.5, d / 2 + 2), DARKSTONE, Enum.Material.Cobblestone)
+	for _, s in { -1, 1 } do
+		local tx, tz = (rel(s * w / 2, 0, d / 2)).Position.X, (rel(s * w / 2, 0, d / 2)).Position.Z
+		cylinder(m, "Turret", H + 8, 6, tx, PAVE + (H + 8) / 2, tz, STONE, Enum.Material.Cobblestone)
+		cone(m, "TurretRoof", tx, PAVE + H + 8, tz, 4, 7, ROOFS[2], Enum.Material.Slate, 6)
+		banner(m, (rel(s * 6, 0, d / 2 + 0.3)).Position.X, PAVE + 16, (rel(s * 6, 0, d / 2 + 0.3)).Position.Z, facing, accent, 7)
+	end
+	local board = part(m, "NameBoard", Vector3.new(math.min(w * 0.6, 30), 2.6, 0.5), rel(0, PAVE + 12.4, d / 2 + 0.6), rgb(50, 40, 35), Enum.Material.WoodPlanks)
+	sign(board, name, GOLD)
+	return m
 end
 
--- Service building (fire station, police, hospital): box, big doors, sign, roof light.
-local function service(parent: Instance, x: number, z: number, w: number, d: number, facing: Vector3, name: string, color: Color3, doors: number)
-	local m = model(parent, name)
-	local rel = frame(x, z, facing)
-	part(m, "Walls", Vector3.new(w, 16, d), rel(0, CURB + 8, 0), rgb(235, 232, 225), Enum.Material.Brick)
-	part(m, "Band", Vector3.new(w + 0.4, 3, d + 0.4), rel(0, CURB + 14, 0), color, Enum.Material.SmoothPlastic)
-	for i = 0, doors - 1 do
-		local u = -w / 2 + (i + 0.5) * (w / doors)
-		part(m, "BayDoor", Vector3.new(w / doors - 3, 9, 0.3), rel(u, CURB + 4.5, d / 2 + 0.15), rgb(200, 205, 215), Enum.Material.DiamondPlate)
+local function cathedral(parent: Instance, cx: number, cz: number, facing: Vector3)
+	local m = model(parent, "Cathedral")
+	local rel = frame(cx, cz, facing)
+	local W, D, H = 30, 64, 30
+	part(m, "Nave", Vector3.new(W, H, D), rel(0, PAVE + H / 2, -4), STONE, Enum.Material.Cobblestone)
+	gableFront(m, rel, W, D, PAVE + H, STONE, ROOFS[2])
+	for _, s in { -1, 1 } do
+		part(m, "Aisle", Vector3.new(10, 16, D - 10), rel(s * (W / 2 + 5), PAVE + 8, -6), DARKSTONE, Enum.Material.Cobblestone)
+		part(m, "AisleRoof", Vector3.new(12, 0.8, D - 8), rel(s * (W / 2 + 5), PAVE + 17, -6) * CFrame.Angles(0, 0, s * math.rad(-20)), ROOFS[2], Enum.Material.Slate)
+		for k = 0, 5 do
+			local v = -D / 2 + 6 + k * (D - 14) / 5
+			part(m, "Buttress", Vector3.new(2, 20, 2.4), rel(s * (W / 2 + 10.6), PAVE + 10, v - 4), DARKSTONE, Enum.Material.Cobblestone)
+			part(m, "StainedGlass", Vector3.new(0.3, 9, 2.4), rel(s * (W / 2 + 0.1), PAVE + 22, v - 4), ({ rgb(90, 140, 255), rgb(255, 90, 120), rgb(255, 210, 80), rgb(120, 220, 140) })[k % 4 + 1], Enum.Material.Neon)
+		end
 	end
-	local board = part(m, "SignBoard", Vector3.new(w * 0.7, 2.6, 0.4), rel(0, CURB + 14, d / 2 + 0.4), color, Enum.Material.SmoothPlastic)
-	sign(board, name, WHITE)
-	part(m, "Roof", Vector3.new(w + 1, 1, d + 1), rel(0, CURB + 16.5, 0), rgb(110, 110, 115), Enum.Material.Concrete)
-	ball(m, "RoofBeacon", 1.6, 0, 0, 0, color, Enum.Material.Neon).CFrame = rel(w / 2 - 3, CURB + 18, 0)
+	-- twin west towers with spires, a rose window and great doors
+	for _, s in { -1, 1 } do
+		local tx, tz = (rel(s * (W / 2 + 4), 0, D / 2 + 2)).Position.X, (rel(s * (W / 2 + 4), 0, D / 2 + 2)).Position.Z
+		box(m, "Tower", tx, PAVE, tz, 12, 52, 12, STONE, Enum.Material.Cobblestone)
+		box(m, "Belfry", tx, PAVE + 44, tz, 12.6, 1, 12.6, DARKSTONE, Enum.Material.Cobblestone)
+		part(m, "BelfryOpening", Vector3.new(4, 6, 12.8), CFrame.new(tx, PAVE + 48, tz), rgb(40, 35, 40), Enum.Material.SmoothPlastic)
+		cone(m, "Spire", tx, PAVE + 52, tz, 8.6, 26, ROOFS[2], Enum.Material.Slate, 4)
+		ball(m, "SpireOrb", 1.6, tx, PAVE + 78.6, tz, GOLD, Enum.Material.Metal)
+	end
+	local rose = cylinder(m, "RoseWindow", 0.6, 12, 0, 0, 0, rgb(255, 120, 170), Enum.Material.Neon)
+	rose.CFrame = rel(0, PAVE + 22, D / 2 - 3.6) * CFrame.Angles(0, math.rad(90), 0)
+	local roseInner = cylinder(m, "RoseInner", 0.7, 6, 0, 0, 0, rgb(120, 160, 255), Enum.Material.Neon)
+	roseInner.CFrame = rel(0, PAVE + 22, D / 2 - 3.5) * CFrame.Angles(0, math.rad(90), 0)
+	part(m, "GreatDoors", Vector3.new(9, 14, 0.6), rel(0, PAVE + 7, D / 2 - 3.7), rgb(95, 60, 40), Enum.Material.WoodPlanks)
+	part(m, "Portal", Vector3.new(13, 2, 1.4), rel(0, PAVE + 15, D / 2 - 3.4), DARKSTONE, Enum.Material.Cobblestone)
+	-- crossing tower over the middle of the nave
+	local cxp, czp = (rel(0, 0, -6)).Position.X, (rel(0, 0, -6)).Position.Z
+	box(m, "CrossingTower", cxp, PAVE + H, czp, 14, 18, 14, STONE, Enum.Material.Cobblestone)
+	cone(m, "CrossingSpire", cxp, PAVE + H + 18, czp, 10, 30, ROOFS[2], Enum.Material.Slate, 8)
+	ball(m, "CrossingOrb", 2, cxp, PAVE + H + 48.8, czp, GOLD, Enum.Material.Metal)
+	-- rounded apse at the east end
+	local ax, az = (rel(0, 0, -D / 2 - 4)).Position.X, (rel(0, 0, -D / 2 - 4)).Position.Z
+	cylinder(m, "Apse", 24, 26, ax, PAVE + 12, az, STONE, Enum.Material.Cobblestone)
+	cone(m, "ApseRoof", ax, PAVE + 24, az, 14, 9, ROOFS[2], Enum.Material.Slate, 8)
+	part(m, "Steps", Vector3.new(20, 1.2, 6), rel(0, PAVE + 0.6, D / 2 + 1), DARKSTONE, Enum.Material.Cobblestone)
+end
+
+local function mageTower(parent: Instance, x: number, z: number)
+	local m = model(parent, "Mage Tower")
+	local stone = rgb(190, 185, 210)
+	local roof = rgb(90, 60, 150)
+	local y = PAVE
+	for i, t in { { 26, 30 }, { 21, 28 }, { 16, 26 } } do
+		local d, h = t[1], t[2]
+		cylinder(m, "Tier", h, d, x, y + h / 2, z, stone, Enum.Material.Cobblestone)
+		cylinder(m, "Balcony", 1, d + 4, x, y + h, z, rgb(150, 145, 170), Enum.Material.Cobblestone)
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2 + i
+			part(m, "GlowWindow", Vector3.new(1.6, 4, 0.4), CFrame.lookAt(Vector3.new(x + math.cos(a) * d / 2, y + h * 0.55, z + math.sin(a) * d / 2), Vector3.new(x + math.cos(a) * d, y + h * 0.55, z + math.sin(a) * d)), rgb(170, 120, 255), Enum.Material.Neon)
+		end
+		y += h
+	end
+	cone(m, "Spire", x, y + 1, z, 12, 34, roof, Enum.Material.Slate, 8)
+	local orb = ball(m, "ArcaneOrb", 4, x, y + 40, z, rgb(170, 120, 255), Enum.Material.Neon)
+	glowLight(orb, 40, 2, rgb(170, 120, 255))
+	part(m, "Door", Vector3.new(5, 8, 0.6), CFrame.new(x, PAVE + 4, z - 13.2), rgb(70, 50, 90), Enum.Material.WoodPlanks)
+	local plaque = part(m, "NameBoard", Vector3.new(10, 2, 0.4), CFrame.new(x, PAVE + 9.4, z - 13.4) * CFrame.Angles(0, math.pi, 0), rgb(50, 35, 70), Enum.Material.SmoothPlastic)
+	sign(plaque, "Mage Tower", rgb(220, 190, 255))
+	-- three floating rune stones that the client bobs
+	for k = 0, 2 do
+		local a = k / 3 * math.pi * 2
+		local rune = model(m, "RuneStone")
+		local stoneP = part(rune, "Rune", Vector3.new(2.4, 4, 1), CFrame.new(x + math.cos(a) * 22, PAVE + 22 + k * 6, z + math.sin(a) * 22) * CFrame.Angles(0, a, math.rad(10)), rgb(150, 140, 170), Enum.Material.Slate)
+		rune.PrimaryPart = stoneP
+		part(rune, "Glyph", Vector3.new(1, 2, 1.1), stoneP.CFrame, rgb(190, 140, 255), Enum.Material.Neon)
+		rune:SetAttribute("Bob", true)
+	end
+end
+
+local function marketSquare(parent: Instance, x0: number, x1: number, z0: number, z1: number)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	box(parent, "Square", cx, PAVE, cz, x1 - x0 - 2, 0.1, z1 - z0 - 2, rgb(210, 195, 170), Enum.Material.Slate)
+	-- three-tier fountain
+	cylinder(parent, "FountainBasin", 2.4, 26, cx, PAVE + 1.2, cz, STONE, Enum.Material.Cobblestone)
+	cylinder(parent, "FountainWater", 0.4, 23, cx, PAVE + 2.3, cz, rgb(80, 170, 225), Enum.Material.Glass).Transparency = 0.2
+	cylinder(parent, "FountainStem", 8, 3, cx, PAVE + 5, cz, STONE, Enum.Material.Cobblestone)
+	cylinder(parent, "FountainBowl", 1.2, 12, cx, PAVE + 8.6, cz, STONE, Enum.Material.Cobblestone)
+	cylinder(parent, "FountainBowl", 1, 6, cx, PAVE + 11.6, cz, STONE, Enum.Material.Cobblestone)
+	cylinder(parent, "FountainJet", 3, 1, cx, PAVE + 13.5, cz, rgb(200, 240, 255), Enum.Material.Neon).Transparency = 0.4
+	-- stalls in a ring and a notice board
+	local colors = { rgb(200, 55, 60), rgb(55, 90, 180), rgb(60, 140, 90), rgb(220, 170, 50), rgb(130, 70, 160), rgb(230, 120, 60) }
+	local r = math.min(x1 - x0, z1 - z0) / 2 - 14
+	for k = 0, 7 do
+		local a = (k + 0.5) / 8 * math.pi * 2
+		local sx, sz = cx + math.cos(a) * r, cz + math.sin(a) * r
+		marketStall(parent, sx, sz, Vector3.new(cx - sx, 0, cz - sz).Unit, colors[k % #colors + 1], k)
+	end
+	local board = box(parent, "NoticeBoard", cx, PAVE + 2, cz - 18, 8, 5, 0.6, rgb(130, 90, 58), Enum.Material.WoodPlanks)
+	sign(board, "Bounties & Quests", rgb(60, 40, 25), Enum.NormalId.Back, rgb(235, 220, 180))
+	for _, s in { -1, 1 } do
+		box(parent, "NoticePost", cx + s * 4.2, PAVE, cz - 18, 0.6, 7.5, 0.6, TIMBER, Enum.Material.Wood)
+	end
+	for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+		lanternPost(parent, cx + c[1] * (r - 6), cz + c[2] * (r - 6))
+	end
+end
+
+-- Round arena with tiered stands, sand floor and gates; Arena attribute marks the PvP zone.
+local function arena(parent: Instance, x0: number, x1: number, z0: number, z1: number)
+	local m = model(parent, "Arena")
+	m:SetAttribute("Arena", true)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local R = math.min(x1 - x0, z1 - z0) / 2 - 3
+	cylinder(m, "ArenaFloor", 0.6, (R - 14) * 2, cx, PAVE + 0.3, cz, rgb(225, 200, 150), Enum.Material.Sand)
+	local segs = 20
+	for k = 0, segs - 1 do
+		local a = (k + 0.5) / segs * math.pi * 2
+		local gate = k % 5 == 0
+		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+		local arc = 2 * math.pi * R / segs + 0.6
+		for tier = 0, 2 do
+			if not gate or tier > 0 then
+				local rr = R - 12 + tier * 4
+				local p = Vector3.new(cx, 0, cz) + dir * rr
+				part(m, "Stand", Vector3.new(2 * math.pi * rr / segs + 0.6, 3 + tier * 3, 4), CFrame.lookAt(Vector3.new(p.X, PAVE + (3 + tier * 3) / 2, p.Z), Vector3.new(p.X, PAVE + (3 + tier * 3) / 2, p.Z) + dir), if tier % 2 == 0 then STONE else DARKSTONE, Enum.Material.Cobblestone)
+			end
+		end
+		local p = Vector3.new(cx, 0, cz) + dir * R
+		local wallH = if gate then 6 else 16
+		part(m, "OuterWall", Vector3.new(arc, wallH, 2.4), CFrame.lookAt(Vector3.new(p.X, PAVE + if gate then 13 else 8, p.Z), Vector3.new(p.X, PAVE + if gate then 13 else 8, p.Z) + dir), STONE, Enum.Material.Cobblestone)
+		if gate then
+			part(m, "Portcullis", Vector3.new(arc - 2, 10, 0.4), CFrame.lookAt(Vector3.new(p.X, PAVE + 5, p.Z), Vector3.new(p.X, PAVE + 5, p.Z) + dir), IRON, Enum.Material.DiamondPlate).Transparency = 0.3
+			local pole = Vector3.new(cx, 0, cz) + dir * (R + 1.6)
+			cylinder(m, "FlagPole", 10, 0.4, pole.X, PAVE + 21, pole.Z, IRON, Enum.Material.Metal)
+			part(m, "Flag", Vector3.new(0.2, 3, 5), CFrame.new(pole.X, PAVE + 24.5, pole.Z + 2.6), BANNERS[(k // 5) % #BANNERS + 1], Enum.Material.Fabric)
+		end
+	end
+	local board = box(m, "ArenaSign", cx, PAVE + 17, z0 + 2, 18, 3, 0.6, rgb(50, 40, 35), Enum.Material.WoodPlanks)
+	sign(board, "The Arena", GOLD, Enum.NormalId.Back)
+end
+
+local function clockTower(parent: Instance, x: number, z: number, facing: Vector3)
+	box(parent, "ClockTower", x, PAVE, z, 12, 46, 12, STONE, Enum.Material.Cobblestone)
+	box(parent, "ClockBand", x, PAVE + 34, z, 12.8, 1, 12.8, DARKSTONE, Enum.Material.Cobblestone)
+	local face = cylinder(parent, "ClockFace", 0.5, 8, 0, 0, 0, WHITE, Enum.Material.SmoothPlastic)
+	local base = CFrame.lookAt(Vector3.new(x, PAVE + 39, z) + facing * 6.2, Vector3.new(x, PAVE + 39, z) + facing * 7)
+	face.CFrame = base * CFrame.Angles(0, math.rad(90), 0)
+	part(parent, "HourHand", Vector3.new(0.4, 2.6, 0.2), base * CFrame.new(0, 1.1, -0.3), IRON, Enum.Material.Metal)
+	part(parent, "MinuteHand", Vector3.new(3.4, 0.3, 0.2), base * CFrame.new(1.5, 0, -0.35), IRON, Enum.Material.Metal)
+	cone(parent, "ClockSpire", x, PAVE + 46, z, 8.6, 18, ROOFS[1], Enum.Material.Slate, 4)
+	ball(parent, "ClockOrb", 1.4, x, PAVE + 64.6, z, GOLD, Enum.Material.Metal)
+end
+
+local function trainingYard(parent: Instance, x: number, z: number, w: number, d: number)
+	box(parent, "YardDirt", x, PAVE, z, w, 0.2, d, rgb(170, 140, 100), Enum.Material.Ground)
+	for k = 0, 3 do
+		local dx = x - w / 2 + 6 + k * (w - 12) / 3
+		box(parent, "DummyPost", dx, PAVE, z, 0.6, 7, 0.6, TIMBER, Enum.Material.Wood)
+		box(parent, "DummyArms", dx, PAVE + 5, z, 5, 0.5, 0.5, TIMBER, Enum.Material.Wood)
+		ball(parent, "DummySack", 3, dx, PAVE + 4.6, z, rgb(210, 190, 140), Enum.Material.Fabric)
+		ball(parent, "DummyHead", 2, dx, PAVE + 7.2, z, rgb(210, 190, 140), Enum.Material.Fabric)
+	end
+	box(parent, "WeaponRack", x, PAVE, z - d / 2 + 2, 10, 4, 1, TIMBER, Enum.Material.WoodPlanks)
+	for k = 0, 4 do
+		box(parent, "RackSword", x - 4 + k * 2, PAVE + 1, z - d / 2 + 2.6, 0.3, 6, 0.3, rgb(200, 205, 215), Enum.Material.Metal)
+	end
+	for k = 0, 1 do
+		local tx = x - w / 2 + 4 + k * 6
+		cylinder(parent, "Target", 0.6, 5, 0, 0, 0, rgb(240, 240, 230), Enum.Material.Fabric).CFrame = CFrame.new(tx, PAVE + 3.5, z + d / 2 - 3) * CFrame.Angles(0, math.rad(90), 0)
+		cylinder(parent, "Bullseye", 0.7, 2, 0, 0, 0, rgb(220, 50, 50), Enum.Material.Fabric).CFrame = CFrame.new(tx, PAVE + 3.5, z + d / 2 - 3.05) * CFrame.Angles(0, math.rad(90), 0)
+	end
+end
+
+local function temple(parent: Instance, x: number, z: number, facing: Vector3)
+	local m = model(parent, "Temple of Healing")
+	local rel = frame(x, z, facing)
+	local marble = rgb(245, 242, 235)
+	part(m, "Base", Vector3.new(40, 3, 36), rel(0, PAVE + 1.5, 0), marble, Enum.Material.Marble)
+	part(m, "Hall", Vector3.new(30, 18, 26), rel(0, PAVE + 12, -2), marble, Enum.Material.Marble)
+	for k = 0, 5 do
+		cylinder(m, "Column", 16, 2.2, 0, 0, 0, marble, Enum.Material.Marble).CFrame = rel(-15 + k * 6, PAVE + 11, 15) * CFrame.Angles(0, 0, math.rad(90))
+	end
+	part(m, "Entablature", Vector3.new(36, 3, 34), rel(0, PAVE + 20.5, 0), marble, Enum.Material.Marble)
+	cylinder(m, "Drum", 6, 20, 0, 0, 0, marble, Enum.Material.Marble).CFrame = rel(0, PAVE + 25, -2) * CFrame.Angles(0, 0, math.rad(90))
+	ball(m, "Dome", 20, 0, 0, 0, rgb(120, 200, 190), Enum.Material.Metal).CFrame = rel(0, PAVE + 28, -2)
+	local flame = ball(m, "SacredFlame", 2.4, 0, 0, 0, rgb(140, 255, 210), Enum.Material.Neon)
+	flame.CFrame = rel(0, PAVE + 39.5, -2)
+	glowLight(flame, 30, 1.4, rgb(140, 255, 210))
+	local plaque = part(m, "NameBoard", Vector3.new(18, 2, 0.4), rel(0, PAVE + 20.5, 17.2), rgb(40, 60, 70), Enum.Material.SmoothPlastic)
+	sign(plaque, "Temple of Healing", rgb(190, 255, 230))
+end
+
+local function gardens(parent: Instance, x0: number, x1: number, z0: number, z1: number)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local w, d = x1 - x0 - 2 * EDGE, z1 - z0 - 2 * EDGE
+	box(parent, "Lawn", cx, PAVE, cz, w, 0.2, d, rgb(105, 185, 80), Enum.Material.Grass)
+	box(parent, "GravelPath", cx, PAVE, cz, 6, 0.3, d, rgb(225, 210, 180), Enum.Material.Pebble)
+	box(parent, "GravelPath", cx, PAVE, cz, w, 0.3, 6, rgb(225, 210, 180), Enum.Material.Pebble)
+	-- clipped hedges framing four parterres, each with a topiary and rose bed
+	for _, qx in { -1, 1 } do
+		for _, qz in { -1, 1 } do
+			local px, pz = cx + qx * w / 4, cz + qz * d / 4
+			local pw, pd = w / 2 - 12, d / 2 - 12
+			for _, e in { { 0, -pd / 2, pw, 1.6 }, { 0, pd / 2, pw, 1.6 }, { -pw / 2, 0, 1.6, pd }, { pw / 2, 0, 1.6, pd } } do
+				box(parent, "Hedge", px + e[1], PAVE, pz + e[2], e[3], 3, e[4], rgb(60, 130, 60), Enum.Material.Grass)
+			end
+			cylinder(parent, "TopiaryPot", 1.4, 3, px, PAVE + 0.7, pz, STONE, Enum.Material.Cobblestone)
+			ball(parent, "Topiary", 5, px, PAVE + 4, pz, rgb(70, 150, 70), Enum.Material.Grass)
+			ball(parent, "Topiary", 3.4, px, PAVE + 7.6, pz, rgb(70, 150, 70), Enum.Material.Grass)
+			for k = 0, 5 do
+				local rose = ball(parent, "Rose", 1.2, px - pw / 2 + 3 + k * (pw - 6) / 5, PAVE + 1.2, pz + pd / 2 - 3, ({ rgb(230, 50, 70), rgb(255, 160, 190), rgb(255, 240, 240) })[k % 3 + 1])
+				rose.Name = "Rose"
+			end
+		end
+	end
+	-- central statue of a knight on a plinth, and a gazebo
+	box(parent, "Plinth", cx, PAVE, cz, 6, 4, 6, STONE, Enum.Material.Marble)
+	box(parent, "StatueLegs", cx, PAVE + 4, cz, 2, 3, 1.2, rgb(160, 170, 175), Enum.Material.Metal)
+	box(parent, "StatueBody", cx, PAVE + 7, cz, 2.6, 3, 1.4, rgb(160, 170, 175), Enum.Material.Metal)
+	ball(parent, "StatueHead", 1.6, cx, PAVE + 10.8, cz, rgb(160, 170, 175), Enum.Material.Metal)
+	part(parent, "StatueSword", Vector3.new(0.4, 6, 0.3), CFrame.new(cx + 1.6, PAVE + 9.6, cz) * CFrame.Angles(0, 0, math.rad(-15)), rgb(200, 205, 215), Enum.Material.Metal)
+	local gx, gz = cx + w / 4, cz - d / 4
+	cylinder(parent, "GazeboFloor", 1, 14, gx, PAVE + 0.5, gz, WHITE, Enum.Material.Marble)
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		cylinder(parent, "GazeboPillar", 9, 0.8, gx + math.cos(a) * 6, PAVE + 5.5, gz + math.sin(a) * 6, WHITE, Enum.Material.Marble)
+	end
+	cone(parent, "GazeboRoof", gx, PAVE + 10, gz, 8.5, 5, rgb(90, 150, 110), Enum.Material.Slate, 6)
+	local sb = box(parent, "GardenSign", cx, PAVE, z0 + EDGE + 1, 16, 4, 1, rgb(60, 110, 70), Enum.Material.WoodPlanks)
+	sign(sb, "Royal Gardens", WHITE, Enum.NormalId.Back)
 end
 
 ----------------------------------------------------------------------------------------------
--- streets
+-- districts
+
+local MARKET = {
+	{ "Blacksmith", "blacksmith" }, { "Armorer", "armorer" }, { "Alchemist", "alchemist" }, { "Beast Tamer", "tamer" },
+	{ "Stables", "stable" }, { "The Gilded Tankard", "tavern" }, { "Fletcher", "fletcher" }, { "Enchanter", "enchanter" },
+	{ "Cook & Larder", "cook" }, { "Tailor", "tailor" }, { "Herbalist", "herbalist" }, { "Cartographer", "maps" },
+}
+
+local function furnish(f: Instance, b: { number }, seed: number)
+	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
+	for _, c in { { x0 + 1.5, z0 + 1.5 }, { x1 - 1.5, z0 + 1.5 }, { x0 + 1.5, z1 - 1.5 }, { x1 - 1.5, z1 - 1.5 } } do
+		lanternPost(f, c[1], c[2])
+	end
+	local w = x1 - x0
+	local n = math.max(1, math.floor(w / 34))
+	for k = 1, n do
+		local x = x0 + k * w / (n + 1)
+		cityTree(f, x, z0 + 2, seed * 7 + k)
+		cityTree(f, x, z1 - 2, seed * 11 + k)
+	end
+	bench(f, x0 + w * 0.5 + 6, z0 + 2, Vector3.new(0, 0, -1))
+	barrel(f, x0 + w * 0.5 - 5, PAVE, z0 + 2)
+end
+
+local function marketRow(f: Instance, b: { number }, index: number)
+	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
+	local inner = x1 - x0 - 2 * EDGE
+	local count = if inner > 80 then 3 else 2
+	local shopW = inner / count - 3
+	for k = 1, count do
+		local n = (index - 1) * 2 + k
+		local x = x0 + EDGE + (k - 0.5) * (inner / count)
+		local a = MARKET[(n - 1) % #MARKET + 1]
+		local c = MARKET[(n + 5) % #MARKET + 1]
+		shop(f, x, z0 + EDGE + 9, shopW, Vector3.new(0, 0, -1), a[1], a[2], n)
+		shop(f, x, z1 - EDGE - 9, shopW, Vector3.new(0, 0, 1), c[1], c[2] .. "2", n + 3)
+	end
+end
+
+local function townhouseRow(f: Instance, b: { number }, seed: number)
+	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
+	local inner = x1 - x0 - 2 * EDGE
+	local count = math.floor(inner / 15)
+	local w = inner / count - 1
+	for k = 1, count do
+		local x = x0 + EDGE + (k - 0.5) * (inner / count)
+		townhouse(f, x, z0 + EDGE + 8, w, 14, 3 + (seed + k) % 2, Vector3.new(0, 0, -1), seed * 13 + k)
+		townhouse(f, x, z1 - EDGE - 8, w, 14, 2 + (seed * 3 + k) % 3, Vector3.new(0, 0, 1), seed * 17 + k)
+	end
+	box(f, "Courtyard", (x0 + x1) / 2, PAVE, (z0 + z1) / 2, inner, 0.15, (z1 - z0) - 2 * EDGE - 34, rgb(110, 180, 85), Enum.Material.Grass)
+	well(f, (x0 + x1) / 2, (z0 + z1) / 2)
+end
+
+local function cottageRow(f: Instance, b: { number }, seed: number)
+	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
+	local inner = x1 - x0 - 2 * EDGE
+	local count = math.max(2, math.floor(inner / 24))
+	for k = 1, count do
+		local x = x0 + EDGE + (k - 0.5) * (inner / count)
+		cottageHome(f, x, z0 + EDGE + 16, Vector3.new(0, 0, -1), seed * 3 + k)
+		cottageHome(f, x, z1 - EDGE - 16, Vector3.new(0, 0, 1), seed * 5 + k)
+	end
+	box(f, "Orchard", (x0 + x1) / 2, PAVE, (z0 + z1) / 2, inner, 0.15, 12, rgb(110, 185, 85), Enum.Material.Grass)
+	for k = 0, 3 do
+		cityTree(f, x0 + EDGE + 8 + k * (inner - 16) / 3, (z0 + z1) / 2, seed * 19 + k)
+	end
+end
+
+local function harbour(f: Instance, x0: number, x1: number, z0: number, z1: number, seed: number)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local w, d = x1 - x0 - 2 * EDGE, z1 - z0 - 2 * EDGE
+	box(f, "Quay", cx, PAVE, cz, w, 0.2, d, rgb(160, 150, 138), Enum.Material.Cobblestone)
+	-- timber warehouse
+	local wx = x0 + EDGE + 16
+	local rel = frame(wx, cz, Vector3.new(1, 0, 0))
+	local wh = model(f, "Warehouse")
+	part(wh, "Walls", Vector3.new(d - 10, 14, 26), rel(0, PAVE + 7, 0), rgb(150, 100, 65), Enum.Material.WoodPlanks)
+	gableSide(wh, rel, d - 10, 26, PAVE + 14, rgb(150, 100, 65), ROOFS[seed % #ROOFS + 1], Enum.Material.WoodPlanks)
+	for k = -1, 1 do
+		part(wh, "LoadingDoor", Vector3.new(8, 9, 0.4), rel(k * (d - 10) / 3.2, PAVE + 4.5, 13.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	end
+	local board = part(wh, "NameBoard", Vector3.new(16, 2.4, 0.4), rel(0, PAVE + 11, 13.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(board, "Harbour Stores", GOLD)
+	-- cargo: crate and barrel stacks
+	for k = 0, 5 do
+		local sx, sz = x0 + EDGE + 42 + (k % 2) * 10, z0 + EDGE + 8 + (k // 2) * (d - 16) / 2
+		for layer = 0, (k + seed) % 3 do
+			crate(f, sx, PAVE + layer * 4, sz, 4, hash(k + layer + seed) * 0.4)
+		end
+		barrel(f, sx + 4.5, PAVE, sz + 3)
+		barrel(f, sx + 4.5, PAVE, sz - 1)
+	end
+	-- treadwheel crane on the quay edge
+	local qx, qz = x1 - EDGE - 6, cz
+	box(f, "CraneBase", qx, PAVE, qz, 8, 2, 8, DARKSTONE, Enum.Material.Cobblestone)
+	box(f, "CraneMast", qx, PAVE + 2, qz, 1.6, 22, 1.6, TIMBER, Enum.Material.Wood)
+	part(f, "CraneJib", Vector3.new(1, 1, 24), CFrame.lookAt(Vector3.new(qx + 8, PAVE + 22, qz), Vector3.new(qx + 20, PAVE + 26, qz)), TIMBER, Enum.Material.Wood)
+	local wheel = cylinder(f, "Treadwheel", 2.4, 10, 0, 0, 0, rgb(150, 110, 70), Enum.Material.WoodPlanks)
+	wheel.CFrame = CFrame.new(qx - 3, PAVE + 7, qz) * CFrame.Angles(0, math.rad(90), 0)
+	box(f, "CraneRope", qx + 19, PAVE + 12, qz, 0.25, 14, 0.25, rgb(90, 80, 70), Enum.Material.Fabric)
+	crate(f, qx + 19, PAVE + 9, qz, 3, 0.2)
+	for k = 0, 9 do
+		cylinder(f, "Bollard", 2, 1.4, x1 - 2, PAVE + 1, z0 + 6 + k * (z1 - z0 - 12) / 9, IRON, Enum.Material.Metal)
+	end
+	-- jetty and moored ship
+	box(f, "Jetty", x1 + 26, 0.2, cz, 52, 0.8, 7, rgb(160, 115, 75), Enum.Material.WoodPlanks)
+	for j = 0, 4 do
+		cylinder(f, "Piling", 6, 1.1, x1 + 4 + j * 11, -2.5, cz + 3.8, TIMBER, Enum.Material.Wood)
+	end
+	ship(f, x1 + 30, cz + (if seed % 2 == 0 then 18 else 11), Vector3.new(1, 0, 0), if seed % 2 == 0 then "galleon" else "sloop", BANNERS[seed % #BANNERS + 1])
+end
+
+local function fishingDocks(f: Instance, x0: number, x1: number, z0: number, z1: number)
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local w, d = x1 - x0 - 2 * EDGE, z1 - z0 - 2 * EDGE
+	box(f, "Boardwalk", cx, PAVE, cz, w, 0.3, d, rgb(175, 135, 95), Enum.Material.WoodPlanks)
+	-- fishmonger's stall and net racks
+	marketStall(f, x0 + EDGE + 10, cz - 14, Vector3.new(1, 0, 0), rgb(60, 130, 200), 3)
+	marketStall(f, x0 + EDGE + 10, cz + 4, Vector3.new(1, 0, 0), rgb(240, 180, 60), 5)
+	for k = 0, 2 do
+		local nx = x0 + EDGE + 28 + k * 12
+		box(f, "NetPost", nx - 4, PAVE, cz + 22, 0.5, 7, 0.5, TIMBER, Enum.Material.Wood)
+		box(f, "NetPost", nx + 4, PAVE, cz + 22, 0.5, 7, 0.5, TIMBER, Enum.Material.Wood)
+		part(f, "FishingNet", Vector3.new(8, 5, 0.15), CFrame.new(nx, PAVE + 4, cz + 22), rgb(150, 140, 110), Enum.Material.Fabric, { Transparency = 0.35 })
+	end
+	local hut = model(f, "Shipwright")
+	local rel = frame(x0 + EDGE + 40, cz - 10, Vector3.new(0, 0, -1))
+	part(hut, "Walls", Vector3.new(22, 11, 16), rel(0, PAVE + 5.5, 0), rgb(150, 100, 65), Enum.Material.WoodPlanks)
+	gableSide(hut, rel, 22, 16, PAVE + 11, rgb(150, 100, 65), ROOFS[4], Enum.Material.WoodPlanks)
+	local board = part(hut, "NameBoard", Vector3.new(12, 2, 0.4), rel(0, PAVE + 8.6, 8.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(board, "Shipwright", GOLD)
+	hut:SetAttribute("Shop", "shipwright")
+	-- finger piers with rowboats and a sloop
+	for k = 0, 3 do
+		local pz = z0 + 10 + k * (z1 - z0 - 20) / 3
+		box(f, "Pier", x1 + 18, 0.2, pz, 36, 0.8, 4.6, rgb(165, 120, 80), Enum.Material.WoodPlanks)
+		for j = 0, 2 do
+			cylinder(f, "Piling", 6, 1, x1 + 3 + j * 13, -2.5, pz + 2.6, TIMBER, Enum.Material.Wood)
+		end
+		if k == 3 then
+			ship(f, x1 + 22, pz + 8, Vector3.new(1, 0, 0), "sloop", BANNERS[3])
+		else
+			ship(f, x1 + 14 + k * 4, pz + 5, Vector3.new(1, 0, 0.2).Unit, "rowboat", WHITE)
+		end
+	end
+end
+
+----------------------------------------------------------------------------------------------
+-- streets, walls and bridges
 
 local function buildStreets(city: Instance)
 	local streets = folder(city, "Streets")
 	local w, d = CITY.x1 - CITY.x0, CITY.z1 - CITY.z0
 	local cx, cz = (CITY.x0 + CITY.x1) / 2, (CITY.z0 + CITY.z1) / 2
-	box(streets, "Asphalt", cx, -1, cz, w, 1, d, ASPHALT, Enum.Material.Asphalt)
-	-- sea wall round the city edge
+	box(streets, "Cobbles", cx, -1, cz, w, 1, d, COBBLE, Enum.Material.Cobblestone)
 	for _, e in { { cx, CITY.z0, w + 2, 2 }, { cx, CITY.z1, w + 2, 2 }, { CITY.x0, cz, 2, d }, { CITY.x1, cz, 2, d } } do
-		box(streets, "SeaWall", e[1], -10, e[2], e[3], 10.8, e[4], rgb(170, 165, 158), Enum.Material.Cobblestone)
+		box(streets, "SeaWall", e[1], -10, e[2], e[3], 10.8, e[4], DARKSTONE, Enum.Material.Cobblestone)
 	end
-
-	-- lane markings
-	local marks = folder(streets, "Markings")
-	for _, a in AVENUES do
-		for si = 1, #STREETS - 1 do
-			local z0, z1 = STREETS[si].z + STREETS[si].w / 2, STREETS[si + 1].z - STREETS[si + 1].w / 2
-			local len = z1 - z0
-			if a.w > 30 then
-				for _, off in { -0.5, 0.5 } do
-					box(marks, "CenterLine", a.x + off, 0, (z0 + z1) / 2, 0.4, 0.06, len - 4, YELLOW)
-				end
-				for _, lane in { -11, 11 } do
-					for k = 0, math.floor(len / 14) - 1 do
-						box(marks, "LaneDash", a.x + lane, 0, z0 + 7 + k * 14, 0.4, 0.06, 6, WHITE)
-					end
-				end
-			else
-				for k = 0, math.floor(len / 14) - 1 do
-					box(marks, "LaneDash", a.x, 0, z0 + 7 + k * 14, 0.4, 0.06, 6, WHITE)
-				end
-			end
-		end
-	end
-	for _, s in STREETS do
-		local xs = { CITY.x0 }
-		for _, a in AVENUES do
-			table.insert(xs, a.x - a.w / 2)
-			table.insert(xs, a.x + a.w / 2)
-		end
-		table.insert(xs, CITY.x1)
-		for k = 1, #xs - 1, 2 do
-			local x0, x1 = xs[k], xs[k + 1]
-			for j = 0, math.floor((x1 - x0) / 14) - 1 do
-				box(marks, "LaneDash", x0 + 7 + j * 14, 0, s.z, 6, 0.06, 0.4, WHITE)
-			end
-		end
-	end
-	-- zebra crossings and signals at every main-avenue junction
+	-- a paler gutter line down the middle of every street
 	local main = AVENUES[3]
+	for _, a in AVENUES do
+		box(streets, "Gutter", a.x, 0, cz, if a == main then 3 else 1.6, 0.05, d - 4, rgb(150, 145, 138), Enum.Material.Slate)
+	end
 	for _, s in STREETS do
-		for _, sgn in { -1, 1 } do
-			for k = -4, 4 do
-				box(marks, "Zebra", main.x + k * 4.4, 0, s.z + sgn * (s.w / 2 + 3), 2.2, 0.06, 5, WHITE)
-			end
-			for k = -2, 2 do
-				box(marks, "Zebra", main.x + sgn * (main.w / 2 + 3), 0, s.z + k * 4.8, 5, 0.06, 2.4, WHITE)
-			end
-		end
-		trafficLight(streets, main.x - main.w / 2 - 2, s.z - s.w / 2 - 2, Vector3.new(1, 0, 0))
-		trafficLight(streets, main.x + main.w / 2 + 2, s.z + s.w / 2 + 2, Vector3.new(-1, 0, 0))
+		box(streets, "Gutter", cx, 0, s.z, w - 4, 0.05, 1.6, rgb(150, 145, 138), Enum.Material.Slate)
 	end
 end
 
-----------------------------------------------------------------------------------------------
--- blocks
-
-local MARKET = {
-	{ "Pet Shop", "pets" }, { "Tool Shop", "tools" }, { "Ability Dojo", "abilities" }, { "Vehicle Dealer", "vehicles" },
-	{ "Cafe Sprout", "cafe" }, { "City Bank", "bank" }, { "Gear & Blasters", "weapons" }, { "Toy Box", "toys" },
-	{ "Arcade", "arcade" }, { "Ice Cream", "icecream" }, { "Boutique", "clothes" }, { "Bakery", "bakery" },
-}
-
-local function furnish(blockFolder: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	-- corner streetlights, trees along the curb, a bench, bin and hydrant
-	for _, c in { { x0 + 1.5, z0 + 1.5, -1, -1 }, { x1 - 1.5, z0 + 1.5, 1, -1 }, { x0 + 1.5, z1 - 1.5, -1, 1 }, { x1 - 1.5, z1 - 1.5, 1, 1 } } do
-		streetlight(blockFolder, c[1], c[2], Vector3.new(c[3], 0, 0))
+local function wallRun(f: Instance, a: Vector3, b: Vector3)
+	local dir = (b - a).Unit
+	local length = (b - a).Magnitude
+	if length < 2 then
+		return
 	end
-	local w = x1 - x0
-	for k = 1, math.max(1, math.floor(w / 30)) do
-		local x = x0 + k * w / (math.floor(w / 30) + 1)
-		cityTree(blockFolder, x, z0 + 2.5, seed * 7 + k)
-		cityTree(blockFolder, x, z1 - 2.5, seed * 11 + k)
-	end
-	bench(blockFolder, x0 + w * 0.5 + 5, z0 + 2.2, Vector3.new(0, 0, -1))
-	trashBin(blockFolder, x0 + w * 0.5 - 4, z0 + 2)
-	hydrant(blockFolder, x1 - 6, z1 - 2)
-end
-
-local function marketBlock(f: Instance, b: { number }, index: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local w = x1 - x0
-	local inner = w - 2 * SIDEWALK
-	local count = if inner > 80 then 3 else 2
-	local shopW = inner / count - 2
-	for k = 1, count do
-		local n = (index - 1) * 2 + k
-		local entry = MARKET[(n - 1) % #MARKET + 1]
-		local x = x0 + SIDEWALK + (k - 0.5) * (inner / count)
-		shop(f, x, z0 + SIDEWALK + 9, shopW, Vector3.new(0, 0, -1), entry[1], entry[2], n)
-		shop(f, x, z1 - SIDEWALK - 9, shopW, Vector3.new(0, 0, 1), MARKET[(n + 5) % #MARKET + 1][1], MARKET[(n + 5) % #MARKET + 1][2] .. "2", n + 3)
+	local mid = (a + b) / 2
+	local cf = CFrame.lookAt(Vector3.new(mid.X, 0, mid.Z), Vector3.new(mid.X, 0, mid.Z) + dir)
+	part(f, "Wall", Vector3.new(5, 16, length), cf * CFrame.new(0, 8, 0), STONE, Enum.Material.Cobblestone)
+	part(f, "WallWalk", Vector3.new(5.6, 0.6, length), cf * CFrame.new(0, 16.3, 0), DARKSTONE, Enum.Material.Cobblestone)
+	local n = math.floor(length / 5)
+	for k = 0, n - 1 do
+		local v = -length / 2 + (k + 0.5) * (length / n)
+		part(f, "Merlon", Vector3.new(1.2, 2.4, 2.4), cf * CFrame.new(2.2, 17.8, v), STONE, Enum.Material.Cobblestone)
 	end
 end
 
-local function downtownBlock(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local cx = (x0 + x1) / 2
-	local inner = x1 - x0 - 2 * SIDEWALK
-	local depth = z1 - z0 - 2 * SIDEWALK
-	local tw = inner / 2 - 4
-	for k, side in { -1, 1 } do
-		local h = 70 + math.floor(hash(seed * 5 + k) * 120)
-		skyscraper(f, cx + side * (tw / 2 + 2), (z0 + z1) / 2, tw, math.min(depth - 4, 34), h, seed * 2 + k)
-	end
-	-- plaza strip between the towers
-	box(f, "Plaza", cx, CURB, (z0 + z1) / 2, 6, 0.1, depth, rgb(220, 205, 180), Enum.Material.Slate)
+local function wallTower(f: Instance, x: number, z: number, banner_: Color3)
+	cylinder(f, "WallTower", 24, 12, x, 12, z, STONE, Enum.Material.Cobblestone)
+	cylinder(f, "TowerRim", 1.4, 13.4, x, 24.2, z, DARKSTONE, Enum.Material.Cobblestone)
+	cone(f, "TowerRoof", x, 24.9, z, 8.6, 12, ROOFS[1], Enum.Material.Slate, 8)
+	cylinder(f, "FlagPole", 6, 0.35, x, 40, z, IRON, Enum.Material.Metal)
+	part(f, "Flag", Vector3.new(0.2, 2.6, 4.4), CFrame.new(x, 41.6, z + 2.3), banner_, Enum.Material.Fabric)
 end
 
-local function apartmentBlock(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local inner = x1 - x0 - 2 * SIDEWALK
-	local count = if inner > 80 then 3 else 2
-	local aw = inner / count - 3
-	for k = 1, count do
-		local x = x0 + SIDEWALK + (k - 0.5) * (inner / count)
-		apartment(f, x, z0 + SIDEWALK + 11, aw, 18, 4 + (seed + k) % 5, Vector3.new(0, 0, -1), seed + k)
-		apartment(f, x, z1 - SIDEWALK - 11, aw, 18, 3 + (seed * 2 + k) % 5, Vector3.new(0, 0, 1), seed + k + 7)
+local function gatehouse(f: Instance, x: number, z: number, along: Vector3, opening: number)
+	local side = Vector3.new(-along.Z, 0, along.X)
+	for _, s in { -1, 1 } do
+		local p = Vector3.new(x, 0, z) + along * s * (opening / 2 + 6)
+		box(f, "GateTower", p.X, 0, p.Z, 12, 28, 12, STONE, Enum.Material.Cobblestone)
+		cone(f, "GateRoof", p.X, 28, p.Z, 8.6, 12, ROOFS[1], Enum.Material.Slate, 4)
+		local torch = box(f, "GateTorch", p.X + side.X * 6.4 - along.X * s * 3, 9, p.Z + side.Z * 6.4 - along.Z * s * 3, 1, 1.6, 1, LANTERN, Enum.Material.Neon)
+		glowLight(torch, 18, 1.2, LANTERN)
 	end
-end
-
-local function houseBlock(f: Instance, b: { number }, seed: number)
-	local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
-	local inner = x1 - x0 - 2 * SIDEWALK
-	local count = math.max(2, math.floor(inner / 34))
-	for k = 1, count do
-		local x = x0 + SIDEWALK + (k - 0.5) * (inner / count) + 4
-		house(f, x, z0 + SIDEWALK + 18, Vector3.new(0, 0, -1), seed * 3 + k)
-		house(f, x, z1 - SIDEWALK - 18, Vector3.new(0, 0, 1), seed * 5 + k)
-	end
-	-- back gardens between the two rows
-	box(f, "Gardens", (x0 + x1) / 2, CURB, (z0 + z1) / 2, inner, 0.15, 14, rgb(110, 185, 85), Enum.Material.Grass)
-end
-
-local function park(f: Instance, x0: number, x1: number, z0: number, z1: number)
-	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-	local w, d = x1 - x0 - 2 * SIDEWALK, z1 - z0 - 2 * SIDEWALK
-	box(f, "Lawn", cx, CURB, cz, w, 0.2, d, rgb(110, 190, 85), Enum.Material.Grass)
-	box(f, "Path", cx, CURB, cz, 6, 0.3, d, rgb(220, 205, 175), Enum.Material.Slate)
-	box(f, "Path", cx, CURB, cz, w, 0.3, 6, rgb(220, 205, 175), Enum.Material.Slate)
-	-- pond with a fountain jet
-	local px, pz = cx - w / 4, cz - d / 4
-	cylinder(f, "PondRim", 1, 30, px, CURB + 0.5, pz, rgb(190, 185, 175), Enum.Material.Cobblestone)
-	cylinder(f, "PondWater", 1, 27, px, CURB + 0.6, pz, rgb(80, 170, 220), Enum.Material.Glass).Transparency = 0.2
-	cylinder(f, "Jet", 6, 1.2, px, CURB + 3.5, pz, rgb(220, 245, 255), Enum.Material.Neon).Transparency = 0.4
-	for i = 1, 5 do
-		local a = i / 5 * math.pi * 2
-		local lily = cylinder(f, "Lily", 0.2, 3, px + math.cos(a) * 8, CURB + 1.15, pz + math.sin(a) * 8, rgb(90, 170, 80), Enum.Material.Grass)
-		lily.CanCollide = false
-	end
-	-- bandstand
-	local bx, bz = cx + w / 4, cz - d / 4
-	cylinder(f, "Bandstand", 1.4, 18, bx, CURB + 0.7, bz, WHITE, Enum.Material.Marble)
-	for i = 0, 7 do
-		local a = i / 8 * math.pi * 2
-		cylinder(f, "BandPillar", 9, 0.8, bx + math.cos(a) * 8, CURB + 5.5, bz + math.sin(a) * 8, WHITE, Enum.Material.Marble)
-	end
-	for i, dd in { 20, 15, 10, 5 } do
-		cylinder(f, "BandRoof", 1.2, dd, bx, CURB + 10 + i * 1.1, bz, rgb(90, 160, 110), Enum.Material.Slate)
-	end
-	-- playground
-	local gx, gz = cx - w / 4, cz + d / 4
-	box(f, "PlayMat", gx, CURB, gz, 26, 0.3, 22, rgb(240, 130, 60), Enum.Material.Fabric)
-	box(f, "SlideTower", gx - 6, CURB, gz, 4, 6, 4, rgb(70, 140, 220), Enum.Material.Plastic)
-	wedge(f, "Slide", Vector3.new(2.6, 6, 9), CFrame.new(gx - 6, CURB + 3, gz + 6.5), rgb(250, 200, 50), Enum.Material.Plastic)
-	box(f, "SwingBar", gx + 6, CURB + 8, gz, 10, 0.6, 0.6, rgb(220, 60, 60), Enum.Material.Metal)
-	for _, u in { -4.8, 4.8 } do
-		box(f, "SwingLeg", gx + 6 + u, CURB, gz, 0.6, 8.3, 0.6, rgb(220, 60, 60), Enum.Material.Metal)
-	end
-	for _, u in { -2, 2 } do
-		box(f, "SwingRope", gx + 6 + u, CURB + 2.6, gz, 0.15, 5.4, 0.15, rgb(60, 60, 65), Enum.Material.Metal)
-		box(f, "SwingSeat", gx + 6 + u, CURB + 2.2, gz, 1.6, 0.3, 1, rgb(40, 40, 45), Enum.Material.Plastic)
-	end
-	-- statue of a Sproutling on a plinth at the crossing
-	box(f, "Plinth", cx, CURB, cz, 5, 4, 5, rgb(200, 195, 185), Enum.Material.Marble)
-	ball(f, "StatueBody", 4, cx, CURB + 6.2, cz, rgb(130, 200, 120), Enum.Material.Metal)
-	ball(f, "StatueLeaf", 2, cx + 0.8, CURB + 8.6, cz, rgb(110, 180, 100), Enum.Material.Metal)
-	-- trees, benches and lamps
-	local n = 0
-	for gxk = -2, 2 do
-		for gzk = -3, 3 do
-			n += 1
-			local x, z = cx + gxk * (w / 5.2), cz + gzk * (d / 7.2)
-			local onPath = math.abs(x - cx) < 6 or math.abs(z - cz) < 6
-			local nearFeature = (math.abs(x - px) < 18 and math.abs(z - pz) < 18) or (math.abs(x - bx) < 14 and math.abs(z - bz) < 14) or (math.abs(x - gx) < 16 and math.abs(z - gz) < 14)
-			if not onPath and not nearFeature and hash(n + 3) < 0.75 then
-				local leaf = if hash(n) < 0.25 then rgb(255, 175, 205) else rgb(70 + math.floor(hash(n + 1) * 40), 160 + math.floor(hash(n + 2) * 40), 70)
-				cylinder(f, "Trunk", 9, 1.2, x, CURB + 4.5, z, rgb(110, 80, 55), Enum.Material.Wood)
-				ball(f, "Canopy", 9, x, CURB + 11, z, leaf, Enum.Material.Grass)
-				ball(f, "Canopy", 6, x + 2, CURB + 13.5, z - 1, leaf, Enum.Material.Grass)
-			end
-		end
-	end
-	for _, s in { { cx - 5, cz - d / 6, 1, 0 }, { cx + 5, cz + d / 6, -1, 0 }, { cx + w / 6, cz + 5, 0, -1 }, { cx - w / 6, cz - 5, 0, 1 } } do
-		bench(f, s[1], s[2], Vector3.new(s[3], 0, s[4]))
-	end
-	local sb = box(f, "ParkSign", cx, CURB, z0 + SIDEWALK + 1, 16, 4, 1, rgb(60, 120, 70), Enum.Material.WoodPlanks)
-	sign(sb, "Central Park", WHITE, Enum.NormalId.Back)
-end
-
-local function harbour(f: Instance, x0: number, x1: number, z0: number, z1: number)
-	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-	local w, d = x1 - x0 - 2 * SIDEWALK, z1 - z0 - 2 * SIDEWALK
-	box(f, "Yard", cx, CURB, cz, w, 0.2, d, rgb(150, 150, 150), Enum.Material.Concrete)
-	-- warehouses along the inland side
-	for k = 0, 1 do
-		local wz = z0 + SIDEWALK + 26 + k * (d / 2)
-		local wx = x0 + SIDEWALK + 18
-		box(f, "Warehouse", wx, CURB, wz, 30, 16, 40, rgb(170, 95, 70), Enum.Material.Brick)
-		box(f, "WarehouseRoof", wx, CURB + 16, wz, 31, 1, 41, rgb(110, 115, 120), Enum.Material.DiamondPlate)
-		for j = -1, 1 do
-			box(f, "RollDoor", wx + 15.1, CURB, wz + j * 12, 0.3, 9, 8, rgb(200, 205, 210), Enum.Material.DiamondPlate)
-		end
-		local board = box(f, "WarehouseSign", wx + 15.3, CURB + 11, wz, 0.4, 3, 20, rgb(40, 60, 90), Enum.Material.SmoothPlastic)
-		sign(board, "HARBOUR " .. (k + 1), WHITE, Enum.NormalId.Right)
-	end
-	-- container stacks
-	local colors = { rgb(220, 70, 60), rgb(60, 130, 220), rgb(250, 190, 50), rgb(90, 180, 110), rgb(240, 130, 50), rgb(150, 100, 200) }
-	local n = 0
-	for row = 0, 5 do
-		for col = 0, 1 do
-			local stack = 1 + (row + col) % 3
-			for layer = 0, stack - 1 do
-				n += 1
-				local c = box(f, "Container", x0 + SIDEWALK + 46 + col * 9, CURB + layer * 8.6, z0 + SIDEWALK + 12 + row * (d - 24) / 5, 8.4, 8.4, 18, colors[n % #colors + 1], Enum.Material.Metal)
-				c:SetAttribute("Climbable", true)
-			end
-		end
-	end
-	-- two gantry cranes on the quay
-	for k = 0, 1 do
-		local qz = z0 + SIDEWALK + d * (0.3 + k * 0.4)
-		local qx = x1 - SIDEWALK - 8
-		for _, c in { { -6, -8 }, { 6, -8 }, { -6, 8 }, { 6, 8 } } do
-			box(f, "CraneLeg", qx + c[1], CURB, qz + c[2], 1.6, 44, 1.6, rgb(240, 180, 40), Enum.Material.Metal)
-		end
-		box(f, "CraneBeam", qx + 18, CURB + 44, qz, 60, 3, 3.4, rgb(240, 180, 40), Enum.Material.Metal)
-		box(f, "CraneBeam", qx, CURB + 44, qz, 14, 3, 18, rgb(240, 180, 40), Enum.Material.Metal)
-		box(f, "CraneCab", qx + 4, CURB + 39, qz, 5, 4, 5, WHITE, Enum.Material.Metal)
-		box(f, "Trolley", qx + 30, CURB + 42.5, qz, 4, 2, 4, rgb(60, 60, 65), Enum.Material.Metal)
-		box(f, "Cable", qx + 30, CURB + 22, qz, 0.3, 20.5, 0.3, rgb(40, 40, 45), Enum.Material.Metal)
-		box(f, "Spreader", qx + 30, CURB + 20.6, qz, 8, 1.2, 16, rgb(60, 60, 65), Enum.Material.Metal)
-	end
-	-- bollards on the quay edge
-	for k = 0, 9 do
-		cylinder(f, "Bollard", 2, 1.4, x1 - 2.5, CURB + 1, z0 + 8 + k * (z1 - z0 - 16) / 9, rgb(50, 50, 55), Enum.Material.Metal)
+	local lintel = part(f, "GateArch", Vector3.new(opening + 2, 8, 8), CFrame.lookAt(Vector3.new(x, 20, z), Vector3.new(x, 20, z) + side), STONE, Enum.Material.Cobblestone)
+	lintel.Name = "GateArch"
+	local plaque = part(f, "GateSign", Vector3.new(opening * 0.7, 3, 0.4), CFrame.lookAt(Vector3.new(x, 20, z) + side * 4.3, Vector3.new(x, 20, z) + side * 6), rgb(50, 40, 35), Enum.Material.WoodPlanks)
+	sign(plaque, "Sproutling", GOLD)
+	sign(plaque, "Sproutling", GOLD, Enum.NormalId.Back)
+	for k = -2, 2 do
+		local bar = Vector3.new(x, 0, z) + along * k * (opening / 5)
+		part(f, "Portcullis", Vector3.new(0.5, 6, 0.5), CFrame.new(bar.X, 13, bar.Z), IRON, Enum.Material.Metal)
 	end
 end
 
-local function marina(f: Instance, x0: number, x1: number, z0: number, z1: number)
-	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-	local w, d = x1 - x0 - 2 * SIDEWALK, z1 - z0 - 2 * SIDEWALK
-	box(f, "Boardwalk", cx, CURB, cz, w, 0.3, d, rgb(180, 140, 100), Enum.Material.WoodPlanks)
-	-- ferry terminal building
-	local tx = x0 + SIDEWALK + 22
-	box(f, "Terminal", tx, CURB, cz, 34, 12, d - 20, rgb(235, 240, 245), Enum.Material.Concrete)
-	box(f, "TerminalGlass", tx, CURB + 2, cz, 34.4, 7, d - 26, rgb(110, 170, 210), Enum.Material.Glass)
-	box(f, "TerminalRoof", tx + 3, CURB + 12, cz, 42, 1.2, d - 14, rgb(60, 140, 200), Enum.Material.Metal)
-	box(f, "TerminalRoofTop", tx, CURB + 13.2, cz, 24, 3, d - 30, rgb(235, 240, 245), Enum.Material.Concrete)
-	local board = box(f, "TerminalSign", tx + 17.3, CURB + 9.4, cz, 0.4, 2.6, 22, rgb(60, 140, 200), Enum.Material.SmoothPlastic)
-	sign(board, "FERRY & MARINA", WHITE, Enum.NormalId.Right)
-	-- finger piers out into the bay with moored boats
-	for k = 0, 3 do
-		local pz = z0 + 14 + k * (z1 - z0 - 28) / 3
-		box(f, "Pier", x1 + 22, 0.2, pz, 44, 0.8, 5, rgb(170, 125, 85), Enum.Material.WoodPlanks)
-		for j = 0, 3 do
-			cylinder(f, "Piling", 6, 1, x1 + 4 + j * 12, -2.5, pz + 2.8, rgb(110, 80, 55), Enum.Material.Wood)
-		end
-		local kinds = { "speedboat", "sailboat", "speedboat", "yacht" }
-		local kind = kinds[k + 1]
-		local colors = { rgb(220, 60, 60), rgb(60, 120, 220), rgb(250, 190, 50), rgb(90, 180, 110) }
-		boat(f, x1 + 24, pz + (if kind == "yacht" then 12 else 7), Vector3.new(1, 0, 0), kind, colors[k + 1])
+local function buildWalls(city: Instance)
+	local f = folder(city, "Walls")
+	local x0, x1, z0, z1 = CITY.x0 + 2.5, CITY.x1 - 2.5, CITY.z0 + 2.5, CITY.z1 - 2.5
+	local main = 30 -- half width of the north gate opening (main bridge)
+	-- north wall with the main gate and a postern for the footbridge
+	wallRun(f, Vector3.new(x0, 0, z0), Vector3.new(-156, 0, z0))
+	wallRun(f, Vector3.new(-144, 0, z0), Vector3.new(-main - 12, 0, z0))
+	wallRun(f, Vector3.new(main + 12, 0, z0), Vector3.new(x1 - 92, 0, z0))
+	gatehouse(f, 0, z0, Vector3.new(1, 0, 0), main * 2)
+	-- west wall with the gate to the airship port bridge
+	wallRun(f, Vector3.new(x0, 0, z0), Vector3.new(x0, 0, 700 - 32))
+	wallRun(f, Vector3.new(x0, 0, 700 + 32), Vector3.new(x0, 0, z1))
+	gatehouse(f, x0, 700, Vector3.new(0, 0, 1), 40)
+	-- south wall (the east side is open harbour)
+	wallRun(f, Vector3.new(x0, 0, z1), Vector3.new(x1 - 92, 0, z1))
+	for i, p in { { x0, z0 }, { x0, z1 }, { -172, z0 }, { x1 - 92, z0 }, { x1 - 92, z1 }, { x0, 900 }, { -200, z1 }, { 0, z1 }, { 150, z1 } } do
+		wallTower(f, p[1], p[2], BANNERS[i % #BANNERS + 1])
 	end
 end
 
-----------------------------------------------------------------------------------------------
--- waterfront, bridges and the airport
-
-local function promenade(city: Instance)
-	local f = folder(city, "Promenade")
-	local z = CITY.z0 + 6
-	box(f, "Promenade", (CITY.x0 + CITY.x1) / 2, 0, z, CITY.x1 - CITY.x0, CURB, 12, rgb(215, 200, 175), Enum.Material.Slate)
-	box(f, "Railing", (CITY.x0 + CITY.x1) / 2, CURB + 3, CITY.z0 + 0.6, CITY.x1 - CITY.x0, 0.4, 0.4, rgb(60, 62, 70), Enum.Material.Metal)
-	for k = 0, 34 do
-		local x = CITY.x0 + 5 + k * ((CITY.x1 - CITY.x0 - 10) / 34)
-		if math.abs(x) > 26 then
-			box(f, "RailPost", x, CURB, CITY.z0 + 0.6, 0.4, 3.2, 0.4, rgb(60, 62, 70), Enum.Material.Metal)
-		end
-	end
-	for k = 0, 9 do
-		local x = CITY.x0 + 20 + k * ((CITY.x1 - CITY.x0 - 40) / 9)
-		if math.abs(x) > 30 then
-			streetlight(f, x, z - 3, Vector3.new(0, 0, -1))
-			bench(f, x + 8, z - 3, Vector3.new(0, 0, -1))
-		end
-	end
-end
-
-local function roadBridge(city: Instance, a: Vector3, b: Vector3, width: number, pylons: boolean)
-	local f = model(city, "RoadBridge")
+-- Stone bridge with arches underneath, parapets, lanterns and statues at the ends.
+local function stoneBridge(city: Instance, a: Vector3, b: Vector3, width: number)
+	local f = model(city, "StoneBridge")
 	local dir = (b - a).Unit
 	local side = Vector3.new(-dir.Z, 0, dir.X)
 	local length = (b - a).Magnitude
 	local mid = (a + b) / 2
-	local deckY = 0.4
-	part(f, "Deck", Vector3.new(width, 1.6, length), CFrame.lookAt(Vector3.new(mid.X, deckY - 0.8, mid.Z), Vector3.new(b.X, deckY - 0.8, b.Z)), ASPHALT, Enum.Material.Asphalt)
-	for _, sgn in { -1, 1 } do
-		local edge = mid + side * sgn * (width / 2 - 2)
-		part(f, "Walkway", Vector3.new(4, 0.6, length), CFrame.lookAt(Vector3.new(edge.X, deckY + 0.3, edge.Z), Vector3.new(edge.X, deckY + 0.3, edge.Z) + dir), CONCRETE, Enum.Material.Concrete)
-		local rail = mid + side * sgn * (width / 2)
-		part(f, "Parapet", Vector3.new(0.8, 2.6, length), CFrame.lookAt(Vector3.new(rail.X, deckY + 1.3, rail.Z), Vector3.new(rail.X, deckY + 1.3, rail.Z) + dir), CONCRETE, Enum.Material.Concrete)
-		local n = math.floor(length / 30)
+	local cf = CFrame.lookAt(Vector3.new(mid.X, 0, mid.Z), Vector3.new(mid.X, 0, mid.Z) + dir)
+	part(f, "Deck", Vector3.new(width, 2, length), cf * CFrame.new(0, -0.6, 0), COBBLE, Enum.Material.Cobblestone)
+	for _, s in { -1, 1 } do
+		part(f, "Parapet", Vector3.new(1.4, 3, length), cf * CFrame.new(s * (width / 2 - 0.7), 1.9, 0), STONE, Enum.Material.Cobblestone)
+		local n = math.floor(length / 26)
 		for k = 0, n do
-			local p = a + dir * (k * length / n) + side * sgn * (width / 2 - 0.5)
-			streetlight(f, p.X, p.Z, -side * sgn)
+			local v = -length / 2 + k * (length / n)
+			local p = (cf * CFrame.new(s * (width / 2 - 0.7), 0, v)).Position
+			lanternPost(f, p.X, p.Z)
 		end
 	end
-	for _, off in { -0.5, 0.5 } do
-		local c = mid + side * off
-		part(f, "CenterLine", Vector3.new(0.4, 0.06, length - 4), CFrame.lookAt(Vector3.new(c.X, deckY + 0.03, c.Z), Vector3.new(c.X, deckY + 0.03, c.Z) + dir), YELLOW)
+	-- arches: piers in the water and curved spans between them
+	local spans = math.max(2, math.floor(length / 34))
+	for k = 0, spans do
+		local v = -length / 2 + k * (length / spans)
+		part(f, "Pier", Vector3.new(width - 4, 12, 6), cf * CFrame.new(0, -7.6, v), DARKSTONE, Enum.Material.Cobblestone)
 	end
-	-- piers
-	local n = math.floor(length / 40)
-	for k = 1, n - 1 do
-		local p = a + dir * (k * length / n)
-		part(f, "Pier", Vector3.new(width - 8, 10, 6), CFrame.lookAt(Vector3.new(p.X, deckY - 6.6, p.Z), Vector3.new(p.X, deckY - 6.6, p.Z) + dir), CONCRETE, Enum.Material.Concrete)
-	end
-	if pylons then
-		-- a cable-stayed pylon in the middle with fanned cables
-		local top = 62
-		for _, sgn in { -1, 1 } do
-			local leg = mid + side * sgn * (width / 2 + 2)
-			part(f, "Pylon", Vector3.new(3.4, top + 10, 3.4), CFrame.new(leg.X, top / 2 - 5, leg.Z), WHITE, Enum.Material.Concrete)
-			ball(f, "PylonLight", 1.4, leg.X, top + 1, leg.Z, rgb(255, 60, 60), Enum.Material.Neon)
-			for _, dsg in { -1, 1 } do
-				for k = 1, 5 do
-					local anchor = mid + dir * dsg * (k * length / 12) + side * sgn * (width / 2 - 0.5)
-					local from = Vector3.new(leg.X, top - k * 4, leg.Z)
-					local to = Vector3.new(anchor.X, deckY + 2.6, anchor.Z)
-					deco(part(f, "Cable", Vector3.new(0.3, 0.3, (to - from).Magnitude), CFrame.lookAt((from + to) / 2, to), WHITE, Enum.Material.Metal))
-				end
-			end
+	for k = 0, spans - 1 do
+		local v0 = -length / 2 + k * (length / spans) + 3
+		local v1 = v0 + length / spans - 6
+		local segs = 6
+		for i = 0, segs - 1 do
+			local t0, t1 = i / segs, (i + 1) / segs
+			local y0 = -1.6 - math.sin(t0 * math.pi) * 0 - (1 - math.sin(t0 * math.pi)) * 5
+			local y1 = -1.6 - (1 - math.sin(t1 * math.pi)) * 5
+			local p0 = cf * CFrame.new(0, y0, v0 + (v1 - v0) * t0)
+			local p1 = cf * CFrame.new(0, y1, v0 + (v1 - v0) * t1)
+			part(f, "ArchRib", Vector3.new(width - 2, 1.4, (p1.Position - p0.Position).Magnitude + 0.4), CFrame.lookAt((p0.Position + p1.Position) / 2, p1.Position), STONE, Enum.Material.Cobblestone)
 		end
-		local beam = mid + Vector3.new(0, top - 2, 0)
-		part(f, "PylonBeam", Vector3.new(width + 8, 3, 3), CFrame.lookAt(beam, beam + side) * CFrame.Angles(0, math.rad(90), 0), WHITE, Enum.Material.Concrete)
-		local banner = part(f, "Welcome", Vector3.new(width - 4, 5, 0.6), CFrame.lookAt(Vector3.new(mid.X, top - 9, mid.Z), Vector3.new(mid.X, top - 9, mid.Z) - dir), rgb(60, 150, 90), Enum.Material.SmoothPlastic)
-		sign(banner, "Welcome to Sproutling City", WHITE)
-		sign(banner, "Garden Isles", WHITE, Enum.NormalId.Back)
+	end
+	-- statues of lions at both ends
+	for _, e in { a + dir * 3, b - dir * 3 } do
+		for _, s in { -1, 1 } do
+			local p = e + side * s * (width / 2 + 2)
+			box(f, "StatuePlinth", p.X, 0, p.Z, 4, 4, 4, STONE, Enum.Material.Marble)
+			box(f, "LionBody", p.X, 4, p.Z, 2.4, 2.4, 3.6, GOLD, Enum.Material.Metal)
+			ball(f, "LionMane", 2.8, p.X, 7, p.Z, GOLD, Enum.Material.Metal)
+		end
 	end
 end
 
-local function airport(city: Instance)
-	local f = folder(city, "Airport")
+----------------------------------------------------------------------------------------------
+-- the airship port (Landscape.Airport)
+
+local function mooringTower(f: Instance, x: number, z: number, h: number)
+	for _, c in { { -4, -4 }, { 4, -4 }, { -4, 4 }, { 4, 4 } } do
+		box(f, "TowerLeg", x + c[1], 0, z + c[2], 1.4, h, 1.4, TIMBER, Enum.Material.Wood)
+	end
+	for k = 1, math.floor(h / 10) do
+		box(f, "TowerBrace", x, k * 10 - 1, z - 4, 9, 0.8, 0.8, TIMBER, Enum.Material.Wood)
+		box(f, "TowerBrace", x, k * 10 - 1, z + 4, 9, 0.8, 0.8, TIMBER, Enum.Material.Wood)
+		box(f, "TowerBrace", x - 4, k * 10 - 1, z, 0.8, 0.8, 9, TIMBER, Enum.Material.Wood)
+		box(f, "TowerBrace", x + 4, k * 10 - 1, z, 0.8, 0.8, 9, TIMBER, Enum.Material.Wood)
+	end
+	box(f, "TowerDeck", x, h, z, 12, 1, 12, rgb(170, 125, 85), Enum.Material.WoodPlanks)
+	box(f, "Ladder", x, 0, z - 4.8, 2, h, 0.3, rgb(150, 110, 70), Enum.Material.WoodPlanks)
+	local beacon = box(f, "Beacon", x, h + 1, z, 1.4, 2, 1.4, LANTERN, Enum.Material.Neon)
+	glowLight(beacon, 24, 1.2, LANTERN)
+end
+
+local function airshipPort(city: Instance)
+	local f = folder(city, "AirshipPort")
 	local A = { x0 = -760, x1 = -425, z0 = 540, z1 = 1120 }
 	local cx, cz = (A.x0 + A.x1) / 2, (A.z0 + A.z1) / 2
-	box(f, "Field", cx, -1, cz, A.x1 - A.x0, 1, A.z1 - A.z0, rgb(120, 185, 90), Enum.Material.Grass)
+	box(f, "Field", cx, -1, cz, A.x1 - A.x0, 1, A.z1 - A.z0, rgb(115, 185, 85), Enum.Material.Grass)
 	for _, e in { { cx, A.z0, A.x1 - A.x0 + 2, 2 }, { cx, A.z1, A.x1 - A.x0 + 2, 2 }, { A.x0, cz, 2, A.z1 - A.z0 }, { A.x1, cz, 2, A.z1 - A.z0 } } do
-		box(f, "SeaWall", e[1], -10, e[2], e[3], 10.4, e[4], rgb(170, 165, 158), Enum.Material.Cobblestone)
+		box(f, "SeaWall", e[1], -10, e[2], e[3], 10.4, e[4], DARKSTONE, Enum.Material.Cobblestone)
 	end
-	-- runway with markings and edge lights
-	local rx, rz0, rz1 = -680, 570, 1090
-	local rlen = rz1 - rz0
-	box(f, "Runway", rx, 0, (rz0 + rz1) / 2, 44, 0.2, rlen, rgb(55, 57, 62), Enum.Material.Asphalt)
-	for k = 0, math.floor(rlen / 30) - 2 do
-		box(f, "RunwayDash", rx, 0.2, rz0 + 40 + k * 30, 1, 0.06, 14, WHITE)
+	-- cobbled road from the bridge, and a plaza
+	box(f, "Road", -510, 0, 700, 170, 0.2, 22, COBBLE, Enum.Material.Cobblestone)
+	box(f, "Plaza", -560, 0, 830, 120, 0.2, 280, rgb(190, 180, 160), Enum.Material.Cobblestone)
+	-- mooring towers with airships
+	local colors = { rgb(200, 60, 60), rgb(60, 110, 200), rgb(220, 170, 50), rgb(120, 70, 170) }
+	for k, p in { { -600, 650 }, { -660, 790 }, { -600, 930 }, { -660, 1060 } } do
+		mooringTower(f, p[1], p[2], 40)
+		airship(f, p[1], 32, p[2] + 2, Vector3.new(0, 0, 1), colors[k])
 	end
-	for _, z in { rz0 + 8, rz1 - 8 } do
-		for k = -4, 4 do
-			if k ~= 0 then
-				box(f, "Threshold", rx + k * 4.4, 0.2, z, 2.2, 0.06, 12, WHITE)
+	-- the shipyard hall and the port inn
+	local hall = model(f, "Skyward Shipyard")
+	local rel = frame(-470, 870, Vector3.new(-1, 0, 0))
+	part(hall, "Walls", Vector3.new(90, 22, 40), rel(0, 11, 0), rgb(150, 100, 65), Enum.Material.WoodPlanks)
+	gableSide(hall, rel, 90, 40, 22, rgb(150, 100, 65), ROOFS[2], Enum.Material.WoodPlanks)
+	part(hall, "BayDoor", Vector3.new(30, 18, 0.5), rel(0, 9, 20.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	local board = part(hall, "NameBoard", Vector3.new(30, 3, 0.5), rel(0, 20, 20.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(board, "Skyward Shipyard", GOLD)
+	hall:SetAttribute("Shop", "airships")
+	shop(f, -500, 620, 22, Vector3.new(-1, 0, 0), "The Cloud's Rest Inn", "inn", 2)
+	for _, p in f:GetChildren() do
+		if p:IsA("Model") and p.Name == "Shop" then
+			for _, q in p:GetDescendants() do
+				if q:IsA("BasePart") then
+					q.CFrame = q.CFrame - Vector3.new(0, PAVE, 0)
+				end
 			end
 		end
 	end
-	for k = 0, math.floor(rlen / 26) do
-		for _, sgn in { -1, 1 } do
-			deco(ball(f, "EdgeLight", 0.8, rx + sgn * 23, 0.6, rz0 + k * 26, if k == 0 or k == math.floor(rlen / 26) then rgb(255, 60, 60) else rgb(255, 245, 200), Enum.Material.Neon))
-		end
+	-- cargo, carts and a windsock
+	for k = 0, 7 do
+		crate(f, -540 + (k % 4) * 5, 0, 760 + (k // 4) * 5, 4, hash(k) * 0.5)
 	end
-	-- taxiway, apron and connectors
-	box(f, "Taxiway", -610, 0, (rz0 + rz1) / 2, 18, 0.18, rlen - 60, rgb(70, 72, 78), Enum.Material.Asphalt)
-	for _, z in { rz0 + 60, (rz0 + rz1) / 2, rz1 - 60 } do
-		box(f, "Connector", -645, 0, z, 52, 0.18, 16, rgb(70, 72, 78), Enum.Material.Asphalt)
-		box(f, "TaxiLine", -645, 0.2, z, 52, 0.06, 0.5, YELLOW)
-	end
-	box(f, "TaxiLine", -610, 0.2, (rz0 + rz1) / 2, 0.5, 0.06, rlen - 60, YELLOW)
-	box(f, "Apron", -520, 0, 830, 150, 0.18, 330, rgb(180, 180, 182), Enum.Material.Concrete)
-	-- terminal with jet bridges
-	local tx = -455
-	box(f, "Terminal", tx, 0, 830, 34, 16, 240, rgb(235, 240, 245), Enum.Material.Concrete)
-	box(f, "TerminalGlass", tx - 17.1, 2, 830, 0.4, 10, 230, rgb(110, 170, 210), Enum.Material.Glass)
-	box(f, "TerminalRoof", tx - 3, 16, 830, 44, 1.4, 250, rgb(60, 140, 200), Enum.Material.Metal)
-	local board = box(f, "TerminalSign", tx - 17.4, 12, 830, 0.4, 3, 60, rgb(60, 140, 200), Enum.Material.SmoothPlastic)
-	sign(board, "SPROUTLING INTERNATIONAL", WHITE, Enum.NormalId.Left)
-	for k = -1, 1 do
-		local gz = 830 + k * 80
-		box(f, "JetBridge", tx - 32, 6, gz, 30, 5, 5, rgb(200, 205, 210), Enum.Material.Metal)
-		box(f, "JetBridgeLeg", tx - 44, 0, gz, 1.4, 6, 1.4, rgb(90, 90, 95), Enum.Material.Metal)
-		box(f, "GateLine", -520, 0.2, gz, 70, 0.06, 0.5, YELLOW)
-	end
-	local liveries = { rgb(220, 60, 60), rgb(60, 140, 220), rgb(90, 180, 110) }
-	for k = -1, 1 do
-		airliner(f, -531, 830 + k * 80 - 4, Vector3.new(1, 0, 0), liveries[k + 2])
-	end
-	-- control tower
-	local ctx, ctz = -470, 620
-	cylinder(f, "TowerShaft", 60, 8, ctx, 30, ctz, rgb(235, 235, 238), Enum.Material.Concrete)
-	cylinder(f, "TowerCab", 8, 16, ctx, 64, ctz, rgb(90, 150, 190), Enum.Material.Glass)
-	cylinder(f, "TowerDeck", 1, 18, ctx, 60, ctz, rgb(200, 200, 205), Enum.Material.Concrete)
-	cylinder(f, "TowerRoof", 1.6, 18, ctx, 68.8, ctz, rgb(200, 200, 205), Enum.Material.Concrete)
-	cylinder(f, "TowerMast", 10, 0.6, ctx, 74.6, ctz, rgb(200, 200, 205), Enum.Material.Metal)
-	local beacon = deco(ball(f, "TowerBeacon", 1.4, ctx, 80, ctz, rgb(255, 60, 60), Enum.Material.Neon))
-	glowLight(beacon, 30, 1.5, rgb(255, 80, 80))
-	-- hangar with small planes and a helicopter
-	local hx, hz = -520, 1060
-	box(f, "Hangar", hx, 0, hz, 80, 22, 50, rgb(200, 205, 212), Enum.Material.DiamondPlate)
-	for k = 1, 4 do
-		box(f, "HangarRoof", hx, 22 + k * 1.6, hz, 80 - k * 12, 1.6, 50.4, rgb(180, 185, 192), Enum.Material.DiamondPlate)
-	end
-	box(f, "HangarDoor", hx - 40.2, 0, hz, 0.4, 18, 40, rgb(70, 140, 220), Enum.Material.DiamondPlate)
-	propPlane(f, -570, 1030, Vector3.new(-1, 0, 0), rgb(250, 190, 50))
-	propPlane(f, -570, 1080, Vector3.new(-1, 0, 0), rgb(220, 70, 90))
-	helicopter(f, -480, 660, Vector3.new(-1, 0, 0), rgb(60, 140, 220))
-	box(f, "Helipad", -480, 0, 660, 22, 0.2, 22, rgb(70, 72, 80), Enum.Material.Concrete)
-	-- windsock
-	cylinder(f, "WindsockPole", 10, 0.4, -720, 5, 600, rgb(200, 200, 205), Enum.Material.Metal)
-	part(f, "Windsock", Vector3.new(1.6, 1.6, 5), CFrame.new(-720, 9.6, 603) * CFrame.Angles(math.rad(-10), 0, 0), rgb(250, 120, 40), Enum.Material.Fabric)
-	-- parking with cars by the terminal road
-	for k = 0, 11 do
-		car(f, -431, 720 + k * 18, Vector3.new(-1, 0, 0), CAR_COLORS[k % #CAR_COLORS + 1])
+	cart(f, -520, 980, Vector3.new(0, 0, -1), 2)
+	cart(f, -540, 1000, Vector3.new(0, 0, 1), 4)
+	cylinder(f, "WindsockPole", 12, 0.4, -720, 6, 600, IRON, Enum.Material.Metal)
+	part(f, "Windsock", Vector3.new(1.6, 1.6, 5), CFrame.new(-720, 11.6, 603) * CFrame.Angles(math.rad(-10), 0, 0), rgb(250, 120, 40), Enum.Material.Fabric)
+	-- a few trees round the field edge
+	for k = 0, 9 do
+		cityTree(f, -740 + (k % 2) * 20, 580 + k * 55, 300 + k)
 	end
 end
 
@@ -1150,75 +1275,91 @@ function CityBuilder.Build(map: Instance): Instance
 		local f = folder(blocksFolder, string.format("Block_%d_%d", ix, iz))
 		local x0, x1, z0, z1 = b[1], b[2], b[3], b[4]
 		local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
-		box(f, "Sidewalk", cx, 0, cz, x1 - x0, CURB, z1 - z0, CONCRETE, Enum.Material.Concrete)
+		box(f, "Flagstones", cx, 0, cz, x1 - x0, PAVE, z1 - z0, FLAGSTONE, Enum.Material.Slate)
 		local special = false
 		if iz == 1 then
-			marketBlock(f, b, ix)
-		elseif ix == 6 and iz <= 2 then
-			marina(f, x0, x1, z0, z1)
+			marketRow(f, b, ix)
+		elseif ix == 6 and iz == 2 then
+			fishingDocks(f, x0, x1, z0, z1)
 			special = true
 		elseif ix == 6 then
-			harbour(f, x0, x1, z0, z1)
+			harbour(f, x0, x1, z0, z1, iz)
 			special = true
 		elseif ix == 2 and (iz == 3 or iz == 4) then
-			park(f, x0, x1, z0, z1)
+			gardens(f, x0, x1, z0, z1)
 			special = true
-		elseif (ix == 3 or ix == 4) and iz >= 2 and iz <= 4 then
-			downtownBlock(f, b, i)
+		elseif ix == 3 and iz == 2 then
+			local hall = guildHall(f, cx, cz + 6, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Adventurers' Guild", BANNERS[1])
+			hall:SetAttribute("Shop", "guild")
+			marketStall(f, x0 + EDGE + 8, z1 - EDGE - 6, Vector3.new(0, 0, -1), BANNERS[4], 1)
+		elseif ix == 4 and iz == 2 then
+			mageTower(f, cx, cz)
+		elseif ix == 3 and iz == 3 then
+			cathedral(f, cx, cz + 4, Vector3.new(0, 0, -1))
+			special = true
+		elseif ix == 4 and iz == 3 then
+			marketSquare(f, x0, x1, z0, z1)
+			special = true
+		elseif ix == 3 and iz == 4 then
+			local hall = guildHall(f, cx, cz, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Royal Treasury", BANNERS[4])
+			hall:SetAttribute("Shop", "bank")
+		elseif ix == 4 and iz == 4 then
+			arena(f, x0, x1, z0, z1)
+			special = true
 		elseif ix == 3 and iz == 5 then
-			civic(f, cx, cz, x1 - x0 - 2 * SIDEWALK - 4, z1 - z0 - 2 * SIDEWALK - 10, Vector3.new(0, 0, -1), "City Hall", rgb(120, 170, 210))
+			guildHall(f, cx - 6, cz, x1 - x0 - 2 * EDGE - 24, 30, Vector3.new(0, 0, -1), "Town Hall", BANNERS[3])
+			clockTower(f, x1 - EDGE - 8, cz, Vector3.new(0, 0, -1))
 		elseif ix == 4 and iz == 5 then
-			civic(f, cx, cz, x1 - x0 - 2 * SIDEWALK - 4, z1 - z0 - 2 * SIDEWALK - 10, Vector3.new(0, 0, -1), "Museum", rgb(200, 150, 90))
+			local lib = guildHall(f, cx, cz, x1 - x0 - 2 * EDGE - 8, 30, Vector3.new(0, 0, -1), "Grand Library", BANNERS[5])
+			lib:SetAttribute("Shop", "library")
 		elseif ix == 5 and iz == 5 then
-			service(f, cx, z0 + SIDEWALK + 14, x1 - x0 - 2 * SIDEWALK - 4, 24, Vector3.new(0, 0, -1), "Fire Station", rgb(220, 60, 50), 3)
-			service(f, cx, z1 - SIDEWALK - 14, x1 - x0 - 2 * SIDEWALK - 4, 24, Vector3.new(0, 0, 1), "Police", rgb(60, 110, 220), 2)
+			local barracks = guildHall(f, cx, z0 + EDGE + 16, x1 - x0 - 2 * EDGE - 8, 26, Vector3.new(0, 0, -1), "Barracks", BANNERS[2])
+			barracks:SetAttribute("Shop", "trainer")
+			trainingYard(f, cx, z1 - EDGE - 18, x1 - x0 - 2 * EDGE - 8, 28)
 		elseif ix == 5 and iz == 6 then
-			service(f, cx, cz, x1 - x0 - 2 * SIDEWALK - 4, z1 - z0 - 2 * SIDEWALK - 8, Vector3.new(0, 0, -1), "Hospital", rgb(240, 240, 245), 2)
+			temple(f, cx, cz, Vector3.new(0, 0, -1))
 		elseif ix == 1 or (ix == 2 and iz >= 5) then
-			houseBlock(f, b, i)
+			cottageRow(f, b, i)
 		else
-			apartmentBlock(f, b, i)
+			townhouseRow(f, b, i)
 		end
 		if not special then
 			furnish(f, b, i)
 		end
 	end
 
-	-- traffic: parked cars along the avenues and a couple of buses
+	-- traffic: carriages, carts and saddled horses at hitching posts
 	local traffic = folder(city, "Traffic")
 	local n = 0
-	for ai, a in AVENUES do
+	for _, a in AVENUES do
 		for si = 1, #STREETS - 1 do
 			local z0, z1 = STREETS[si].z + STREETS[si].w / 2, STREETS[si + 1].z - STREETS[si + 1].w / 2
-			for k = 0, 2 do
-				n += 1
-				if hash(n + 0.3) < 0.7 then
-					local sgn = if k % 2 == 0 then 1 else -1
-					local kind = if hash(n) < 0.15 then "taxi" elseif hash(n) > 0.95 then "police" else nil
-					local color = if kind == "taxi" then rgb(250, 200, 40) elseif kind == "police" then rgb(240, 240, 245) else CAR_COLORS[n % #CAR_COLORS + 1]
-					car(traffic, a.x + sgn * (a.w / 2 - 3.2), z0 + 14 + k * ((z1 - z0 - 28) / 2), Vector3.new(0, 0, sgn), color, kind)
-				end
+			n += 1
+			local roll = hash(n + 0.3)
+			local sgn = if n % 2 == 0 then 1 else -1
+			local px, pz = a.x + sgn * (a.w / 2 - 4), z0 + 20 + hash(n) * (z1 - z0 - 40)
+			if roll < 0.35 then
+				carriage(traffic, px, pz, Vector3.new(0, 0, sgn), BANNERS[n % #BANNERS + 1])
+			elseif roll < 0.7 then
+				cart(traffic, px, pz, Vector3.new(0, 0, sgn), n)
+			elseif roll < 0.9 then
+				horse(traffic, px, pz, Vector3.new(sgn, 0, 0), COATS[n % #COATS + 1], true)
 			end
-		end
-		if ai == 3 then
-			bus(traffic, a.x + a.w / 2 - 4, 650, Vector3.new(0, 0, 1))
-			busStop(traffic, a.x + a.w / 2 + 3, 640, Vector3.new(-1, 0, 0))
-			bus(traffic, a.x - a.w / 2 + 4, 980, Vector3.new(0, 0, -1))
-			busStop(traffic, a.x - a.w / 2 - 3, 990, Vector3.new(1, 0, 0))
 		end
 	end
 
-	promenade(city)
-	roadBridge(city, Vector3.new(0, 0, 330), Vector3.new(0, 0, CITY.z0), 44, true)
-	roadBridge(city, Vector3.new(CITY.x0, 0, 700), Vector3.new(-425, 0, 700), 28, false)
+	buildWalls(city)
+	stoneBridge(city, Vector3.new(0, 0, 330), Vector3.new(0, 0, CITY.z0), 40)
+	stoneBridge(city, Vector3.new(CITY.x0, 0, 700), Vector3.new(-425, 0, 700), 26)
 
-	-- out in the harbour bay: a cargo ship and a tug
+	-- out in the harbour bay: a galleon under sail, a sloop and fishing boats
 	local bay = folder(city, "Bay")
-	boat(bay, 420, 900, Vector3.new(0, 0, -1), "cargo", rgb(40, 70, 120))
-	boat(bay, 395, 1010, Vector3.new(-0.4, 0, -1).Unit, "tug", rgb(200, 60, 50))
-	boat(bay, 400, 760, Vector3.new(0.3, 0, 1).Unit, "sailboat", rgb(240, 120, 150))
+	ship(bay, 430, 900, Vector3.new(0, 0, -1), "galleon", BANNERS[1])
+	ship(bay, 405, 1040, Vector3.new(-0.4, 0, -1).Unit, "sloop", BANNERS[3])
+	ship(bay, 400, 760, Vector3.new(0.3, 0, 1).Unit, "rowboat", WHITE)
+	ship(bay, 415, 720, Vector3.new(-0.6, 0, 1).Unit, "rowboat", WHITE)
 
-	airport(city)
+	airshipPort(city)
 
 	city.Parent = map
 	return city
