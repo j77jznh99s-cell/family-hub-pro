@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-21)
 
 ## Corpus Check
-- 87 files · ~90,366 words
+- 87 files · ~90,822 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 778 nodes · 1116 edges · 70 communities (68 shown, 2 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 122 edges (avg confidence: 0.9)
+- 779 nodes · 1118 edges · 72 communities (69 shown, 3 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 123 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fffc8f03`
+- Built from commit: `348ca474`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -86,9 +86,11 @@
 - .claude/CLAUDE.md
 - transcription.js
 - billing.test.js
+- main
+- Decisions
 
 ## God Nodes (most connected - your core abstractions)
-1. `main()` - 57 edges
+1. `main()` - 58 edges
 2. `Session Log` - 39 edges
 3. `Morning Summary` - 27 edges
 4. `query()` - 15 edges
@@ -114,15 +116,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (70 total, 2 thin omitted)
+## Communities (72 total, 3 thin omitted)
 
 ### Community 0 - "Session Log.md"
 Cohesion: 0.15
 Nodes (14): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), Bybit Trading Bot, Hard rules for every agent, Tasks, Claude Code Add-ons, How to install (approve once) (+6 more)
 
 ### Community 1 - "main"
-Cohesion: 0.07
-Nodes (48): main(), Decisions, Pending owner decisions (answer any time; recommendations in brackets), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided (+40 more)
+Cohesion: 0.08
+Nodes (26): 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25: StarNet automation setup, 2026-09-26: agent platform comparison (StarNet alternatives), 2026-09-26 (evening): hourly workflow restarted, 2026-09-26: hourly run — audit-economy now auto-checks Codes.luau against the paid catalogue, 2026-09-26: hourly run — audit-economy's 4th section, steady-state Dew/hour (+18 more)
 
 ### Community 2 - "upload.js"
 Cohesion: 0.06
@@ -405,25 +407,29 @@ Nodes (7): openai, ffmpeg, fs, getClient(), OpenAI, { OPENAI_API_KEY, OPENAI_TRA
 Cohesion: 0.33
 Nodes (5): stripe, assert, billing, Stripe, { test }
 
+### Community 70 - "main"
+Cohesion: 0.10
+Nodes (21): main(), 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-26: AI memory export for migrating to another assistant, 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete), 2026-09-26: hourly run — Frostbloom Festival (winter event) spec written, 2026-09-26: hourly run — Gumroad product-line demand brief, 2026-09-26: hourly run — Hollow Harvest Halloween event built (and a real economy bug fixed) (+13 more)
+
 ## Knowledge Gaps
 - **1 isolated node(s):** `dotenv`
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 494 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.331) - this node is a cross-community bridge._
-- **Are the 53 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
-  _`main()` has 53 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `main()` connect `main` to `main`, `AI Memory Export`, `cli.js`, `Clip Studio`, `Morning Summary`, `Decisions`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+  _High betweenness centrality (0.334) - this node is a cross-community bridge._
+- **Are the 54 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
+  _`main()` has 54 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `dotenv` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `main` be split into smaller, more focused modules?**
-  _Cohesion score 0.06648936170212766 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
 - **Why does `Sproutling Isles: Launch & Live Ops` connect `Sproutling Isles: Launch & Live Ops` to `Session Log.md`, `6. Marketing`, `3. Analytics event spec`, `1. Pre-launch checklist`, `5. Week 1–8 live-ops calendar`, `4. Rewarded video ads plan`?**
-  _High betweenness centrality (0.180) - this node is a cross-community bridge._
+  _High betweenness centrality (0.179) - this node is a cross-community bridge._
 - **Should `upload.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06050420168067227 - nodes in this community are weakly interconnected._
 - **Why does `3. Analytics event spec` connect `3. Analytics event spec` to `Sproutling Isles: Launch & Live Ops`?**
-  _High betweenness centrality (0.130) - this node is a cross-community bridge._
+  _High betweenness centrality (0.129) - this node is a cross-community bridge._
