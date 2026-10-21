@@ -9,6 +9,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Species = require(Shared.Species)
 local MapBuilder = require(Shared.MapBuilder)
+local Ambience = require(Shared.Ambience)
 local Events = require(Shared.Events)
 
 local Net = require(script.Net)
@@ -28,6 +29,7 @@ local EventService = require(script.EventService)
 local CodesService = require(script.CodesService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
+Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
 
 WeatherService.init()
 PlotService.init(map)

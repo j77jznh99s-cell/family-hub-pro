@@ -12,6 +12,9 @@
 --   Bloom Plaza at origin, Wishing Pond at the north tip (z = -300),
 --   8 plots in two columns (x = +-155), Pollen Parade belt south of the plaza (z = 85),
 --   Sky Garden floating over the south tip (y = 90, z = 300).
+--   Scenery (cottages, towers, windmill, festoon lights) sits in the strips between the avenue
+--   and the plots (|x| 60-100) and at the island's north/south ends; floating islets, clouds and
+--   waterfalls are out over the sea. None of it is gameplay: it lives in Map.Scenery.
 
 local MapBuilder = {}
 
@@ -22,6 +25,11 @@ local CFrame = CFrame
 local Color3 = Color3
 local Enum = Enum
 local UDim2 = UDim2
+local NumberRange = NumberRange
+local NumberSequence = NumberSequence
+local NumberSequenceKeypoint = NumberSequenceKeypoint
+local ColorSequence = ColorSequence
+local Vector2 = Vector2
 
 function MapBuilder.useApi(api: any)
 	Instance = api.Instance
@@ -30,6 +38,11 @@ function MapBuilder.useApi(api: any)
 	Color3 = api.Color3
 	Enum = api.Enum
 	UDim2 = api.UDim2
+	NumberRange = api.NumberRange
+	NumberSequence = api.NumberSequence
+	NumberSequenceKeypoint = api.NumberSequenceKeypoint
+	ColorSequence = api.ColorSequence
+	Vector2 = api.Vector2
 end
 
 MapBuilder.PlotSize = 100
@@ -114,6 +127,39 @@ local function ball(parent: Instance, name: string, diameter: number, x: number,
 	return p
 end
 
+-- Purely visual part: no collisions, raycasts, touches or shadows.
+local function deco(p: BasePart): BasePart
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	return p
+end
+
+-- NumberSequence that goes from a to b over a particle's life.
+local function fade(a: number, b: number): NumberSequence
+	return NumberSequence.new({ NumberSequenceKeypoint.new(0, a), NumberSequenceKeypoint.new(1, b) })
+end
+
+-- Particles use Roblox's built-in default texture, so no uploaded assets are needed.
+local function emitter(parent: Instance, name: string, props: { [string]: any }): ParticleEmitter
+	local e = Instance.new("ParticleEmitter")
+	e.Name = name
+	for key, value in props do
+		(e :: any)[key] = value
+	end
+	e.Parent = parent
+	return e
+end
+
+local function glowLight(parent: Instance, range: number, brightness: number, color: Color3)
+	local light = Instance.new("PointLight")
+	light.Range = range
+	light.Brightness = brightness
+	light.Color = color
+	light.Parent = parent
+end
+
 local function label(adornee: BasePart, text: string, offsetY: number, size: UDim2?, color: Color3?): TextLabel
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "Label"
@@ -142,15 +188,22 @@ local function hash(n: number): number
 	return s - math.floor(s)
 end
 
-local function tree(parent: Instance, x: number, z: number, scale: number, seed: number)
+local function tree(parent: Instance, x: number, z: number, scale: number, seed: number, y0: number?)
 	local model = Instance.new("Model")
 	model.Name = "Tree"
 	model.Parent = parent
+	local base = y0 or 0
 	local h = 10 * scale
-	cylinder(model, "Trunk", h, 2.2 * scale, x, h / 2, z, rgb(110, 80, 55), Enum.Material.Wood)
-	local leafColor = rgb(70 + math.floor(hash(seed) * 40), 150 + math.floor(hash(seed + 1) * 50), 70)
-	ball(model, "Canopy", 9 * scale, x, h + 2 * scale, z, leafColor, Enum.Material.Grass)
-	ball(model, "Canopy2", 6 * scale, x + 2.5 * scale, h + 4.5 * scale, z - 1.5 * scale, leafColor, Enum.Material.Grass)
+	cylinder(model, "Trunk", h, 2.2 * scale, x, base + h / 2, z, rgb(110, 80, 55), Enum.Material.Wood)
+	-- Mostly bright greens, with blossom, autumn and lilac trees mixed in for colour.
+	local pick = hash(seed + 0.37)
+	local leafColor = if pick < 0.16
+		then rgb(255, 165 + math.floor(hash(seed + 2) * 30), 200)
+		elseif pick < 0.27 then rgb(245, 145 + math.floor(hash(seed + 2) * 50), 60)
+		elseif pick < 0.34 then rgb(185, 150, 245)
+		else rgb(60 + math.floor(hash(seed) * 40), 165 + math.floor(hash(seed + 1) * 50), 70)
+	ball(model, "Canopy", 9 * scale, x, base + h + 2 * scale, z, leafColor, Enum.Material.Grass)
+	ball(model, "Canopy2", 6 * scale, x + 2.5 * scale, base + h + 4.5 * scale, z - 1.5 * scale, leafColor, Enum.Material.Grass)
 end
 
 local function lamp(parent: Instance, x: number, z: number)
@@ -342,6 +395,17 @@ local function buildPlaza(map: Instance)
 	glow.Range = 30
 	glow.Color = rgb(120, 220, 255)
 	glow.Parent = drop
+	emitter(drop, "Spray", {
+		Color = ColorSequence.new(rgb(200, 240, 255)),
+		Size = fade(0.6, 0.1),
+		Rate = 40,
+		Lifetime = NumberRange.new(1.2, 1.8),
+		Speed = NumberRange.new(14, 18),
+		SpreadAngle = Vector2.new(18, 18),
+		Acceleration = Vector3.new(0, -24, 0),
+		LightEmission = 0.6,
+		Transparency = NumberSequence.new(0.25),
+	})
 
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "PlazaSpawn"
@@ -554,6 +618,10 @@ local function buildPond(map: Instance)
 		local r = 22 + hash(i) * 16
 		local lily = cylinder(pond, "LilyPad", 0.3, 4 + hash(i + 3) * 3, math.cos(a) * r, 1.2, -300 + math.sin(a) * r, rgb(90, 170, 80), Enum.Material.Grass)
 		lily.CanCollide = false
+		if i % 2 == 1 then
+			local blossom = ball(pond, "LilyBlossom", 1.4, math.cos(a) * r + 0.6, 1.8, -300 + math.sin(a) * r, if i % 4 == 1 then rgb(255, 150, 200) else rgb(255, 245, 250), Enum.Material.Neon)
+			blossom.CanCollide = false
+		end
 	end
 	for _, x in { -18, 18 } do
 		lamp(pond, x, -280)
@@ -583,6 +651,410 @@ local function buildSkyGarden(map: Instance)
 end
 
 ----------------------------------------------------------------------------------------------
+-- scenery: atmosphere pieces with no gameplay role (all under Map.Scenery)
+
+local function cottage(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
+	local model = Instance.new("Model")
+	model.Name = "Cottage"
+	model.Parent = parent
+	local base = CFrame.lookAt(Vector3.new(x, 0, z), Vector3.new(x, 0, z) + facing)
+	local function rel(u: number, y: number, v: number): CFrame
+		return base * CFrame.new(u, y, -v) -- u = right, v = forward (towards the avenue)
+	end
+	local walls = { rgb(250, 238, 215), rgb(255, 214, 200), rgb(220, 240, 220), rgb(255, 230, 170), rgb(215, 225, 250) }
+	local roofs = { rgb(205, 85, 70), rgb(70, 110, 180), rgb(60, 160, 150), rgb(225, 160, 60), rgb(150, 90, 170) }
+	local wall = walls[seed % #walls + 1]
+	local roof = roofs[(seed * 3) % #roofs + 1]
+	local beam = rgb(110, 75, 50)
+	local W, D, H, rise = 16, 12, 10, 6
+
+	part(model, "Footing", Vector3.new(W + 1, 1.4, D + 1), rel(0, 0.7, 0), rgb(150, 145, 140), Enum.Material.Cobblestone)
+	part(model, "Walls", Vector3.new(W, H, D), rel(0, H / 2 + 1, 0), wall, Enum.Material.Plaster)
+	-- attic: a prism rotated 45 degrees whose lower half hides inside the walls, filling the gables
+	local attic = math.sqrt(2) * rise
+	part(model, "Attic", Vector3.new(W - 0.2, attic, attic), rel(0, H + 1, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, Enum.Material.Plaster)
+	-- timber frame on the front face
+	for _, u in { -W / 2 + 0.4, -2.6, 2.6, W / 2 - 0.4 } do
+		part(model, "Timber", Vector3.new(0.8, H, 0.5), rel(u, H / 2 + 1, D / 2 + 0.1), beam, Enum.Material.Wood)
+	end
+	part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, H + 0.8, D / 2 + 0.1), beam, Enum.Material.Wood)
+	part(model, "Timber", Vector3.new(W, 0.6, 0.5), rel(0, 5.6, D / 2 + 0.1), beam, Enum.Material.Wood)
+	-- roof: two tilted slabs and a ridge
+	local slope = math.atan(rise / (D / 2))
+	local length = math.sqrt(rise * rise + (D / 2) ^ 2) + 2
+	for _, side in { 1, -1 } do
+		part(model, "Roof", Vector3.new(W + 2, 0.9, length), rel(0, H + 1 + rise / 2 + 0.4, side * D / 4) * CFrame.Angles(-side * slope, 0, 0), roof, Enum.Material.Slate)
+	end
+	part(model, "Ridge", Vector3.new(W + 2.4, 1, 1), rel(0, H + 1 + rise + 0.5, 0), Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75), Enum.Material.Wood)
+	part(model, "Chimney", Vector3.new(2.2, 7, 2.2), rel(W / 2 - 3.5, H + rise, -D / 4), rgb(170, 110, 90), Enum.Material.Brick)
+	-- door, lit windows and window boxes
+	part(model, "Door", Vector3.new(3.4, 6.2, 0.4), rel(0, 4.1, D / 2 + 0.2), rgb(120, 80, 55), Enum.Material.WoodPlanks)
+	local knob = ball(model, "Knob", 0.4, 0, 0, 0, rgb(240, 200, 90), Enum.Material.Metal)
+	knob.CFrame = rel(1.1, 4, D / 2 + 0.45)
+	for _, u in { -5.3, 5.3 } do
+		part(model, "WindowFrame", Vector3.new(3.4, 3.4, 0.3), rel(u, 7, D / 2 + 0.15), beam, Enum.Material.Wood)
+		local pane = part(model, "Window", Vector3.new(2.6, 2.6, 0.3), rel(u, 7, D / 2 + 0.25), rgb(255, 210, 130), Enum.Material.Neon)
+		if u > 0 then
+			glowLight(pane, 14, 0.8, rgb(255, 200, 130))
+		end
+		part(model, "WindowBox", Vector3.new(3.6, 0.9, 1), rel(u, 5, D / 2 + 0.6), rgb(150, 100, 70), Enum.Material.Wood)
+		for i = 1, 4 do
+			local flowerColors = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255), rgb(255, 255, 255) }
+			local bloom = ball(model, "WindowBloom", 0.8, 0, 0, 0, flowerColors[(i + seed) % 4 + 1])
+			bloom.CFrame = rel(u - 1.65 + i * 0.66, 5.7, D / 2 + 0.7)
+		end
+	end
+	-- a little lantern by the door
+	local lantern = ball(model, "DoorLantern", 0.9, 0, 0, 0, rgb(255, 215, 140), Enum.Material.Neon)
+	lantern.CFrame = rel(-2.6, 8.4, D / 2 + 0.8)
+	return model
+end
+
+local function lanternTower(parent: Instance, x: number, z: number, accent: Color3)
+	local model = Instance.new("Model")
+	model.Name = "LanternTower"
+	model.Parent = parent
+	cylinder(model, "Base", 4, 9, x, 2, z, rgb(165, 160, 150), Enum.Material.Cobblestone)
+	cylinder(model, "Shaft", 22, 6.5, x, 15, z, rgb(200, 195, 185), Enum.Material.Brick)
+	cylinder(model, "Balcony", 1, 10, x, 26.5, z, rgb(120, 85, 60), Enum.Material.WoodPlanks)
+	for i = 0, 5 do
+		local a = i / 6 * math.pi * 2
+		cylinder(model, "Post", 6, 0.6, x + math.cos(a) * 3.6, 30, z + math.sin(a) * 3.6, rgb(110, 75, 50), Enum.Material.Wood)
+	end
+	local flame = ball(model, "Flame", 4, x, 30, z, rgb(255, 190, 90), Enum.Material.Neon)
+	glowLight(flame, 45, 1.6, rgb(255, 200, 120))
+	emitter(flame, "Embers", {
+		Color = ColorSequence.new(rgb(255, 220, 120), rgb(255, 120, 40)),
+		Size = fade(0.5, 0),
+		Rate = 10,
+		Lifetime = NumberRange.new(1.5, 2.5),
+		Speed = NumberRange.new(3, 6),
+		SpreadAngle = Vector2.new(25, 25),
+		LightEmission = 1,
+	})
+	-- tiered roof
+	for i, d in { 10, 7.5, 5, 2.5 } do
+		cylinder(model, "Roof", 1.4, d, x, 33 + i * 1.3, z, accent, Enum.Material.Slate)
+	end
+	ball(model, "Finial", 1.4, x, 39.5, z, rgb(255, 225, 120), Enum.Material.Neon)
+end
+
+-- Windmill whose sail assembly the client spins (attribute SpinSpeed, degrees per second).
+local function windmill(parent: Instance, x: number, z: number, facing: Vector3)
+	local model = Instance.new("Model")
+	model.Name = "Windmill"
+	model.Parent = parent
+	for i, d in { 16, 14.5, 13, 11.5, 10 } do
+		cylinder(model, "Tower", 6, d, x, (i - 0.5) * 6, z, if i % 2 == 0 then rgb(240, 235, 225) else rgb(225, 218, 205), Enum.Material.Plaster)
+	end
+	for i, d in { 12, 9, 6, 3 } do
+		cylinder(model, "Cap", 2, d, x, 30 + i * 2, z, rgb(200, 80, 70), Enum.Material.Slate)
+	end
+	part(model, "Door", Vector3.new(4, 7, 1), CFrame.lookAt(Vector3.new(x, 3.5, z) + facing * 7.8, Vector3.new(x, 3.5, z) + facing * 9), rgb(120, 80, 55), Enum.Material.WoodPlanks)
+
+	local sails = Instance.new("Model")
+	sails.Name = "Sails"
+	sails.Parent = model
+	local hubPos = Vector3.new(x, 28, z) + facing * 7
+	local hubCf = CFrame.lookAt(hubPos, hubPos + facing)
+	local hub = part(sails, "Hub", Vector3.new(2.6, 2.6, 2.6), hubCf, rgb(110, 75, 50), Enum.Material.Wood)
+	sails.PrimaryPart = hub
+	for i = 0, 3 do
+		local spoke = hubCf * CFrame.Angles(0, 0, i * math.pi / 2)
+		part(sails, "Arm", Vector3.new(0.8, 22, 0.8), spoke * CFrame.new(0, 11, 0), rgb(110, 75, 50), Enum.Material.Wood)
+		part(sails, "Sail", Vector3.new(5, 16, 0.3), spoke * CFrame.new(3, 13, 0.3), rgb(250, 248, 240), Enum.Material.Fabric)
+		part(sails, "SailTip", Vector3.new(5, 3, 0.35), spoke * CFrame.new(3, 22.5, 0.3), rgb(220, 70, 70), Enum.Material.Fabric)
+	end
+	for _, p in sails:GetChildren() do
+		if p:IsA("BasePart") then
+			p.CanCollide = false
+		end
+	end
+	sails:SetAttribute("SpinSpeed", 25)
+end
+
+-- A string of coloured festoon bulbs between two points.
+local function festoon(parent: Instance, a: Vector3, b: Vector3, seed: number)
+	local mid = (a + b) / 2
+	local length = (b - a).Magnitude
+	deco(part(parent, "FestoonWire", Vector3.new(0.15, 0.15, length), CFrame.lookAt(mid, b), rgb(50, 45, 40)))
+	local colors = { rgb(255, 90, 120), rgb(255, 210, 70), rgb(90, 220, 255), rgb(150, 255, 120), rgb(200, 130, 255), rgb(255, 150, 60) }
+	local count = math.floor(length / 5)
+	for i = 1, count do
+		local f = i / (count + 1)
+		local sag = math.sin(f * math.pi) * 1.6
+		local pos = a + (b - a) * f - Vector3.new(0, sag + 0.5, 0)
+		deco(ball(parent, "FestoonBulb", 0.9, pos.X, pos.Y, pos.Z, colors[(i + seed) % #colors + 1], Enum.Material.Neon))
+	end
+end
+
+-- Tall translucent light column (two nested cylinders) rising from (x, y0, z).
+local function lightBeam(parent: Instance, name: string, x: number, y0: number, z: number, height: number, width: number, color: Color3)
+	local core = deco(cylinder(parent, name, height, width, x, y0 + height / 2, z, color, Enum.Material.Neon))
+	core.Transparency = 0.45
+	local halo = deco(cylinder(parent, name .. "Halo", height, width * 2.6, x, y0 + height / 2, z, color, Enum.Material.Neon))
+	halo.Transparency = 0.86
+	emitter(core, "Motes", {
+		Color = ColorSequence.new(rgb(255, 255, 255), color),
+		Size = fade(0.7, 0),
+		Rate = 6,
+		Lifetime = NumberRange.new(4, 6),
+		Speed = NumberRange.new(4, 8),
+		EmissionDirection = Enum.NormalId.Top,
+		LightEmission = 1,
+		Transparency = fade(0.1, 1),
+	})
+	return core
+end
+
+-- Glowing crystal cluster; the client bobs and turns the ones tagged with Bob.
+local function crystal(parent: Instance, x: number, y: number, z: number, scale: number, color: Color3, seed: number, bob: boolean)
+	local model = Instance.new("Model")
+	model.Name = "Crystal"
+	model.Parent = parent
+	local main = part(model, "Shard", Vector3.new(2.4, 7, 2.4) * scale, CFrame.new(x, y + 3.5 * scale, z) * CFrame.Angles(0, math.rad(seed * 37), math.rad(8)), color, Enum.Material.Neon)
+	model.PrimaryPart = main
+	for i = 1, 3 do
+		local a = (i / 3 + hash(seed + i) * 0.2) * math.pi * 2
+		part(model, "Shard", Vector3.new(1.4, 4, 1.4) * scale, CFrame.new(x + math.cos(a) * 1.8 * scale, y + 2 * scale, z + math.sin(a) * 1.8 * scale) * CFrame.Angles(math.cos(a) * 0.5, a, math.sin(a) * 0.5), color, Enum.Material.Neon)
+	end
+	for _, p in model:GetChildren() do
+		deco(p :: BasePart)
+	end
+	glowLight(main, 18 * scale, 1.2, color)
+	emitter(main, "Glint", {
+		Color = ColorSequence.new(rgb(255, 255, 255), color),
+		Size = fade(0.4, 0),
+		Rate = 3,
+		Lifetime = NumberRange.new(1.5, 2.5),
+		Speed = NumberRange.new(1, 2),
+		SpreadAngle = Vector2.new(180, 180),
+		LightEmission = 1,
+	})
+	if bob then
+		model:SetAttribute("Bob", true)
+	end
+end
+
+-- A falling ribbon of water from (x, top, z) down to the sea, with spray at the bottom.
+local function waterfall(parent: Instance, x: number, top: number, z: number, width: number, facing: Vector3)
+	local height = top + 2
+	local cf = CFrame.lookAt(Vector3.new(x, top - height / 2, z), Vector3.new(x, top - height / 2, z) + facing)
+	local sheet = deco(part(parent, "Waterfall", Vector3.new(width, height, 1.2), cf, rgb(95, 185, 240), Enum.Material.Glass))
+	sheet.Transparency = 0.2
+	-- brighter white-water streak down the middle
+	local foam = deco(part(parent, "WaterfallFoam", Vector3.new(width * 0.35, height, 0.4), cf * CFrame.new(0, 0, -0.7), rgb(225, 245, 255), Enum.Material.SmoothPlastic))
+	foam.Transparency = 0.35
+	local back = deco(part(parent, "WaterfallBack", Vector3.new(width + 2, height, 0.6), cf * CFrame.new(0, 0, 1), rgb(50, 130, 200), Enum.Material.Glass))
+	back.Transparency = 0.35
+	emitter(sheet, "Streaks", {
+		Color = ColorSequence.new(rgb(235, 250, 255)),
+		Size = fade(0.8, 0.3),
+		Rate = 25,
+		Lifetime = NumberRange.new(2, 3),
+		Speed = NumberRange.new(30, 40),
+		EmissionDirection = Enum.NormalId.Bottom,
+		LightEmission = 0.5,
+		Transparency = fade(0.3, 0.9),
+	})
+	local splash = deco(part(parent, "Splash", Vector3.new(width + 6, 1, 8), CFrame.new(x, -1, z), rgb(255, 255, 255), nil, { Transparency = 1 }))
+	emitter(splash, "Mist", {
+		Color = ColorSequence.new(rgb(255, 255, 255)),
+		Size = fade(4, 9),
+		Rate = 12,
+		Lifetime = NumberRange.new(2, 3),
+		Speed = NumberRange.new(4, 8),
+		SpreadAngle = Vector2.new(60, 60),
+		EmissionDirection = Enum.NormalId.Top,
+		Transparency = fade(0.5, 1),
+		RotSpeed = NumberRange.new(-20, 20),
+	})
+end
+
+local function floatingIslet(parent: Instance, x: number, y: number, z: number, r: number, seed: number, falls: boolean)
+	local model = Instance.new("Model")
+	model.Name = "Islet"
+	model.Parent = parent
+	cylinder(model, "Top", 3, r * 2, x, y, z, rgb(105, 190, 85), Enum.Material.Grass)
+	cylinder(model, "Soil", 4, r * 2 - 1, x, y - 3.4, z, rgb(130, 95, 65), Enum.Material.Ground)
+	cylinder(model, "Rock", r * 0.5, r * 1.5, x, y - 5.4 - r * 0.25, z, rgb(140, 125, 115), Enum.Material.Rock)
+	cylinder(model, "Rock", r * 0.5, r * 0.9, x + r * 0.08, y - 5.4 - r * 0.7, z - r * 0.05, rgb(125, 110, 100), Enum.Material.Rock)
+	ball(model, "RockTip", r * 0.55, x - r * 0.05, y - 5.4 - r * 1.05, z + r * 0.05, rgb(115, 100, 95), Enum.Material.Rock)
+	-- hanging roots
+	for i = 1, 6 do
+		local a = i / 6 * math.pi * 2 + hash(seed + i)
+		local len = 6 + hash(seed * 3 + i) * 10
+		cylinder(model, "Root", len, 0.5, x + math.cos(a) * r * 0.7, y - 5 - len / 2, z + math.sin(a) * r * 0.7, rgb(95, 120, 60), Enum.Material.Grass)
+	end
+	for i = 1, math.max(1, math.floor(r / 12)) do
+		local a = hash(seed + i * 7) * math.pi * 2
+		local d = hash(seed + i * 11) * r * 0.55
+		tree(model, x + math.cos(a) * d, z + math.sin(a) * d, 0.8 + hash(seed + i) * 0.5, seed * 10 + i, y + 1.5)
+	end
+	local crystalColors = { rgb(120, 230, 255), rgb(255, 130, 200), rgb(190, 140, 255), rgb(140, 255, 170) }
+	local ca = hash(seed + 5) * math.pi * 2
+	crystal(model, x + math.cos(ca) * r * 0.6, y + 1.5, z + math.sin(ca) * r * 0.6, 0.9, crystalColors[seed % 4 + 1], seed, false)
+	if falls then
+		-- pour off the edge facing the main island
+		local toward = Vector3.new(-x, 0, -z).Unit
+		local edge = Vector3.new(x, 0, z) + toward * (r - 0.5)
+		waterfall(model, edge.X, y + 1, edge.Z, math.max(5, r * 0.2), toward)
+	end
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") then
+			p.CanCollide = false
+			p.CanQuery = false
+		end
+	end
+end
+
+local function cloud(parent: Instance, x: number, y: number, z: number, scale: number, seed: number)
+	local model = Instance.new("Model")
+	model.Name = "Cloud"
+	model.Parent = parent
+	for i = 1, 6 do
+		local ox = (i - 3.5) * 9 * scale
+		local d = (14 + hash(seed + i) * 12) * scale
+		local p = deco(ball(model, "Puff", d, x + ox, y + hash(seed * 2 + i) * 5 * scale, z + (hash(seed * 3 + i) - 0.5) * 12 * scale, rgb(255, 255, 255)))
+		p.Transparency = 0.12
+	end
+end
+
+-- Drifting glowing motes in a box-shaped volume.
+local function motes(parent: Instance, name: string, cf: CFrame, size: Vector3, color: Color3, rate: number)
+	local volume = deco(part(parent, name, size, cf, color, nil, { Transparency = 1 }))
+	emitter(volume, "Motes", {
+		Shape = Enum.ParticleEmitterShape.Box,
+		ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+		Color = ColorSequence.new(color),
+		Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.2, 0.35),
+			NumberSequenceKeypoint.new(0.8, 0.35),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+		Rate = rate,
+		Lifetime = NumberRange.new(5, 8),
+		Speed = NumberRange.new(0.5, 1.5),
+		SpreadAngle = Vector2.new(180, 180),
+		LightEmission = 1,
+		Drag = 0.5,
+	})
+end
+
+local function buildScenery(map: Instance)
+	local scenery = Instance.new("Folder")
+	scenery.Name = "Scenery"
+	scenery.Parent = map
+
+	-- Village: cottages in the strips between the avenue and the plots, facing the avenue.
+	local village = Instance.new("Folder")
+	village.Name = "Village"
+	village.Parent = scenery
+	local seed = 0
+	for _, z in { -195, -145, 145, 195 } do
+		for _, side in { -1, 1 } do
+			seed += 1
+			cottage(village, side * 75, z, Vector3.new(-side, 0, 0), seed)
+		end
+	end
+	-- north end, either side of the pond, and the south-west corner
+	cottage(village, -110, -275, Vector3.new(1, 0, 0), 11)
+	cottage(village, 110, -275, Vector3.new(-1, 0, 0), 12)
+	cottage(village, -95, 262, Vector3.new(1, 0, -0.4).Unit, 13)
+	windmill(village, 112, 255, Vector3.new(-1, 0, -0.3).Unit)
+	lanternTower(village, -62, -245, rgb(70, 110, 180))
+	lanternTower(village, 62, -245, rgb(205, 85, 70))
+	lanternTower(village, -60, 232, rgb(60, 160, 150))
+	lanternTower(village, 60, 225, rgb(150, 90, 170))
+
+	-- Festoon lights strung across the avenue between the lamp pairs (skipping the Plaza).
+	local lights = Instance.new("Folder")
+	lights.Name = "Festoons"
+	lights.Parent = scenery
+	for i, z in { -250, -200, -130, -90, 120, 160, 200 } do
+		festoon(lights, Vector3.new(-24, 13.2, z), Vector3.new(24, 13.2, z + 20), i)
+	end
+
+	-- Light beams: the Dewdrop fountain, the Rebirth Shrine and the Sky Garden lift.
+	local beams = Instance.new("Folder")
+	beams.Name = "Beams"
+	beams.Parent = scenery
+	lightBeam(beams, "DewdropBeam", 0, 19, 0, 420, 4, rgb(120, 225, 255))
+	lightBeam(beams, "ShrineBeam", -50, 9, 0, 320, 2.4, rgb(200, 150, 255))
+	lightBeam(beams, "SkyLiftBeam", 0, 1, 240, 92, 5, rgb(190, 140, 255))
+	lightBeam(beams, "SkyWellBeam", 0, 97, 305, 260, 3, rgb(220, 180, 255))
+
+	-- Glowing crystals around the Wishing Pond and on the Sky Garden.
+	local crystals = Instance.new("Folder")
+	crystals.Name = "Crystals"
+	crystals.Parent = scenery
+	crystal(crystals, -58, 0, -305, 1.1, rgb(120, 230, 255), 1, false)
+	crystal(crystals, 58, 0, -310, 1, rgb(255, 130, 200), 2, false)
+	crystal(crystals, -30, 0, -352, 0.9, rgb(190, 140, 255), 3, false)
+	crystal(crystals, 32, 0, -350, 1.2, rgb(140, 255, 170), 4, false)
+	crystal(crystals, -18, 92, 300, 0.8, rgb(220, 170, 255), 5, false)
+	crystal(crystals, 18, 92, 300, 0.8, rgb(120, 230, 255), 6, false)
+	-- small floating ones that bob over the pond and plaza edges
+	crystal(crystals, -36, 14, -318, 0.5, rgb(255, 190, 110), 7, true)
+	crystal(crystals, 38, 16, -290, 0.5, rgb(120, 230, 255), 8, true)
+	crystal(crystals, -75, 18, -60, 0.5, rgb(255, 130, 200), 9, true)
+	crystal(crystals, 75, 18, -60, 0.5, rgb(190, 140, 255), 10, true)
+
+	-- Drifting motes: gold over the Plaza, blue over the pond, violet on the Sky Garden.
+	local fx = Instance.new("Folder")
+	fx.Name = "Ambient"
+	fx.Parent = scenery
+	motes(fx, "PlazaMotes", CFrame.new(0, 9, 0), Vector3.new(120, 12, 120), rgb(255, 225, 130), 14)
+	motes(fx, "AvenueMotesNorth", CFrame.new(0, 7, -170), Vector3.new(60, 10, 160), rgb(255, 240, 170), 6)
+	motes(fx, "AvenueMotesSouth", CFrame.new(0, 7, 180), Vector3.new(60, 10, 160), rgb(255, 240, 170), 6)
+	motes(fx, "PondMotes", CFrame.new(0, 5, -300), Vector3.new(90, 8, 90), rgb(140, 220, 255), 10)
+	motes(fx, "SkyGardenMotes", CFrame.new(0, 100, 300), Vector3.new(70, 14, 70), rgb(220, 180, 255), 10)
+	local mist = deco(part(fx, "PondMist", Vector3.new(80, 1, 80), CFrame.new(0, 1.6, -300), rgb(255, 255, 255), nil, { Transparency = 1 }))
+	emitter(mist, "Mist", {
+		Shape = Enum.ParticleEmitterShape.Box,
+		ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+		Color = ColorSequence.new(rgb(225, 245, 255)),
+		Size = fade(6, 12),
+		Rate = 4,
+		Lifetime = NumberRange.new(6, 9),
+		Speed = NumberRange.new(0.3, 0.8),
+		SpreadAngle = Vector2.new(180, 10),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.4, 0.82),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		RotSpeed = NumberRange.new(-8, 8),
+	})
+
+	-- Sky Garden waterfall pouring off its south edge.
+	waterfall(fx, 0, 86, 341, 8, Vector3.new(0, 0, -1))
+
+	-- Out over the sea: floating islets (some with waterfalls) and clouds, for depth.
+	local sky = Instance.new("Folder")
+	sky.Name = "Skyline"
+	sky.Parent = scenery
+	local islets = {
+		{ -340, 110, -120, 38, true }, { 360, 140, 60, 45, true }, { -300, 170, 260, 30, false },
+		{ 320, 95, -330, 28, true }, { -150, 190, -520, 34, true }, { 180, 150, -500, 26, false },
+		{ 60, 210, 520, 32, true }, { -420, 230, -380, 22, false }, { 440, 210, 330, 24, false },
+		{ 75, 125, 375, 10, false }, { -70, 112, 330, 8, false },
+	}
+	for i, it in islets do
+		floatingIslet(sky, it[1], it[2], it[3], it[4], i, it[5])
+	end
+	local clouds = {
+		{ -260, 260, -300, 1.4 }, { 250, 280, -150, 1.2 }, { -380, 240, 100, 1.6 }, { 380, 300, 250, 1.3 },
+		{ 0, 320, -620, 1.8 }, { -200, 290, 480, 1.2 }, { 260, 250, 520, 1 }, { 520, 270, -420, 1.5 },
+		{ -540, 300, -120, 1.7 }, { 120, 340, 40, 1.1 },
+	}
+	for i, c in clouds do
+		cloud(sky, c[1], c[2], c[3], c[4], i)
+	end
+end
+
+----------------------------------------------------------------------------------------------
 
 function MapBuilder.Build(parent: Instance): Instance
 	local existing = parent:FindFirstChild("Map")
@@ -603,6 +1075,7 @@ function MapBuilder.Build(parent: Instance): Instance
 	buildParade(map)
 	buildPond(map)
 	buildSkyGarden(map)
+	buildScenery(map)
 
 	map.Parent = parent
 	return map

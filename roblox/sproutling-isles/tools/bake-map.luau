@@ -6,6 +6,7 @@ local process = require("@lune/process")
 local roblox = require("@lune/roblox")
 
 local MapBuilder = require("../src/shared/MapBuilder")
+local Ambience = require("../src/shared/Ambience")
 
 local path = process.args[1] or "build/SproutlingIsles.rbxlx"
 local game = roblox.deserializePlace(fs.readFile(path))
@@ -13,6 +14,10 @@ local workspace = game:GetService("Workspace")
 
 MapBuilder.useApi(roblox)
 local map = MapBuilder.Build(workspace)
+
+-- Bake the lighting look too, so edit mode in Studio matches play mode.
+Ambience.useApi(roblox)
+Ambience.Apply(game:GetService("Lighting"))
 
 local count = 0
 for _, descendant in map:GetDescendants() do

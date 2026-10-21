@@ -637,3 +637,36 @@ RunService.RenderStepped:Connect(function()
 
 	refreshEvent()
 end)
+
+----------------------------------------------------------------------------------------------
+-- scenery animation (client-only, cosmetic): windmill sails turn, floating crystals bob
+
+task.spawn(function()
+	local map = workspace:WaitForChild("Map", 60)
+	local scenery = map and map:WaitForChild("Scenery", 60)
+	if not scenery then
+		return
+	end
+	local spinners: { { model: Model, speed: number } } = {}
+	local bobbers: { { model: Model, base: CFrame, phase: number } } = {}
+	for _, d in scenery:GetDescendants() do
+		if d:IsA("Model") and d.PrimaryPart then
+			local speed = d:GetAttribute("SpinSpeed")
+			if typeof(speed) == "number" then
+				table.insert(spinners, { model = d, speed = math.rad(speed) })
+			elseif d:GetAttribute("Bob") then
+				table.insert(bobbers, { model = d, base = d:GetPivot(), phase = #bobbers * 1.7 })
+			end
+		end
+	end
+	RunService.RenderStepped:Connect(function(dt)
+		for _, s in spinners do
+			s.model:PivotTo(s.model:GetPivot() * CFrame.Angles(0, 0, s.speed * dt))
+		end
+		local clock = os.clock()
+		for _, b in bobbers do
+			local offset = math.sin(clock * 1.2 + b.phase) * 1.2
+			b.model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, clock * 0.6 + b.phase, 0))
+		end
+	end)
+end)
