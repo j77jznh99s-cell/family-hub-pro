@@ -38,6 +38,7 @@ Landscape.SiteList = {
 	{ name = "cape", x = 585, z = -60, r = 26, h = 38 },
 	{ name = "watch", x = -560, z = 330, r = 30, h = 44 },
 	{ name = "ruins", x = 620, z = 430, r = 26, h = 30 },
+	{ name = "grove", x = -495, z = -445, r = 40, h = 34 }, -- Ironbark's clearing (field boss)
 }
 Landscape.Sites = {} :: { [string]: { name: string, x: number, z: number, r: number, h: number } }
 for _, s in Landscape.SiteList do
@@ -57,6 +58,8 @@ Landscape.Paths = {
 	{ { -352, 60 }, { -378, 70 }, { -405, 62 }, { -430, 60 } },
 	-- north-west bridge up to the west hamlet
 	{ { -360, -250 }, { -372, -280 }, { -385, -300 }, { -392, -312 } },
+	-- west hamlet on to Ironbark's grove
+	{ { -415, -365 }, { -440, -395 }, { -465, -420 } },
 	-- north-east shore up to the east hamlet
 	{ { 362, -240 }, { 380, -262 }, { 398, -275 }, { 408, -288 } },
 	-- south-east shore up to the farm

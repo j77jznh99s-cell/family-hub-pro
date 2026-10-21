@@ -56,6 +56,17 @@ Combat.Abilities = {
 	{ id = "secondwind", name = "Second Wind", key = "C", cooldown = 20, stamina = 0, heal = 35 },
 } :: { Ability }
 
+-- Boss attack patterns. "slam": everything within radius of the boss; "swipe": a frontal arc;
+-- "roots": a circle that erupts under the target's feet. All are telegraphed on the ground
+-- for `windup` seconds first, so they can be dodged or walked out of.
+export type BossAttack = {
+	kind: string,
+	damage: number,
+	radius: number,
+	windup: number,
+	arc: number?, -- swipe half-angle in degrees
+}
+
 export type EnemyType = {
 	id: string,
 	name: string,
@@ -69,12 +80,35 @@ export type EnemyType = {
 	reward: number, -- Dew on kill
 	respawn: number, -- seconds
 	dummy: boolean?, -- training dummy: no AI, regenerates
+	boss: boolean?,
+	attacks: { BossAttack }?,
+	size: number?, -- model scale for bosses
 }
 
 Combat.Enemies = {
 	slime = { id = "slime", name = "Bog Slime", health = 40, damage = 8, speed = 10, attackRange = 5, attackWindup = 0.6, attackCooldown = 1.6, aggroRange = 35, reward = 4, respawn = 18 },
 	goblin = { id = "goblin", name = "Thornback Goblin", health = 70, damage = 12, speed = 15, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.3, aggroRange = 45, reward = 9, respawn = 25 },
 	wolf = { id = "wolf", name = "Ashen Wolf", health = 55, damage = 10, speed = 21, attackRange = 6, attackWindup = 0.35, attackCooldown = 1.1, aggroRange = 55, reward = 7, respawn = 22 },
+	skeleton = { id = "skeleton", name = "Crypt Skeleton", health = 60, damage = 11, speed = 13, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 50, reward = 8, respawn = 0 },
+	bat = { id = "bat", name = "Gloom Bat", health = 25, damage = 6, speed = 24, attackRange = 5, attackWindup = 0.3, attackCooldown = 1, aggroRange = 60, reward = 3, respawn = 0 },
+	warden = {
+		id = "warden", name = "The Bone Warden", health = 1400, damage = 22, speed = 11, attackRange = 12, attackWindup = 1, attackCooldown = 2.2, aggroRange = 70, reward = 150, respawn = 0,
+		boss = true, size = 2.2,
+		attacks = {
+			{ kind = "swipe", damage = 24, radius = 16, windup = 0.8, arc = 70 },
+			{ kind = "slam", damage = 30, radius = 18, windup = 1.3 },
+			{ kind = "roots", damage = 20, radius = 9, windup = 1.1 },
+		},
+	},
+	treant = {
+		id = "treant", name = "Ironbark, the Old Grove", health = 2000, damage = 26, speed = 9, attackRange = 14, attackWindup = 1, attackCooldown = 2.4, aggroRange = 80, reward = 220, respawn = 300,
+		boss = true, size = 2.8,
+		attacks = {
+			{ kind = "slam", damage = 32, radius = 20, windup = 1.4 },
+			{ kind = "roots", damage = 22, radius = 10, windup = 1 },
+			{ kind = "swipe", damage = 26, radius = 18, windup = 0.9, arc = 80 },
+		},
+	},
 	dummy = { id = "dummy", name = "Training Dummy", health = 200, damage = 0, speed = 0, attackRange = 0, attackWindup = 0, attackCooldown = 0, aggroRange = 0, reward = 0, respawn = 3, dummy = true },
 } :: { [string]: EnemyType }
 
@@ -95,5 +129,8 @@ Combat.Camps = {
 Combat.Dummies = { { x = 150, z = 990 }, { x = 170, z = 990 }, { x = 190, z = 990 }, { x = 210, z = 990 } }
 
 Combat.LeashRange = 90 -- enemies give up and walk home past this distance from their camp
+
+-- The overworld boss's clearing (a flat Landscape site, see Landscape.SiteList "grove").
+Combat.FieldBoss = { kind = "treant", site = "grove" }
 
 return Combat

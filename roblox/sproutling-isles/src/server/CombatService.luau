@@ -13,6 +13,7 @@ local Workspace = game:GetService("Workspace")
 local Combat = require(ReplicatedStorage:WaitForChild("Shared").Combat)
 
 local State = require(script.Parent.State)
+local LootService = require(script.Parent.LootService)
 
 local CombatService = {}
 
@@ -138,7 +139,7 @@ end
 ----------------------------------------------------------------------------------------------
 -- attacks
 
-local function meleeAttack(player: Player, root: BasePart, weapon: Combat.Weapon, aim: Vector3)
+local function meleeAttack(player: Player, root: BasePart, weapon: Combat.Weapon, aim: Vector3, damage: number)
 	local origin = root.Position
 	local arc = math.cos(math.rad(weapon.arc or 60))
 	for _, enemy in enemiesNear(origin, weapon.range + 4) do
@@ -147,7 +148,7 @@ local function meleeAttack(player: Player, root: BasePart, weapon: Combat.Weapon
 		local dist = flat.Magnitude
 		local facing = if dist > 0.01 then flat.Unit:Dot(aim) else 1
 		if dist <= weapon.range + enemy.radius and facing >= arc then
-			hitEnemy(player, enemy, weapon.damage, if dist > 0.01 then flat.Unit else aim, weapon.knockback)
+			hitEnemy(player, enemy, damage, if dist > 0.01 then flat.Unit else aim, weapon.knockback)
 		end
 	end
 	CombatService.fx("slash", { pos = origin + aim * 3, dir = aim, range = weapon.range, player = player })
@@ -249,10 +250,11 @@ local function onAttack(player: Player, aim: any)
 	end
 	f.nextAttack = t + weapon.cooldown
 	local dir = aimFrom(root, aim)
+	local damage = weapon.damage * LootService.power(player, weapon.id)
 	if weapon.kind == "melee" then
-		meleeAttack(player, root, weapon, dir)
+		meleeAttack(player, root, weapon, dir, damage)
 	else
-		launch(player, root, dir, weapon.id, weapon.speed or 100, weapon.range, weapon.radius or 2, weapon.damage, weapon.knockback)
+		launch(player, root, dir, weapon.id, weapon.speed or 100, weapon.range, weapon.radius or 2, damage, weapon.knockback)
 	end
 end
 
@@ -295,12 +297,12 @@ local function onAbility(player: Player, id: any, aim: any)
 			local offset = enemy.root.Position - root.Position
 			local flat = Vector3.new(offset.X, 0, offset.Z)
 			if flat.Magnitude <= radius + enemy.radius then
-				hitEnemy(player, enemy, ability.damage or 20, if flat.Magnitude > 0.01 then flat.Unit else dir, 40)
+				hitEnemy(player, enemy, (ability.damage or 20) * LootService.power(player, "sword"), if flat.Magnitude > 0.01 then flat.Unit else dir, 40)
 			end
 		end
 		CombatService.fx("whirl", { pos = root.Position, radius = radius })
 	elseif ability.id == "firebolt" then
-		launch(player, root, dir, "firebolt", ability.speed or 100, ability.range or 120, 2.5, ability.damage or 30, 30, ability.radius)
+		launch(player, root, dir, "firebolt", ability.speed or 100, ability.range or 120, 2.5, (ability.damage or 30) * LootService.power(player, "staff"), 30, ability.radius)
 	elseif ability.id == "secondwind" then
 		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + (ability.heal or 30))
 		f.stamina = Combat.Player.maxStamina

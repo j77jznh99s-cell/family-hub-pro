@@ -15,6 +15,7 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Combat = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Combat"))
+local Loot = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Loot"))
 
 local CombatClient = {}
 
@@ -173,6 +174,32 @@ end
 local healthFill, healthText = bar(-118, Color3.fromRGB(220, 60, 70), "")
 local staminaFill, staminaText = bar(-98, Color3.fromRGB(240, 190, 60), "")
 
+-- boss health bar across the top while a boss is close
+local bossFrame = Instance.new("Frame")
+bossFrame.AnchorPoint = Vector2.new(0.5, 0)
+bossFrame.Position = UDim2.new(0.5, 0, 0, 56)
+bossFrame.Size = UDim2.fromOffset(460, 22)
+bossFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+bossFrame.BackgroundTransparency = 0.2
+bossFrame.Visible = false
+bossFrame.Parent = gui
+Instance.new("UICorner", bossFrame).CornerRadius = UDim.new(0, 6)
+local bossFill = Instance.new("Frame")
+bossFill.Size = UDim2.fromScale(1, 1)
+bossFill.BackgroundColor3 = Color3.fromRGB(190, 40, 60)
+bossFill.Parent = bossFrame
+Instance.new("UICorner", bossFill).CornerRadius = UDim.new(0, 6)
+local bossName = Instance.new("TextLabel")
+bossName.BackgroundTransparency = 1
+bossName.AnchorPoint = Vector2.new(0.5, 1)
+bossName.Position = UDim2.new(0.5, 0, 0, -2)
+bossName.Size = UDim2.new(1, 0, 0, 24)
+bossName.Font = Enum.Font.Fantasy
+bossName.TextScaled = true
+bossName.TextColor3 = Color3.fromRGB(255, 225, 170)
+bossName.TextStrokeTransparency = 0.3
+bossName.Parent = bossFrame
+
 local slots: { [string]: { frame: Frame, shade: Frame, label: TextLabel } } = {}
 local function slot(index: number, key: string, name: string, color: Color3): { frame: Frame, shade: Frame, label: TextLabel }
 	local frame = Instance.new("Frame")
@@ -244,7 +271,31 @@ RunService.RenderStepped:Connect(function()
 	staminaText.Text = "Stamina " .. tostring(stamina)
 	local weapon = player:GetAttribute("Weapon") or "sword"
 	for _, id in Combat.WeaponOrder do
-		(slots[id].frame:FindFirstChild("Selected") :: UIStroke).Thickness = if id == weapon then 3 else 0
+		local stroke = slots[id].frame:FindFirstChild("Selected") :: UIStroke
+		local rarity = Loot.Rarities[player:GetAttribute("Gear_" .. id) or 1] or Loot.Rarities[1]
+		stroke.Color = rarity.color
+		stroke.Thickness = if id == weapon then 4 elseif (player:GetAttribute("Gear_" .. id) or 1) > 1 then 2 else 0
+	end
+	-- nearest boss within 140 studs
+	local root = rootPart()
+	local bossHumanoid: Humanoid? = nil
+	local enemiesFolder = Workspace:FindFirstChild("Enemies")
+	if root and enemiesFolder then
+		local best = 140
+		for _, m in enemiesFolder:GetChildren() do
+			if m:GetAttribute("Boss") and m:IsA("Model") and m.PrimaryPart then
+				local d = (m.PrimaryPart.Position - root.Position).Magnitude
+				local h = m:FindFirstChildOfClass("Humanoid")
+				if d < best and h and h.Health > 0 then
+					best, bossHumanoid = d, h
+				end
+			end
+		end
+	end
+	bossFrame.Visible = bossHumanoid ~= nil
+	if bossHumanoid then
+		bossFill.Size = UDim2.fromScale(math.clamp(bossHumanoid.Health / bossHumanoid.MaxHealth, 0, 1), 1)
+		bossName.Text = bossHumanoid.DisplayName
 	end
 	local t = Workspace:GetServerTimeNow()
 	for _, a in Combat.Abilities do
@@ -416,11 +467,60 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		local glow = fxPart(Vector3.new(4, 4, 4), CFrame.new(data.pos), Color3.fromRGB(120, 255, 170), Enum.PartType.Ball, 0.4)
 		fadeOut(glow, 0.6, Vector3.new(9, 9, 9))
 		floatText(data.pos + Vector3.new(0, 3, 0), "+Heal", Color3.fromRGB(120, 255, 170))
+	elseif kind == "telegraph" then
+		-- a red warning on the ground that fills up until the attack lands
+		local radius = data.radius or 10
+		local pos = data.pos + Vector3.new(0, 0.3, 0)
+		local parts: { BasePart } = {}
+		if data.shape == "swipe" and data.dir then
+			local arc = math.rad(data.arc or 60)
+			local base = CFrame.lookAt(pos, pos + data.dir)
+			for k = -3, 3 do
+				local wedgeLine = fxPart(Vector3.new(radius * 0.32, 0.2, radius), base * CFrame.Angles(0, k / 3 * arc, 0) * CFrame.new(0, 0, -radius / 2), Color3.fromRGB(255, 60, 60), nil, 0.65)
+				table.insert(parts, wedgeLine)
+			end
+		else
+			local disc = fxPart(Vector3.new(0.2, radius * 2, radius * 2), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 60, 60), Enum.PartType.Cylinder, 0.7)
+			table.insert(parts, disc)
+			local inner = fxPart(Vector3.new(0.25, 0.5, 0.5), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 120, 80), Enum.PartType.Cylinder, 0.4)
+			TweenService:Create(inner, TweenInfo.new(data.time or 1, Enum.EasingStyle.Linear), { Size = Vector3.new(0.25, radius * 2, radius * 2) }):Play()
+			table.insert(parts, inner)
+		end
+		for _, p in parts do
+			Debris:AddItem(p, (data.time or 1) + 0.05)
+		end
+		if data.model then
+			flash(data.model, Color3.fromRGB(255, 60, 60), data.time or 1)
+		end
+	elseif kind == "burst" then
+		local radius = data.radius or 10
+		local color = if data.shape == "roots" then Color3.fromRGB(120, 200, 80) else Color3.fromRGB(255, 170, 90)
+		local ring = fxPart(Vector3.new(1, 2, 2), CFrame.new(data.pos + Vector3.new(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder, 0.2)
+		fadeOut(ring, 0.4, Vector3.new(1, radius * 2, radius * 2))
+		if data.shape == "roots" then
+			for k = 0, 5 do
+				local a = k / 6 * math.pi * 2
+				local spike = fxPart(Vector3.new(1, 6, 1), CFrame.new(data.pos + Vector3.new(math.cos(a) * radius * 0.5, 3, math.sin(a) * radius * 0.5)), Color3.fromRGB(110, 80, 50), nil, 0)
+				spike.Material = Enum.Material.Wood
+				fadeOut(spike, 0.6)
+			end
+		end
+		local camera = Workspace.CurrentCamera
+		local root = rootPart()
+		if camera and root and (root.Position - data.pos).Magnitude < radius + 30 then
+			task.spawn(function()
+				for _ = 1, 6 do
+					camera.CFrame = camera.CFrame * CFrame.new((math.random() - 0.5) * 0.8, (math.random() - 0.5) * 0.8, 0)
+					task.wait()
+				end
+			end)
+		end
 	elseif kind == "dodged" then
 		floatText(data.pos + Vector3.new(0, 3, 0), "Dodged!", Color3.fromRGB(180, 220, 255))
 	elseif kind == "defeat" then
-		local puff = fxPart(Vector3.new(2, 2, 2), CFrame.new(data.pos), Color3.fromRGB(255, 255, 255), Enum.PartType.Ball, 0.3)
-		fadeOut(puff, 0.5, Vector3.new(10, 10, 10))
+		local size = if data.boss then 40 else 10
+		local puff = fxPart(Vector3.new(2, 2, 2), CFrame.new(data.pos), if data.boss then Color3.fromRGB(255, 220, 120) else Color3.fromRGB(255, 255, 255), Enum.PartType.Ball, 0.3)
+		fadeOut(puff, if data.boss then 1.2 else 0.5, Vector3.new(size, size, size))
 	elseif kind == "knock" then
 		local root = rootPart()
 		if root and data.vector then

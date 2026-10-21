@@ -86,6 +86,9 @@ function DataService.defaultData()
 		-- Events.FrostbloomTeaserDaysNeeded). The Frostfawn seed grant is a future task for whatever
 		-- builds the Frostbloom Advent Gift system, which should check this flag on Day 1 (Sat 12 Dec).
 		frostbloomTeaser = { days = {}, qualified = false },
+		-- RPG (LootService): best rarity owned per weapon, and monster materials for cooking
+		gear = { sword = { r = 1 }, bow = { r = 1 }, staff = { r = 1 } },
+		materials = {}, -- [materialId] = count
 	}
 end
 

@@ -57,6 +57,12 @@ function MapBuilder.useCity(module: any)
 	City = module
 end
 
+-- Shared.DungeonBuilder (The Hollow Crypt), same arrangement.
+local Dungeon: any = nil
+function MapBuilder.useDungeon(module: any)
+	Dungeon = module
+end
+
 MapBuilder.PlotSize = 100
 MapBuilder.PlotColors = {
 	{ "Red", 235, 80, 80 },
@@ -2070,6 +2076,14 @@ function MapBuilder.Build(parent: Instance): Instance
 			City = module
 		end
 	end
+	if not Dungeon then
+		local ok, module = pcall(function()
+			return require((script :: any).Parent.DungeonBuilder)
+		end)
+		if ok then
+			Dungeon = module
+		end
+	end
 	local existing = parent:FindFirstChild("Map")
 	if existing then
 		existing:Destroy()
@@ -2091,6 +2105,9 @@ function MapBuilder.Build(parent: Instance): Instance
 	buildScenery(map)
 	if City then
 		City.Build(map)
+	end
+	if Dungeon then
+		Dungeon.Build(map, Landscape)
 	end
 
 	map.Parent = parent

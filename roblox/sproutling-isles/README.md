@@ -46,6 +46,19 @@ camps (slimes, goblins, wolves) are out on the hills and spawn once the terrain 
 lives in `src/shared/Combat.luau`; the server code is `CombatService.luau` and `EnemyService.luau`,
 the client code `src/client/Combat.luau`.
 
+## Dungeon, field boss and loot (RPG step 3)
+
+- **The Hollow Crypt**: walk onto the purple portal in the hilltop castle's courtyard (west bridge, then
+  the path up). Six rooms: entry hall, crypt hall, bat cavern, ossuary, treasure vault, and the Bone
+  Warden's chamber. Clearing a room raises the portcullis to the next. Chests open once per player
+  per run; the crypt resets 2 minutes after the Warden falls or after a minute empty.
+- **Ironbark, the Old Grove**: a field boss in the clearing past the north-west hamlet (respawns
+  every 5 minutes). Bosses telegraph every attack with a red marker on the ground.
+- **Loot**: monsters drop materials and sometimes weapons (Common to Legendary, x1.0 to x2.1 damage);
+  only the player who earned a drop can pick it up. A better weapon upgrades yours; a worse one is
+  salvaged for Dew. Code: `src/shared/Loot.luau`, `DungeonBuilder.luau`, `src/server/LootService.luau`,
+  `DungeonService.luau`.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).

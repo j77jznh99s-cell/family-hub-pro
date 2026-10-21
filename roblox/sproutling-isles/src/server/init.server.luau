@@ -30,6 +30,8 @@ local CodesService = require(script.CodesService)
 local TerrainBuilder = require(script.TerrainBuilder)
 local CombatService = require(script.CombatService)
 local EnemyService = require(script.EnemyService)
+local LootService = require(script.LootService)
+local DungeonService = require(script.DungeonService)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
@@ -51,6 +53,8 @@ CodesService.init() -- Week 5 live-ops: the in-world Codes box (client HUD), see
 task.spawn(TerrainBuilder.build, map) -- hills, lagoon and sea around the island (cosmetic)
 CombatService.init() -- RPG step 2: weapons, stamina, dodge, abilities
 EnemyService.init() -- monsters at the hill camps + training dummies (camps wait for the terrain)
+LootService.init() -- RPG step 3: drops, pickups, gear upgrades
+DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle
