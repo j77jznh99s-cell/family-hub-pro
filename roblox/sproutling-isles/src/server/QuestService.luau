@@ -21,6 +21,7 @@ local InventoryService = require(script.Parent.InventoryService)
 local LootService = require(script.Parent.LootService)
 local EnemyService = require(script.Parent.EnemyService)
 local LevelService = require(script.Parent.LevelService)
+local CrateService = require(script.Parent.CrateService)
 local Levels = require(Shared.Levels)
 
 local QuestService = {}
@@ -143,11 +144,14 @@ local function targetOf(player: Player, q: Quests.Quest, p: Progress, ready: boo
 	return nil
 end
 
+local autoComplete: (Player, any) -> () -- defined with the actions below
+
 local function push(player: Player)
 	local d = data(player)
 	if not d then
 		return
 	end
+	autoComplete(player, d)
 	local active = {}
 	for id, p in d.quests.active do
 		local q = Quests.get(id)
@@ -200,6 +204,9 @@ local function giveReward(player: Player, d: any, q: Quests.Quest)
 	if r.weapon then
 		LootService.giveWeapon(player, Loot.rollWeapon(rng, r.weapon))
 	end
+	if r.crate then
+		CrateService.give(player, r.crate)
+	end
 	if r.potions then
 		d.consumables = d.consumables or {}
 		d.consumables.potion_health = (d.consumables.potion_health or 0) + r.potions
@@ -210,6 +217,36 @@ local function giveReward(player: Player, d: any, q: Quests.Quest)
 		player:SetAttribute("Unlock_" .. r.unlock, true)
 	end
 	InventoryService.push(player)
+end
+
+-- Tour quests (auto) finish the moment they're done and start the next step.
+autoComplete = function(player: Player, d: any)
+	for _ = 1, 5 do
+		local finished: Quests.Quest? = nil
+		for id, p in d.quests.active do
+			local q = Quests.get(id)
+			if q and q.auto then
+				local _, ready = progressOf(d, q, p)
+				if ready then
+					finished = q
+					break
+				end
+			end
+		end
+		if not finished then
+			return
+		end
+		local q = finished :: Quests.Quest
+		d.quests.active[q.id] = nil
+		d.quests.done[q.id] = true
+		giveReward(player, d, q)
+		notify(player, "Quest complete: " .. q.name .. "! " .. q.finish, "#a0ffa0")
+		local nextQ = q.nextQuest and Quests.get(q.nextQuest)
+		if nextQ and canStart(d, nextQ) then
+			d.quests.active[nextQ.id] = { n = 0, taken = {}, visited = {}, talked = false }
+			notify(player, "New quest: " .. nextQ.name .. " - " .. nextQ.intro, "#ffd27a")
+		end
+	end
 end
 
 local function onAction(player: Player, action: any, questId: any)
@@ -446,6 +483,10 @@ function QuestService.init(map: Instance)
 				task.wait(1)
 			end
 			push(player)
+			local d = data(player)
+			if d and not d.quests.done.guide_city and not d.quests.active.guide_city then
+				notify(player, "New to the Isles? Talk to Mara the Guide by the bridge south of the plaza (gold ! over her head).", "#ffd27a")
+			end
 		end)
 	end
 	Players.PlayerAdded:Connect(onPlayer)

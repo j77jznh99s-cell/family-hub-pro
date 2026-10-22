@@ -26,6 +26,8 @@ export type Npc = {
 	near: { number }, -- desired x, z (or a sky isle by name in `isle`)
 	isle: string?,
 	site: string?, -- a levelled Landscape site to camp on (the mountain camps)
+	fixed: { number }?, -- exact x, y, z (the guide on the garden island)
+	facing: { number }?, -- with fixed: x, z direction to face
 	camp: string, -- what WildsBuilder builds round them
 }
 
@@ -39,7 +41,7 @@ export type Objective = {
 	text: string,
 }
 
-export type Reward = { dew: number?, materials: { [string]: number }?, weapon: number?, potions: number?, unlock: string? }
+export type Reward = { dew: number?, materials: { [string]: number }?, weapon: number?, potions: number?, unlock: string?, crate: string? }
 
 export type Quest = {
 	id: string,
@@ -47,6 +49,8 @@ export type Quest = {
 	giver: string,
 	turnIn: string?, -- defaults to the giver
 	requires: { string }?,
+	auto: boolean?, -- completes itself the moment it's done (and starts `nextQuest`)
+	nextQuest: string?,
 	intro: string,
 	finish: string,
 	objective: Objective,
@@ -86,6 +90,11 @@ Quests.ItemSpots = {
 -- people
 
 Quests.Npcs = {
+	mara = {
+		id = "mara", name = "Mara Brightfoot", title = "Guide to the Isles", camp = "guide", near = { 0, 0 }, fixed = { 30, 0, 334 }, facing = { 0, -1 },
+		greeting = "New to the Isles? Splendid! The city's just over that bridge. Let me show you around.",
+		look = { skin = rgb(235, 195, 160), shirt = rgb(240, 170, 60), pants = rgb(90, 110, 70), hair = rgb(160, 80, 50), hat = "straw", hatColor = rgb(240, 215, 140), prop = "letter" },
+	},
 	bryn = {
 		id = "bryn", name = "Bryn Ashgrove", title = "Forest Warden", camp = "ranger", near = { -800, 60 },
 		greeting = "Keep your eyes on the treeline, traveller. The woods are hungrier this season.",
@@ -146,10 +155,15 @@ Quests.Npcs = {
 -- Places to visit (Oswin's cairns on three peaks): desired x, z; WildsBuilder picks the highest
 -- open ground nearby.
 Quests.Spots = {
+	-- places in the city for Mara's tour (marked on things CityBuilder made)
+	spotMarket = { name = "the Market Square", find = { "TravelPoint", "market" } },
+	spotYard = { name = "the Barracks training yard", find = { "DummySpot", true } },
+	spotArena = { name = "the Arena gate", find = { "ArenaGate", true } },
+	spotPort = { name = "the Airship Port", find = { "TravelPoint", "port" } },
 	cairnWest = { name = "West Peak Cairn", near = { -1060, -260 } },
 	cairnNorth = { name = "North Peak Cairn", near = { 620, -1000 } },
 	cairnSouth = { name = "South Peak Cairn", near = { 820, 1700 } },
-} :: { [string]: { name: string, near: { number } } }
+} :: { [string]: any }
 
 -- Enemy camps the quests need, beside a person's camp (offset x, z from it) or on a named isle.
 Quests.Camps = {
@@ -171,6 +185,49 @@ Quests.Camps = {
 -- quests
 
 Quests.List = {
+	-- Mara's tour of the Isles: each step finishes itself and starts the next
+	{
+		id = "guide_city", name = "Into the City", giver = "mara", auto = true, nextQuest = "guide_yard",
+		intro = "Cross the stone bridge south and find the Market Square in Sproutling City. Follow the beam of light!",
+		finish = "The market! Shops, stalls and a fountain. Now, let's get you ready for trouble.",
+		objective = { kind = "visit", spots = { "spotMarket" }, text = "Reach the Market Square" },
+		reward = { dew = 100, crate = "wood" },
+	},
+	{
+		id = "guide_yard", name = "The Training Yard", giver = "mara", requires = { "guide_city" }, auto = true, nextQuest = "guide_hunt",
+		intro = "Find the Barracks training yard. Hit the dummies there: click to swing, 1/2/3 to swap weapons, Shift to roll.",
+		finish = "Good form! Time to try it on something that hits back.",
+		objective = { kind = "visit", spots = { "spotYard" }, text = "Visit the training yard" },
+		reward = { dew = 80, potions = 2 },
+	},
+	{
+		id = "guide_hunt", name = "First Hunt", giver = "mara", requires = { "guide_yard" }, auto = true, nextQuest = "guide_arena",
+		intro = "Bog Slimes gather in the hills around the island. Defeat three of them. H drinks a healing draught if you need one.",
+		finish = "Your first hunt! Every monster gives XP; watch your level badge climb.",
+		objective = { kind = "slay", target = "slime", count = 3, text = "Defeat Bog Slimes" },
+		reward = { dew = 120, crate = "wood" },
+	},
+	{
+		id = "guide_arena", name = "Sand and Glory", giver = "mara", requires = { "guide_hunt" }, auto = true, nextQuest = "guide_port",
+		intro = "The Arena is where heroes test themselves in waves of monsters. Go and see its gate.",
+		finish = "Start a trial there whenever you feel brave. Crates for every fifth wave!",
+		objective = { kind = "visit", spots = { "spotArena" }, text = "Find the Arena gate" },
+		reward = { dew = 120 },
+	},
+	{
+		id = "guide_port", name = "Wheels and Wings", giver = "mara", requires = { "guide_arena" }, auto = true, nextQuest = "guide_help",
+		intro = "West of the city is the Airship Port. Airships fly you anywhere, and the Aerie Workshop builds flying machines for heroes of high level.",
+		finish = "Carriages, boats, flying machines... level up and they're yours. Press G for your garage and M for the map.",
+		objective = { kind = "visit", spots = { "spotPort" }, text = "Visit the Airship Port" },
+		reward = { dew = 150, crate = "silver" },
+	},
+	{
+		id = "guide_help", name = "Folk in Need", giver = "mara", requires = { "guide_port" }, turnIn = "bryn",
+		intro = "People all over the Isles need a hand. Start with Bryn, the Forest Warden west of the city. Look for the gold ! over their heads.",
+		finish = "Mara sent you? Good. I could use someone like you.",
+		objective = { kind = "talk", npc = "bryn", text = "Find Bryn the Forest Warden" },
+		reward = { dew = 100, crate = "wood" },
+	},
 	{
 		id = "bryn_wolves", name = "Wolves at the Treeline", giver = "bryn",
 		intro = "A pack of ashen wolves has been circling my outpost. Thin them out before they get bold.",

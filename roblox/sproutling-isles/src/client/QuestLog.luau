@@ -116,6 +116,9 @@ local function rewardText(r: Quests.Reward): string
 	if r.unlock == "skyward" then
 		table.insert(parts, "the Skyward Charm (ride the wind shrines)")
 	end
+	if r.crate then
+		table.insert(parts, "a " .. r.crate .. " crate")
+	end
 	return "Reward: " .. table.concat(parts, ", ")
 end
 

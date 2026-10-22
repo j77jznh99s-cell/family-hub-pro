@@ -600,6 +600,15 @@ CAMPS.courier = function(f, x, z, face, _seed)
 	campfire(f, x - 4, z + 8)
 end
 
+CAMPS.guide = function(f, x, z, face, seed)
+	local side = Vector3.new(-face.Z, 0, face.X)
+	local sx, sz = x + side.X * 5, z + side.Z * 5
+	K.signpost(f, sx, sz, "Sproutling City this way!", rgb(255, 230, 150))
+	local lx, lz = x - side.X * 5, z - side.Z * 5
+	K.lamp(f, lx, lz)
+	K.flowerBed(f, x - face.X * 4 + side.X * 3, z - face.Z * 4 + side.Z * 3, 4, 3, seed)
+end
+
 CAMPS.skycamp = function(f, x, z, _face, seed)
 	for k = 0, 5 do
 		local a = k / 6 * math.pi * 2
@@ -768,7 +777,17 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 	for i, id in ids do
 		local npc = Q.Npcs[id]
 		local builder = CAMPS[npc.camp]
-		if npc.isle then
+		if npc.fixed then
+			-- placed by hand (the guide by the island's bridge to the city)
+			local p, face = npc.fixed, Vector3.new(npc.facing[1], 0, npc.facing[2]).Unit
+			local f = folder(camps, npc.camp .. "_" .. id)
+			if builder then
+				builder(f, p[1], p[3], face, i)
+				lift(f, p[2])
+			end
+			person(f, npc, p[1], p[2], p[3], face)
+			npcPos[id] = Vector3.new(p[1], p[2], p[3])
+		elseif npc.isle then
 			local it = isles[npc.isle]
 			if it then
 				local x, z, y = it.x + it.r * 0.25, it.z - it.r * 0.2, it.y + 1.5
@@ -854,13 +873,31 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 	end
 
 	-- the peak cairns Oswin sends you to
+	-- (spots with `find` mark a place another builder made, e.g. the city's market square)
+	local found: { [string]: Vector3 } = {}
+	for _, d in map:GetDescendants() do
+		if d:IsA("BasePart") then
+			for id, spot in Q.Spots do
+				if spot.find and not found[id] and d:GetAttribute(spot.find[1]) == spot.find[2] then
+					found[id] = d.CFrame.Position
+				end
+			end
+		end
+	end
 	for id, spot in Q.Spots do
-		local x, z, h = findPeak(spot.near[1], spot.near[2], 160)
-		local f = folder(camps, "Cairn_" .. id)
-		raised(f, h - 0.5, function(t)
-			cairn(t, x, z, 1.6)
-		end)
-		marker(f, "QuestSpot", Vector3.new(x, h, z), { QuestSpot = id, SpotName = spot.name })
+		if spot.find then
+			local p = found[id]
+			if p then
+				marker(camps, "QuestSpot", p - Vector3.new(0, 1.5, 0), { QuestSpot = id, SpotName = spot.name })
+			end
+		else
+			local x, z, h = findPeak(spot.near[1], spot.near[2], 160)
+			local f = folder(camps, "Cairn_" .. id)
+			raised(f, h - 0.5, function(t)
+				cairn(t, x, z, 1.6)
+			end)
+			marker(f, "QuestSpot", Vector3.new(x, h, z), { QuestSpot = id, SpotName = spot.name })
+		end
 	end
 
 	-- wind shrines on the ground below each named isle, and the isles' own pieces

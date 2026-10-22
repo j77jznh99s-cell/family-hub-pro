@@ -76,7 +76,44 @@ local function open(player: Player, tier: any)
 	end)
 end
 
+-- One free crate a day for logging in; every 7th day in a row adds a silver one.
+local function dailyCrate(player: Player)
+	for _ = 1, 40 do
+		if State.get(player) then
+			break
+		end
+		task.wait(0.5)
+	end
+	local session = State.get(player)
+	if not session then
+		return
+	end
+	local data = session.data
+	local today = os.time() // 86400
+	data.dailyCrate = data.dailyCrate or { day = 0, streak = 0 }
+	local daily = data.dailyCrate
+	if daily.day >= today then
+		return
+	end
+	daily.streak = if daily.day == today - 1 then daily.streak + 1 else 1
+	daily.day = today
+	CrateService.give(player, "wood")
+	local extra = ""
+	if daily.streak % 7 == 0 then
+		CrateService.give(player, "silver")
+		extra = " and a Silver Crate for a 7-day streak"
+	end
+	State.notify(session, string.format("Daily gift: a Wooden Crate%s! (day %d in a row) Open it with K.", extra, daily.streak), "#ffd27a")
+end
+
 function CrateService.init()
+	local Players = game:GetService("Players")
+	Players.PlayerAdded:Connect(function(player)
+		task.spawn(dailyCrate, player)
+	end)
+	for _, player in Players:GetPlayers() do
+		task.spawn(dailyCrate, player)
+	end
 	CrateRemote.OnServerEvent:Connect(function(player, action, tier)
 		if action == "open" then
 			open(player, tier)

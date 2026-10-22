@@ -151,6 +151,15 @@ the client code `src/client/Combat.luau`.
   shrines, sky isles, the arena and the crypt. Tap a pin for a waypoint beam. The side panel lists
   every way of getting around.
 
+## New players
+
+- **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you
+  to the Market Square, the training yard, a first hunt, the Arena gate and the Airship Port. Each
+  step completes itself the moment you get there, pays out (Dew and crates) and starts the next,
+  then she hands you on to Bryn and the other quest givers. New players get a hint to find her.
+- **Help (F1 or the button):** every control and where to find everything.
+- **Daily gift:** a Wooden Crate each day you log in; every 7th day in a row adds a Silver Crate.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).
