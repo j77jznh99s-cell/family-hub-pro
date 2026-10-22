@@ -1,17 +1,17 @@
-# Graph Report - family-hub-pro  (2026-10-21)
+# Graph Report - family-hub-pro  (2026-10-22)
 
 ## Corpus Check
-- 87 files · ~92,904 words
+- 87 files · ~93,125 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 783 nodes · 1125 edges · 68 communities (66 shown, 2 thin omitted)
+- 784 nodes · 1126 edges · 68 communities (66 shown, 2 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 126 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63ce0bcd`
+- Built from commit: `4cf574f4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -115,8 +115,8 @@
 ## Communities (68 total, 2 thin omitted)
 
 ### Community 0 - "Session Log.md"
-Cohesion: 0.15
-Nodes (15): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, Bybit Trading Bot, Hard rules for every agent, Tasks, Claude Code Add-ons (+7 more)
+Cohesion: 0.14
+Nodes (16): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, 2026-10-22: levels, vehicles, arena, crates, map, Bybit Trading Bot, Hard rules for every agent, Tasks (+8 more)
 
 ### Community 1 - "main"
 Cohesion: 0.06
@@ -397,7 +397,7 @@ Nodes (9): Transcript-based scoring + captions: off (default) or Whisper, openai
 
 ## Knowledge Gaps
 - **1 isolated node(s):** `dotenv`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 496 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 497 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -410,10 +410,10 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `dotenv` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Session Log.md` be split into smaller, more focused modules?**
-  _Cohesion score 0.14804964539007093 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
 - **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
-  _High betweenness centrality (0.283) - this node is a cross-community bridge._
+  _High betweenness centrality (0.284) - this node is a cross-community bridge._
 - **Should `main` be split into smaller, more focused modules?**
   _Cohesion score 0.06285714285714286 - nodes in this community are weakly interconnected._
 - **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.214) - this node is a cross-community bridge._
+  _High betweenness centrality (0.213) - this node is a cross-community bridge._

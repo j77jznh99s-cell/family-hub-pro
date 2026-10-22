@@ -12,6 +12,7 @@ tags: [memory, log]
 
 **Not verified**
 - Nothing run in Studio. Flight/boat physics (LinearVelocity + PlatformStand) and the arena loop are the riskiest parts.
+- Follow-up review (`c4bb510`): fixed the arena being unenterable (portcullis + stands blocked the gates) and a trial ending instantly when started from the gate; added ramps from raised plinths (landmarks all sides, shops front).
 
 ## 2026-10-21 (night): quests, wilds and sky isles
 **Device:** laptop · **Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
