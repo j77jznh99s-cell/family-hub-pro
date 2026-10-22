@@ -67,6 +67,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 | 14 | Rewarded video ads plan + ad-reward products | Yes, once eligible |
 | 15 | Gate look: glowing vine curtain instead of a laser? | Yes (fits the art style) |
 
+**2026-10-22 (session call, owner can override):** vehicles stay in the Renaissance theme (carriages for cars, ornithopter for planes, aerial screw for helicopters) because the owner earlier chose a Renaissance fantasy RPG; a modern reskin is possible if the owner wants real cars/planes.
+
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |

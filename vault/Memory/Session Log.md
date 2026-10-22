@@ -1,6 +1,18 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-22: levels, vehicles, arena, crates, map
+**Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
+
+**Owner asked**
+- Working buildings (colosseum fights etc.), car/boat shops + customization shops, crates, leaderboards, a world map with transport, horse & trailer, unlock planes/helicopters by level, a fancy level-up display.
+
+**What was done**
+- `36aaaa8`: Levels/Vehicles/Crates shared data; Level, Vehicle, Crate, Arena, Map services; client Progress (badge, celebration, arena banner, crates reel), Vehicles (garage, sail/flight controller, paint shops), WorldMap. Halls given purposes. Level/arena leaderboards.
+
+**Not verified**
+- Nothing run in Studio. Flight/boat physics (LinearVelocity + PlatformStand) and the arena loop are the riskiest parts.
+
 ## 2026-10-21 (night): quests, wilds and sky isles
 **Device:** laptop · **Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
 
