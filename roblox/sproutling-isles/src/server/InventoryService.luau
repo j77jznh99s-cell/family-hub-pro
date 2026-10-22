@@ -23,6 +23,8 @@ local Recipes = require(Shared.Recipes)
 local State = require(script.Parent.State)
 local Prompts = require(script.Parent.Prompts)
 local BuffService = require(script.Parent.BuffService)
+local LevelService = require(script.Parent.LevelService)
+local Vehicles = require(Shared.Vehicles)
 
 local InventoryService = {}
 
@@ -56,6 +58,8 @@ local function normalise(data)
 	data.consumables = data.consumables or {}
 	data.materials = data.materials or {}
 	data.unlocks = data.unlocks or {}
+	data.vehicles = data.vehicles or {}
+	data.crates = data.crates or {}
 	return data
 end
 
@@ -76,6 +80,15 @@ function InventoryService.push(player: Player)
 	player:SetAttribute("Potions", data.consumables.potion_health or 0)
 	for id, on in data.unlocks do
 		player:SetAttribute("Unlock_" .. id, on == true)
+	end
+	-- owned vehicles and their colours, and unopened crates (garage, paint shops, crate window)
+	for id, v in data.vehicles do
+		player:SetAttribute("Vehicle_" .. id, true)
+		player:SetAttribute("VPaint_" .. id, v.paint or 1)
+		player:SetAttribute("VTrim_" .. id, v.trim or 1)
+	end
+	for _, tier in { "wood", "silver", "gold" } do
+		player:SetAttribute("Crates_" .. tier, data.crates[tier] or 0)
 	end
 	InventoryRemote:FireClient(player, {
 		bag = data.bag,
@@ -232,7 +245,12 @@ local function onAction(player: Player, action: any, arg: any)
 			if item.buff then
 				BuffService.apply(player, item.buff, item.duration or 60, item.name)
 			end
-			State.notify(session, "Ate " .. item.name .. (if item.blurb then " - " .. item.blurb else ""), "#9affc4")
+			if item.xp then
+				LevelService.addXP(player, item.xp, "Read")
+				State.notify(session, "You read the " .. item.name .. ". +" .. item.xp .. " XP", "#c8b4ff")
+			else
+				State.notify(session, "Used " .. item.name .. (if item.blurb then " - " .. item.blurb else ""), "#9affc4")
+			end
 		end
 	elseif action == "cook" then
 		local key = InventoryService.nearShop(player)
@@ -268,6 +286,10 @@ local function onAction(player: Player, action: any, arg: any)
 			State.notify(session, "You already wear armour that good.", "#d8d8d8")
 		elseif item.kind == "unlock" and data.unlocks[item.unlock or ""] then
 			State.notify(session, "You already have that.", "#d8d8d8")
+		elseif item.kind == "vehicle" and data.vehicles[item.vehicle or ""] then
+			State.notify(session, "That's already in your garage (G).", "#d8d8d8")
+		elseif item.level and (data.level or 1) < item.level then
+			State.notify(session, string.format("You need to be level %d for that.", item.level), "#ff9a9a")
 		elseif item.kind == "weapon" and #data.bag >= Shops.BagSize then
 			State.notify(session, "Your bag is full.", "#ff9a9a")
 		elseif not State.spendDew(session, item.price, "Shop:" .. item.id) then
@@ -281,11 +303,35 @@ local function onAction(player: Player, action: any, arg: any)
 			elseif item.kind == "consumable" then
 				data.consumables[item.id] = (data.consumables[item.id] or 0) + 1
 				State.notify(session, "Bought " .. item.name, "#9affc4")
+			elseif item.kind == "vehicle" then
+				data.vehicles[item.vehicle :: string] = { paint = 1, trim = 1 }
+				State.notify(session, "The " .. item.name .. " is yours! Press G to open your garage and ride it.", "#ffd27a")
+			elseif item.kind == "crate" then
+				data.crates[item.crate :: string] = (data.crates[item.crate :: string] or 0) + 1
+				State.notify(session, "Bought a " .. item.name .. ". Open it from the Crates button.", "#ffd27a")
 			elseif item.kind == "unlock" then
 				data.unlocks[item.unlock :: string] = true
 				player:SetAttribute("Unlock_" .. (item.unlock :: string), true)
 				State.notify(session, if item.unlock == "horse" then "Your horse is ready! Press V to ride." else "Your best Sproutling will fight beside you! Press P to call it.", "#ffd27a")
 			end
+		end
+	elseif action == "paint" then
+		-- arg = { vehicle = id, slot = "paint" | "trim", index = n }, at a paint shop for that class
+		local key = InventoryService.nearShop(player)
+		local shop = key and Shops.Catalog[key]
+		local vehicle = typeof(arg) == "table" and typeof(arg.vehicle) == "string" and Vehicles.get(arg.vehicle)
+		local owned = vehicle and data.vehicles[vehicle.id]
+		local index = typeof(arg) == "table" and tonumber(arg.index)
+		local slot = typeof(arg) == "table" and arg.slot
+		if not shop or not shop.customize or not vehicle or vehicle.class ~= shop.customize then
+			State.notify(session, "Bring it to the right paint shop.", "#ff9a9a")
+		elseif not owned or not index or not Vehicles.Paints[index] or (slot ~= "paint" and slot ~= "trim") then
+			return
+		elseif not State.spendDew(session, Vehicles.PaintPrice, "Paint") then
+			State.notify(session, string.format("A new coat costs %d Dew.", Vehicles.PaintPrice), "#ff9a9a")
+		else
+			owned[slot] = index
+			State.notify(session, string.format("%s %s: %s", vehicle.name, slot, Vehicles.Paints[index].name), "#ffd27a")
 		end
 	elseif action == "sellMaterials" then
 		if not InventoryService.nearShop(player) then
@@ -335,7 +381,7 @@ function InventoryService.init(map: Instance)
 			local id = d:GetAttribute("Shop")
 			if typeof(id) == "string" then
 				local shop, key = Shops.get(id)
-				local action = if not shop then "Closed" elseif key == "kitchen" then "Cook" else "Browse"
+				local action = if not shop then "Closed" elseif key == "kitchen" then "Cook" elseif shop.customize then "Customize" elseif shop.map then "Look" else "Browse"
 				local prompt = Prompts.create(d, action, if shop then shop.name else "Shop", 0)
 				prompt.MaxActivationDistance = 12
 				prompt.Triggered:Connect(function(player)

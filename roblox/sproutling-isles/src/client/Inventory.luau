@@ -269,6 +269,10 @@ local function describe(item: Shops.Item): (string, Color3)
 		return string.format("%s weapon, x%.2f damage", r.name, r.power), r.color
 	elseif item.kind == "armor" then
 		return string.format("Armour, blocks %d%% of damage", math.floor((item.reduce or 0) * 100)), Color3.fromRGB(190, 210, 255)
+	elseif item.kind == "vehicle" then
+		return string.format("Vehicle - needs level %d", item.level or 1), Color3.fromRGB(150, 210, 255)
+	elseif item.kind == "crate" then
+		return "Reward crate - open it with the Crates button (K)", Color3.fromRGB(255, 210, 120)
 	elseif item.kind == "unlock" then
 		return if item.unlock == "horse" then "Ride with V: much faster travel" else "Call with P: your best Sproutling fights beside you", Color3.fromRGB(255, 210, 140)
 	end
@@ -278,6 +282,12 @@ local function describe(item: Shops.Item): (string, Color3)
 	end
 	if item.stamina then
 		table.insert(parts, "+" .. item.stamina .. " stamina")
+	end
+	if item.xp then
+		table.insert(parts, "+" .. item.xp .. " XP")
+	end
+	if item.buff then
+		table.insert(parts, string.format("lasts %d min", math.floor((item.duration or 60) / 60)))
 	end
 	return table.concat(parts, ", "), Color3.fromRGB(170, 255, 200)
 end
@@ -347,8 +357,10 @@ local function renderShop()
 		label(text, UDim2.new(0.62, -8, 0, 18), UDim2.fromOffset(8, 28), Color3.fromRGB(210, 200, 185)).Parent = r
 		local owned = (item.kind == "armor" and (item.tier or 0) <= (snapshot.armor or 0))
 			or (item.kind == "unlock" and player:GetAttribute("Unlock_" .. (item.unlock or "")) == true)
-		local b = button(if owned then "Owned" else string.format("Buy %d", item.price), UDim2.new(0.34, 0, 0, 34), UDim2.new(0.64, 0, 0, 9), if owned then Color3.fromRGB(80, 80, 80) else Color3.fromRGB(70, 140, 80), function()
-			if not owned then
+			or (item.kind == "vehicle" and player:GetAttribute("Vehicle_" .. (item.vehicle or "")) == true)
+		local locked = not owned and item.level ~= nil and (player:GetAttribute("Level") or 1) < item.level
+		local b = button(if owned then "Owned" elseif locked then "Lv " .. tostring(item.level) else string.format("Buy %d", item.price), UDim2.new(0.34, 0, 0, 34), UDim2.new(0.64, 0, 0, 9), if owned or locked then Color3.fromRGB(80, 80, 80) else Color3.fromRGB(70, 140, 80), function()
+			if not owned and not locked then
 				ActionRemote:FireServer("buy", item.id)
 			end
 		end)
@@ -449,6 +461,10 @@ InventoryRemote.OnClientEvent:Connect(function(data)
 end)
 
 OpenShopRemote.OnClientEvent:Connect(function(key: string, name: string, text: string)
+	local catalog = Shops.Catalog[key]
+	if catalog and (catalog.customize or catalog.map) then
+		return -- the paint shops and map halls have their own windows (Vehicles, WorldMap)
+	end
 	currentShop = key
 	shopTitle.Text = name
 	greeting.Text = text

@@ -255,7 +255,7 @@ end)
 
 local tracker = make("Frame", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -10, 0, 96),
+	Position = UDim2.new(1, -10, 0, 130),
 	Size = UDim2.fromOffset(260, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundColor3 = PANEL,

@@ -63,6 +63,28 @@ do
 	end
 end
 
+-- Level and arena boards (see reportStat): OrderedDataStores per stat, and the in-world boards
+-- that show them (any part with a Leaderboard attribute and a BillboardGui "Label" > "Text").
+local STATS = {
+	level = { title = "\226\173\144 HIGHEST LEVEL", suffix = function(v: number): string
+		return "Lv " .. v
+	end },
+	arena = { title = "\226\154\148 ARENA CHAMPIONS", suffix = function(v: number): string
+		return "Wave " .. v
+	end },
+}
+local statStores: { [string]: OrderedDataStore } = {}
+for stat in STATS do
+	local ok, store = pcall(function()
+		return DataStoreService:GetOrderedDataStore(Config.DataStoreName .. "_LB_" .. stat)
+	end)
+	if ok then
+		statStores[stat] = store
+	end
+end
+local statLabels: { [string]: { TextLabel } } = {}
+local lastReported: { [string]: number } = {}
+
 local incomeLabel: TextLabel? = nil
 local hatchLabel: TextLabel? = nil
 
@@ -110,6 +132,25 @@ function LeaderboardService.reportIncome(player: Player, totalDew: number)
 		task.spawn(function()
 			pcall(function()
 				(incomeStore :: OrderedDataStore):SetAsync(keyOf(player), score)
+			end)
+		end)
+	end
+	setMeta(player, { name = player.DisplayName })
+end
+
+-- Level ("level") or best arena wave ("arena"): written only when it beats what this server
+-- last wrote for the player, so it's a handful of writes per session.
+function LeaderboardService.reportStat(player: Player, stat: string, value: number)
+	local store = statStores[stat]
+	local key = stat .. ":" .. player.UserId
+	if (lastReported[key] or 0) >= value then
+		return
+	end
+	lastReported[key] = value
+	if store then
+		task.spawn(function()
+			pcall(function()
+				store:SetAsync(keyOf(player), math.floor(value))
 			end)
 		end)
 	end
@@ -195,6 +236,19 @@ function LeaderboardService.refresh()
 		table.insert(hatchLines, i .. ". " .. name .. " - " .. species .. " (" .. rarity .. ")")
 	end
 	render(hatchLabel, "\240\159\140\159 RAREST HATCH", hatchLines)
+
+	for stat, labels in statLabels do
+		local info = STATS[stat]
+		local lines = {}
+		for i, entry in fetchTop(statStores[stat]) do
+			local meta = getMeta(entry.key)
+			local name = (meta and meta.name) or ("Player " .. entry.key)
+			table.insert(lines, i .. ". " .. name .. " - " .. info.suffix(entry.value))
+		end
+		for _, label in labels do
+			render(label, info.title, lines)
+		end
+	end
 end
 
 -- `map` is the built map (see MapBuilder.buildLeaderboards); missing parts (a stale bake from
@@ -208,6 +262,17 @@ function LeaderboardService.init(map: Instance)
 	local hatchGui = hatchBoard and hatchBoard:FindFirstChild("Label")
 	incomeLabel = incomeGui and (incomeGui:FindFirstChild("Text") :: TextLabel?)
 	hatchLabel = hatchGui and (hatchGui:FindFirstChild("Text") :: TextLabel?)
+	for _, d in map:GetDescendants() do
+		local stat = d:GetAttribute("Leaderboard")
+		if typeof(stat) == "string" and STATS[stat] then
+			local gui = d:FindFirstChild("Label")
+			local text = gui and gui:FindFirstChild("Text")
+			if text and text:IsA("TextLabel") then
+				statLabels[stat] = statLabels[stat] or {}
+				table.insert(statLabels[stat], text)
+			end
+		end
+	end
 
 	task.spawn(function()
 		while true do

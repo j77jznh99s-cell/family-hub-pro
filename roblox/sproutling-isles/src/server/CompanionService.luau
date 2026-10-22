@@ -203,6 +203,10 @@ local function mount(player: Player)
 		notify(player, "Your horse won't go down into the crypt.", "#ffb070")
 		return
 	end
+	if player:GetAttribute("VehicleId") then
+		notify(player, "Leave your vehicle first (G).", "#ffb070")
+		return
+	end
 	local model = buildHorse()
 	model.Parent = player.Character
 	local hip = humanoid.HipHeight

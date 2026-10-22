@@ -3,12 +3,21 @@
 -- on the city's shop models; the second shop of a trade has a "2" suffix ("blacksmith2"), which
 -- Shops.get() strips. Every open shop also buys monster materials (Loot.Materials[].value).
 
+local Vehicles = require(script.Parent.Vehicles)
+local Crates = require(script.Parent.Crates)
+
 local Shops = {}
 
 export type Item = {
 	id: string,
-	kind: string, -- "weapon" | "armor" | "consumable" | "unlock"
+	kind: string, -- "weapon" | "armor" | "consumable" | "unlock" | "vehicle" | "crate"
 	unlock: string?, -- unlock: "companion" | "horse"
+	vehicle: string?, -- vehicle id (Shared/Vehicles)
+	crate: string?, -- crate tier (Shared/Crates)
+	level: number?, -- player level needed to buy
+	xp: number?, -- consumable: XP when used
+	buff: { [string]: number }?, -- consumable: timed buff (BuffService kinds)
+	duration: number?,
 	name: string,
 	price: number,
 	base: string?, -- weapon: sword | bow | staff
@@ -19,8 +28,9 @@ export type Item = {
 	stamina: number?, -- consumable
 }
 
--- cooking: has a kitchen (Shared/Recipes); travel: "air" | "sea" fast travel (Shared/Travel)
-export type Shop = { name: string, greeting: string, items: { Item }, cooking: boolean?, travel: string? }
+-- cooking: has a kitchen (Shared/Recipes); travel: "air" | "sea" fast travel (Shared/Travel);
+-- customize: paints vehicles of that class; map: opens the world map ("all" or "quests").
+export type Shop = { name: string, greeting: string, items: { Item }, cooking: boolean?, travel: string?, customize: string?, map: string? }
 
 local function weapons(base: string, label: string): { Item }
 	return {
@@ -46,6 +56,31 @@ Shops.Consumables = {
 
 local C = Shops.Consumables
 
+C.tome_small = { id = "tome_small", kind = "consumable", name = "Traveller's Journal", xp = 250, price = 300 }
+C.tome_large = { id = "tome_large", kind = "consumable", name = "Tome of Heroes", xp = 1500, price = 1600, level = 8 }
+C.manual = { id = "manual", kind = "consumable", name = "Sparring Manual", xp = 500, price = 550 }
+C.cloak = { id = "cloak", kind = "consumable", name = "Windrunner Cloak (+8 speed, 5 min)", buff = { speed = 8 }, duration = 300, price = 120 }
+C.warpaint = { id = "warpaint", kind = "consumable", name = "War Paint (+20% damage, 5 min)", buff = { damage = 1.2 }, duration = 300, price = 180 }
+
+local function vehicles(shop: string): { Item }
+	local out = {}
+	for _, v in Vehicles.List do
+		if v.shop == shop then
+			table.insert(out, { id = "vehicle_" .. v.id, kind = "vehicle", vehicle = v.id, name = v.name .. " (" .. v.kind .. ")", price = v.price, level = v.level })
+		end
+	end
+	return out
+end
+
+local function crates(): { Item }
+	local out = {}
+	for _, tier in Crates.Order do
+		local c = Crates.Tiers[tier]
+		table.insert(out, { id = "crate_" .. tier, kind = "crate", crate = tier, name = c.name, price = c.price })
+	end
+	return out
+end
+
 Shops.Catalog = {
 	blacksmith = { name = "Blacksmith", greeting = "Steel for the road ahead.", items = weapons("sword", "Knight's Sword") },
 	fletcher = { name = "Fletcher", greeting = "Straight shafts, true aim.", items = weapons("bow", "Hunter's Bow") },
@@ -68,6 +103,20 @@ Shops.Catalog = {
 	airships = { name = "Skyward Shipyard", greeting = "Where to? The winds are fair.", items = {}, travel = "air" },
 	shipwright = { name = "Shipwright", greeting = "Hop aboard, we sail with the tide.", items = {}, travel = "sea" },
 	kitchen = { name = "Cooking Pot", greeting = "A bubbling pot over the fire.", items = {}, cooking = true },
+	-- vehicles and their paint shops
+	carriages = { name = "Carriage Works", greeting = "Wheels, horses, and the open road. What'll it be?", items = vehicles("carriages") },
+	boats = { name = "Boatwright", greeting = "Every hull here floats. I checked twice.", items = vehicles("boats") },
+	aircraft = { name = "Aerie Workshop", greeting = "Mind the propellers. And the wings. And the sky.", items = vehicles("aircraft") },
+	coachpaint = { name = "Coachpaint Atelier", greeting = "Pick a colour, any colour. Then pick a better one.", items = {}, customize = "land" },
+	sailmaker = { name = "Sailmaker", greeting = "Hulls, sails and trim, painted to order.", items = {}, customize = "water" },
+	aeriepaint = { name = "Aerie Paint Loft", greeting = "Bright wings fly better. Probably.", items = {}, customize = "air" },
+	-- the city's halls
+	bank = { name = "Royal Treasury Crate Vault", greeting = "Crates of every kind, sealed by royal warrant.", items = crates() },
+	library = { name = "Grand Library", greeting = "Knowledge is experience you didn't have to bleed for.", items = { C.tome_small, C.tome_large } },
+	trainer = { name = "Barracks Quartermaster", greeting = "Train hard. Then train harder in the arena.", items = { C.manual, C.potion_health, C.warpaint } },
+	tailor = { name = "Tailor", greeting = "A good cloak makes a quick traveller.", items = { C.cloak } },
+	maps = { name = "Cartographer", greeting = "Every road, river and peak, inked by hand. Have a look.", items = {}, map = "all" },
+	guild = { name = "Adventurers' Guild", greeting = "Folk across the land need help. The board shows who and where.", items = {}, map = "quests" },
 	herbalist = { name = "Herbalist", greeting = "Every herb has its use.", items = {}, cooking = true },
 } :: { [string]: Shop }
 

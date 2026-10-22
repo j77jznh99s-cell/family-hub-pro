@@ -94,6 +94,11 @@ function DataService.defaultData()
 		consumables = {}, -- [itemId] = count (potions, meals)
 		unlocks = {}, -- [unlockId] = true: "companion" (Beast Tamer), "horse" (Stables), "skyward" (quest)
 		quests = { active = {}, done = {}, caches = {} }, -- QuestService
+		level = 1, -- LevelService
+		xp = 0, -- XP towards the next level
+		vehicles = {}, -- [vehicleId] = { paint = index, trim = index } (Shared/Vehicles)
+		crates = { wood = 1, silver = 0, gold = 0 }, -- unopened reward crates (Shared/Crates)
+		arenaBest = 0, -- best arena wave survived
 	}
 end
 

@@ -700,3 +700,7 @@ require(script:WaitForChild("Combat"))
 require(script:WaitForChild("Inventory"))
 -- quests: talk window, tracker and guide beam (see QuestLog.luau)
 require(script:WaitForChild("QuestLog"))
+-- levels, crates, vehicles and the world map
+require(script:WaitForChild("Progress"))
+require(script:WaitForChild("Vehicles"))
+require(script:WaitForChild("WorldMap"))

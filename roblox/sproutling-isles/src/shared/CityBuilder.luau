@@ -657,6 +657,16 @@ local function guildHall(parent: Instance, x: number, z: number, w: number, d: n
 	return m
 end
 
+-- Makes a hall a working shop: the Shop attribute plus a counter anchor in front of its doors.
+local function hallShop(hall: Model, id: string)
+	hall:SetAttribute("Shop", id)
+	local doors = hall:FindFirstChild("Doors") :: BasePart?
+	if doors then
+		local anchor = part(hall, "ShopAnchor", Vector3.new(4, 4, 4), doors.CFrame * CFrame.new(0, -2.5, -3.5), WHITE, nil, { Transparency = 1, CanCollide = false })
+		anchor:SetAttribute("Shop", id)
+	end
+end
+
 local function cathedral(parent: Instance, cx: number, cz: number, facing: Vector3)
 	local m = model(parent, "Cathedral")
 	local rel = frame(cx, cz, facing)
@@ -732,6 +742,34 @@ local function mageTower(parent: Instance, x: number, z: number)
 	end
 end
 
+-- A leaderboard on two posts; LeaderboardService fills in boards by their Leaderboard attribute.
+local function leaderBoard(parent: Instance, x: number, z: number, facing: Vector3, stat: string, title: string)
+	local rel = frame(x, z, facing)
+	for _, s in { -1, 1 } do
+		part(parent, "BoardPost", Vector3.new(0.8, 15, 0.8), rel(s * 6.5, 7.5, 0), TIMBER, Enum.Material.Wood)
+	end
+	local header = part(parent, "BoardHeader", Vector3.new(14, 2.4, 0.6), rel(0, 15, 0), GOLD, Enum.Material.Metal)
+	sign(header, title, rgb(60, 40, 20))
+	local backing = part(parent, "LeaderboardBoard", Vector3.new(12, 11, 0.6), rel(0, 8, 0), rgb(60, 50, 45), Enum.Material.WoodPlanks)
+	backing:SetAttribute("Leaderboard", stat)
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Label"
+	gui.Size = UDim2.fromOffset(260, 280)
+	gui.LightInfluence = 0
+	gui.MaxDistance = 90
+	gui.Parent = backing
+	local text = Instance.new("TextLabel")
+	text.Name = "Text"
+	text.BackgroundTransparency = 0.25
+	text.BackgroundColor3 = rgb(35, 28, 24)
+	text.Size = UDim2.fromScale(1, 1)
+	text.Font = Enum.Font.FredokaOne
+	text.TextScaled = true
+	text.TextColor3 = rgb(255, 240, 200)
+	text.Text = title .. "\n\nLoading..."
+	text.Parent = gui
+end
+
 local function marketSquare(parent: Instance, x0: number, x1: number, z0: number, z1: number)
 	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
 	box(parent, "Square", cx, PAVE, cz, x1 - x0 - 2, 0.1, z1 - z0 - 2, rgb(210, 195, 170), Enum.Material.Slate)
@@ -758,6 +796,7 @@ local function marketSquare(parent: Instance, x0: number, x1: number, z0: number
 	for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
 		lanternPost(parent, cx + c[1] * (r - 6), cz + c[2] * (r - 6))
 	end
+	leaderBoard(parent, x1 - 9, z0 + 9, Vector3.new(0, 0, 1), "level", "Highest Levels")
 end
 
 -- Round arena with tiered stands, sand floor and gates; Arena attribute marks the PvP zone.
@@ -792,6 +831,17 @@ local function arena(parent: Instance, x0: number, x1: number, z0: number, z1: n
 	end
 	local board = box(m, "ArenaSign", cx, PAVE + 17, z0 + 2, 18, 3, 0.6, rgb(50, 40, 35), Enum.Material.WoodPlanks)
 	sign(board, "The Arena", GOLD, Enum.NormalId.Back)
+	-- gameplay: the floor's centre and size (ArenaService), and the gate where trials start
+	local centre = part(m, "ArenaCenter", Vector3.new(1, 1, 1), CFrame.new(cx, PAVE + 0.5, cz), WHITE, nil, { Transparency = 1, CanCollide = false, CanQuery = false, CanTouch = false })
+	centre:SetAttribute("ArenaCenter", true)
+	centre:SetAttribute("ArenaRadius", R - 15)
+	local gateDir = Vector3.new(math.cos(math.pi * 2 * 0.5 / segs), 0, math.sin(math.pi * 2 * 0.5 / segs))
+	local gatePos = Vector3.new(cx, 0, cz) + gateDir * (R + 4)
+	local gate = part(m, "ArenaGate", Vector3.new(4, 6, 4), CFrame.new(gatePos.X, PAVE + 3, gatePos.Z), rgb(200, 60, 50), Enum.Material.Fabric)
+	gate:SetAttribute("ArenaGate", true)
+	local gateSign = part(m, "GateBanner", Vector3.new(0.4, 4, 3), CFrame.lookAt(Vector3.new(gatePos.X, PAVE + 9, gatePos.Z), Vector3.new(gatePos.X, PAVE + 9, gatePos.Z) + gateDir), rgb(200, 60, 50), Enum.Material.Fabric)
+	sign(gateSign, "Trials", GOLD, Enum.NormalId.Front)
+	leaderBoard(m, x0 + 8, z1 - 8, Vector3.new(0, 0, 1), "arena", "Arena Champions")
 end
 
 local function clockTower(parent: Instance, x: number, z: number, facing: Vector3)
@@ -902,7 +952,17 @@ local function harbour(f: Instance, x0: number, x1: number, z0: number, z1: numb
 		part(wh, "LoadingDoor", Vector3.new(8, 9, 0.4), rel(k * (d - 10) / 3.2, PAVE + 4.5, 13.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
 	end
 	local board = part(wh, "NameBoard", Vector3.new(16, 2.4, 0.4), rel(0, PAVE + 11, 13.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
-	sign(board, "Harbour Stores", GOLD)
+	sign(board, "Boatwright", GOLD)
+	wh:SetAttribute("Shop", "boats")
+	local boatAnchor = part(wh, "ShopAnchor", Vector3.new(4, 4, 4), rel(0, PAVE + 2.5, 16), WHITE, nil, { Transparency = 1, CanCollide = false })
+	boatAnchor:SetAttribute("Shop", "boats")
+	-- the sailmaker's stall on the quay, for paint and trim
+	local sx, sz = x0 + EDGE + 40, z1 - EDGE - 6
+	marketStall(f, sx, sz, Vector3.new(0, 0, -1), rgb(80, 150, 220), seed + 4)
+	local sailSign = part(f, "SailmakerSign", Vector3.new(8, 1.6, 0.3), CFrame.new(sx, PAVE + 9.4, sz + 0.5), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(sailSign, "Sailmaker", GOLD, Enum.NormalId.Front)
+	local sailAnchor = part(f, "ShopAnchor", Vector3.new(4, 4, 4), CFrame.new(sx, PAVE + 2.5, sz - 3), WHITE, nil, { Transparency = 1, CanCollide = false })
+	sailAnchor:SetAttribute("Shop", "sailmaker")
 	-- cargo: crate and barrel stacks
 	for k = 0, 5 do
 		local sx, sz = x0 + EDGE + 42 + (k % 2) * 10, z0 + EDGE + 8 + (k // 2) * (d - 16) / 2
@@ -1110,6 +1170,23 @@ local function airshipPort(f: Instance, cx: number, cz: number)
 	raised(f, -PAVE, function(t)
 		shop(t, cx + 80, cz - 75, 22, Vector3.new(-1, 0, 0), "The Cloud's Rest Inn", "inn", 2)
 	end)
+	-- the Aerie Workshop: flying machines and their paint loft
+	local aerie = model(f, "Aerie Workshop")
+	local arel = frame(cx + 20, cz + 116, Vector3.new(0, 0, -1))
+	part(aerie, "Walls", Vector3.new(44, 16, 22), arel(0, 8, 0), rgb(205, 195, 175), Enum.Material.Plaster)
+	gableSide(aerie, arel, 44, 22, 16, rgb(205, 195, 175), ROOFS[3], Enum.Material.Plaster)
+	part(aerie, "HangarDoor", Vector3.new(18, 12, 0.5), arel(-8, 6, 11.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	local aboard = part(aerie, "NameBoard", Vector3.new(22, 2.6, 0.5), arel(0, 14, 11.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(aboard, "Aerie Workshop", GOLD)
+	for _, s in { -1, 1 } do
+		part(aerie, "DisplayWing", Vector3.new(14, 0.3, 4), arel(s * 9, 18.5, 2) * CFrame.Angles(0, 0, s * math.rad(-12)), rgb(240, 230, 210), Enum.Material.Fabric)
+	end
+	local craftAnchor = part(aerie, "ShopAnchor", Vector3.new(4, 4, 4), arel(-8, 2.5, 14), WHITE, nil, { Transparency = 1, CanCollide = false })
+	craftAnchor:SetAttribute("Shop", "aircraft")
+	local loftAnchor = part(aerie, "ShopAnchor", Vector3.new(4, 4, 4), arel(14, 2.5, 14), WHITE, nil, { Transparency = 1, CanCollide = false })
+	loftAnchor:SetAttribute("Shop", "aeriepaint")
+	local loftSign = part(aerie, "LoftSign", Vector3.new(10, 1.6, 0.4), arel(14, 7, 11.3), rgb(60, 45, 35), Enum.Material.WoodPlanks)
+	sign(loftSign, "Paint Loft", GOLD)
 	-- cargo, carts and a windsock
 	for k = 0, 7 do
 		crate(f, cx + 10 + (k % 4) * 5, 0, cz - 60 + (k // 4) * 5, 4, hash(k) * 0.5)
@@ -1285,6 +1362,7 @@ local MARKET = {
 	{ "Blacksmith", "blacksmith" }, { "Armorer", "armorer" }, { "Alchemist", "alchemist" }, { "Beast Tamer", "tamer" },
 	{ "Stables", "stable" }, { "The Gilded Tankard", "tavern" }, { "Fletcher", "fletcher" }, { "Enchanter", "enchanter" },
 	{ "Cook & Larder", "cook" }, { "Tailor", "tailor" }, { "Herbalist", "herbalist" }, { "Cartographer", "maps" },
+	{ "Carriage Works", "carriages" }, { "Coachpaint Atelier", "coachpaint" },
 }
 local shopsPlaced = 0
 
@@ -1593,11 +1671,11 @@ function CityBuilder.Build(map: Instance, landscape: any): Instance
 	end, { fixed = Vector3.new(0, 0, 1) })
 	landmark(quarter, "Guild", 85, 612, 74, -16, 19, function(u, x, z, facing)
 		local hall = guildHall(u, x, z, 66, 30, facing, "Adventurers' Guild", BANNERS[1])
-		hall:SetAttribute("Shop", "guild")
+		hallShop(hall, "guild")
 	end)
 	landmark(quarter, "Treasury", 60, 905, 64, -16, 19, function(u, x, z, facing)
 		local hall = guildHall(u, x, z, 56, 30, facing, "Royal Treasury", BANNERS[4])
-		hall:SetAttribute("Shop", "bank")
+		hallShop(hall, "bank")
 	end)
 	landmark(quarter, "TownHall", -115, 1060, 78, -16, 19, function(u, x, z, facing)
 		local rel = frame(x, z, facing)
@@ -1606,11 +1684,11 @@ function CityBuilder.Build(map: Instance, landscape: any): Instance
 	end)
 	landmark(quarter, "Library", -170, 820, 64, -16, 19, function(u, x, z, facing)
 		local lib = guildHall(u, x, z, 56, 30, facing, "Grand Library", BANNERS[5])
-		lib:SetAttribute("Shop", "library")
+		hallShop(lib, "library")
 	end)
 	landmark(quarter, "Barracks", 110, 1185, 88, -36, 36, function(u, x, z)
 		local barracks = guildHall(u, x, z - 20, 80, 26, Vector3.new(0, 0, -1), "Barracks", BANNERS[2])
-		barracks:SetAttribute("Shop", "trainer")
+		hallShop(barracks, "trainer")
 		trainingYard(u, x, z + 18, 80, 28)
 		for k = 0, 3 do
 			marker(u, "DummySpot", x - 30 + k * 20, PAVE, z + 12, "DummySpot", true)

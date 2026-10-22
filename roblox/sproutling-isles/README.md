@@ -124,6 +124,33 @@ the client code `src/client/Combat.luau`.
 - Code: `src/shared/WildsBuilder.luau` (builds it all), `src/server/QuestService.luau`,
   `src/client/QuestLog.luau`.
 
+## Levels, vehicles, the arena, crates and the map
+
+- **Levels (1-60):** XP from monsters, quests, arena waves, hatching and library tomes. The badge
+  (top left) shows level, rank and an XP bar. Each level-up plays a full-screen celebration
+  (spinning rays, a golden LEVEL UP!, the number bouncing in, confetti, then the new rank and
+  unlocks) and everyone nearby sees a pillar of light. Every level gives a crate (silver every 5th,
+  gold every 10th). Ranks: Wanderer, Adventurer, Pathfinder, Hero of the Isles, Champion, Sky Warden,
+  Legend, Mythic.
+- **Vehicles (G = garage),** unlocked by level and bought at the right building:
+  Carriage Works (city): Horse & Wagon L3, Carriage L6 (the car), Royal Coach L14.
+  Boatwright (harbour): Rowboat L2, Sloop L9, Swan Barge L20. Boats ride the sea and stop at the beach.
+  Aerie Workshop (airship port): Ornithopter L16 (the plane, always flying forward),
+  Aerial Screw L24 (the helicopter), Personal Skyship L34, Storm Griffin L50.
+  Flying: Space climbs, Ctrl dives (Up/Down buttons on phones).
+  Paint and trim: Coachpaint Atelier (land), Sailmaker (boats), Paint Loft (air), 12 colours.
+- **The Arena:** press "Start a trial" at the arena gate. Everyone on the floor fights waves that
+  get tougher (boss waves every 5th and 10th). Dew + XP per wave, crates on waves 5 and 10.
+- **Crates (K):** wooden, silver and golden; a spinning reel lands on the reward. Bought at the
+  Royal Treasury's crate vault.
+- **Every hall works:** Grand Library (XP tomes), Barracks quartermaster (sparring manual, war
+  paint), Tailor (speed cloak), Cartographer (world map), Adventurers' Guild (map of who needs help).
+- **Leaderboards:** Highest Levels (market square) and Arena Champions (at the arena), plus the
+  original income and rarest-hatch boards on the island. "Level" also shows in the player list.
+- **World map (M):** land, sea, city and every road, with pins for towns, quest givers, shops,
+  shrines, sky isles, the arena and the crypt. Tap a pin for a waypoint beam. The side panel lists
+  every way of getting around.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).

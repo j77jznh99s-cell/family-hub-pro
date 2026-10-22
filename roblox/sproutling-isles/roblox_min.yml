@@ -33,6 +33,8 @@ globals:
     any: true
   ColorSequence:
     any: true
+  ColorSequenceKeypoint:
+    any: true
   Random:
     any: true
   task:

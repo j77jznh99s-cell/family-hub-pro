@@ -38,6 +38,13 @@ local DungeonService = require(script.DungeonService)
 local CompanionService = require(script.CompanionService)
 local TravelService = require(script.TravelService)
 local QuestService = require(script.QuestService)
+local LevelService = require(script.LevelService)
+local VehicleService = require(script.VehicleService)
+local CrateService = require(script.CrateService)
+local ArenaService = require(script.ArenaService)
+local MapService = require(script.MapService)
+local Levels = require(Shared.Levels)
+local Combat = require(Shared.Combat)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
 Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
@@ -67,6 +74,17 @@ DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
 CompanionService.init() -- RPG step 6: Sproutling companions (P) and horses (V)
 TravelService.init(map) -- RPG step 6: airship and boat fast travel
 QuestService.init(map) -- quest givers in the wilds, wind shrines to the sky isles
+LevelService.init() -- levels, XP and the level-up celebration
+VehicleService.init() -- carriages, boats and flying machines (garage: G)
+CrateService.init() -- reward crates
+ArenaService.init(map) -- wave trials in the colosseum
+MapService.init(map) -- points of interest for the world map (M)
+EnemyService.onKill(function(player, kindId)
+	local kind = Combat.Enemies[kindId]
+	if kind then
+		LevelService.addXP(player, kind.reward * Levels.Gain.killPerDew, "Kill")
+	end
+end)
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle
