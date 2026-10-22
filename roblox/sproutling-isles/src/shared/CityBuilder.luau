@@ -813,7 +813,7 @@ local function arena(parent: Instance, x0: number, x1: number, z0: number, z1: n
 		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
 		local arc = 2 * math.pi * R / segs + 0.6
 		for tier = 0, 2 do
-			if not gate or tier > 0 then
+			if not gate then
 				local rr = R - 12 + tier * 4
 				local p = Vector3.new(cx, 0, cz) + dir * rr
 				part(m, "Stand", Vector3.new(2 * math.pi * rr / segs + 0.6, 3 + tier * 3, 4), CFrame.lookAt(Vector3.new(p.X, PAVE + (3 + tier * 3) / 2, p.Z), Vector3.new(p.X, PAVE + (3 + tier * 3) / 2, p.Z) + dir), if tier % 2 == 0 then STONE else DARKSTONE, Enum.Material.Cobblestone)
@@ -823,7 +823,10 @@ local function arena(parent: Instance, x0: number, x1: number, z0: number, z1: n
 		local wallH = if gate then 6 else 16
 		part(m, "OuterWall", Vector3.new(arc, wallH, 2.4), CFrame.lookAt(Vector3.new(p.X, PAVE + if gate then 13 else 8, p.Z), Vector3.new(p.X, PAVE + if gate then 13 else 8, p.Z) + dir), STONE, Enum.Material.Cobblestone)
 		if gate then
-			part(m, "Portcullis", Vector3.new(arc - 2, 10, 0.4), CFrame.lookAt(Vector3.new(p.X, PAVE + 5, p.Z), Vector3.new(p.X, PAVE + 5, p.Z) + dir), IRON, Enum.Material.DiamondPlate).Transparency = 0.3
+			-- the portcullis is raised: walk straight in
+			local bars = part(m, "Portcullis", Vector3.new(arc - 2, 3, 0.4), CFrame.lookAt(Vector3.new(p.X, PAVE + 11.5, p.Z), Vector3.new(p.X, PAVE + 11.5, p.Z) + dir), IRON, Enum.Material.DiamondPlate)
+			bars.Transparency = 0.3
+			bars.CanCollide = false
 			local pole = Vector3.new(cx, 0, cz) + dir * (R + 1.6)
 			cylinder(m, "FlagPole", 10, 0.4, pole.X, PAVE + 21, pole.Z, IRON, Enum.Material.Metal)
 			part(m, "Flag", Vector3.new(0.2, 3, 5), CFrame.new(pole.X, PAVE + 24.5, pole.Z + 2.6), BANNERS[(k // 5) % #BANNERS + 1], Enum.Material.Fabric)
@@ -1297,7 +1300,34 @@ end
 
 -- Builds a lot (made for flat ground at y = 0) at the top of its slope, on a stone plinth that
 -- levels it: on a hillside the plinth becomes a terrace wall. Ships stay down on the water.
-local function buildLot(parent: Instance, name: string, lot: Lot, lo: number, hi: number, builder: (Instance) -> (), plinthColor: Color3?, plinthMaterial: any?, fixedY: number?): Instance
+-- Stone ramps from the top of a lot's plinth down to the ground beyond its edges, wherever the
+-- drop is more than a step: "front" (towards the street) or "all" four sides.
+local function addRamps(unit: Instance, lot: Lot, top: number, sides: string)
+	local f = lot.facing
+	local r = Vector3.new(-f.Z, 0, f.X)
+	local origin = Vector3.new(lot.x, 0, lot.z)
+	local centre = origin + f * ((lot.front + lot.back) / 2)
+	local depth = lot.front - lot.back
+	local edges: { { any } } = { { f, origin + f * lot.front, lot.w } }
+	if sides == "all" then
+		table.insert(edges, { -f, origin + f * lot.back, lot.w })
+		table.insert(edges, { r, centre + r * (lot.w / 2), depth })
+		table.insert(edges, { -r, centre - r * (lot.w / 2), depth })
+	end
+	for _, e in edges do
+		local dir: Vector3, edge: Vector3, span: number = e[1], e[2], e[3]
+		local beyond = edge + dir * 3
+		local drop = top - L.height(beyond.X, beyond.Z)
+		if drop > 1.2 then
+			local length = math.max(6, drop * 2.2)
+			local width = math.clamp(span * 0.35, 8, 14)
+			local mid = edge + dir * (length / 2 + 0.5)
+			wedge(unit, "Ramp", Vector3.new(width, drop, length), CFrame.lookAt(Vector3.new(mid.X, top - drop / 2, mid.Z), Vector3.new(mid.X, top - drop / 2, mid.Z) + dir), DARKSTONE, Enum.Material.Cobblestone)
+		end
+	end
+end
+
+local function buildLot(parent: Instance, name: string, lot: Lot, lo: number, hi: number, builder: (Instance) -> (), plinthColor: Color3?, plinthMaterial: any?, fixedY: number?, ramps: string?): Instance
 	local unit = folder(parent, name)
 	builder(unit)
 	local y = fixedY or (hi + 0.1)
@@ -1313,6 +1343,9 @@ local function buildLot(parent: Instance, name: string, lot: Lot, lo: number, hi
 		local cv = (lot.back + lot.front) / 2
 		local cf = CFrame.lookAt(Vector3.new(lot.x, 0, lot.z), Vector3.new(lot.x + lot.facing.X, 0, lot.z + lot.facing.Z)) * CFrame.new(0, (top + bottom) / 2, -cv)
 		part(unit, "Plinth", Vector3.new(lot.w + 1, top - bottom, lot.front - lot.back + 1), cf, plinthColor or FLAGSTONE, plinthMaterial or Enum.Material.Slate)
+		if ramps then
+			addRamps(unit, lot, top, ramps)
+		end
 	end
 	return unit
 end
@@ -1337,7 +1370,7 @@ local function landmark(parent: Instance, name: string, x: number, z: number, w:
 				claim(lot)
 				buildLot(parent, name, lot, lo, hi, function(u)
 					builder(u, px, pz, facing)
-				end, DARKSTONE, Enum.Material.Cobblestone, o.y)
+				end, DARKSTONE, Enum.Material.Cobblestone, o.y, "all")
 				return lot
 			end
 			if o.force then
@@ -1437,7 +1470,7 @@ local function frontage(parent: Instance, roadIndex: number, pick: (number, numb
 					local id = if shopsPlaced > #MARKET then entry[2] .. "2" else entry[2]
 					buildLot(parent, "Shop", lot, lo, hi, function(u)
 						shop(u, lot.x, lot.z, w, facing, entry[1], id, seed)
-					end)
+					end, nil, nil, nil, "front")
 				elseif kind == "townhouse" then
 					buildLot(parent, "Townhouse", lot, lo, hi, function(u)
 						townhouse(u, lot.x, lot.z, w, 14, 2 + seed % 3, facing, seed)

@@ -145,21 +145,39 @@ local function waveCleared()
 	end
 end
 
+-- Everyone standing on the floor joins (at the start and before every later wave).
+local function recruit()
+	for _, player in Players:GetPlayers() do
+		if not fighters[player] and onFloor(player) then
+			fighters[player] = true
+			notify(player, "You join the trial!", "#ffd27a")
+		end
+	end
+end
+
 local function start(by: Player)
 	if running then
-		notify(by, string.format("A trial is already running (wave %d). Watch from the stands!", wave), "#d8d8d8")
+		notify(by, string.format("A trial is already running (wave %d). Step onto the floor to join the next wave!", wave), "#d8d8d8")
 		return
 	end
 	running = true
 	wave = 0
+	-- warn everyone near the arena, then gather whoever is on the floor
 	for _, player in Players:GetPlayers() do
-		if onFloor(player) or player == by then
-			fighters[player] = true
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root and (root.Position - centre).Magnitude < radius * 4 then
+			notify(player, "An arena trial begins in 8 seconds! Step onto the sand to fight.", "#ffd27a")
 		end
 	end
-	tellFighters("The gates close... the trial begins in 5 seconds!", "#ffd27a")
 	task.spawn(function()
-		task.wait(5)
+		task.wait(8)
+		recruit()
+		if next(fighters) == nil then
+			running = false
+			notify(by, "Nobody was on the arena floor, so the trial was called off.", "#d8d8d8")
+			return
+		end
 		spawnWave()
 		while running do
 			task.wait(1)
@@ -178,6 +196,7 @@ local function start(by: Player)
 				waveCleared()
 				tellFighters("Next wave in 6 seconds...", "#ffd27a")
 				task.wait(6)
+				recruit()
 				if running and next(fighters) ~= nil then
 					spawnWave()
 				end
