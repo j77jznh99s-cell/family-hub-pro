@@ -32,6 +32,49 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-22
+
+**Done overnight/today**
+- Big one: over the last ~36 hours (owner's own laptop/phone sessions, not the paused hourly
+  worker), **Sproutling Isles was completely rebuilt** into a different game. The owner iterated
+  through several directions in one stretch — modern city game → open-world fantasy RPG (Renaissance
+  style, genre ideas from Elden Ring/Diablo/Delicious in Dungeon, nothing copied) — and asked to
+  "continue the process until it is finished" without stopping for check-ins. What landed: combat
+  (dodge, stamina, abilities), companions/mounts/travel (airship, boat, horse), a reshaped world
+  (vast irregular land, curvy roads, sky isles, quests, new enemies), vehicles/garages/paint shops,
+  an arena with leaderboards, crates, a world map, levels, and today a guide NPC (Mara) with tour
+  quests, an F1 help panel, and a daily crate. Gardening was kept — plots now grow RPG ingredients,
+  and Sproutlings became companion pets.
+- **Almost none of this has been tested in Roblox Studio.** The owner ran one early play-test
+  partway through ("looks good") on an older map version; everything built since — most of the RPG
+  systems — has never been run. The owner explicitly chose to build first, test later.
+- The old "beta 2–8 Oct, skip Halloween by 24 Oct" plan no longer applies — that was for the
+  original grow-and-snatch game, which this replaced. Updated [[Active Context]] to stop carrying
+  that stale deadline forward.
+- Also fixed upstream: `graphify-out/manifest.json` (pure local-timestamp noise I'd been manually
+  stashing around on every morning run) is no longer tracked — that workaround isn't needed going forward.
+
+**New projects waiting for your OK**
+- None — all owner-directed, not autonomous.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$) — note these were scoped for the old game and may no longer be relevant.
+
+**Needs you**
+- **Play-test the finished Sproutling Isles RPG in Studio** — this is now the real priority, not
+  the old beta/Halloween dates. Pull the branch, open the place file, press Play, send back any red
+  Output errors. See [[Active Context]] and [[Sproutling Isles]] for exact steps.
+- 12 texture asset IDs are still pending (material kit built, waiting on you to paste real Roblox IDs).
+- Approve or decline PonyTail + Agent Skills per [[Claude Code Add-ons]] (Graphify already done).
+- Everything else from recent summaries still open: video-analyst's YouTube import, Family Hub's
+  Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian confirmation, OANDA setup, Clip
+  Studio direction, Command Deck wiring.
+
+**Next up**
+- Waiting on your RPG play-test above all else. Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-21
 
 **Done overnight/today**

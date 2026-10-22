@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 # Active Context
 
@@ -88,11 +88,13 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 - [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do (no Xcode in the sandbox). See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
 
 ## Timeline at risk
-**The original plan has now fully slipped** (as of 2026-10-10, the originally planned public-launch date):
-the 2–8 Oct beta window passed with no play-test done, and today's launch date passed with it. The owner is
-the only one who can run the play-test (Roblox Studio access). This needs an explicit owner decision — new
-beta/launch dates, or another path forward — not something a session can resolve on its own. If launch slips
-past 24 Oct, skip Halloween.
+**Superseded, not current.** The old "beta 2–8 Oct, skip Halloween if launch slips past 24 Oct" plan was for
+the original grow-and-snatch Sproutling Isles. The owner changed direction 2026-10-21: Sproutling Isles is
+now a completely different game, an open-world fantasy RPG (see [[Sproutling Isles]] and [[Decisions]] for the
+pivot history) — Halloween/Hollow Harvest content and the old beta dates no longer apply to what's being
+built. No new launch date has been set. The real open item now is simply: **the owner needs to play-test the
+RPG in Studio** — large parts of it (combat, vehicles, quests, arena, levels, crates, map) have never been
+run.
 
 ## Key links
 - Queue: [[Work Queue]] · Rule: [[Hourly Workflow]] · Summary: [[Morning Summary]]
