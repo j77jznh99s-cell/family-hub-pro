@@ -32,6 +32,32 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-23
+
+**Done overnight/today**
+- Sproutling Isles RPG build continued (owner's own session): a second dungeon, "The Deepdelve
+  Mines," with a data-driven dungeon builder, a boss (Crag King), a quest and a map pin. Same as
+  everything else built this week — **not yet tested in Studio.**
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (likely stale now that the game concept changed — worth re-confirming whether they still apply).
+
+**Needs you**
+- Unchanged from yesterday: **play-test the Sproutling Isles RPG in Studio** is the real priority —
+  it keeps growing (now 2 dungeons, an arena, vehicles, quests, a guide NPC) with nothing run yet.
+  12 texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Waiting on your RPG play-test above all else. Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-22
 
 **Done overnight/today**
