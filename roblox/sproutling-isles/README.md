@@ -151,6 +151,15 @@ the client code `src/client/Combat.luau`.
   shrines, sky isles, the arena and the crypt. Tap a pin for a waypoint beam. The side panel lists
   every way of getting around.
 
+## Waystones (fast travel)
+
+- 24 glowing obelisks across the Isles: the island bridge, the city market, harbour and airship port,
+  every hill site and village, the three mountain camps, and one on each of the five sky isles.
+- Touch one to **attune** it (+40 XP); its runes light up blue. Standing at any waystone, travel to
+  any attuned one for free. From anywhere else, **T**, the Travel button or a waystone pin on the
+  world map sends you once a minute. Not from inside a dungeon or during an arena trial.
+- Data: `src/shared/Waystones.luau`; server `WaystoneService.luau`; client `src/client/Waystones.luau`.
+
 ## Second dungeon: The Deepdelve Mines
 
 - Entrance: a glowing stairwell by Gorrim's mine camp in the northern mountains (level 12+; the

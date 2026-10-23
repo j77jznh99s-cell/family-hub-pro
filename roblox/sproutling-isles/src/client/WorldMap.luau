@@ -14,6 +14,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Landscape = require(Shared:WaitForChild("Landscape"))
 local Shops = require(Shared:WaitForChild("Shops"))
 
+local WaystoneClient = require(script.Parent:WaitForChild("Waystones"))
+
 local WorldMap = {}
 
 local player = Players.LocalPlayer
@@ -39,6 +41,7 @@ local KINDS = {
 	travel = { color = Color3.fromRGB(120, 255, 220), label = "Airships & boats" },
 	shrine = { color = Color3.fromRGB(170, 230, 255), label = "Wind shrine" },
 	sky = { color = Color3.fromRGB(230, 240, 255), label = "Sky isle" },
+	waystone = { color = Color3.fromRGB(90, 170, 255), label = "Waystone (fast travel)" },
 	arena = { color = Color3.fromRGB(255, 90, 80), label = "Arena" },
 	dungeon = { color = Color3.fromRGB(150, 110, 200), label = "Crypt" },
 }
@@ -113,11 +116,12 @@ local function sideLine(text: string, color: Color3, height: number?)
 	order += 1
 	make("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, height or 16), LayoutOrder = order, Font = FONT, TextScaled = true, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = color, Text = text, Parent = side })
 end
-for _, k in { "town", "village", "quest", "vehicles", "custom", "crates", "hall", "travel", "shrine", "sky", "arena", "dungeon" } do
+for _, k in { "town", "village", "waystone", "quest", "vehicles", "custom", "crates", "hall", "travel", "shrine", "sky", "arena", "dungeon" } do
 	sideLine("\226\151\143 " .. KINDS[k].label, KINDS[k].color)
 end
 sideLine("", WHITE, 6)
 sideLine("GETTING AROUND", GOLD, 20)
+sideLine("Waystones: touch to attune, then travel (T)", Color3.fromRGB(120, 190, 255), 30)
 sideLine("Walk or run the roads", WHITE)
 sideLine("Horse (V) - Stables", Color3.fromRGB(210, 200, 185))
 sideLine("Horse & wagon, carriage, coach - Carriage Works", Color3.fromRGB(210, 200, 185), 30)
@@ -236,7 +240,12 @@ local function build()
 			make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 1), Size = UDim2.fromOffset(110, 13), BackgroundTransparency = 1, Font = FONT, TextScaled = true, TextColor3 = WHITE, TextStrokeTransparency = 0.2, Text = poi.name, ZIndex = 4, Parent = pin })
 		end
 		pin.Activated:Connect(function()
-			info.Text = poi.name .. " - waypoint set (blue beam)."
+			if poi.kind == "waystone" and poi.id and WaystoneClient.isAttuned(poi.id) then
+				win.Visible = false
+				WaystoneClient.open(nil)
+				return
+			end
+			info.Text = poi.name .. (if poi.kind == "waystone" then " - not attuned yet. Waypoint set." else " - waypoint set (blue beam).")
 			setWaypoint(poi.x, poi.z)
 		end)
 		pin.MouseEnter:Connect(function()

@@ -38,6 +38,7 @@ end
 local L: any = nil -- Shared.Landscape
 local Q: any = nil -- Shared.Quests
 local K: any = nil -- MapBuilder's kit
+local WS: any = nil -- Shared.Waystones
 
 ----------------------------------------------------------------------------------------------
 -- helpers
@@ -743,12 +744,52 @@ end
 
 ----------------------------------------------------------------------------------------------
 
-function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any): Instance
+-- A waystone: a carved obelisk with a rune (grey until attuned; the client lights it) and a
+-- floating crystal. The anchor part carries Waystone (id) for WaystoneService's prompt.
+local function waystone(parent: Instance, w: any, x: number, y: number, z: number)
+	local m = model(parent, "Waystone_" .. w.id)
+	m:SetAttribute("Waystone", w.id)
+	m.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+	local stone = rgb(170, 175, 190)
+	cylinder(m, "WaystoneBase", 1.2, 9, x, y + 0.2, z, rgb(120, 125, 135), Enum.Material.Slate)
+	part(m, "Obelisk", Vector3.new(3.2, 7, 3.2), CFrame.new(x, y + 4.3, z), stone, Enum.Material.Slate)
+	part(m, "ObeliskTop", Vector3.new(2.2, 3, 2.2), CFrame.new(x, y + 9.3, z) * CFrame.Angles(0, math.rad(45), 0), stone, Enum.Material.Slate)
+	for _, a in { 0, 90, 180, 270 } do
+		local dir = CFrame.Angles(0, math.rad(a), 0).LookVector
+		local rune = part(m, "Rune", Vector3.new(1.4, 2.4, 0.2), CFrame.lookAt(Vector3.new(x, y + 4.8, z) + dir * 1.62, Vector3.new(x, y + 4.8, z) + dir * 3), rgb(110, 110, 120), Enum.Material.Neon)
+		rune.CanCollide = false
+	end
+	local crystal = part(m, "WayCrystal", Vector3.new(1.4, 2.2, 1.4), CFrame.new(x, y + 12.6, z) * CFrame.Angles(0, math.rad(45), math.rad(15)), rgb(150, 210, 255), Enum.Material.Neon)
+	crystal.CanCollide = false
+	glow(crystal, 18, 1.2, rgb(150, 210, 255))
+	local anchor = marker(m, "WaystoneAnchor", Vector3.new(x, y, z), { Waystone = w.id, WaystoneName = w.name, WaystoneRegion = w.region })
+	anchor.Size = Vector3.new(6, 6, 6)
+	m.PrimaryPart = anchor
+	-- a name over the stone
+	local tag = Instance.new("BillboardGui")
+	tag.Name = "NameTag"
+	tag.Size = UDim2.fromOffset(200, 40)
+	tag.StudsOffset = Vector3.new(0, 15, 0)
+	tag.MaxDistance = 120
+	tag.LightInfluence = 0
+	tag.Parent = anchor
+	local text = Instance.new("TextLabel")
+	text.BackgroundTransparency = 1
+	text.Size = UDim2.fromScale(1, 1)
+	text.Font = Enum.Font.FredokaOne
+	text.TextScaled = true
+	text.TextColor3 = rgb(190, 225, 255)
+	text.TextStrokeTransparency = 0.3
+	text.Text = "Waystone: " .. w.name
+	text.Parent = tag
+end
+
+function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any, waystones: any?): Instance
 	local existing = map:FindFirstChild("Wilds")
 	if existing then
 		existing:Destroy()
 	end
-	L, Q, K = landscape, quests, kit
+	L, Q, K, WS = landscape, quests, kit, waystones
 	counter = 0
 	table.clear(taken)
 	local wilds = Instance.new("Folder")
@@ -925,6 +966,48 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 		local cx, cz = it.x + it.r * 0.4, it.z - it.r * 0.4
 		chest(f, cx, y, cz, 0.6)
 		marker(f, "SkyCacheAnchor", Vector3.new(cx, y, cz), { SkyCache = name })
+	end
+
+	-- waystones: fast-travel checkpoints (Shared/Waystones)
+	if WS then
+		local wf = folder(wilds, "Waystones")
+		local markers: { [string]: Vector3 } = {}
+		for _, d in map:GetDescendants() do
+			if d:IsA("BasePart") then
+				for _, w in WS.List do
+					if w.find and not markers[w.id] and d:GetAttribute(w.find[1]) == w.find[2] then
+						markers[w.id] = d.CFrame.Position
+					end
+				end
+			end
+		end
+		for _, w in WS.List do
+			if w.at then
+				waystone(wf, w, w.at[1], w.at[2], w.at[3])
+			elseif w.isle then
+				local it = isles[w.isle]
+				if it then
+					waystone(wf, w, it.x - it.r * 0.45, it.y + 1.5, it.z - it.r * 0.1)
+				end
+			elseif w.find then
+				local p = markers[w.id]
+				if p then
+					-- beside the marker, not on top of it
+					local x, z = p.X + 10, p.Z + 6
+					waystone(wf, w, x, p.Y - 1, z)
+				end
+			elseif w.site then
+				local s = L.Sites[w.site]
+				if s then
+					local x, z, h = findSpot(s.x + (w.dx or 0), s.z + (w.dz or 0), { radius = 6, maxRange = 3, search = 6, roadMargin = 3, minHeight = -10 })
+					if x and z and h then
+						waystone(wf, w, x, h - 0.2, z)
+					else
+						print("[WildsBuilder] no room for waystone " .. w.name)
+					end
+				end
+			end
+		end
 	end
 
 	-- homesteads in the open clearings

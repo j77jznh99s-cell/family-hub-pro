@@ -703,5 +703,6 @@ require(script:WaitForChild("QuestLog"))
 -- levels, crates, vehicles and the world map
 require(script:WaitForChild("Progress"))
 require(script:WaitForChild("Vehicles"))
+require(script:WaitForChild("Waystones"))
 require(script:WaitForChild("WorldMap"))
 require(script:WaitForChild("Help"))

@@ -60,9 +60,11 @@ end
 -- Shared.WildsBuilder and Shared.Quests (quest camps, homesteads, sky isle content), same arrangement.
 local Wilds: any = nil
 local QuestData: any = nil
-function MapBuilder.useWilds(module: any, quests: any)
+local WaystoneData: any = nil
+function MapBuilder.useWilds(module: any, quests: any, waystones: any?)
 	Wilds = module
 	QuestData = quests
+	WaystoneData = waystones
 end
 
 -- Shared.DungeonBuilder (The Hollow Crypt), same arrangement.
@@ -2104,11 +2106,11 @@ function MapBuilder.Build(parent: Instance): Instance
 		end
 	end
 	if not Wilds then
-		local ok, wildsModule, questModule = pcall(function()
-			return require((script :: any).Parent.WildsBuilder), require((script :: any).Parent.Quests)
+		local ok, wildsModule, questModule, waystoneModule = pcall(function()
+			return require((script :: any).Parent.WildsBuilder), require((script :: any).Parent.Quests), require((script :: any).Parent.Waystones)
 		end)
 		if ok then
-			Wilds, QuestData = wildsModule, questModule
+			Wilds, QuestData, WaystoneData = wildsModule, questModule, waystoneModule
 		end
 	end
 	local existing = parent:FindFirstChild("Map")
@@ -2150,7 +2152,7 @@ function MapBuilder.Build(parent: Instance): Instance
 			signpost = signpost,
 			crystal = crystal,
 			flowerBed = flowerBed,
-		})
+		}, WaystoneData)
 	end
 
 	map.Parent = parent

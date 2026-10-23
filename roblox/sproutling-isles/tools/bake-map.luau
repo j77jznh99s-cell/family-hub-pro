@@ -22,7 +22,7 @@ DungeonBuilder.useApi(roblox)
 MapBuilder.useDungeon(DungeonBuilder)
 local WildsBuilder = require("../src/shared/WildsBuilder")
 WildsBuilder.useApi(roblox)
-MapBuilder.useWilds(WildsBuilder, require("../src/shared/Quests"))
+MapBuilder.useWilds(WildsBuilder, require("../src/shared/Quests"), require("../src/shared/Waystones"))
 local map = MapBuilder.Build(workspace)
 
 -- Bake the lighting look too, so edit mode in Studio matches play mode.

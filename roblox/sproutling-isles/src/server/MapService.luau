@@ -16,7 +16,7 @@ local POIRemote = Instance.new("RemoteFunction")
 POIRemote.Name = "MapPOIs"
 POIRemote.Parent = remotes
 
-type POI = { name: string, kind: string, x: number, z: number }
+type POI = { name: string, kind: string, x: number, z: number, id: string? }
 local pois: { POI } = {}
 
 local SITE_NAMES = {
@@ -72,6 +72,8 @@ function MapService.init(map: Instance)
 				seenShop[shop] = true
 				table.insert(pois, { name = catalog.name, kind = kind, x = p.X, z = p.Z })
 			end
+		elseif typeof(d:GetAttribute("Waystone")) == "string" then
+			table.insert(pois, { name = "Waystone: " .. tostring(d:GetAttribute("WaystoneName")), kind = "waystone", x = p.X, z = p.Z, id = d:GetAttribute("Waystone") })
 		elseif d:GetAttribute("WindShrine") then
 			table.insert(pois, { name = "Wind Shrine to " .. tostring(d:GetAttribute("WindShrine")), kind = "shrine", x = p.X, z = p.Z })
 		elseif d:GetAttribute("SkyLanding") then

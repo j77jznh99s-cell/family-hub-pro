@@ -18,7 +18,7 @@ local LINES = {
 	{ "Click / tap: attack     1 / 2 / 3: sword, bow, staff     Shift: dodge roll", false },
 	{ "Q / X / C: Whirlwind, Firebolt, Second Wind     H: healing draught     J: stamina tonic", false },
 	{ "E: talk, shop, pick up     B: bag     K: crates     L: quest tracker", false },
-	{ "M: world map     G: garage (vehicles)     V: horse     P: companion", false },
+	{ "M: world map     G: garage (vehicles)     V: horse     P: companion     T: fast travel", false },
 	{ "Flying: Space up, Ctrl down. The Ornithopter always flies forward; W for speed.", false },
 	{ "", false },
 	{ "WHERE TO GO", true },
@@ -28,6 +28,7 @@ local LINES = {
 	{ "Coachpaint Atelier, Sailmaker, Paint Loft: paint your vehicles.", false },
 	{ "Skyward Shipyard (airship port) and Shipwright (docks): fast travel.", false },
 	{ "Wind shrines: up to the sky isles, once Pell gives you the Skyward Charm.", false },
+	{ "Waystones (glowing obelisks, 24 of them): touch to attune, then travel between them free.", false },
 	{ "Every day you log in: a free crate. Every 7 days in a row: a silver one too.", false },
 }
 
