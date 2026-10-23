@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-23: waystones
+**Agents used:** none · `8cc51cc` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a teleportation system like fast-travel checkpoints. Built 24 waystones (Shared/Waystones, WildsBuilder, WaystoneService, client window, map pins). Not Studio-tested.
+
 ## 2026-10-23: second dungeon
 **Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
 - Owner: "next". Built The Deepdelve Mines (data-driven DungeonBuilder, per-dungeon DungeonService, Crag King boss, quest, map pin). Not Studio-tested.
