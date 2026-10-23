@@ -11,7 +11,7 @@
   "9": "Sproutling Isles: Art Brief",
   "10": "pipeline.js",
   "11": "Sproutling Isles — Game Design Doc",
-  "12": "upload.js",
+  "12": "main",
   "13": "Gumroad Digital Products",
   "14": "bullmq.js",
   "15": "Clip Studio",
@@ -20,7 +20,7 @@
   "18": "1. Pre-launch checklist",
   "19": "5. Week 1–8 live-ops calendar",
   "20": "Sproutling Isles: Trading Booths (Phase 2 spec)",
-  "21": "ffmpeg.js",
+  "21": "inProcess.js",
   "22": "s3.js",
   "23": "StarNet Automation",
   "24": "ref_node_assert",
@@ -38,6 +38,7 @@
   "36": "routes/billing.js",
   "37": "3. Analytics event spec",
   "38": "config.js",
+  "39": "captions.test.js",
   "40": "Hourly Workflow (the standing rule)",
   "41": "Trading Agent (forex setups)",
   "42": "install-graphify.sh",
@@ -66,5 +67,7 @@
   "65": "Clip Studio",
   "66": "6. Marketing",
   "67": ".claude/CLAUDE.md",
-  "68": "transcription.js"
+  "68": "jobs.js",
+  "69": "billing.test.js",
+  "70": "Decisions"
 }

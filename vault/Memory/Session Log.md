@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-23: second dungeon
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner: "next". Built The Deepdelve Mines (data-driven DungeonBuilder, per-dungeon DungeonService, Crag King boss, quest, map pin). Not Studio-tested.
+
 ## 2026-10-22 (later): onboarding
 **Agents used:** none · `1a67526` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner: "Continue the development." Added Mara the Guide (tour quests that auto-complete via city markers), F1 help panel, daily crate. Earlier: arena/ramp fixes (`c4bb510`). Not Studio-tested.
