@@ -151,6 +151,18 @@ the client code `src/client/Combat.luau`.
   shrines, sky isles, the arena and the crypt. Tap a pin for a waypoint beam. The side panel lists
   every way of getting around.
 
+## Second dungeon: The Deepdelve Mines
+
+- Entrance: a glowing stairwell by Gorrim's mine camp in the northern mountains (level 12+; the
+  portal turns away lower levels). Six rooms: Mine Mouth, Collapsed Gallery (Crag Golems), Glowstone
+  Cavern (bats and a golem among glowing crystals), Lost Miners' Rest (skeletons and golems),
+  the Ore Vault (chest) and the Heart of the Mountain, where **the Crag King** waits (2,400 HP,
+  slams, eruptions and sweeps; drops an Epic+ weapon).
+- Gorrim's new quest **Into the Deep** (after Glowstone Seams) sends you after him: 500 Dew, an Epic+
+  weapon and a Golden Crate.
+- `DungeonBuilder.Dungeons` now describes every dungeon (rooms, look, entrance, level), and
+  DungeonService runs each one on its own, so more can be added as data.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you

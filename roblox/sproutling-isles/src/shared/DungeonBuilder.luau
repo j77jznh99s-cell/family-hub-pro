@@ -1,7 +1,9 @@
 --!strict
--- Builds The Hollow Crypt: an underground dungeon of six rooms reached through a stairway in the
--- hilltop castle's courtyard. Geometry plus named markers only; DungeonService adds the
--- behaviour (teleports, room clearing, doors, chests, the boss).
+-- Builds the dungeons: The Hollow Crypt (six rooms, reached through a stairway in the hilltop
+-- castle's courtyard) and The Deepdelve Mines (below Gorrim's mountain camp, level 12+).
+-- Geometry plus named markers only; DungeonService adds the behaviour (teleports, room
+-- clearing, doors, chests, the boss). Each dungeon is the same shape of markers under its own
+-- root folder (Map.Dungeon for the crypt, Map.Mines for the mines); see DungeonBuilder.Dungeons.
 --
 -- Service-free like MapBuilder (runs at server start and offline under Lune). The crypt sits far
 -- below the world at ORIGIN; players are teleported in and out, so it never shows from above.
@@ -35,15 +37,49 @@ end
 
 DungeonBuilder.Origin = { x = -500, y = -400, z = 60 }
 
--- Room plan, entered in order. Spawns are { kind, count }.
-DungeonBuilder.Rooms = {
-	{ name = "Entry Hall", w = 44, d = 40, spawns = {} },
-	{ name = "Crypt Hall", w = 64, d = 46, spawns = { { "skeleton", 4 } }, sarcophagi = true },
-	{ name = "Bat Cavern", w = 58, d = 58, spawns = { { "bat", 5 }, { "skeleton", 2 } }, pillars = true },
-	{ name = "Ossuary", w = 64, d = 46, spawns = { { "skeleton", 5 }, { "bat", 2 } }, niches = true },
-	{ name = "Treasure Vault", w = 34, d = 30, spawns = {}, chest = "vault" },
-	{ name = "Warden's Chamber", w = 84, d = 84, spawns = { { "warden", 1 } }, chest = "boss", boss = true },
+-- Each dungeon: where it sits (far below the world), its rooms in order (spawns are
+-- { kind, count }; the boss kind is placed on the dais), its look, and its entrance.
+DungeonBuilder.Dungeons = {
+	{
+		id = "crypt",
+		root = "Dungeon",
+		interior = "Crypt",
+		portal = "CryptPortal",
+		title = "The Hollow Crypt",
+		minLevel = 1,
+		origin = { x = -500, y = -400, z = 60 },
+		theme = "crypt",
+		entrance = { site = "castle", dx = 0, dz = 27 },
+		rooms = {
+			{ name = "Entry Hall", w = 44, d = 40, spawns = {} },
+			{ name = "Crypt Hall", w = 64, d = 46, spawns = { { "skeleton", 4 } }, sarcophagi = true },
+			{ name = "Bat Cavern", w = 58, d = 58, spawns = { { "bat", 5 }, { "skeleton", 2 } }, pillars = true },
+			{ name = "Ossuary", w = 64, d = 46, spawns = { { "skeleton", 5 }, { "bat", 2 } }, niches = true },
+			{ name = "Treasure Vault", w = 34, d = 30, spawns = {}, chest = "vault" },
+			{ name = "Warden's Chamber", w = 84, d = 84, spawns = { { "warden", 1 } }, chest = "boss", boss = "warden" },
+		},
+	},
+	{
+		id = "mines",
+		root = "Mines",
+		interior = "Depths",
+		portal = "MinePortal",
+		title = "The Deepdelve Mines",
+		minLevel = 12,
+		origin = { x = 600, y = -420, z = -1200 },
+		theme = "mines",
+		entrance = { site = "minecamp", dx = -24, dz = 22 },
+		rooms = {
+			{ name = "Mine Mouth", w = 44, d = 40, spawns = {}, timbers = true },
+			{ name = "Collapsed Gallery", w = 62, d = 50, spawns = { { "golem", 3 } }, timbers = true, rails = true },
+			{ name = "Glowstone Cavern", w = 64, d = 64, spawns = { { "bat", 5 }, { "golem", 1 } }, pillars = true, crystals = true },
+			{ name = "Lost Miners' Rest", w = 60, d = 48, spawns = { { "skeleton", 5 }, { "golem", 2 } }, timbers = true, rails = true },
+			{ name = "Ore Vault", w = 36, d = 30, spawns = {}, chest = "vault", crystals = true },
+			{ name = "Heart of the Mountain", w = 90, d = 90, spawns = { { "cragking", 1 } }, chest = "boss", boss = "cragking", crystals = true },
+		},
+	},
 }
+DungeonBuilder.Rooms = DungeonBuilder.Dungeons[1].rooms
 
 local H = 24 -- room height
 local WALL = 3
@@ -130,13 +166,22 @@ local function sign(target: BasePart, text: string, color: Color3, face: any)
 end
 
 -- Colours, built once Color3 is available (Lune passes it in via useApi).
-local STONE: Color3, DARK: Color3, FLOOR: Color3, BONE: Color3, MOSS: Color3, FLAME: Color3
-local function initColors()
-	STONE = rgb(92, 88, 98)
-	DARK = rgb(64, 60, 70)
-	FLOOR = rgb(78, 74, 80)
+local STONE: Color3, DARK: Color3, FLOOR: Color3, BONE: Color3, MOSS: Color3, FLAME: Color3, GLOW: Color3
+local function initColors(theme: string?)
+	if theme == "mines" then
+		STONE = rgb(110, 96, 82)
+		DARK = rgb(72, 62, 54)
+		FLOOR = rgb(96, 82, 68)
+		MOSS = rgb(90, 120, 80)
+		GLOW = rgb(110, 230, 255)
+	else
+		STONE = rgb(92, 88, 98)
+		DARK = rgb(64, 60, 70)
+		FLOOR = rgb(78, 74, 80)
+		MOSS = rgb(70, 110, 60)
+		GLOW = rgb(200, 140, 255)
+	end
 	BONE = rgb(232, 226, 210)
-	MOSS = rgb(70, 110, 60)
 	FLAME = rgb(255, 160, 70)
 end
 
@@ -252,6 +297,43 @@ local function room(f: Instance, index: number, plan: any, cx: number, y: number
 			tip.CanCollide = false
 		end
 	end
+	if plan.timbers then
+		-- mine supports: posts and a cross-beam every few metres
+		local n = math.max(2, math.floor(d / 12))
+		for k = 1, n do
+			local tz = cz - d / 2 + k * d / (n + 1)
+			for _, s in { -1, 1 } do
+				box(r, "SupportPost", cx + s * (w / 2 - 2), y, tz, 1.6, H - 2, 1.6, rgb(110, 80, 52), Enum.Material.Wood)
+			end
+			box(r, "SupportBeam", cx, y + H - 3, tz, w - 2, 1.6, 1.8, rgb(100, 72, 48), Enum.Material.Wood)
+		end
+	end
+	if plan.rails then
+		for _, s in { -1, 1 } do
+			box(r, "Rail", cx + s * 1.6, y, cz, 0.4, 0.4, d - 4, rgb(90, 90, 95), Enum.Material.Metal)
+		end
+		local n = math.floor(d / 3)
+		for k = 0, n - 1 do
+			local sleeper = box(r, "Sleeper", cx, y - 0.1, cz - d / 2 + 2 + k * 3, 5, 0.3, 1.2, rgb(110, 80, 52), Enum.Material.Wood)
+			sleeper.CanCollide = false
+		end
+		box(r, "Minecart", cx, y + 0.6, cz + d / 5, 4, 3, 5, rgb(80, 74, 70), Enum.Material.Metal)
+		local ore = box(r, "Ore", cx, y + 3.4, cz + d / 5, 3.4, 0.8, 4.4, GLOW, Enum.Material.Neon)
+		ore.CanCollide = false
+	end
+	if plan.crystals then
+		for k = 0, 7 do
+			local a = k / 8 * math.pi * 2 + index
+			local px, pz = cx + math.cos(a) * (w / 2 - 5), cz + math.sin(a) * (d / 2 - 5)
+			for j = 0, 2 do
+				local shard = part(r, "Crystal", Vector3.new(1.4, 4 + j * 2, 1.4), CFrame.new(px + (j - 1) * 1.4, y + 2 + j, pz) * CFrame.Angles(0.2 * (j - 1), a, 0.25 * (j - 1)), GLOW, Enum.Material.Neon)
+				shard.CanCollide = false
+				if j == 1 and k % 2 == 0 then
+					light(shard, 24, 1.2, GLOW)
+				end
+			end
+		end
+	end
 	if plan.niches then
 		for _, s in { -1, 1 } do
 			for k = -2, 2 do
@@ -355,40 +437,45 @@ end
 
 ----------------------------------------------------------------------------------------------
 
--- Builds Map.Dungeon. `landscape` is Shared.Landscape (for the castle courtyard entrance).
-function DungeonBuilder.Build(map: Instance, landscape: any): Instance
-	initColors()
-	local existing = map:FindFirstChild("Dungeon")
+local function buildOne(map: Instance, def: any, landscape: any): Instance
+	initColors(def.theme)
+	local existing = map:FindFirstChild(def.root)
 	if existing then
 		existing:Destroy()
 	end
 	local root = Instance.new("Folder")
-	root.Name = "Dungeon"
-	local crypt = folder(root, "Crypt")
+	root.Name = def.root
+	root:SetAttribute("Title", def.title)
+	root:SetAttribute("MinLevel", def.minLevel)
+	local crypt = folder(root, def.interior)
 	local rooms = folder(crypt, "Rooms")
 	local spawns = folder(crypt, "Spawns")
 	local doors = folder(crypt, "Doors")
 	local chests = folder(crypt, "Chests")
 
-	local O = DungeonBuilder.Origin
+	local O = def.origin
 	local x, y = O.x, O.y
 	local cursor = O.z
-	local plans = DungeonBuilder.Rooms
+	local plans = def.rooms
 	for i, plan in plans do
 		local index = i - 1
 		local cz = cursor + plan.d / 2 + WALL
 		local last = i == #plans
 		room(rooms, index, plan, x, y, cz, last)
-		-- spawn markers spread over the back two thirds of the room
+		-- spawn markers spread over the back two thirds of the room; the boss on the dais
 		local n = 0
 		for _, s in plan.spawns do
 			for _ = 1, s[2] do
 				n += 1
-				local sx = if s[1] == "warden" then x else x + ((n % 3) - 1) * (plan.w / 4)
-				local sz = if s[1] == "warden" then cz + plan.d / 6 else cz + ((n // 3) % 3 - 0.5) * (plan.d / 4)
+				local isBoss = s[1] == plan.boss
+				local sx = if isBoss then x else x + ((n % 3) - 1) * (plan.w / 4)
+				local sz = if isBoss then cz + plan.d / 6 else cz + ((n // 3) % 3 - 0.5) * (plan.d / 4)
 				local m = marker(spawns, "Spawn", sx, y + 0.5, sz)
 				m:SetAttribute("Room", index)
 				m:SetAttribute("Kind", s[1])
+				if isBoss then
+					m:SetAttribute("Boss", true)
+				end
 			end
 		end
 		if plan.chest then
@@ -400,9 +487,9 @@ function DungeonBuilder.Build(map: Instance, landscape: any): Instance
 		end
 		if index == 0 then
 			marker(crypt, "EntryPad", x, y + 3, cz - plan.d / 2 + 8)
-			portal(crypt, "ExitPortal", x - plan.w / 2 + 10, y, cz - plan.d / 2 + 1.5, rgb(170, 110, 255), true)
-			local plaque = box(crypt, "Plaque", x, y + 13, cz - plan.d / 2 + 0.4, 16, 3, 0.4, rgb(40, 35, 45), Enum.Material.Slate)
-			sign(plaque, "The Hollow Crypt", rgb(220, 200, 255), Enum.NormalId.Back)
+			portal(crypt, "ExitPortal", x - plan.w / 2 + 10, y, cz - plan.d / 2 + 1.5, GLOW, true)
+			local plaque = box(crypt, "Plaque", x, y + 13, cz - plan.d / 2 + 0.4, 18, 3, 0.4, rgb(40, 35, 45), Enum.Material.Slate)
+			sign(plaque, def.title, rgb(220, 200, 255), Enum.NormalId.Back)
 		end
 		cursor = cz + plan.d / 2 + WALL
 		if not last then
@@ -412,11 +499,11 @@ function DungeonBuilder.Build(map: Instance, landscape: any): Instance
 		end
 	end
 
-	-- the way in: a stairwell with an arch and a portal in the castle courtyard
+	-- the way in: a stairwell with an arch and a portal at the entrance site
 	local entrance = folder(root, "Entrance")
-	local castle = landscape and landscape.Sites and landscape.Sites.castle
-	if castle then
-		local ex, ey, ez = castle.x, castle.h + 0.4, castle.z + 27
+	local site = landscape and landscape.Sites and landscape.Sites[def.entrance.site]
+	if site then
+		local ex, ey, ez = site.x + def.entrance.dx, site.h + 0.4, site.z + def.entrance.dz
 		for _, e in { { 0, -5.5, 12, 1 }, { 0, 5.5, 12, 1 }, { -5.5, 0, 1, 10 }, { 5.5, 0, 1, 10 } } do
 			if e[2] ~= -5.5 then
 				box(entrance, "StairWall", ex + e[1], ey, ez + e[2], e[3], 2.4, e[4], DARK, Enum.Material.Cobblestone)
@@ -428,20 +515,34 @@ function DungeonBuilder.Build(map: Instance, landscape: any): Instance
 		end
 		for _, s in { -1, 1 } do
 			box(entrance, "ArchPillar", ex + s * 5.5, ey, ez - 6, 1.6, 10, 1.6, STONE, Enum.Material.Cobblestone)
-			local flame = ball(entrance, "ArchFlame", 1, ex + s * 5.5, ey + 10.8, ez - 6, rgb(190, 120, 255), Enum.Material.Neon)
-			light(flame, 16, 1.2, rgb(190, 120, 255))
+			local flame = ball(entrance, "ArchFlame", 1, ex + s * 5.5, ey + 10.8, ez - 6, GLOW, Enum.Material.Neon)
+			light(flame, 16, 1.2, GLOW)
 		end
 		local lintel = box(entrance, "ArchLintel", ex, ey + 10, ez - 6, 12.6, 2, 1.8, STONE, Enum.Material.Cobblestone)
-		sign(lintel, "The Hollow Crypt", rgb(220, 200, 255), Enum.NormalId.Front)
-		local p = box(entrance, "CryptPortal", ex, ey - 0.1, ez, 9, 0.6, 9, rgb(150, 90, 230), Enum.Material.Neon)
+		sign(lintel, def.title, rgb(220, 200, 255), Enum.NormalId.Front)
+		if def.minLevel > 1 then
+			local note = box(entrance, "LevelPlaque", ex, ey + 7.6, ez - 6, 6, 1.4, 0.4, rgb(40, 35, 30), Enum.Material.WoodPlanks)
+			sign(note, "Level " .. def.minLevel .. "+", rgb(255, 210, 120), Enum.NormalId.Front)
+		end
+		local p = box(entrance, def.portal, ex, ey - 0.1, ez, 9, 0.6, 9, GLOW, Enum.Material.Neon)
 		p.Transparency = 0.3
 		p.CanCollide = false
-		light(p, 18, 1.4, rgb(170, 110, 255))
+		light(p, 18, 1.4, GLOW)
 		marker(entrance, "ReturnPoint", ex + 11, ey + 3, ez)
 	end
 
 	root.Parent = map
 	return root
+end
+
+-- Builds every dungeon (Map.Dungeon, Map.Mines). `landscape` is Shared.Landscape (entrances).
+function DungeonBuilder.Build(map: Instance, landscape: any): Instance
+	local first: Instance? = nil
+	for _, def in DungeonBuilder.Dungeons do
+		local root = buildOne(map, def, landscape)
+		first = first or root
+	end
+	return first :: Instance
 end
 
 return DungeonBuilder

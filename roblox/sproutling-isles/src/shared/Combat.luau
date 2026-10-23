@@ -94,6 +94,15 @@ Combat.Enemies = {
 	-- the mountains and the sky isles (quest areas)
 	golem = { id = "golem", name = "Crag Golem", health = 150, damage = 16, speed = 9, attackRange = 7, attackWindup = 0.8, attackCooldown = 2, aggroRange = 40, reward = 14, respawn = 30 },
 	wisp = { id = "wisp", name = "Storm Wisp", health = 45, damage = 9, speed = 18, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 50, reward = 8, respawn = 25 },
+	cragking = {
+		id = "cragking", name = "The Crag King", health = 2400, damage = 28, speed = 9, attackRange = 13, attackWindup = 1.1, attackCooldown = 2.4, aggroRange = 75, reward = 300, respawn = 0,
+		boss = true, size = 2.4,
+		attacks = {
+			{ kind = "slam", damage = 34, radius = 20, windup = 1.4 },
+			{ kind = "roots", damage = 24, radius = 10, windup = 1 },
+			{ kind = "swipe", damage = 28, radius = 18, windup = 0.9, arc = 80 },
+		},
+	},
 	stormcaller = {
 		id = "stormcaller", name = "Stormcaller, Eye of the Gale", health = 1700, damage = 24, speed = 12, attackRange = 12, attackWindup = 1, attackCooldown = 2.2, aggroRange = 70, reward = 260, respawn = 240,
 		boss = true, size = 2.2,

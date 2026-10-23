@@ -61,6 +61,7 @@ Loot.Drops = {
 	golem = { material = "ore", materialChance = 0.6, weaponChance = 0.14, minRarity = 2 },
 	wisp = { material = "stormglass", materialChance = 0.55, weaponChance = 0.12, minRarity = 2 },
 	stormcaller = { material = "galecore", materialChance = 1, weaponChance = 1, minRarity = 4 },
+	cragking = { material = "ore", materialChance = 1, weaponChance = 1, minRarity = 4 },
 } :: { [string]: DropTable }
 
 -- Chests in the crypt: how many weapons and their minimum rarity.

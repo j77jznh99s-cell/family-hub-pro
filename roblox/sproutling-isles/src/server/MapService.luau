@@ -79,7 +79,9 @@ function MapService.init(map: Instance)
 		elseif d:GetAttribute("ArenaGate") then
 			table.insert(pois, { name = "The Arena", kind = "arena", x = p.X, z = p.Z })
 		elseif d.Name == "CryptPortal" then
-			table.insert(pois, { name = "The Hollow Crypt", kind = "dungeon", x = p.X, z = p.Z })
+			table.insert(pois, { name = "The Hollow Crypt (dungeon)", kind = "dungeon", x = p.X, z = p.Z })
+		elseif d.Name == "MinePortal" then
+			table.insert(pois, { name = "The Deepdelve Mines (dungeon, level 12+)", kind = "dungeon", x = p.X, z = p.Z })
 		end
 	end
 	POIRemote.OnServerInvoke = function()

@@ -199,6 +199,28 @@ local function build(kind: Combat.EnemyType, at: Vector3): (Model, BasePart, num
 			piece(m, root, "Spark", Vector3.new(0.6, 0.6, 0.6), CFrame.new(math.cos(a) * 2.4, math.sin(a * 2) * 0.6, math.sin(a) * 2.4), Color3.fromRGB(255, 255, 200), Enum.Material.Neon, Enum.PartType.Ball)
 		end
 		radius = 2
+	elseif id == "cragking" then
+		-- a towering golem of dark rock, crowned with glowstone
+		local s = kind.size or 2
+		root.Size = Vector3.new(4, 4, 3) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.4 * s, 0))
+		humanoid.HipHeight = 3.4 * s
+		local rock = Color3.fromRGB(80, 74, 70)
+		local glow = Color3.fromRGB(110, 230, 255)
+		piece(m, root, "Body", Vector3.new(4.6, 4.2, 3.4) * s, CFrame.new(), rock, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.4, 2, 2.2) * s, CFrame.new(0, 3 * s, -0.2 * s), rock, Enum.Material.Basalt)
+		piece(m, root, "Core", Vector3.new(1.4, 1.4, 0.4) * s, CFrame.new(0, 0.3 * s, -1.75 * s), glow, Enum.Material.Neon)
+		for k = 0, 4 do
+			piece(m, root, "Crown", Vector3.new(0.6, 1.6, 0.6) * s, CFrame.new((k - 2) * 0.5 * s, 4.6 * s, 0) * CFrame.Angles(0, 0, (k - 2) * 0.15), glow, Enum.Material.Neon)
+		end
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.5, 0.35, 0.2) * s, CFrame.new(side * 0.55 * s, 3.1 * s, -1.35 * s), glow, Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(1.8, 4.8, 1.8) * s, CFrame.new(side * 3.3 * s, -0.8 * s, 0), rock, Enum.Material.Basalt)
+			piece(m, root, "Fist", Vector3.new(2.3, 2, 2.3) * s, CFrame.new(side * 3.3 * s, -3.6 * s, 0), Color3.fromRGB(65, 60, 58), Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(1.8, 2.8, 1.8) * s, CFrame.new(side * 1.3 * s, -3.4 * s, 0), rock, Enum.Material.Basalt)
+			piece(m, root, "Shoulder", Vector3.new(1.4, 2.4, 1.4) * s, CFrame.new(side * 2.6 * s, 2.4 * s, 0) * CFrame.Angles(0, 0, side * 0.4), glow, Enum.Material.Neon)
+		end
+		radius = 3.4 * s
 	elseif id == "stormcaller" then
 		-- the storm's heart: a crackling core inside spinning rings
 		local s = kind.size or 2

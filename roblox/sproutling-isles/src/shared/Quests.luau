@@ -306,6 +306,13 @@ Quests.List = {
 		reward = { dew = 200, materials = { ore = 3 } },
 	},
 	{
+		id = "gorrim_deep", name = "Into the Deep", giver = "gorrim", requires = { "gorrim_glow" },
+		intro = "The deep seam is open, and something big woke up down there. The Crag King. Go through the mine mouth by my camp (level 12 or more) and put him back to sleep. Permanently.",
+		finish = "The mountain's quiet. Too quiet. Ha! Take this, you've earned it.",
+		objective = { kind = "slay", target = "cragking", count = 1, text = "Defeat the Crag King in the Deepdelve Mines" },
+		reward = { dew = 500, weapon = 4, crate = "gold" },
+	},
+	{
 		id = "oswin_cairns", name = "The Hermit's Cairns", giver = "oswin",
 		intro = "Three cairns stand on three peaks. Visit each and listen to the wind. Then come back and tell me what it said.",
 		finish = "It spoke of islands, didn't it? It always does. Go and find Pell.",
