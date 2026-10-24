@@ -51,6 +51,7 @@ local function open(player: Player, tier: any)
 	busy[player] = os.clock() + 2.5
 	data.crates[tier] -= 1
 	player:SetAttribute("Crates_" .. tier, data.crates[tier])
+	State.track(session, "crate")
 	local index = Crates.roll(tier, rng:NextNumber())
 	local reward = Crates.Tiers[tier].rewards[index]
 	-- the reel spins for a couple of seconds on the client; pay out once it lands

@@ -301,6 +301,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		State.addSeeds(session, seedId, -1)
 		session.data.soil[key] = { s = seedId, ready = os.time() + species.growSeconds, total = species.growSeconds }
 		updateSoil(info, session)
+		State.track(session, "plant")
 		if not session.data.onb.FirstPlant then
 			session.data.onb.FirstPlant = true
 			Analytics.onboarding(player, "FirstPlant")
@@ -317,6 +318,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		end
 		session.data.soil[key] = nil
 		updateSoil(info, session)
+		State.track(session, "harvest")
 		if not session.data.onb.FirstHatch then
 			session.data.onb.FirstHatch = true
 			Analytics.onboarding(player, "FirstHatch")
@@ -361,6 +363,7 @@ local function onSell(info: PlotInfo, pad: number, player: Player)
 	session.data.pads[tostring(pad)] = nil
 	local value = State.sellValue(sprout)
 	State.addDew(session, value, "Sell:" .. sprout.s)
+	State.track(session, "sell")
 	if not session.data.onb.FirstSell then
 		session.data.onb.FirstSell = true
 		Analytics.onboarding(player, "FirstSell")
@@ -397,6 +400,7 @@ function PlotService.sellStorage(session: State.Session)
 	sellConfirmUntil[player] = nil
 	table.clear(session.data.storage)
 	State.addDew(session, total, "SellStorage")
+	State.track(session, "sell", count)
 	if not session.data.onb.FirstSell then
 		session.data.onb.FirstSell = true
 		Analytics.onboarding(player, "FirstSell")

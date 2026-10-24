@@ -111,6 +111,10 @@ local function travel(player: Player, id: any, fromMap: any)
 			character:PivotTo(CFrame.new(to))
 			r.AssemblyLinearVelocity = Vector3.zero
 			WaystoneRemote:FireClient(player, "arrive", target.name)
+			local session = State.get(player)
+			if session then
+				State.track(session, "travel")
+			end
 		end
 		push(player)
 	end)

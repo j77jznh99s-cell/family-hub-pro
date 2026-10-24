@@ -277,6 +277,16 @@ the client code `src/client/Combat.luau`.
   Discovering every entry in a region: a one-time Dew reward and a silver or gold crate.
 - `Shared/Journal`, `server/JournalService` (data.journal), `client/Journal`.
 
+## Daily Tasks (overnight run 2)
+
+- **Y** (the Tasks button, or the Task Board on Greenhollow green) shows today's three tasks,
+  picked from a pool the player's level can reach: plant, harvest, sell, hunt, complete a
+  quest, fast travel, open a crate, and elemental hunts (shadow, earth at level 8+, fire 20+,
+  water 25+). Each pays Dew and XP; all three pay a silver crate, every fifth full day in a
+  row a golden one. New tasks at midnight UTC.
+- `Shared/DailyTasks`, `server/DailyService` (data.daily), `client/DailyTasks`;
+  `State.track(session, stat, n)` / `State.onTrack` are the activity hooks.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you

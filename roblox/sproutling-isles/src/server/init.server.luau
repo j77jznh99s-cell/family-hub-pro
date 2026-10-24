@@ -46,6 +46,7 @@ local MapService = require(script.MapService)
 local WaystoneService = require(script.WaystoneService)
 local HazardService = require(script.HazardService)
 local JournalService = require(script.JournalService)
+local DailyService = require(script.DailyService)
 local Levels = require(Shared.Levels)
 local Combat = require(Shared.Combat)
 
@@ -85,6 +86,7 @@ MapService.init(map) -- points of interest for the world map (M)
 WaystoneService.init(map) -- fast-travel waystones (T)
 HazardService.init(map) -- lava and other floor hazards
 JournalService.init() -- the Monster Journal (N)
+DailyService.init(map) -- Daily Tasks (Y, Task Boards)
 EnemyService.onKill(function(player, kindId)
 	local kind = Combat.Enemies[kindId]
 	if kind then

@@ -159,6 +159,18 @@ function State.addDew(session: Session, amount: number, reason: string?)
 	end
 end
 
+-- Activity hooks: services call State.track(session, "plant" | "harvest" | "sell" | "quest" |
+-- "travel" | "crate", n); listeners (DailyService) count them. Kills come from EnemyService.onKill.
+local trackers: { (Session, string, number) -> () } = {}
+function State.onTrack(fn: (Session, string, number) -> ())
+	table.insert(trackers, fn)
+end
+function State.track(session: Session, stat: string, n: number?)
+	for _, fn in trackers do
+		task.spawn(fn, session, stat, n or 1)
+	end
+end
+
 function State.spendDew(session: Session, amount: number, reason: string?): boolean
 	if session.data.dew < amount then
 		return false

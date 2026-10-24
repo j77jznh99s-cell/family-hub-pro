@@ -196,6 +196,7 @@ local function giveReward(player: Player, d: any, q: Quests.Quest)
 	local session = State.get(player)
 	if r.dew and session then
 		State.addDew(session, r.dew, "Quest:" .. q.id)
+		State.track(session, "quest")
 		LevelService.addXP(player, math.floor(r.dew * Levels.Gain.questPerDew), "Quest")
 	end
 	for id, count in r.materials or {} do

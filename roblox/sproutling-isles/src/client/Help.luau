@@ -20,6 +20,7 @@ local LINES = {
 	{ "E: talk, shop, pick up     B: bag     K: crates     L: quest tracker", false },
 	{ "M: world map     G: garage (vehicles)     V: horse     P: companion     T: fast travel", false },
 	{ "N: Monster Journal (every monster you defeat, rewards for mastering them and finishing regions)", false },
+	{ "Y: Daily Tasks (three a day; finish all three for a crate and keep your streak going)", false },
 	{ "Flying: Space up, Ctrl down. The Ornithopter always flies forward; W for speed.", false },
 	{ "", false },
 	{ "WHERE TO GO", true },

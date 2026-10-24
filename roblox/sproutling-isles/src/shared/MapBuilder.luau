@@ -2901,6 +2901,18 @@ local function buildGreenhollow(map: Instance)
 			ball(m, "ArchVine", 1.3, ax + k * 2.2, 15.1 - math.abs(k) * 0.15, az + 0.9, jungleGreen(), Enum.Material.Grass).CanCollide = false
 		end
 		signpost(m, gx + 10, gz - 14, "Sproutling City", rgb(255, 235, 170))
+		-- the Task Board: today's Daily Tasks (DailyService adds the prompt)
+		local bx, bz = gx - 15, gz + 12 -- (Mara stands across the lane)
+		for _, s_ in { -1, 1 } do
+			part(m, "BoardPost", Vector3.new(0.6, 8, 0.6), at(bx + s_ * 3.4, 4, bz), rgb(120, 85, 55), Enum.Material.Wood)
+		end
+		local taskBoard = part(m, "TaskBoard", Vector3.new(7.4, 4.4, 0.5), at(bx, 5.8, bz), rgb(150, 110, 70), Enum.Material.WoodPlanks)
+		taskBoard:SetAttribute("TaskBoard", true)
+		label(taskBoard, "Daily Tasks", 3.2, UDim2.fromOffset(200, 40), rgb(200, 255, 190))
+		for k = 0, 2 do
+			part(m, "Note", Vector3.new(1.8, 2.2, 0.1), at(bx - 2.2 + k * 2.2, 5.9, bz - 0.3), rgb(250, 245, 225), Enum.Material.SmoothPlastic)
+		end
+		part(m, "BoardRoof", Vector3.new(8.6, 0.4, 1.8), at(bx, 8.3, bz), rgb(90, 140, 80), Enum.Material.WoodPlanks)
 	end, greenSite.h)
 
 	-- the lane (the trunk): lamps on alternate sides, jungle planting along the verges
