@@ -9,8 +9,10 @@
 --   * offline under Lune (see tools/bake-map.luau), which passes its own Roblox API table.
 --
 -- Layout (studs, +Z = south):
---   Bloom Plaza at origin, Wishing Pond at the north tip (z = -300),
---   8 plots in two columns (x = +-155), Pollen Parade belt south of the plaza (z = 85),
+--   Bloom Plaza at origin on the garden island (280 wide), Wishing Pond at the north tip (z = -300),
+--   the 8 garden houses in Greenhollow Gardens, a farm village off the city's Grand Way
+--   (MapBuilder.Garden, Landscape site "greenhollow"),
+--   Pollen Parade belt south of the plaza (z = 85),
 --   Sky Garden floating over the south tip (y = 90, z = 300).
 --   Scenery (cottages, towers, windmill, festoon lights) sits in the strips between the avenue
 --   and the plots (|x| 60-100) and at the island's north/south ends; floating islets, clouds and
@@ -73,7 +75,11 @@ function MapBuilder.useDungeon(module: any)
 	Dungeon = module
 end
 
-MapBuilder.PlotSize = 100
+MapBuilder.PlotSize = 54 -- inside of a garden house (walls stand just outside this square)
+-- Greenhollow Gardens: the village lane the garden houses face, and the height of its levelled
+-- ground (must match the "greenhollow" site in Shared/Landscape).
+MapBuilder.Garden = { x = -170, z = 1440, y = 24 }
+MapBuilder.PlotBaseY = MapBuilder.Garden.y
 MapBuilder.PlotColors = {
 	{ "Red", 235, 80, 80 },
 	{ "Orange", 245, 150, 60 },
@@ -85,27 +91,40 @@ MapBuilder.PlotColors = {
 	{ "Pink", 240, 120, 190 },
 }
 
--- Returns plot centre X, centre Z and "inward" direction (+1 = gate faces +X).
+-- Returns plot centre X, centre Z and "inward" direction (+1 = gate faces +X): two rows of
+-- garden houses either side of Greenhollow Lane, their doors facing the lane.
 function MapBuilder.plotPlacement(index: number): (number, number, number)
-	local rows = { -165, -55, 55, 165 }
+	local g = MapBuilder.Garden
+	local rows = { -138, -46, 46, 138 }
 	if index <= 4 then
-		return -155, rows[index], 1
+		return g.x - 48, g.z + rows[index], 1
 	end
-	return 155, rows[index - 4], -1
+	return g.x + 48, g.z + rows[index - 4], -1
+end
+
+-- Each garden house is turned a few degrees off square, so the lane looks lived-in.
+local PLOT_YAW = { 6, -5, 5, -6, -6, 5, -5, 6 }
+
+-- The house's own axes: `facing` points out of its doors towards the lane, `along` runs along
+-- the lane (+Z when the house is square). Plot-local (u, v) = cx, cz + facing * u + along * v.
+function MapBuilder.plotAxes(index: number): (Vector3, Vector3)
+	local _, _, d = MapBuilder.plotPlacement(index)
+	local rot = CFrame.Angles(0, math.rad(PLOT_YAW[index] or 0), 0)
+	return (rot * CFrame.new(d, 0, 0)).Position, (rot * CFrame.new(0, 0, 1)).Position
 end
 
 -- Soil tile positions in plot-local (u = towards gate, v = along the avenue).
 function MapBuilder.soilLocal(tile: number): (number, number)
 	local row = (tile - 1) // 4 -- 0..2
 	local col = (tile - 1) % 4 -- 0..3
-	return 40 - row * 16, -24 + col * 16
+	return 19 - row * 8.5, -14.4 + col * 9.6
 end
 
 -- Pads 1-8 are base, 9-12 unlock with the Big Greenhouse pass.
 local padSlots = {
-	{ -20, -40 }, { -20, -24 }, { -20, -8 }, { -20, 8 }, { -20, 24 }, { -20, 40 },
-	{ -38, -8 }, { -38, 8 },
-	{ -38, -40 }, { -38, -24 }, { -38, 24 }, { -38, 40 },
+	{ -10.5, -20.5 }, { -10.5, -12.3 }, { -10.5, -4.1 }, { -10.5, 4.1 }, { -10.5, 12.3 }, { -10.5, 20.5 },
+	{ -20, -4.1 }, { -20, 4.1 },
+	{ -20, -20.5 }, { -20, -12.3 }, { -20, 12.3 }, { -20, 20.5 },
 }
 function MapBuilder.padLocal(pad: number): (number, number)
 	local slot = padSlots[pad]
@@ -370,8 +389,8 @@ end
 -- Hollow Harvest: 14 marker points for Wisp Lanterns to spawn at (EventService picks 10 of them
 -- at random each Fog). Placed along the avenue north of the Plaza (towards the Pond) and south of
 -- the Parade (towards the Sky Garden's ground footprint), well clear of the Plaza's ~65-stud
--- radius, the Pond (centred z = -300), the Parade belt (z 79.5-90.5) and every plot's footprint
--- (plots sit at |x| = 105-205; these markers stay within |x| <= 12, so they never overlap a plot
+-- radius, the Pond (centred z = -300), the Parade belt (z 79.5-90.5) and the village row
+-- (the island's village row sits at |x| = 60-100; these markers stay within |x| <= 12
 -- regardless of z). Doubles as a squashed-pumpkin decoration so the avenue looks intentional even
 -- outside Fog.
 local LANTERN_SPAWN_POINTS = {
@@ -396,8 +415,8 @@ local function buildIsland(map: Instance)
 
 	part(island, "Sea", Vector3.new(1400, 2, 1600), at(0, -3, -30), rgb(60, 150, 210), Enum.Material.Glass, { Transparency = 0.25, CanCollide = false })
 	part(island, "Seabed", Vector3.new(1400, 2, 1600), at(0, -10, -30), rgb(200, 185, 140), Enum.Material.Sand)
-	part(island, "Sand", Vector3.new(520, 2, 760), at(0, -1.4, -30), rgb(235, 215, 160), Enum.Material.Sand)
-	part(island, "Grass", Vector3.new(490, 2, 730), at(0, -1, -30), rgb(110, 180, 90), Enum.Material.Grass)
+	part(island, "Sand", Vector3.new(276, 2, 760), at(0, -1.4, -30), rgb(235, 215, 160), Enum.Material.Sand)
+	part(island, "Grass", Vector3.new(250, 2, 730), at(0, -1, -30), rgb(110, 180, 90), Enum.Material.Grass)
 	-- the avenue: a stone path running the full length of the island
 	part(island, "Avenue", Vector3.new(44, 0.2, 700), at(0, 0.1, -30), rgb(215, 200, 170), Enum.Material.Cobblestone)
 
@@ -412,10 +431,11 @@ local function buildIsland(map: Instance)
 	local n = 0
 	for i = 0, 71 do
 		local angle = (i / 72) * math.pi * 2
-		local rx, rz = 225 + hash(i) * 10, 355 + hash(i + 5) * 10
+		local rx, rz = 112 + hash(i) * 6, 355 + hash(i + 5) * 10
 		local x, z = math.cos(angle) * rx, math.sin(angle) * rz - 30
-		local inPlotBand = math.abs(x) > 90 and math.abs(x) < 222 and z > -230 and z < 230
-		if (math.abs(x) > 60 or (z > -250 and z < 200)) and not inPlotBand then
+		-- skip the avenue ends, and the village row and shops along the sides
+		local nearHouses = math.abs(x) > 60 and ((z > -320 and z < -130) or (z > -110 and z < -80) or (z > 100 and z < 210))
+		if (math.abs(x) > 60 or (z > -250 and z < 200)) and not nearHouses then
 			n += 1
 			if hash(i + 0.71) < 0.3 then
 				pine(island, x, z, 0.9 + hash(i + 9) * 0.5, i)
@@ -588,99 +608,6 @@ local function buildPlaza(map: Instance)
 		local a = (i + 0.5) / 8 * math.pi * 2
 		lamp(plaza, math.cos(a) * 60, math.sin(a) * 60)
 	end
-end
-
-local function buildPlot(plots: Instance, index: number)
-	local cx, cz, d = MapBuilder.plotPlacement(index)
-	local colorInfo = MapBuilder.PlotColors[index]
-	local color = rgb(colorInfo[2], colorInfo[3], colorInfo[4])
-	local half = MapBuilder.PlotSize / 2
-
-	local plot = Instance.new("Model")
-	plot.Name = "Plot" .. index
-	plot.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- a plot streams in whole
-	plot:SetAttribute("Index", index)
-	plot:SetAttribute("ColorName", colorInfo[1])
-	plot:SetAttribute("Inward", d)
-	plot.Parent = plots
-
-	local function w(u: number, y: number, v: number): Vector3
-		return Vector3.new(cx + d * u, y, cz + v)
-	end
-	local facing = Vector3.new(d, 0, 0)
-
-	local floor = part(plot, "Floor", Vector3.new(MapBuilder.PlotSize, 1, MapBuilder.PlotSize), at(cx, 0.5, cz), rgb(125, 190, 100), Enum.Material.Grass)
-	plot.PrimaryPart = floor
-	-- coloured border so plots are recognisable from afar
-	for _, e in { { 0, -half }, { 0, half } } do
-		part(plot, "Border", Vector3.new(MapBuilder.PlotSize, 1.2, 2), CFrame.new(w(e[1], 0.6, e[2])), color, Enum.Material.SmoothPlastic)
-	end
-	part(plot, "Border", Vector3.new(2, 1.2, MapBuilder.PlotSize), CFrame.new(w(-half, 0.6, 0)), color, Enum.Material.SmoothPlastic)
-
-	-- hedges on the three non-gate sides
-	part(plot, "Hedge", Vector3.new(MapBuilder.PlotSize, 8, 3), CFrame.new(w(0, 4, -half - 1.5)), rgb(70, 140, 60), Enum.Material.Grass)
-	part(plot, "Hedge", Vector3.new(MapBuilder.PlotSize, 8, 3), CFrame.new(w(0, 4, half + 1.5)), rgb(70, 140, 60), Enum.Material.Grass)
-	part(plot, "Hedge", Vector3.new(3, 8, MapBuilder.PlotSize + 6), CFrame.new(w(-half - 1.5, 4, 0)), rgb(70, 140, 60), Enum.Material.Grass)
-
-	-- soil tiles
-	local soil = Instance.new("Folder")
-	soil.Name = "Soil"
-	soil.Parent = plot
-	for tile = 1, 12 do
-		local u, v = MapBuilder.soilLocal(tile)
-		local s = part(soil, "Soil" .. tile, Vector3.new(12, 1.2, 12), CFrame.new(w(u, 1.1, v)), rgb(110, 75, 50), Enum.Material.Ground)
-		s:SetAttribute("Tile", tile)
-	end
-
-	-- greenhouse over the pad area
-	local gh = Instance.new("Model")
-	gh.Name = "Greenhouse"
-	gh.Parent = plot
-	part(gh, "GreenhouseFloor", Vector3.new(34, 0.4, 98), CFrame.new(w(-30, 1.2, 0)), rgb(235, 230, 220), Enum.Material.Marble)
-	for _, v in { -48, -16, 16, 48 } do
-		for _, u in { -47, -13 } do
-			part(gh, "Frame", Vector3.new(1, 16, 1), CFrame.new(w(u, 9, v)), rgb(245, 245, 245), Enum.Material.Metal)
-		end
-	end
-	part(gh, "Roof", Vector3.new(36, 0.6, 100), CFrame.new(w(-30, 17.3, 0)), rgb(200, 240, 255), Enum.Material.Glass, { Transparency = 0.6 })
-	part(gh, "RoofTrim", Vector3.new(36, 1, 2), CFrame.new(w(-30, 17.8, 0)), color, Enum.Material.SmoothPlastic)
-
-	local pads = Instance.new("Folder")
-	pads.Name = "Pads"
-	pads.Parent = plot
-	for pad = 1, 12 do
-		local u, v = MapBuilder.padLocal(pad)
-		local p = cylinder(pads, "Pad" .. pad, 1, 9, 0, 0, 0, rgb(250, 250, 250), Enum.Material.Marble)
-		p.CFrame = CFrame.new(w(u, 1.9, v)) * CFrame.Angles(0, 0, math.rad(90))
-		p.Name = "Pad" .. pad
-		p:SetAttribute("Pad", pad)
-		p:SetAttribute("Bonus", pad > 8)
-		if pad > 8 then
-			p.Transparency = 0.7
-		end
-		local rim = cylinder(pads, "Rim" .. pad, 0.4, 9.6, 0, 0, 0, color, Enum.Material.Neon)
-		rim.CFrame = CFrame.new(w(u, 1.5, v)) * CFrame.Angles(0, 0, math.rad(90))
-	end
-
-	-- gate: two pillars, a laser curtain (visible when locked) and the lock button
-	local gate = Instance.new("Model")
-	gate.Name = "Gate"
-	gate.Parent = plot
-	for _, v in { -half - 1.5, half + 1.5 } do
-		part(gate, "Pillar", Vector3.new(4, 14, 4), CFrame.new(w(half, 7, v)), color, Enum.Material.SmoothPlastic)
-		ball(gate, "PillarCap", 4.5, w(half, 14.5, v).X, 14.5, v + cz, color, Enum.Material.Neon)
-	end
-	part(gate, "Laser", Vector3.new(0.6, 10, MapBuilder.PlotSize), CFrame.new(w(half, 5, 0)), rgb(255, 60, 60), Enum.Material.ForceField, { Transparency = 1, CanCollide = false, CanQuery = false })
-	local button = part(gate, "LockButton", Vector3.new(3, 3, 3), CFrame.lookAt(w(half - 5, 2.5, -half + 6), w(half - 5, 2.5, -half + 6) + facing), rgb(255, 80, 80), Enum.Material.Neon)
-	part(gate, "LockPost", Vector3.new(2, 1, 2), CFrame.new(w(half - 5, 0.9, -half + 6)), rgb(80, 80, 90), Enum.Material.Metal)
-	label(button, "LOCK", 3, UDim2.fromOffset(160, 40))
-
-	-- owner sign over the gate
-	local sign = part(plot, "Sign", Vector3.new(1, 5, 30), CFrame.new(w(half + 2, 16, 0)), rgb(250, 245, 230), Enum.Material.WoodPlanks)
-	label(sign, colorInfo[1] .. " plot - unclaimed", 4, UDim2.fromOffset(360, 70), color)
-
-	local spawnPoint = part(plot, "SpawnPoint", Vector3.new(4, 1, 4), CFrame.lookAt(w(-4, 3.5, 0), w(-4, 3.5, 0) + facing), color, Enum.Material.SmoothPlastic, { Transparency = 1, CanCollide = false, CanQuery = false })
-	spawnPoint:SetAttribute("Spawn", true)
 end
 
 local function buildParade(map: Instance)
@@ -1394,8 +1321,8 @@ local function buildDetails(scenery: Instance)
 			path(details, Vector3.new(side * 62, 0, z), Vector3.new(side * 22, 0, z), 3.5)
 		end
 	end
-	yard(details, -160, -250, Vector3.new(0, 0, 1), 25)
-	yard(details, 160, -250, Vector3.new(0, 0, 1), 26)
+	yard(details, -100, -252, Vector3.new(0, 0, 1), 25)
+	yard(details, 100, -252, Vector3.new(0, 0, 1), 26)
 	-- shop fronts: path, barrels, crates and a bench
 	for _, s in { { -80, -95, 1 }, { 80, -95, -1 }, { -80, 120, 1 }, { 80, 120, -1 } } do
 		local x, z, d = s[1], s[2], s[3]
@@ -1409,24 +1336,24 @@ local function buildDetails(scenery: Instance)
 	cart(details, -66, -118, math.rad(20), rgb(230, 60, 60))
 	cart(details, 66, 98, math.rad(-15), rgb(245, 150, 40))
 	-- north village square
-	well(details, -135, -262)
-	cart(details, 135, -264, math.rad(70), rgb(120, 200, 80))
-	bench(details, -125, -248, Vector3.new(0, 0, -1))
+	well(details, -58, -275)
+	cart(details, 58, -278, math.rad(70), rgb(120, 200, 80))
+	bench(details, -50, -262, Vector3.new(0, 0, -1))
 	-- farm by the windmill
 	haystack(details, 90, 272, 6)
 	haystack(details, 96, 282, 4.5)
-	haystack(details, 132, 238, 5)
+	haystack(details, 112, 238, 5)
 	-- signposts
 	signpost(details, -30, -232, "Wishing Pond", rgb(160, 230, 255))
 	signpost(details, 30, 104, "Sky Garden", rgb(220, 200, 255))
 	signpost(details, -30, -78, "Seed Shop", rgb(200, 255, 200))
 
 	-- beach palms leaning out to sea
-	local palms = { { -252, -300, -1 }, { -254, -120, -1 }, { -252, 200, -1 }, { 252, -260, 1 }, { 254, -80, 1 }, { 252, 150, 1 }, { 253, 290, 1 } }
+	local palms = { { -132, -350, -1 }, { -134, -60, -1 }, { -132, 40, -1 }, { 132, -360, 1 }, { 134, -50, 1 }, { 132, 60, 1 }, { 133, 250, 1 } }
 	for i, pt in palms do
 		palm(details, pt[1], pt[2], Vector3.new(pt[3], 0, (hash(i) - 0.5) * 0.6).Unit, i)
 	end
-	for i, x in { -150, -40, 70, 180 } do
+	for i, x in { -110, -40, 40, 110 } do
 		palm(details, x, -404, Vector3.new((hash(i + 9) - 0.5) * 0.6, 0, -1).Unit, i + 10)
 	end
 
@@ -1578,11 +1505,11 @@ local function buildLandscape(scenery: Instance)
 	land.Parent = scenery
 
 	-- terraced hills in the island's four empty corners (outside the shoreline tree ring)
-	hill(land, -205, -355, 34, 4, 1)
-	hill(land, 205, -355, 30, 4, 2)
-	local elderBase = hill(land, -210, 300, 30, 3, 3, false)
-	elderTree(land, -210, elderBase, 300)
-	hill(land, 205, 305, 26, 3, 4)
+	hill(land, -95, -378, 22, 3, 1)
+	hill(land, 95, -378, 20, 3, 2)
+	local elderBase = hill(land, -100, 305, 22, 3, 3, false)
+	elderTree(land, -100, elderBase, 305)
+	hill(land, 108, 318, 16, 2, 4)
 
 	-- town: two-storey shop houses beside the Plaza, more cottages at the north corners
 	local town = scenery:FindFirstChild("Village") or land
@@ -1590,10 +1517,10 @@ local function buildLandscape(scenery: Instance)
 	cottage(town, 80, -95, Vector3.new(-1, 0, 0), 22, 2, rgb(240, 120, 150))
 	cottage(town, -80, 120, Vector3.new(1, 0, 0), 23, 2, rgb(90, 160, 255))
 	cottage(town, 80, 120, Vector3.new(-1, 0, 0), 24, 2, rgb(255, 180, 60))
-	cottage(town, -160, -250, Vector3.new(0, 0, 1), 25)
-	cottage(town, 160, -250, Vector3.new(0, 0, 1), 26)
-	cottage(town, -138, -300, Vector3.new(0.6, 0, 0.8).Unit, 27, 2)
-	cottage(town, 138, -300, Vector3.new(-0.6, 0, 0.8).Unit, 28, 2)
+	cottage(town, -100, -252, Vector3.new(0, 0, 1), 25)
+	cottage(town, 100, -252, Vector3.new(0, 0, 1), 26)
+	cottage(town, -100, -310, Vector3.new(0.6, 0, 0.8).Unit, 27, 2)
+	cottage(town, 100, -310, Vector3.new(-0.6, 0, 0.8).Unit, 28, 2)
 
 	-- bushes lining the avenue (clear of the Plaza and the Parade)
 	local n = 0
@@ -1611,9 +1538,9 @@ local function buildLandscape(scenery: Instance)
 		local f = i / 28
 		local x, z
 		if i % 2 == 0 then
-			x, z = (f * 2 - 1) * 250, if i % 4 == 0 then -402 else 342
+			x, z = (f * 2 - 1) * 128, if i % 4 == 0 then -402 else 342
 		else
-			x, z = if i % 4 == 1 then -253 else 253, -400 + f * 740
+			x, z = if i % 4 == 1 then -133 else 133, -400 + f * 740
 		end
 		ball(land, "Boulder", 4 + hash(i) * 6, x + (hash(i + 2) - 0.5) * 6, -0.5, z, rgb(160, 150, 140), Enum.Material.Rock)
 	end
@@ -1624,16 +1551,16 @@ local function buildLandscape(scenery: Instance)
 	coast.Parent = scenery
 	-- (the castle, lighthouse and ruins now stand on the terrain hills, see buildHills)
 
-	part(coast, "Pier", Vector3.new(80, 1, 10), at(290, 1.5, 20), rgb(160, 115, 75), Enum.Material.WoodPlanks)
+	part(coast, "Pier", Vector3.new(80, 1, 10), at(170, 1.5, 20), rgb(160, 115, 75), Enum.Material.WoodPlanks)
 	for i = 0, 7 do
 		for _, side in { -1, 1 } do
-			cylinder(coast, "Piling", 8, 1.2, 254 + i * 10, -2.5, 20 + side * 5.2, rgb(110, 80, 55), Enum.Material.Wood)
+			cylinder(coast, "Piling", 8, 1.2, 134 + i * 10, -2.5, 20 + side * 5.2, rgb(110, 80, 55), Enum.Material.Wood)
 		end
 	end
-	lamp(coast, 328, 26)
-	boat(coast, 300, 38, math.rad(80), rgb(240, 90, 90))
-	boat(coast, 318, 2, math.rad(100), rgb(90, 150, 240))
-	boat(coast, 380, 70, math.rad(30), rgb(255, 210, 80))
+	lamp(coast, 208, 26)
+	boat(coast, 180, 38, math.rad(80), rgb(240, 90, 90))
+	boat(coast, 198, 2, math.rad(100), rgb(90, 150, 240))
+	boat(coast, 260, 70, math.rad(30), rgb(255, 210, 80))
 
 	-- (the old distant prop mountains are gone: real terrain mountains ring the land now)
 end
@@ -2498,6 +2425,507 @@ end
 
 ----------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------
+-- the garden houses and Greenhollow Gardens
+
+-- Each garden house has its own plant theme for its planters and potted plants.
+local PLOT_THEMES = {
+	{ name = "Rose Cottage", kind = "flower", bloom = { 230, 50, 70 }, leaf = { 60, 140, 60 } },
+	{ name = "Marigold House", kind = "flower", bloom = { 255, 150, 40 }, leaf = { 70, 150, 60 } },
+	{ name = "Sunflower Lodge", kind = "sunflower", bloom = { 255, 210, 40 }, leaf = { 80, 160, 60 } },
+	{ name = "Fernery", kind = "fern", bloom = { 90, 190, 90 }, leaf = { 60, 150, 70 } },
+	{ name = "Mint Conservatory", kind = "mushroom", bloom = { 90, 210, 200 }, leaf = { 240, 240, 230 } },
+	{ name = "Bluebell Barn", kind = "flower", bloom = { 90, 130, 240 }, leaf = { 60, 140, 70 } },
+	{ name = "Lilac Loft", kind = "tree", bloom = { 180, 130, 240 }, leaf = { 110, 80, 55 } },
+	{ name = "Blossom Hall", kind = "tree", bloom = { 255, 170, 205 }, leaf = { 110, 80, 55 } },
+}
+
+-- A plant in the house's theme standing on the ground at world point p (y = its base).
+local function themePlant(parent: Instance, theme: any, p: Vector3, scale: number, seed: number)
+	local bloom = rgb(theme.bloom[1], theme.bloom[2], theme.bloom[3])
+	local leaf = rgb(theme.leaf[1], theme.leaf[2], theme.leaf[3])
+	local x, y, z = p.X, p.Y, p.Z
+	if theme.kind == "sunflower" then
+		cylinder(parent, "Stem", 4.5 * scale, 0.35 * scale, x, y + 2.25 * scale, z, leaf)
+		local head = part(parent, "Bloom", Vector3.new(0.4, 2.2, 2.2) * scale, CFrame.new(x, y + 4.8 * scale, z) * CFrame.Angles(0, seed, math.rad(20)), bloom, Enum.Material.SmoothPlastic)
+		head.Shape = Enum.PartType.Cylinder
+		ball(parent, "Seeds", 1.1 * scale, x, y + 4.8 * scale, z, rgb(110, 70, 40))
+	elseif theme.kind == "fern" then
+		for k = 0, 4 do
+			local a = k / 5 * math.pi * 2 + seed
+			part(parent, "Frond", Vector3.new(0.3, 0.2, 3) * scale, CFrame.new(x, y + 1.2 * scale, z) * CFrame.Angles(0, a, 0) * CFrame.Angles(math.rad(35), 0, 0) * CFrame.new(0, 0, -1.3 * scale), bloom, Enum.Material.Grass)
+		end
+	elseif theme.kind == "mushroom" then
+		cylinder(parent, "MushroomStem", 2 * scale, 0.8 * scale, x, y + 1 * scale, z, leaf)
+		local cap = ball(parent, "MushroomCap", 2.4 * scale, x, y + 2.2 * scale, z, bloom, Enum.Material.SmoothPlastic)
+		cap.Size = Vector3.new(2.6, 1.4, 2.6) * scale
+	elseif theme.kind == "tree" then
+		cylinder(parent, "Trunk", 3 * scale, 0.5 * scale, x, y + 1.5 * scale, z, leaf, Enum.Material.Wood)
+		ball(parent, "Canopy", 3 * scale, x, y + 3.6 * scale, z, bloom, Enum.Material.Grass)
+		ball(parent, "Canopy", 2 * scale, x + 0.9 * scale, y + 4.3 * scale, z - 0.5 * scale, bloom, Enum.Material.Grass)
+	else
+		cylinder(parent, "Stem", 2 * scale, 0.25 * scale, x, y + 1 * scale, z, leaf)
+		ball(parent, "Bloom", 1.2 * scale, x, y + 2.2 * scale, z, bloom)
+		ball(parent, "Leaf", 0.8 * scale, x + 0.45 * scale, y + 1.1 * scale, z, leaf, Enum.Material.Grass)
+	end
+end
+
+-- Jungle plants for the garden houses and Greenhollow's lanes (all built on the ground at p).
+-- (a function: Color3 only exists once useApi has run under Lune)
+local function jungleGreen(): Color3
+	return rgb(45, 135, 60)
+end
+local function monstera(parent: Instance, p: Vector3, scale: number, seed: number)
+	for k = 0, 4 do
+		local a = k / 5 * math.pi * 2 + seed
+		local tilt = math.rad(25 + (k % 2) * 20)
+		local stem = CFrame.new(p) * CFrame.Angles(0, a, 0)
+		deco(part(parent, "LeafStem", Vector3.new(0.25, 3.2, 0.25) * scale, stem * CFrame.new(0, 1.6 * scale, -0.6 * scale) * CFrame.Angles(-tilt, 0, 0), rgb(70, 140, 60), Enum.Material.Grass))
+		local leaf = deco(part(parent, "BigLeaf", Vector3.new(2.8, 0.2, 3.8) * scale, stem * CFrame.new(0, 3 * scale, -2.2 * scale) * CFrame.Angles(-tilt * 0.6, 0, 0), jungleGreen(), Enum.Material.Grass))
+		leaf.Shape = Enum.PartType.Cylinder
+		leaf.Size = Vector3.new(0.2, 3.6, 3.6) * scale
+		leaf.CFrame = leaf.CFrame * CFrame.Angles(0, 0, math.rad(90))
+	end
+end
+
+local function bamboo(parent: Instance, p: Vector3, height: number, seed: number)
+	for k = 0, 3 do
+		local a = k / 4 * math.pi * 2 + seed
+		local x, z = p.X + math.cos(a) * 0.9, p.Z + math.sin(a) * 0.9
+		local h = height * (0.75 + hash(seed + k) * 0.35)
+		cylinder(parent, "Bamboo", h, 0.6, x, p.Y + h / 2, z, rgb(150, 190, 80), Enum.Material.Wood)
+		for j = 1, 2 do
+			cylinder(parent, "BambooJoint", 0.25, 0.75, x, p.Y + h * j / 3, z, rgb(110, 150, 60), Enum.Material.Wood)
+		end
+		ball(parent, "BambooLeaves", 2.2, x, p.Y + h + 0.4, z, rgb(90, 170, 70), Enum.Material.Grass)
+	end
+end
+
+local function banana(parent: Instance, p: Vector3, scale: number, seed: number)
+	local h = 6 * scale
+	cylinder(parent, "BananaTrunk", h, 1 * scale, p.X, p.Y + h / 2, p.Z, rgb(120, 140, 70), Enum.Material.Grass)
+	for k = 0, 4 do
+		local a = k / 5 * math.pi * 2 + seed
+		local cf = CFrame.new(p.X, p.Y + h, p.Z) * CFrame.Angles(0, a, 0) * CFrame.Angles(math.rad(-25), 0, 0) * CFrame.new(0, 0, -2.6 * scale)
+		deco(part(parent, "BananaLeaf", Vector3.new(1.6, 0.2, 5.4) * scale, cf, rgb(80, 170, 60), Enum.Material.Grass))
+	end
+	ball(parent, "Bananas", 1 * scale, p.X + 0.6 * scale, p.Y + h - 0.6 * scale, p.Z, rgb(250, 220, 70))
+end
+
+-- A vine hanging from top (world point) down `length` studs, with leaves along it.
+local function vine(parent: Instance, top: Vector3, length: number, seed: number)
+	deco(part(parent, "Vine", Vector3.new(0.25, length, 0.25), CFrame.new(top - Vector3.new(0, length / 2, 0)), rgb(60, 130, 50), Enum.Material.Grass))
+	for k = 1, 3 do
+		local y = top.Y - length * k / 3.5
+		ball(parent, "VineLeaf", 0.9, top.X + (hash(seed + k) - 0.5) * 0.8, y, top.Z + (hash(seed + k * 2) - 0.5) * 0.8, jungleGreen(), Enum.Material.Grass).CanCollide = false
+	end
+end
+
+-- A garden house: a timber-and-glass conservatory in the plot's colour, with the soil beds near
+-- its doors, the display pads at the back and its own plant theme in the planters and pots. The
+-- doorway (facing the avenue) is the gate: laser curtain, lock button and owner sign.
+-- Part names (Floor, Border, Soil/SoilN, Pads/PadN, Greenhouse/Roof, Gate/Laser/LockButton/
+-- PillarCap, Sign, SpawnPoint) are what PlotService, SnatchService and the plot skins look for.
+local function buildPlot(plots: Instance, index: number)
+	local cx, cz, d = MapBuilder.plotPlacement(index)
+	local colorInfo = MapBuilder.PlotColors[index]
+	local color = rgb(colorInfo[2], colorInfo[3], colorInfo[4])
+	local theme = PLOT_THEMES[index]
+	local S = MapBuilder.PlotSize
+	local half = S / 2
+	local wallH = 14
+	local wood = rgb(150, 105, 70)
+	local frame = rgb(245, 242, 235)
+	local DOOR = 14 -- doorway width
+
+	local plot = Instance.new("Model")
+	plot.Name = "Plot" .. index
+	plot.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- a plot streams in whole
+	plot:SetAttribute("Index", index)
+	plot:SetAttribute("ColorName", colorInfo[1])
+	plot:SetAttribute("Inward", d)
+	plot:SetAttribute("Theme", theme.name)
+	plot.Parent = plots
+
+	-- u = towards the doors (the lane), v = along the lane; the house is turned a little
+	local facing, along = MapBuilder.plotAxes(index)
+	local rot = CFrame.Angles(0, math.rad(PLOT_YAW[index] or 0), 0)
+	local function w(u: number, y: number, v: number): Vector3
+		return Vector3.new(cx, y, cz) + facing * u + along * v
+	end
+	-- a frame at a world point, turned with the house (parts' X runs along the lane's cross axis)
+	local function frameAt(p: Vector3): CFrame
+		return CFrame.new(p) * rot
+	end
+	-- a part whose local X runs along u and Z along v
+	local function box(name: string, size: Vector3, u: number, y: number, v: number, color_: Color3, material: any?, props: { [string]: any }?): BasePart
+		return part(plot, name, size, frameAt(w(u, y, v)), color_, material, props)
+	end
+
+	-- floor: a stone path down the middle, a coloured trim, tiles round the beds
+	local floor = box("Floor", Vector3.new(S + 4, 1, S + 4), 0, 0.5, 0, rgb(205, 195, 175), Enum.Material.Slate)
+	plot.PrimaryPart = floor
+	box("Border", Vector3.new(S + 4.4, 1.1, 1.2), 0, 0.55, -half - 1.4, color, Enum.Material.SmoothPlastic)
+	box("Border", Vector3.new(S + 4.4, 1.1, 1.2), 0, 0.55, half + 1.4, color, Enum.Material.SmoothPlastic)
+	box("Rug", Vector3.new(4, 0.12, 10), -3.6, 1.06, 0, color, Enum.Material.Fabric)
+
+	-- walls: a wooden base course with glass above, timber posts, and the doorway at +u
+	local gh = Instance.new("Model")
+	gh.Name = "Greenhouse"
+	gh.Parent = plot
+	local function wallRun(u0: number, v0: number, u1: number, v1: number)
+		local a, b = w(u0, 0, v0), w(u1, 0, v1)
+		local len = (b - a).Magnitude
+		local mid = (a + b) / 2
+		local look = CFrame.lookAt(mid, b)
+		part(gh, "WallBase", Vector3.new(1.2, 4, len), look + Vector3.new(0, 3, 0), wood, Enum.Material.WoodPlanks)
+		part(gh, "Glass", Vector3.new(0.4, wallH - 5, len), look + Vector3.new(0, 5 + (wallH - 5) / 2, 0), rgb(200, 235, 255), Enum.Material.Glass, { Transparency = 0.55 })
+		part(gh, "WallCap", Vector3.new(1.6, 0.8, len), look + Vector3.new(0, wallH + 1, 0), frame, Enum.Material.Wood)
+		local n = math.max(1, math.floor(len / 10))
+		for k = 0, n do
+			local p = a + (b - a) * (k / n)
+			cylinder(gh, "Frame", wallH, 1, p.X, 1 + wallH / 2, p.Z, frame, Enum.Material.Wood)
+		end
+	end
+	local e = half + 1.5
+	local BACK = 12 -- the back doorway: walk in from the back path too
+	wallRun(-e, -e, -e, -BACK / 2) -- back, either side of the back doorway
+	wallRun(-e, BACK / 2, -e, e)
+	wallRun(-e, -e, e, -e) -- sides
+	wallRun(-e, e, e, e)
+	wallRun(e, -e, e, -DOOR / 2) -- front, either side of the doorway
+	wallRun(e, DOOR / 2, e, e)
+	-- the roof: two glass slopes on white ribs, a ridge in the plot's colour
+	local rise = 10
+	local slopeLen = math.sqrt((e + 1) ^ 2 + rise ^ 2)
+	local tilt = math.atan(rise / (e + 1))
+	for _, side in { -1, 1 } do
+		-- u runs along world X, so each slope tilts about X
+		local mid = w(0, wallH + 1.5 + rise / 2, side * (e + 1) / 2)
+		part(gh, "Roof", Vector3.new(S + 6, 0.5, slopeLen + 1), frameAt(mid) * CFrame.Angles(side * tilt, 0, 0), rgb(200, 240, 255), Enum.Material.Glass, { Transparency = 0.5 })
+		for k = -3, 3 do
+			local rib = w(k * (S + 4) / 6, wallH + 1.5 + rise / 2, side * (e + 1) / 2)
+			part(gh, "Rib", Vector3.new(0.8, 0.8, slopeLen + 1.2), frameAt(rib) * CFrame.Angles(side * tilt, 0, 0), frame, Enum.Material.Wood)
+		end
+	end
+	local ridge = part(gh, "RoofTrim", Vector3.new(S + 7, 1.4, 1.4), frameAt(w(0, wallH + 1.5 + rise + 0.3, 0)), color, Enum.Material.SmoothPlastic)
+	ridge.Shape = Enum.PartType.Cylinder
+	for _, u in { -(half + 3.5), half + 3.5 } do
+		local fp = w(u, wallH + 1.5 + rise + 0.6, 0)
+		ball(gh, "Finial", 2.2, fp.X, fp.Y, fp.Z, color, Enum.Material.Neon)
+	end
+	-- gable ends: the triangle above each end wall, filled with glass
+	for _, u in { -e, e } do
+		for _, side in { -1, 1 } do
+			local a = w(u, wallH + 1.5, side * (e + 1))
+			local foot = w(u, wallH + 1.5, 0)
+			-- one wedge per half-gable: tall edge at the ridge, sloping out to the eave
+			local size = Vector3.new(0.4, rise, (a - foot).Magnitude)
+			local wcf = CFrame.lookAt((foot + a) / 2 + Vector3.new(0, rise / 2, 0), (foot + a) / 2 + Vector3.new(0, rise / 2, 0) + (a - foot).Unit)
+			-- the front gable (over the doors) is painted in the plot's colour; the back one is glass
+			local front = u > 0
+			local wedgePart = wedge(gh, "Gable", size, wcf, if front then color else rgb(200, 235, 255), if front then Enum.Material.WoodPlanks else Enum.Material.Glass)
+			wedgePart.Transparency = if front then 0 else 0.5
+		end
+	end
+
+	-- the back doorway's timber frame
+	for _, v in { -BACK / 2 - 0.6, BACK / 2 + 0.6 } do
+		local bp = w(-e, 0, v)
+		cylinder(gh, "BackPost", wallH, 1.2, bp.X, 1 + wallH / 2, bp.Z, frame, Enum.Material.Wood)
+	end
+	part(gh, "BackLintel", Vector3.new(1.6, 1.4, BACK + 2.4), frameAt(w(-e, wallH, 0)), frame, Enum.Material.Wood)
+	box("BackStep", Vector3.new(3, 0.6, BACK + 1), -e - 2, 0.8, 0, rgb(205, 195, 175), Enum.Material.Slate)
+
+	-- a round window and a little bargeboard trim in the painted front gable
+	local gw = part(gh, "GableWindow", Vector3.new(0.5, 4, 4), frameAt(w(e + 0.3, wallH + 1.5 + rise * 0.4, 0)), rgb(255, 225, 150), Enum.Material.Neon)
+	gw.Shape = Enum.PartType.Cylinder
+	local gwFrame = part(gh, "GableWindowFrame", Vector3.new(0.4, 5.2, 5.2), frameAt(w(e + 0.2, wallH + 1.5 + rise * 0.4, 0)), frame, Enum.Material.Wood)
+	gwFrame.Shape = Enum.PartType.Cylinder
+
+	-- soil beds, each in a wooden frame
+	local soil = Instance.new("Folder")
+	soil.Name = "Soil"
+	soil.Parent = plot
+	for tile = 1, 12 do
+		local u, v = MapBuilder.soilLocal(tile)
+		local s_ = part(soil, "Soil" .. tile, Vector3.new(7, 1.2, 7), frameAt(w(u, 1.1, v)), rgb(110, 75, 50), Enum.Material.Ground)
+		s_:SetAttribute("Tile", tile)
+		box("BedFrame", Vector3.new(7.8, 1.4, 0.5), u, 1.2, v - 3.65, wood, Enum.Material.WoodPlanks)
+		box("BedFrame", Vector3.new(7.8, 1.4, 0.5), u, 1.2, v + 3.65, wood, Enum.Material.WoodPlanks)
+	end
+
+	-- display pads on a raised marble stage at the back
+	box("Stage", Vector3.new(19, 0.6, S - 2), -14.5, 1.3, 0, rgb(240, 235, 225), Enum.Material.Marble)
+	local pads = Instance.new("Folder")
+	pads.Name = "Pads"
+	pads.Parent = plot
+	for pad = 1, 12 do
+		local u, v = MapBuilder.padLocal(pad)
+		local p = cylinder(pads, "Pad" .. pad, 1, 6.5, 0, 0, 0, rgb(250, 250, 250), Enum.Material.Marble)
+		p.CFrame = frameAt(w(u, 2, v)) * CFrame.Angles(0, 0, math.rad(90))
+		p.Name = "Pad" .. pad
+		p:SetAttribute("Pad", pad)
+		p:SetAttribute("Bonus", pad > 8)
+		if pad > 8 then
+			p.Transparency = 0.7
+		end
+		local rim = cylinder(pads, "Rim" .. pad, 0.4, 7.1, 0, 0, 0, color, Enum.Material.Neon)
+		rim.CFrame = frameAt(w(u, 1.75, v)) * CFrame.Angles(0, 0, math.rad(90))
+	end
+
+	-- the house's own decor: planters of its theme along the side walls, potted plants in the
+	-- corners, hanging lanterns, a bench, shelves of pots, a watering can
+	for _, side in { -1, 1 } do
+		local pv = side * (half - 1.5)
+		box("Planter", Vector3.new(16, 1.6, 2.4), 8, 1.8, pv, wood, Enum.Material.WoodPlanks)
+		box("PlanterSoil", Vector3.new(15, 0.3, 1.8), 8, 2.6, pv, rgb(90, 60, 40), Enum.Material.Ground)
+		for k = 0, 4 do
+			themePlant(plot, theme, w(1.6 + k * 3.2, 2.7, pv), 0.8, k + side)
+		end
+		-- a potted plant either side of the stage
+		local pot = w(-half + 2, 1, side * (half - 8))
+		cylinder(plot, "Pot", 2.2, 3, pot.X, 2.1, pot.Z, rgb(200, 110, 80), Enum.Material.SmoothPlastic)
+		themePlant(plot, theme, pot + Vector3.new(0, 2.2, 0), 1.3, index)
+		-- wall shelf with little pots
+		box("Shelf", Vector3.new(10, 0.5, 1.6), -2, 8, side * (half - 0.4), wood, Enum.Material.WoodPlanks)
+		for k = -1, 1 do
+			local sp = w(-2 + k * 3.5, 8.25, side * (half - 0.6))
+			cylinder(plot, "Pot", 1.4, 1.4, sp.X, sp.Y + 0.7, sp.Z, rgb(200, 110, 80), Enum.Material.SmoothPlastic)
+			themePlant(plot, theme, sp + Vector3.new(0, 1.4, 0), 0.5, k)
+		end
+		-- a hanging lantern over each side of the path
+		local lp = w(2, wallH - 1, side * 8)
+		cylinder(plot, "LanternChain", 4, 0.15, lp.X, lp.Y + 2, lp.Z, rgb(60, 60, 65), Enum.Material.Metal)
+		local glow = ball(plot, "Lantern", 1.6, lp.X, lp.Y, lp.Z, rgb(255, 225, 150), Enum.Material.Neon)
+		glowLight(glow, 22, 1, rgb(255, 215, 150))
+	end
+	-- jungle: bamboo in the back corners, monstera by the doors, vines hanging from the roof
+	for _, side in { -1, 1 } do
+		bamboo(plot, w(-half + 2.5, 1, side * (half - 3)), 11, index + side)
+		monstera(plot, w(half - 4, 1, side * (DOOR / 2 + 4)), 0.9, index + side)
+		for k = -2, 2 do
+			local vv = side * 10
+			local roofY = wallH + 1.5 + rise * (1 - math.abs(vv) / (e + 1))
+			vine(plot, w(k * 9, roofY - 0.4, vv), 3 + hash(index + k + side) * 3, index * 10 + k)
+		end
+	end
+	local benchAt = w(-6, 0, -half + 4)
+	part(plot, "BenchSeat", Vector3.new(6, 0.5, 2), CFrame.lookAt(benchAt + Vector3.new(0, 2.4, 0), benchAt + Vector3.new(0, 2.4, 0) + along) * CFrame.Angles(0, math.rad(90), 0), wood, Enum.Material.WoodPlanks)
+	local can = w(-6, 1.8, half - 4)
+	cylinder(plot, "WateringCan", 2, 1.6, can.X, can.Y, can.Z, color, Enum.Material.Metal)
+	part(plot, "Spout", Vector3.new(0.3, 0.3, 2), CFrame.lookAt(can + Vector3.new(0, 0.4, 0), can + Vector3.new(0, 1.2, 0) + facing * 1.5) * CFrame.new(0, 0, -1), color, Enum.Material.Metal)
+
+	-- the doorway: a timber arch with posts in the plot colour (the gate), the laser curtain,
+	-- the lock button, a door lantern either side and the owner's sign above
+	local gate = Instance.new("Model")
+	gate.Name = "Gate"
+	gate.Parent = plot
+	for _, v in { -DOOR / 2 - 1, DOOR / 2 + 1 } do
+		local pp = w(e, 0, v)
+		part(gate, "Pillar", Vector3.new(2.4, wallH + 2, 2.4), frameAt(pp + Vector3.new(0, 1 + (wallH + 2) / 2, 0)), color, Enum.Material.SmoothPlastic)
+		ball(gate, "PillarCap", 3, pp.X, wallH + 4, pp.Z, color, Enum.Material.Neon)
+		local lamp_ = w(e + 1.6, 9, v)
+		local bulb = ball(gate, "DoorLamp", 1.2, lamp_.X, lamp_.Y, lamp_.Z, rgb(255, 225, 150), Enum.Material.Neon)
+		glowLight(bulb, 14, 0.8, rgb(255, 215, 150))
+	end
+	part(gate, "Lintel", Vector3.new(2.4, 2, DOOR + 4.4), frameAt(w(e, wallH + 2, 0)), color, Enum.Material.SmoothPlastic)
+	part(gate, "Laser", Vector3.new(0.6, wallH - 2, DOOR), frameAt(w(e, 1 + (wallH - 2) / 2, 0)), rgb(255, 60, 60), Enum.Material.ForceField, { Transparency = 1, CanCollide = false, CanQuery = false })
+	local buttonAt = w(e + 3, 2.5, -DOOR / 2 - 4)
+	local button = part(gate, "LockButton", Vector3.new(3, 3, 3), CFrame.lookAt(buttonAt, buttonAt + facing), rgb(255, 80, 80), Enum.Material.Neon)
+	part(gate, "LockPost", Vector3.new(2, 1, 2), frameAt(w(e + 3, 0.9, -DOOR / 2 - 4)), rgb(80, 80, 90), Enum.Material.Metal)
+	label(button, "LOCK", 3, UDim2.fromOffset(160, 40))
+	-- the doorstep and flower tubs outside
+	box("Doorstep", Vector3.new(4, 0.6, DOOR + 2), e + 2.5, 0.8, 0, rgb(205, 195, 175), Enum.Material.Slate)
+	for _, v in { -DOOR / 2 - 4, DOOR / 2 + 4 } do
+		local tub = w(e + 3, 0, v)
+		if v > 0 then
+			cylinder(plot, "Tub", 2.4, 3.6, tub.X, 1.2, tub.Z, wood, Enum.Material.WoodPlanks)
+			themePlant(plot, theme, tub + Vector3.new(0, 2.4, 0), 1.2, index + 3)
+		end
+	end
+
+	-- owner sign over the doors (house name underneath)
+	local sign = part(plot, "Sign", Vector3.new(1, 4, 22), frameAt(w(e + 1.4, wallH + 5.5, 0)), rgb(250, 245, 230), Enum.Material.WoodPlanks)
+	label(sign, colorInfo[1] .. " plot - unclaimed", 4, UDim2.fromOffset(360, 70), color)
+	local nameBoard = part(plot, "HouseName", Vector3.new(0.6, 1.6, 14), frameAt(w(e + 1.4, wallH + 2.6, 0)), rgb(70, 50, 35), Enum.Material.WoodPlanks)
+	label(nameBoard, theme.name, 0, UDim2.fromOffset(220, 36), rgb(255, 235, 170))
+
+	local spawnPoint = part(plot, "SpawnPoint", Vector3.new(4, 1, 4), CFrame.lookAt(w(-4, 3.5, 0), w(-4, 3.5, 0) + facing), color, Enum.Material.SmoothPlastic, { Transparency = 1, CanCollide = false, CanQuery = false })
+	spawnPoint:SetAttribute("Spawn", true)
+
+	-- the jungle yard round the house: palms behind, banana plants and mossy rocks at the sides
+	local yard_ = Instance.new("Model")
+	yard_.Name = "JungleYard"
+	yard_.Parent = plot
+	for _, side in { -1, 1 } do
+		local pp = w(-e - 5, 0, side * (e - 6))
+		palm(yard_, pp.X, pp.Z, Vector3.new(-d, 0, side * 0.5).Unit, index * 3 + side)
+		banana(yard_, w(-e - 4, 0, side * 8), 1.1, index + side)
+		local rock = w(-e - 3, 0, side * (e - 14))
+		ball(yard_, "MossRock", 4, rock.X, 0.8, rock.Z, rgb(110, 115, 105), Enum.Material.Slate)
+		ball(yard_, "Moss", 3, rock.X, 2, rock.Z, rgb(70, 140, 60), Enum.Material.Grass)
+	end
+	lift(plot, MapBuilder.PlotBaseY)
+end
+
+-- Greenhollow Gardens: the farm village round the garden houses, off the city's Grand Way. A
+-- village green at the lane's north end with the Seed Barn (a second Seed Shop: ShopService and
+-- the client handle every "Seed Shop" model), a Sell Stand and a well, a welcome arch, lamps and
+-- jungle planting down the lane. Built at y = 0 and lifted onto the levelled site.
+local function buildGreenhollow(map: Instance)
+	local g = MapBuilder.Garden
+	local village = Instance.new("Model")
+	village.Name = "Greenhollow"
+	village.ModelStreamingMode = Enum.ModelStreamingMode.Persistent -- the client reads its shop labels
+	village.Parent = map
+	local gx, gz = g.x, g.z - 187 -- the green
+	part(village, "Green", Vector3.new(76, 0.4, 34), at(gx, 0.2, gz), rgb(205, 195, 175), Enum.Material.Slate)
+	well(village, gx - 10, gz - 10)
+	-- the Seed Barn: kiosks along the counter, a restock board above
+	local barnFacing = Vector3.new(1, 0, 0)
+	local seedBarn = stall(village, "Seed Shop", gx - 28, gz, barnFacing, 34, rgb(90, 190, 110))
+	local base = CFrame.lookAt(Vector3.new(gx - 28, 0, gz), Vector3.new(gx - 28, 0, gz) + barnFacing)
+	local kiosks = Instance.new("Folder")
+	kiosks.Name = "Kiosks"
+	kiosks.Parent = seedBarn
+	for i = 1, 11 do
+		local u = -15.5 + (i - 0.5) * (31 / 11)
+		local k = part(kiosks, "Kiosk" .. i, Vector3.new(2.5, 1, 2.4), base * CFrame.new(u, 4, -1), rgb(255, 250, 235), Enum.Material.SmoothPlastic)
+		k:SetAttribute("Slot", i)
+	end
+	local timer = part(seedBarn, "RestockBoard", Vector3.new(16, 4, 0.5), base * CFrame.new(0, 19.5, 2), rgb(40, 60, 45), Enum.Material.SmoothPlastic)
+	label(timer, "Restock in 5m 00s", 0, UDim2.fromOffset(260, 40), rgb(200, 255, 200))
+	local sell = stall(village, "Sell Stand", gx + 28, gz, Vector3.new(-1, 0, 0), 16, rgb(240, 180, 60))
+	part(sell, "Anchor", Vector3.new(4, 1, 4), at(gx + 25, 4, gz), rgb(255, 220, 120), Enum.Material.Neon)
+	-- the welcome arch over the lane, and a signpost
+	local ax, az = gx, gz + 24
+	for _, s_ in { -1, 1 } do
+		part(village, "ArchPost", Vector3.new(1.6, 16, 1.6), at(ax + s_ * 9, 8, az), rgb(130, 95, 60), Enum.Material.Wood)
+		bamboo(village, Vector3.new(ax + s_ * 12, 0, az), 9, s_)
+	end
+	part(village, "ArchBeam", Vector3.new(21, 1.6, 1.6), at(ax, 16.2, az), rgb(130, 95, 60), Enum.Material.Wood)
+	local board = part(village, "ArchSign", Vector3.new(16, 3.4, 0.5), at(ax, 13.6, az), rgb(70, 50, 35), Enum.Material.WoodPlanks)
+	label(board, "Greenhollow Gardens", 0, UDim2.fromOffset(300, 50), rgb(200, 255, 190))
+	for k = -4, 4 do
+		ball(village, "ArchVine", 1.3, ax + k * 2.2, 15.1 - math.abs(k) * 0.15, az + 0.9, jungleGreen(), Enum.Material.Grass).CanCollide = false
+	end
+	signpost(village, gx + 10, gz - 14, "Sproutling City", rgb(255, 235, 170))
+	-- farm fields either side of the houses, fenced, with crops, haystacks and a scarecrow
+	local crops = { rgb(240, 200, 70), rgb(80, 170, 70), rgb(245, 140, 40), rgb(200, 80, 90) }
+	for i, f in { { -112, -92 }, { -112, 0 }, { -112, 92 }, { 112, -46 }, { 112, 46 } } do
+		local fx, fz = g.x + f[1], g.z + f[2]
+		part(village, "Field", Vector3.new(28, 0.6, 60), at(fx, 0.3, fz), rgb(110, 80, 55), Enum.Material.Ground)
+		for r = 0, 5 do
+			part(village, "CropRow", Vector3.new(2.2, 1, 56), at(fx - 11 + r * 4.4, 0.9, fz), crops[(i + r) % #crops + 1], Enum.Material.Grass)
+		end
+		for _, side in { -1, 1 } do
+			part(village, "FenceRail", Vector3.new(0.4, 0.4, 62), at(fx + side * 15, 2.2, fz), rgb(150, 110, 70), Enum.Material.Wood)
+			part(village, "FenceRail", Vector3.new(30, 0.4, 0.4), at(fx, 2.2, fz + side * 31), rgb(150, 110, 70), Enum.Material.Wood)
+			for k = -3, 3 do
+				part(village, "FencePost", Vector3.new(0.5, 3, 0.5), at(fx + side * 15, 1.5, fz + k * 10), rgb(130, 95, 60), Enum.Material.Wood)
+			end
+		end
+		if i % 2 == 1 then
+			haystack(village, fx + (if fx < g.x then 21 else -21), fz - 20, 4)
+		else
+			scarecrow(village, fx, fz)
+		end
+	end
+	-- a red barn and silo at the bottom of the lane
+	barn(village, g.x - 16, g.z + 190, Vector3.new(0, 0, -1))
+	silo(village, g.x + 14, g.z + 192)
+	haystack(village, g.x + 28, g.z + 182, 4.5)
+
+	-- between each pair of houses: a stone path from the lane round to the fields, lanterns along
+	-- it, and a little trading cart (a Sell Stand: ShopService wires every one) by the lane
+	-- the back paths behind each row, joined to the lane by the branch paths
+	for _, s_ in { -1, 1 } do
+		part(village, "GardenPath", Vector3.new(5, 0.3, 330), at(g.x + s_ * 90, 0.15, g.z), rgb(185, 175, 160), Enum.Material.Cobblestone)
+	end
+	for i, z in { -92, 0, 92 } do
+		local pz = g.z + z
+		for _, s_ in { -1, 1 } do
+			part(village, "GardenPath", Vector3.new(86, 0.3, 5), at(g.x + s_ * 48, 0.15, pz), rgb(185, 175, 160), Enum.Material.Cobblestone)
+			-- little trees down the middle of each branch, between the houses
+			for _, dx in { 40, 70 } do
+				local tx, tz = g.x + s_ * dx, pz - 6.5
+				cylinder(village, "TreeBed", 0.5, 3.6, tx, 0.25, tz, rgb(110, 80, 55), Enum.Material.Ground)
+				cylinder(village, "Trunk", 6, 0.8, tx, 3, tz, rgb(105, 75, 52), Enum.Material.Wood)
+				ball(village, "Canopy", 5.4, tx, 7.2, tz, rgb(70 + (dx % 3) * 15, 160, 75), Enum.Material.Grass)
+				ball(village, "Canopy", 3.6, tx + 1.2, 9, tz - 0.8, rgb(80, 170, 80), Enum.Material.Grass)
+			end
+			for k = 0, 5 do
+				cylinder(village, "PathStone", 0.35, 2.4, g.x + s_ * (14 + k * 14), 0.3, pz + (if k % 2 == 0 then 3.4 else -3.4), rgb(160, 150, 140), Enum.Material.Slate)
+			end
+			for _, dx in { 26, 55, 84 } do
+				local lx = g.x + s_ * dx
+				cylinder(village, "LanternPost", 7, 0.5, lx, 3.5, pz + 3.6, rgb(60, 55, 50), Enum.Material.Metal)
+				part(village, "LanternArm", Vector3.new(0.3, 0.3, 1.6), at(lx, 6.8, pz + 2.9), rgb(60, 55, 50), Enum.Material.Metal)
+				local lantern = part(village, "Lantern", Vector3.new(1.1, 1.4, 1.1), at(lx, 6, pz + 2.2), rgb(255, 215, 140), Enum.Material.Neon)
+				glowLight(lantern, 18, 0.9, rgb(255, 210, 140))
+				cone(village, "LanternCap", lx, 6.7, pz + 2.2, 0.8, 0.8, rgb(60, 55, 50), Enum.Material.Metal, 4)
+			end
+			-- lanterns strung across the lane too
+			lamp(village, g.x + s_ * 8, pz - 6)
+		end
+		-- the trading cart, on alternating sides of the lane
+		local side = if i % 2 == 0 then 1 else -1
+		local cx_, cz_ = g.x + side * 22, pz - 8
+		local cart_ = Instance.new("Model")
+		cart_.Name = "Sell Stand"
+		cart_.Parent = village
+		local turn = CFrame.new(cx_, 0, cz_) * CFrame.Angles(0, if side > 0 then -math.pi / 2 else math.pi / 2, 0) -- faces the lane
+		local function c(u: number, y: number, v: number): CFrame
+			return turn * CFrame.new(u, y, -v)
+		end
+		local wood = rgb(150, 105, 70)
+		part(cart_, "CartBed", Vector3.new(8, 1.2, 4.6), c(0, 2.4, 0), wood, Enum.Material.WoodPlanks)
+		part(cart_, "CartSide", Vector3.new(8, 1.4, 0.4), c(0, 3.6, 2.1), wood, Enum.Material.WoodPlanks)
+		part(cart_, "CartSide", Vector3.new(8, 1.4, 0.4), c(0, 3.6, -2.1), wood, Enum.Material.WoodPlanks)
+		for _, wu in { -2.8, 2.8 } do
+			for _, wv in { -2.6, 2.6 } do
+				local wheel = part(cart_, "Wheel", Vector3.new(0.5, 2.6, 2.6), c(wu, 1.3, wv) * CFrame.Angles(0, math.rad(90), 0), rgb(90, 65, 45), Enum.Material.Wood)
+				wheel.Shape = Enum.PartType.Cylinder
+			end
+		end
+		for _, pu in { -3.7, 3.7 } do
+			for _, pv in { -2, 2 } do
+				part(cart_, "CanopyPost", Vector3.new(0.4, 6, 0.4), c(pu, 6, pv), wood, Enum.Material.Wood)
+			end
+		end
+		local stripes = { rgb(240, 90, 90), rgb(255, 255, 255), rgb(240, 90, 90), rgb(255, 255, 255) }
+		for k = 1, 4 do
+			local u = -4.5 + (k - 0.5) * 2.25
+			part(cart_, "Canopy", Vector3.new(2.25, 0.3, 6), c(u, 9.2, 0.3) * CFrame.Angles(math.rad(-10), 0, 0), stripes[k], Enum.Material.Fabric)
+			local sc = part(cart_, "Scallop", Vector3.new(0.25, 2, 2), c(u, 8.6, 3.3) * CFrame.Angles(0, math.rad(90), 0), stripes[k], Enum.Material.Fabric)
+			sc.Shape = Enum.PartType.Cylinder
+			sc.CanCollide = false
+		end
+		local produce = { rgb(230, 60, 60), rgb(250, 200, 60), rgb(120, 200, 80), rgb(240, 140, 50), rgb(170, 120, 220) }
+		for k = 0, 5 do
+			local fruit = part(cart_, "Produce", Vector3.new(1.2, 1.2, 1.2), c(-3 + k * 1.2, 3.6, (k % 2) * 1.2 - 0.6), produce[(k + i) % #produce + 1], Enum.Material.SmoothPlastic)
+			fruit.Shape = Enum.PartType.Ball
+		end
+		part(cart_, "Crate", Vector3.new(2, 2, 2), c(5.4, 1, 1.2), wood, Enum.Material.WoodPlanks)
+		part(cart_, "Crate", Vector3.new(1.6, 1.6, 1.6), c(5.6, 2.8, 1.1), wood, Enum.Material.WoodPlanks)
+		local board = part(cart_, "CartSign", Vector3.new(5, 1.4, 0.3), c(0, 10.6, 3.1), rgb(70, 50, 35), Enum.Material.WoodPlanks)
+		label(board, "Trading Cart", 0, UDim2.fromOffset(180, 36), rgb(255, 235, 170))
+		part(cart_, "Anchor", Vector3.new(3, 1, 3), c(0, 3.4, 2.8), rgb(255, 220, 120), Enum.Material.Neon)
+	end
+	-- jungle planting down the lane
+	for _, z in { -138, -46, 46, 138 } do
+		local lz = g.z + z
+		for _, s_ in { -1, 1 } do
+			monstera(village, Vector3.new(g.x + s_ * 12, 0, lz + 20), 0.9, z + s_)
+			palm(village, g.x + s_ * 12, lz - 20, Vector3.new(s_, 0, 0), z + s_ * 5)
+		end
+	end
+	lamp(village, g.x + 8, g.z + 172)
+	lamp(village, g.x - 8, g.z + 172)
+	lift(village, g.y)
+end
+
 function MapBuilder.Build(parent: Instance): Instance
 	if not Landscape then
 		local ok, module = pcall(function()
@@ -2546,6 +2974,7 @@ function MapBuilder.Build(parent: Instance): Instance
 	for index = 1, 8 do
 		buildPlot(plots, index)
 	end
+	buildGreenhollow(map)
 	buildParade(map)
 	buildPond(map)
 	buildSkyGarden(map)

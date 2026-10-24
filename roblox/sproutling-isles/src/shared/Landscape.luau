@@ -17,7 +17,7 @@
 local Landscape = {}
 
 -- Bump when the terrain shape changes, so a terrain baked into the place in Studio is rebuilt.
-Landscape.Version = 5
+Landscape.Version = 6
 
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
@@ -26,7 +26,7 @@ Landscape.LagoonFloor = -8
 Landscape.Bounds = { x0 = -1500, x1 = 1500, z0 = -1350, z1 = 2350 }
 
 -- The garden island: built from parts, so no terrain is generated inside it.
-Landscape.Play = { x0 = -262, x1 = 262, z0 = -412, z1 = 352 }
+Landscape.Play = { x0 = -140, x1 = 140, z0 = -412, z1 = 352 }
 Landscape.Areas = { Landscape.Play }
 
 -- The walled city: centre and rough radius (the outline wobbles, see cityRadiusAt).
@@ -64,6 +64,8 @@ Landscape.SiteList = {
 	{ name = "observatory", x = 280, z = -860, r = 30 },
 	-- the volcanic peak above the Emberdeep Caldera (third dungeon)
 	{ name = "emberpeak", x = -850, z = 1520, r = 36 },
+	-- Greenhollow Gardens, the garden-house village off the city's Grand Way (MapBuilder.Garden)
+	{ name = "greenhollow", x = -170, z = 1440, r = 210, h = 24 },
 	-- Highcrag, the mountain village below Ember Peak; over Saltwind Pass to Saltmere on the beach
 	-- (and the Tidewrack Grotto, the fourth dungeon)
 	{ name = "highcrag", x = -770, z = 1615, r = 48, h = 168, ground = "LeafyGrass" },
@@ -92,9 +94,9 @@ local BAYS = {
 -- Lagoon bridges: start on the island's beach and run outwards until they reach dry land.
 -- { x, z, dx, dz }; the far end is worked out below. Landscape.Bridges holds { x0, z0, x1, z1 }.
 local BRIDGE_STARTS = {
-	{ -262, 60, -1, 0 },
-	{ -262, -250, -1, 0 },
-	{ -150, 352, 0, 1 }, -- footbridge to the city's west side
+	{ -140, 60, -1, 0 },
+	{ -140, -250, -1, 0 },
+	{ -100, 352, 0, 1 }, -- footbridge to the city's west side
 }
 local GRAND_BRIDGE_START = { 0, 352, 0, 1 } -- the stone bridge to the city's north gate
 
@@ -120,6 +122,7 @@ Landscape.Roads = {
 	{ name = "Eastmere Road", width = 8, material = "Ground", points = { { 432, 345 }, { 560, 330 }, { 680, 392 }, { 752, 428 } } },
 	{ name = "Watch Road", width = 8, material = "Ground", points = { { -560, 905 }, { -625, 760 }, { -640, 610 }, { -600, 470 }, { -566, 362 } } },
 	{ name = "Pinecrest Road", width = 7, material = "Ground", points = { { -566, 362 }, { -700, 380 }, { -840, 330 }, { -985, 295 } } },
+	{ name = "Greenhollow Lane", width = 10, material = "Ground", points = { { 62, 1385 }, { 0, 1345 }, { -60, 1295 }, { -110, 1264 }, { -150, 1253 }, { -170, 1264 }, { -170, 1340 }, { -170, 1440 }, { -170, 1540 }, { -170, 1615 } } },
 	{ name = "Old Fort Track", width = 7, material = "Ground", points = { { 95, 1640 }, { 260, 1610 }, { 420, 1540 }, { 545, 1440 } } },
 	-- mountain tracks up to the quest camps
 	{ name = "Miners' Track", width = 7, material = "Ground", points = { { -465, -420 }, { -420, -560 }, { -380, -700 }, { -320, -850 }, { -275, -935 } } },

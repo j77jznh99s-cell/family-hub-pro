@@ -11,7 +11,7 @@ local WHITE = Color3.new(1, 1, 1)
 
 local LINES = {
 	{ "GETTING STARTED", true },
-	{ "Talk to Mara the Guide by the bridge south of the plaza for a tour.", false },
+	{ "Talk to Mara the Guide on Greenhollow green (by the Seed Barn) for a tour.", false },
 	{ "Gold ! over a head = a quest for you. Green ? = hand it in.", false },
 	{ "", false },
 	{ "CONTROLS", true },

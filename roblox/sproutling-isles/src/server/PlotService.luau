@@ -38,6 +38,8 @@ type PlotInfo = {
 	cx: number,
 	cz: number,
 	inward: number,
+	facing: Vector3, -- out of the house's doors (MapBuilder.plotAxes: houses are turned a little)
+	along: Vector3,
 	owner: Player?,
 	soilPrompts: { ProximityPrompt },
 	sellPrompts: { ProximityPrompt },
@@ -55,7 +57,7 @@ local plotByModel: { [Model]: PlotInfo } = {}
 -- geometry
 
 local function worldPoint(info: PlotInfo, u: number, y: number, v: number): Vector3
-	return Vector3.new(info.cx + info.inward * u, y, info.cz + v)
+	return Vector3.new(info.cx, y, info.cz) + info.facing * u + info.along * v
 end
 
 function PlotService.isInside(plot: Model, position: Vector3): boolean
@@ -64,13 +66,14 @@ function PlotService.isInside(plot: Model, position: Vector3): boolean
 		return false
 	end
 	local half = MapBuilder.PlotSize / 2
-	return math.abs(position.X - info.cx) <= half and math.abs(position.Z - info.cz) <= half + 2
+	local offset = Vector3.new(position.X - info.cx, 0, position.Z - info.cz)
+	return math.abs(offset:Dot(info.facing)) <= half + 2 and math.abs(offset:Dot(info.along)) <= half + 2
 end
 
 function PlotService.gateOutside(plot: Model): CFrame
 	local info = plotByModel[plot]
-	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, 4, 0)
-	return CFrame.lookAt(pos, pos + Vector3.new(info.inward, 0, 0))
+	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, MapBuilder.PlotBaseY + 4, 0)
+	return CFrame.lookAt(pos, pos + info.facing)
 end
 
 function PlotService.info(plot: Model): PlotInfo?
@@ -121,7 +124,7 @@ function PlotService.renderPads(session: State.Session)
 			info.sellPrompts[pad].HoldDuration = if species and RARE_OR_BETTER[species.rarity] then 1 else 0.4
 			local model = SproutModel.build(sprout, true)
 			local top = padPart.Position + Vector3.new(0, padPart.Size.X / 2, 0)
-			model:PivotTo(CFrame.lookAt(top, top + Vector3.new(info.inward, 0, 0)))
+			model:PivotTo(CFrame.lookAt(top, top + info.facing))
 			local incomeLabel = model:FindFirstChild("Income", true) :: TextLabel?
 			if incomeLabel then
 				incomeLabel.Text = "+" .. Format.number(SproutModel.income(sprout) * mult) .. " Dew/s"
@@ -597,12 +600,15 @@ function PlotService.init(map: Instance)
 	for _, model in map.Plots:GetChildren() do
 		local index = model:GetAttribute("Index")
 		local cx, cz, inward = MapBuilder.plotPlacement(index)
+		local facing, along = MapBuilder.plotAxes(index)
 		local info: PlotInfo = {
 			model = model,
 			index = index,
 			cx = cx,
 			cz = cz,
 			inward = inward,
+			facing = facing,
+			along = along,
 			owner = nil,
 			soilPrompts = {},
 			sellPrompts = {},

@@ -100,8 +100,8 @@ Quests.ItemSpots = {
 
 Quests.Npcs = {
 	mara = {
-		id = "mara", name = "Mara Brightfoot", title = "Guide to the Isles", camp = "guide", near = { 0, 0 }, fixed = { 30, 0, 334 }, facing = { 0, -1 },
-		greeting = "New to the Isles? Splendid! The city's just over that bridge. Let me show you around.",
+		id = "mara", name = "Mara Brightfoot", title = "Guide to the Isles", camp = "guide", near = { 0, 0 }, fixed = { -156, 24, 1266 }, facing = { 0, 1 },
+		greeting = "Welcome to Greenhollow Gardens! Your garden house is down the lane, and the city's just up the road. Let me show you around.",
 		look = { skin = rgb(235, 195, 160), shirt = rgb(240, 170, 60), pants = rgb(90, 110, 70), hair = rgb(160, 80, 50), hat = "straw", hatColor = rgb(240, 215, 140), prop = "letter" },
 	},
 	bryn = {
@@ -246,7 +246,7 @@ Quests.List = {
 	-- Mara's tour of the Isles: each step finishes itself and starts the next
 	{
 		id = "guide_city", name = "Into the City", giver = "mara", auto = true, nextQuest = "guide_yard",
-		intro = "Cross the stone bridge south and find the Market Square in Sproutling City. Follow the beam of light!",
+		intro = "Walk up Greenhollow Lane to the Grand Way and into Sproutling City. Find the Market Square. Follow the beam of light!",
 		finish = "The market! Shops, stalls and a fountain. Now, let's get you ready for trouble.",
 		objective = { kind = "visit", spots = { "spotMarket" }, text = "Reach the Market Square" },
 		reward = { dew = 100, crate = "wood" },

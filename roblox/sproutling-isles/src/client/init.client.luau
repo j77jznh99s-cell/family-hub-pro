@@ -486,27 +486,49 @@ end
 local map = workspace:WaitForChild("Map")
 local plaza = map:WaitForChild("Plaza")
 local shop = plaza:WaitForChild("Seed Shop")
+-- every Seed Shop: the plaza's, and the Seed Barn in Greenhollow Gardens (added when it arrives)
+local shops: { Instance } = { shop }
+local restockLabels: { TextLabel } = {}
 
 local function refreshStock()
 	local ok, stock = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Stock") or "{}")
 	if not ok then
 		return
 	end
-	for _, kiosk in shop:WaitForChild("Kiosks"):GetChildren() do
-		local id = kiosk:GetAttribute("Species")
-		local species = id and Species.get(id)
-		local label = kiosk:FindFirstChild("StockLabel")
-		local textLabel = label and label:FindFirstChild("Text") :: TextLabel?
-		if species and textLabel then
-			local left = stock[id] or 0
-			textLabel.Text = species.name .. "\n" .. Format.number(species.price) .. (if left > 0 then ("  x" .. left) else "  SOLD OUT")
+	for _, s in shops do
+		local kiosks = s:FindFirstChild("Kiosks")
+		for _, kiosk in if kiosks then kiosks:GetChildren() else {} do
+			local id = kiosk:GetAttribute("Species")
+			local species = id and Species.get(id)
+			local label = kiosk:FindFirstChild("StockLabel")
+			local textLabel = label and label:FindFirstChild("Text") :: TextLabel?
+			if species and textLabel then
+				local left = stock[id] or 0
+				textLabel.Text = species.name .. "\n" .. Format.number(species.price) .. (if left > 0 then ("  x" .. left) else "  SOLD OUT")
+			end
 		end
 	end
 end
 player:GetAttributeChangedSignal("Stock"):Connect(refreshStock)
 task.defer(refreshStock)
 
-local restockLabel = (shop:WaitForChild("RestockBoard"):WaitForChild("Label"):WaitForChild("Text")) :: TextLabel
+table.insert(restockLabels, (shop:WaitForChild("RestockBoard"):WaitForChild("Label"):WaitForChild("Text")) :: TextLabel)
+task.spawn(function()
+	local village = map:WaitForChild("Greenhollow", 60)
+	local barn = village and village:WaitForChild("Seed Shop", 30)
+	if barn then
+		table.insert(shops, barn)
+		local board = barn:WaitForChild("RestockBoard", 30)
+		local text = board and board:WaitForChild("Label", 30)
+		text = text and text:WaitForChild("Text", 30)
+		if text then
+			table.insert(restockLabels, text :: TextLabel)
+		end
+		-- the kiosks get their labels from the server; give them a moment, then fill them in
+		task.wait(2)
+		refreshStock()
+	end
+end)
 local shrineLabel = plaza:WaitForChild("Rebirth Shrine"):WaitForChild("Anchor"):WaitForChild("Label"):WaitForChild("Text") :: TextLabel
 
 -- Sprout Supply is purely a UI shortcut, so its prompt is created locally
@@ -611,7 +633,9 @@ RunService.RenderStepped:Connect(function()
 
 	local nextRestock = ReplicatedStorage:GetAttribute("NextRestock")
 	if nextRestock then
-		restockLabel.Text = "Restock in " .. Format.time(math.max(0, nextRestock - t))
+		for _, restockLabel in restockLabels do
+			restockLabel.Text = "Restock in " .. Format.time(math.max(0, nextRestock - t))
+		end
 	end
 	shrineLabel.Text = "Rebirth: " .. Format.number(player:GetAttribute("RebirthCost") or 0) .. " Dew"
 

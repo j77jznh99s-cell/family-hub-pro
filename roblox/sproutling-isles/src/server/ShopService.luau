@@ -184,11 +184,10 @@ end
 
 ----------------------------------------------------------------------------------------------
 
-function ShopService.init(map: Instance)
-	local plaza = map.Plaza
-	local shop = plaza:FindFirstChild("Seed Shop")
+-- Every Seed Shop on the map (the plaza's and Greenhollow's Seed Barn) sells the same stock.
+local function seedShop(shop: Instance)
 	for index, species in Species.ShopList do
-		local kiosk = shop.Kiosks:FindFirstChild("Kiosk" .. index) :: BasePart
+		local kiosk = shop:FindFirstChild("Kiosks"):FindFirstChild("Kiosk" .. index) :: BasePart
 		kiosk:SetAttribute("Species", species.id)
 		kiosk.Color = Species.RarityColors[species.rarity]
 		local prompt = Prompts.create(kiosk, "Buy " .. Format.number(species.price), species.name .. " seed")
@@ -215,15 +214,22 @@ function ShopService.init(map: Instance)
 		text.Text = species.name .. "\n" .. Format.number(species.price)
 		text.Parent = gui
 	end
+end
 
-	local sellAnchor = plaza:FindFirstChild("Sell Stand"):FindFirstChild("Anchor")
-	local sell = Prompts.create(sellAnchor, "Sell stored Sproutlings", "Sell Stand")
-	sell.Triggered:Connect(function(player)
-		local session = State.get(player)
-		if session then
-			PlotService.sellStorage(session)
+function ShopService.init(map: Instance)
+	for _, d in map:GetDescendants() do
+		if d:IsA("Model") and d.Name == "Seed Shop" and d:FindFirstChild("Kiosks") then
+			seedShop(d)
+		elseif d:IsA("Model") and d.Name == "Sell Stand" and d:FindFirstChild("Anchor") then
+			local sell = Prompts.create(d:FindFirstChild("Anchor") :: BasePart, "Sell stored Sproutlings", "Sell Stand")
+			sell.Triggered:Connect(function(player)
+				local session = State.get(player)
+				if session then
+					PlotService.sellStorage(session)
+				end
+			end)
 		end
-	end)
+	end
 
 	ReplicatedStorage:SetAttribute("NextRestock", ShopService.nextRestockAt())
 	task.spawn(function()

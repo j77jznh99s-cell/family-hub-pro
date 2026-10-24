@@ -485,7 +485,7 @@ function QuestService.init(map: Instance)
 			push(player)
 			local d = data(player)
 			if d and not d.quests.done.guide_city and not d.quests.active.guide_city then
-				notify(player, "New to the Isles? Talk to Mara the Guide by the bridge south of the plaza (gold ! over her head).", "#ffd27a")
+				notify(player, "New to the Isles? Talk to Mara the Guide on the green at the top of Greenhollow Lane (gold ! over her head).", "#ffd27a")
 			end
 		end)
 	end

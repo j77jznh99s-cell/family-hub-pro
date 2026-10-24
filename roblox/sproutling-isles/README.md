@@ -245,6 +245,29 @@ the client code `src/client/Combat.luau`.
   removes it (`workspace.EditGround`) once the terrain is in. Guideposts mark the journey:
   city, Ember Trail, Highcrag, Saltwind Pass, Saltmere (and the other tracks).
 
+## Greenhollow Gardens (the garden plots, moved off the island)
+
+- The 8 garden plots are now **garden houses** in **Greenhollow Gardens**, a small farm village
+  off the city's Grand Way (south-west of the walls), reached by Greenhollow Lane.
+- Each house is a timber-and-glass conservatory in its plot's colour (54 x 54 inside, about 40%
+  of the old 100 x 100 plot), turned a few degrees off square, with a painted front gable and
+  round window, its own name and plant theme (Rose Cottage, Sunflower Lodge, Fernery...), and
+  jungle decor: bamboo, monstera, banana plants, palms, vines hanging from the roof, mossy rocks.
+  Soil beds sit by the front doors, the display pads on a stage at the back. Doors open at the
+  front (the gate, lock button and owner sign) **and at the back**, so every garden can be
+  walked into from either path.
+- Paths branch like a tree: the lane down the middle, a path between every pair of houses
+  (about 30 studs apart) lined with lanterns and little trees, and a path behind each row.
+  A small **Trading Cart** (a Sell Stand) stands between each pair by the lane.
+- The village green at the top of the lane has a **Seed Barn** (a second Seed Shop with the
+  same stock), a Sell Stand, a well, a welcome arch and Mara the Guide. Fenced crop fields,
+  haystacks, a scarecrow, a red barn and a silo make it rural. Waystone and airship stop.
+- The garden island keeps the Bloom Plaza, Seed Shop, Pond, Parade and Sky Garden and is now
+  narrower (280 wide). Players spawn at their garden house.
+- Code: `MapBuilder.Garden`, `MapBuilder.plotPlacement` / `plotAxes` (houses are turned, so
+  PlotService works in each house's own axes), ShopService and the client handle every
+  "Seed Shop" and "Sell Stand" on the map. `Landscape.Version` 6: re-bake the terrain.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you

@@ -36,6 +36,7 @@ local SITE_NAMES = {
 	oldfort = "The Old Fort",
 	emberpeak = "Ember Peak",
 	highcrag = "Highcrag",
+	greenhollow = "Greenhollow Gardens",
 	saltmere = "Saltmere",
 }
 
