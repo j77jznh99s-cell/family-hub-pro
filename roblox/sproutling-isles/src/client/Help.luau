@@ -19,6 +19,7 @@ local LINES = {
 	{ "Q / X / C: Whirlwind, Firebolt, Second Wind     H: healing draught     J: stamina tonic", false },
 	{ "E: talk, shop, pick up     B: bag     K: crates     L: quest tracker", false },
 	{ "M: world map     G: garage (vehicles)     V: horse     P: companion     T: fast travel", false },
+	{ "N: Monster Journal (every monster you defeat, rewards for mastering them and finishing regions)", false },
 	{ "Flying: Space up, Ctrl down. The Ornithopter always flies forward; W for speed.", false },
 	{ "", false },
 	{ "WHERE TO GO", true },

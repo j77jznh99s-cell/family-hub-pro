@@ -268,6 +268,15 @@ the client code `src/client/Combat.luau`.
   `plotPlacement` / `plotAxes` / `plotRot` (PlotService works in each house's own axes).
   `Landscape.Version` 6: re-bake the terrain.
 
+## Monster Journal (overnight run 1)
+
+- **N** (or the Journal button) opens the Monster Journal: every monster by region (The Wild
+  Lands, Hollow Crypt, Deepdelve Mines, Emberdeep Caldera, Tidewrack Grotto), with its element,
+  your defeat count and a mastery bar. Undiscovered monsters show as "???".
+- First defeat of a kind: +25 Dew. Mastery (25 defeats, 3 for bosses): +150 Dew and XP.
+  Discovering every entry in a region: a one-time Dew reward and a silver or gold crate.
+- `Shared/Journal`, `server/JournalService` (data.journal), `client/Journal`.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you
