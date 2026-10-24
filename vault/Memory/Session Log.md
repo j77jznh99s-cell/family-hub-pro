@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (later): mountain village, beach village, water dungeon
+**Agents used:** none · `cd0e4db` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a mountain village outside a cave with its own quests, a route over the mountain to a beach village, a new water cave from there, and each cave with its own element enemies and bosses. Built Highcrag, Saltwind Pass, Saltmere, The Tidewrack Grotto (Thalvorn), and elements for all four dungeons (shadow/earth/fire/water). Terrain Version 5. Not Studio-tested.
+
 ## 2026-10-24: fire dungeon
 **Agents used:** none · `a46815e` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner asked for a bigger third cave with its own element. Built The Emberdeep Caldera (fire: Burning DoT, lava, Pyrrhax boss, Fireward Tonic, Brannoc quests). Terrain Version 4 needs a re-bake. Not Studio-tested.
