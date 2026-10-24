@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (overnight run 1): Monster Journal
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for hourly overnight improvement runs comparing with similar Roblox games. Cron job set (session-only). Run 1 added the Monster Journal (bestiary). Also earlier: Greenhollow re-laid out from the owner's sketch (tree of paths, houses spread out, loaded decor). See [[Sproutling Isles - Overnight Runs]]. Not Studio-tested.
+
 ## 2026-10-24 (late night): Greenhollow Gardens
 **Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
 - Owner asked to shrink the garden plots into individual buildings with jungle decor in a rural village branching off the city, slightly angled, ~20+ studs apart with tree-like paths, lanterns, trading carts, open backs. Done (Greenhollow Gardens, SW of the city; island narrowed to 280 wide). Owner's "all shops free" line was then retracted ("ignore"), so prices unchanged. Not Studio-tested: PlotService now uses rotated plot axes.
