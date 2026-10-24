@@ -232,6 +232,9 @@ local function tree(parent: Instance, x: number, z: number, scale: number, seed:
 		else rgb(60 + math.floor(hash(seed) * 40), 165 + math.floor(hash(seed + 1) * 50), 70)
 	ball(model, "Canopy", 9 * scale, x, base + h + 2 * scale, z, leafColor, Enum.Material.Grass)
 	ball(model, "Canopy2", 6 * scale, x + 2.5 * scale, base + h + 4.5 * scale, z - 1.5 * scale, leafColor, Enum.Material.Grass)
+	-- two more puffs so the crown reads round and fluffy instead of a single ball
+	ball(model, "Canopy3", 5.6 * scale, x - 3 * scale, base + h + 3.2 * scale, z + 1.4 * scale, leafColor, Enum.Material.Grass)
+	ball(model, "Canopy3", 4.6 * scale, x + 0.6 * scale, base + h + 1 * scale, z + 3.2 * scale, leafColor, Enum.Material.Grass)
 end
 
 -- WedgePart: tall edge at the back (+Z), slope facing the front (-Z, the LookVector).
@@ -302,8 +305,11 @@ local function lamp(parent: Instance, x: number, z: number)
 	local model = Instance.new("Model")
 	model.Name = "Lamp"
 	model.Parent = parent
+	cylinder(model, "LampBase", 1.2, 1.8, x, 0.6, z, rgb(60, 60, 70), Enum.Material.Metal)
 	cylinder(model, "Post", 12, 0.8, x, 6, z, rgb(60, 60, 70), Enum.Material.Metal)
+	cylinder(model, "LampCollar", 0.5, 1.6, x, 11.4, z, rgb(60, 60, 70), Enum.Material.Metal)
 	local bulb = ball(model, "Bulb", 2.2, x, 12.5, z, rgb(255, 235, 170), Enum.Material.Neon)
+	cone(model, "LampCap", x, 13.4, z, 1.5, 1.6, rgb(60, 60, 70), Enum.Material.Metal, 6)
 	local light = Instance.new("PointLight")
 	light.Range = 20
 	light.Brightness = 1.2
@@ -763,6 +769,9 @@ end
 ----------------------------------------------------------------------------------------------
 -- scenery: atmosphere pieces with no gameplay role (all under Map.Scenery)
 
+-- A storybook cottage: plaster walls with a timber frame and round corner posts, a steep
+-- bell-cast roof (flared eaves, tile courses, round ridge with finials, a dormer), a round
+-- chimney pot, arched door under a little hood, arched shuttered windows on every side.
 local function cottage(parent: Instance, x: number, z: number, facing: Vector3, seed: number, storeys: number?, awning: Color3?)
 	local model = Instance.new("Model")
 	model.Name = "Cottage"
@@ -775,40 +784,92 @@ local function cottage(parent: Instance, x: number, z: number, facing: Vector3, 
 	local roofs = { rgb(205, 85, 70), rgb(70, 110, 180), rgb(60, 160, 150), rgb(225, 160, 60), rgb(150, 90, 170) }
 	local wall = walls[seed % #walls + 1]
 	local roof = roofs[(seed * 3) % #roofs + 1]
+	local dark = Color3.new(roof.R * 0.72, roof.G * 0.72, roof.B * 0.72)
 	local beam = rgb(110, 75, 50)
+	local glass = rgb(255, 210, 130)
 	local floors = storeys or 1
 	local W, D, H, rise = 16, 12, 10 * floors, 6
+	local top = H + 1 -- top of the walls
 
-	-- a disc (round window, arch top, porthole) facing out of the front wall at (u, y, v)
-	local function disc(name: string, d: number, u: number, y: number, v: number, color: Color3, material: any?): BasePart
-		local p = part(model, name, Vector3.new(0.3, d, d), rel(u, y, v) * CFrame.Angles(0, math.rad(90), 0), color, material)
+	-- a disc facing along the cframe's X axis (round windows, arch tops)
+	local function disc(name: string, d: number, cf: CFrame, color: Color3, material: any?): BasePart
+		local p = part(model, name, Vector3.new(0.3, d, d), cf, color, material)
 		p.Shape = Enum.PartType.Cylinder
 		return p
 	end
-	local glass = rgb(255, 210, 130)
+	local FRONT = CFrame.Angles(0, math.rad(90), 0) -- turns a disc to face out of the front/back walls
+	-- an arched window on the front (side = 1) or back (side = -1) wall
+	local function window(u: number, y: number, side: number, shutters: boolean)
+		local v = side * (D / 2 + 0.15)
+		part(model, "WindowFrame", Vector3.new(3.2, 2.8, 0.3), rel(u, y, v), beam, Enum.Material.Wood)
+		part(model, "Window", Vector3.new(2.4, 2.2, 0.3), rel(u, y, v + side * 0.1), glass, Enum.Material.Neon)
+		disc("WindowArch", 3.2, rel(u, y + 1.3, v) * FRONT, beam, Enum.Material.Wood)
+		disc("WindowArch", 2.4, rel(u, y + 1.1, v + side * 0.1) * FRONT, glass, Enum.Material.Neon)
+		if shutters then
+			for _, k in { -1, 1 } do
+				part(model, "Shutter", Vector3.new(1.1, 3.2, 0.25), rel(u + k * 2.25, y + 0.3, v + side * 0.05), roof, Enum.Material.WoodPlanks)
+			end
+		end
+	end
 
+	-- walls, footing and timber frame
 	part(model, "Footing", Vector3.new(W + 1, 1.4, D + 1), rel(0, 0.7, 0), rgb(150, 145, 140), Enum.Material.Cobblestone)
 	part(model, "Walls", Vector3.new(W, H, D), rel(0, H / 2 + 1, 0), wall, Enum.Material.Plaster)
-	-- attic: a prism rotated 45 degrees whose lower half hides inside the walls, filling the gables
 	local attic = math.sqrt(2) * rise
-	part(model, "Attic", Vector3.new(W - 0.2, attic, attic), rel(0, H + 1, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, Enum.Material.Plaster)
-	-- round timber corner posts and a timber frame on the front face
+	part(model, "Attic", Vector3.new(W - 0.2, attic, attic), rel(0, top, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, Enum.Material.Plaster)
 	for _, u in { -W / 2, W / 2 } do
-		local post = part(model, "Timber", Vector3.new(H + 0.4, 1.1, 1.1), rel(u, H / 2 + 1, D / 2) * CFrame.Angles(0, 0, math.rad(90)), beam, Enum.Material.Wood)
-		post.Shape = Enum.PartType.Cylinder
+		for _, v in { -D / 2, D / 2 } do
+			local post = part(model, "Timber", Vector3.new(H + 0.4, 1.1, 1.1), rel(u, H / 2 + 1, v) * CFrame.Angles(0, 0, math.rad(90)), beam, Enum.Material.Wood)
+			post.Shape = Enum.PartType.Cylinder
+		end
 	end
 	for _, u in { -2.6, 2.6 } do
 		part(model, "Timber", Vector3.new(0.8, H, 0.5), rel(u, H / 2 + 1, D / 2 + 0.1), beam, Enum.Material.Wood)
 	end
 	part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, H + 0.8, D / 2 + 0.1), beam, Enum.Material.Wood)
+	part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, H + 0.8, -D / 2 - 0.1), beam, Enum.Material.Wood)
 	for floor = 2, floors do
 		local y0 = (floor - 1) * 10
-		part(model, "Timber", Vector3.new(W, 0.8, 0.5), rel(0, y0 + 1, D / 2 + 0.1), beam, Enum.Material.Wood)
-		for _, u in { -4.5, 0, 4.5 } do
-			part(model, "WindowFrame", Vector3.new(3, 3, 0.3), rel(u, y0 + 6.2, D / 2 + 0.15), beam, Enum.Material.Wood)
-			part(model, "Window", Vector3.new(2.2, 2.2, 0.3), rel(u, y0 + 6.2, D / 2 + 0.25), glass, Enum.Material.Neon)
-			disc("WindowArch", 2.2, u, y0 + 7.3, D / 2 + 0.25, glass, Enum.Material.Neon)
+		part(model, "Timber", Vector3.new(W + 0.4, 0.8, D + 0.4), rel(0, y0 + 1, 0), beam, Enum.Material.Wood)
+		for _, u in { -4.5, 4.5 } do
+			window(u, y0 + 5.8, 1, true)
 		end
+		window(0, y0 + 5.8, -1, false)
+	end
+
+	-- door with a round arch, a brass knob, a little hood on brackets and a lantern
+	part(model, "Door", Vector3.new(3.4, 5.6, 0.4), rel(0, 3.8, D / 2 + 0.2), rgb(120, 80, 55), Enum.Material.WoodPlanks)
+	disc("DoorArch", 3.4, rel(0, 6.6, D / 2 + 0.2) * FRONT, rgb(120, 80, 55), Enum.Material.WoodPlanks)
+	disc("DoorStone", 4.4, rel(0, 6.6, D / 2 + 0.05) * FRONT, rgb(170, 160, 150), Enum.Material.Cobblestone)
+	local knob = ball(model, "Knob", 0.45, 0, 0, 0, rgb(240, 200, 90), Enum.Material.Metal)
+	knob.CFrame = rel(1.1, 4, D / 2 + 0.45)
+	part(model, "Step", Vector3.new(5, 0.6, 1.6), rel(0, 1.1, D / 2 + 1.2), rgb(165, 160, 150), Enum.Material.Slate)
+	if not awning then
+		part(model, "Hood", Vector3.new(5.4, 0.4, 2.6), rel(0, 9.2, D / 2 + 1.1) * CFrame.Angles(math.rad(-25), 0, 0), roof, Enum.Material.Slate)
+		for _, k in { -1, 1 } do
+			part(model, "HoodBracket", Vector3.new(0.4, 1.4, 1.2), rel(k * 2.3, 8.4, D / 2 + 0.6), beam, Enum.Material.Wood)
+		end
+	end
+	local lantern = ball(model, "DoorLantern", 0.9, 0, 0, 0, rgb(255, 215, 140), Enum.Material.Neon)
+	lantern.CFrame = rel(-2.9, 8, D / 2 + 0.8)
+
+	-- arched, shuttered windows with flower boxes at the front; plain ones round the back and sides
+	local flowerColors = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255), rgb(255, 255, 255) }
+	for _, u in { -5.3, 5.3 } do
+		window(u, 6.4, 1, true)
+		part(model, "WindowBox", Vector3.new(3.6, 0.9, 1), rel(u, 4.6, D / 2 + 0.6), rgb(150, 100, 70), Enum.Material.Wood)
+		for i = 1, 3 do
+			local bloom = ball(model, "WindowBloom", 1.1, 0, 0, 0, flowerColors[(i + seed) % 4 + 1])
+			bloom.CFrame = rel(u - 2 + i, 5.4, D / 2 + 0.7)
+		end
+		window(u, 6.4, -1, false)
+	end
+	for _, side in { -1, 1 } do
+		local u = side * (W / 2 + 0.15)
+		part(model, "Window", Vector3.new(0.3, 2.2, 2.4), rel(u, 6.4, 0), glass, Enum.Material.Neon)
+		disc("WindowArch", 2.4, rel(u, 7.5, 0), glass, Enum.Material.Neon)
+		-- a round window high in each gable
+		disc("GableWindow", 2.4, rel(side * (W / 2 + 0.05), top + rise * 0.4, 0), glass, Enum.Material.Neon)
 	end
 	if awning then
 		-- a striped awning with a scalloped edge
@@ -817,57 +878,55 @@ local function cottage(parent: Instance, x: number, z: number, facing: Vector3, 
 			local color = if i % 2 == 0 then rgb(255, 255, 255) else awning
 			part(model, "Awning", Vector3.new(W / 4, 0.5, 4), rel(u, 9.4, D / 2 + 2) * CFrame.Angles(math.rad(-18), 0, 0), color, Enum.Material.Fabric)
 			for _, k in { -1, 1 } do
-				disc("Scallop", W / 8, u + k * W / 16, 8.6, D / 2 + 3.9, color, Enum.Material.Fabric).CanCollide = false
+				disc("Scallop", W / 8, rel(u + k * W / 16, 8.6, D / 2 + 3.9) * FRONT, color, Enum.Material.Fabric).CanCollide = false
 			end
 		end
 	end
-	-- roof: two steep slabs flaring out into shallow eaves (a bell-cast curve), a round ridge
-	-- with ball finials
+
+	-- roof: steep slabs flaring out into shallow eaves (a bell-cast curve), darker tile courses,
+	-- a round ridge with ball finials
 	local slope = math.atan(rise / (D / 2))
 	local length = math.sqrt(rise * rise + (D / 2) ^ 2) + 0.6
 	local flare = math.rad(22)
-	local dark = Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75)
 	for _, side in { 1, -1 } do
-		part(model, "Roof", Vector3.new(W + 2, 0.9, length), rel(0, H + 1 + rise / 2 + 0.4, side * D / 4) * CFrame.Angles(-side * slope, 0, 0), roof, Enum.Material.Slate)
-		-- the eave: starts where the slab ends and kicks out at a shallower angle
+		local tilt = CFrame.Angles(-side * slope, 0, 0)
+		part(model, "Roof", Vector3.new(W + 2, 0.9, length), rel(0, top + rise / 2 + 0.4, side * D / 4) * tilt, roof, Enum.Material.Slate)
+		for _, f in { 0.3, 0.62 } do
+			-- a course of tiles: a thin darker band standing proud of the slab
+			local v = side * D / 2 * f
+			part(model, "RoofTiles", Vector3.new(W + 2.1, 0.35, 0.7), rel(0, top + rise * (1 - f) + 0.4 + 0.42, v + side * 0.3) * tilt, dark, Enum.Material.Slate)
+		end
 		local ev = side * (D / 2 + 0.2)
-		local ey = H + 1 + 0.2
-		part(model, "Eave", Vector3.new(W + 2.6, 0.7, 3.4), rel(0, ey - math.sin(flare) * 1.5, ev + side * math.cos(flare) * 1.5) * CFrame.Angles(-side * flare, 0, 0), roof, Enum.Material.Slate)
+		part(model, "Eave", Vector3.new(W + 2.6, 0.7, 3.4), rel(0, top + 0.2 - math.sin(flare) * 1.5, ev + side * math.cos(flare) * 1.5) * CFrame.Angles(-side * flare, 0, 0), roof, Enum.Material.Slate)
+		-- bargeboards: dark trim down the gable edges
+		for _, e in { -1, 1 } do
+			part(model, "Barge", Vector3.new(0.5, 0.9, length), rel(e * (W / 2 + 1.05), top + rise / 2 + 0.55, side * D / 4) * tilt, dark, Enum.Material.Wood)
+		end
 	end
-	local ridge = part(model, "Ridge", Vector3.new(W + 2.4, 1.3, 1.3), rel(0, H + 1 + rise + 0.5, 0), dark, Enum.Material.Wood)
+	local ridge = part(model, "Ridge", Vector3.new(W + 2.4, 1.3, 1.3), rel(0, top + rise + 0.5, 0), dark, Enum.Material.Wood)
 	ridge.Shape = Enum.PartType.Cylinder
 	for _, u in { -(W / 2 + 1.4), W / 2 + 1.4 } do
-		ball(model, "Finial", 1.6, 0, 0, 0, dark, Enum.Material.Wood).CFrame = rel(u, H + 1 + rise + 0.7, 0)
+		ball(model, "Finial", 1.6, 0, 0, 0, dark, Enum.Material.Wood).CFrame = rel(u, top + rise + 0.7, 0)
 	end
-	-- a round chimney pot with a wider cap
+	-- a dormer window on the front slope
+	do
+		local du = -W / 4
+		part(model, "Dormer", Vector3.new(3.6, 3.2, 3.4), rel(du, top + 2.6, 3.2), wall, Enum.Material.Plaster)
+		for _, k in { -1, 1 } do
+			part(model, "DormerRoof", Vector3.new(2.9, 0.4, 4.2), rel(du + k * 0.95, top + 5.35, 3.1) * CFrame.Angles(0, 0, -k * math.rad(45)), roof, Enum.Material.Slate)
+		end
+		part(model, "Window", Vector3.new(1.6, 1.2, 0.3), rel(du, top + 2.7, 4.95), glass, Enum.Material.Neon)
+		disc("WindowArch", 1.6, rel(du, top + 3.3, 4.95) * FRONT, glass, Enum.Material.Neon)
+	end
+	-- a round chimney pot with a wider cap (and a weathervane on some roofs)
 	local cp = rel(W / 2 - 3.5, H + rise, -D / 4).Position
 	cylinder(model, "Chimney", 7, 2.4, cp.X, cp.Y, cp.Z, rgb(170, 110, 90), Enum.Material.Brick)
 	cylinder(model, "ChimneyCap", 0.8, 3.2, cp.X, cp.Y + 3.7, cp.Z, rgb(120, 85, 70), Enum.Material.Brick)
-	-- a round window in the gable
-	local gable = part(model, "GableWindow", Vector3.new(0.3, 2.2, 2.2), rel(W / 2 + 0.05, H + 1 + rise * 0.4, 0), glass, Enum.Material.Neon)
-	gable.Shape = Enum.PartType.Cylinder
-	-- arched door, lit arched windows and window boxes
-	part(model, "Door", Vector3.new(3.4, 5.6, 0.4), rel(0, 3.8, D / 2 + 0.2), rgb(120, 80, 55), Enum.Material.WoodPlanks)
-	disc("DoorArch", 3.4, 0, 6.6, D / 2 + 0.2, rgb(120, 80, 55), Enum.Material.WoodPlanks)
-	local knob = ball(model, "Knob", 0.4, 0, 0, 0, rgb(240, 200, 90), Enum.Material.Metal)
-	knob.CFrame = rel(1.1, 4, D / 2 + 0.45)
-	for _, u in { -5.3, 5.3 } do
-		part(model, "WindowFrame", Vector3.new(3.4, 3, 0.3), rel(u, 6.6, D / 2 + 0.15), beam, Enum.Material.Wood)
-		local pane = part(model, "Window", Vector3.new(2.6, 2.4, 0.3), rel(u, 6.6, D / 2 + 0.25), glass, Enum.Material.Neon)
-		disc("WindowArch", 2.6, u, 7.8, D / 2 + 0.25, glass, Enum.Material.Neon)
-		if u > 0 then
-			glowLight(pane, 14, 0.8, rgb(255, 200, 130))
-		end
-		part(model, "WindowBox", Vector3.new(3.6, 0.9, 1), rel(u, 5, D / 2 + 0.6), rgb(150, 100, 70), Enum.Material.Wood)
-		local flowerColors = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255), rgb(255, 255, 255) }
-		for i = 1, 2 do
-			local bloom = ball(model, "WindowBloom", 1.3, 0, 0, 0, flowerColors[(i + seed) % 4 + 1])
-			bloom.CFrame = rel(u - 1.65 + i * 1.1, 5.8, D / 2 + 0.7)
-		end
+	if seed % 3 == 0 then
+		local vp = rel(-W / 2 + 2, top + rise + 2.6, 0).Position
+		cylinder(model, "VanePole", 3.4, 0.25, vp.X, vp.Y, vp.Z, rgb(60, 60, 65), Enum.Material.Metal)
+		part(model, "VaneArrow", Vector3.new(2.6, 0.5, 0.15), rel(-W / 2 + 2, top + rise + 3.8, 0), rgb(230, 190, 70), Enum.Material.Metal)
 	end
-	-- a little lantern by the door
-	local lantern = ball(model, "DoorLantern", 0.9, 0, 0, 0, rgb(255, 215, 140), Enum.Material.Neon)
-	lantern.CFrame = rel(-2.6, 8.4, D / 2 + 0.8)
 	return model
 end
 
@@ -2172,6 +2231,37 @@ local function passSummit(parent: Instance, s: any)
 	spot:SetAttribute("Lookout", "pass")
 end
 
+-- Guideposts along the journey from the city to the far coast, beside the road near (x, z).
+local GUIDEPOSTS = {
+	{ -480, 985, "Ember Trail: Highcrag, Ember Peak, Saltmere" },
+	{ -826, 1505, "Highcrag village / Emberdeep Caldera" },
+	{ -790, 1622, "Saltwind Pass: over the mountain to Saltmere" },
+	{ -948, 1766, "Saltmere beach / Tidewrack Grotto" },
+	{ -462, -412, "Miners' Track: Deepdelve Mines" },
+	{ 362, -246, "Observatory Trail / Hermit's Climb" },
+	{ -560, 905, "Watch Road: Pinecrest and the west" },
+	{ 95, 1630, "Old Fort Track / Southvale" },
+}
+
+local function guideposts(parent: Instance)
+	local folder = Instance.new("Folder")
+	folder.Name = "Guideposts"
+	folder.Parent = parent
+	for k, g in GUIDEPOSTS do
+		local x, z = g[1], g[2]
+		local d, sample = Landscape.nearestRoad(x, z)
+		if sample and d < 40 then
+			local nx, nz = -sample.tz, sample.tx
+			x, z = sample.x + nx * (sample.hw + 4), sample.z + nz * (sample.hw + 4)
+		end
+		local m = Instance.new("Model")
+		m.Name = "Guidepost" .. k
+		m.Parent = folder
+		signpost(m, x, z, g[3], rgb(255, 235, 170))
+		lift(m, Landscape.height(x, z) - 0.3)
+	end
+end
+
 local function nearPath(x: number, z: number, margin: number): boolean
 	if Landscape.onRoad(x, z, margin) then
 		return true
@@ -2218,6 +2308,7 @@ local function buildHills(scenery: Instance)
 	if sites.windpass then
 		passSummit(hills, sites.windpass)
 	end
+	guideposts(hills)
 	for _, br in Landscape.Bridges do
 		bridge(hills, br[1], br[2], br[3], br[4])
 	end
@@ -2280,11 +2371,11 @@ local function buildHills(scenery: Instance)
 						tree(wild, x, z, 0.8 + hash(i) * 0.7, i, h - 0.6)
 					elseif hash(i + 0.2) < (if far then 0.03 else 0.12) then
 						local flowers = { rgb(255, 120, 160), rgb(255, 230, 100), rgb(255, 255, 255), rgb(180, 140, 255) }
-						for k = 1, 2 do
-							ball(wild, "Wildflower", 1.2, x + (hash(i + k) - 0.5) * 4, h + 0.4, z + (hash(i + k * 3) - 0.5) * 4, flowers[(i + k) % 4 + 1])
+						for k = 1, 4 do
+							ball(wild, "Wildflower", 1, x + (hash(i + k) - 0.5) * 4, h + 0.35, z + (hash(i + k * 3) - 0.5) * 4, flowers[(i + k) % 4 + 1])
 						end
 					end
-				elseif h > 2 and slope >= 0.75 and hash(i + 0.4) < 0.22 then
+				elseif h > 2 and slope >= 0.75 and hash(i + 0.4) < 0.3 then
 					rocks += 1
 					ball(wild, "Boulder", 5 + hash(i) * 7, x, h, z, rgb(150, 140, 130), Enum.Material.Rock)
 				end

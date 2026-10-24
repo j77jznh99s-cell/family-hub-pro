@@ -226,14 +226,24 @@ the client code `src/client/Combat.luau`.
 - New materials: Glittering Geode, Sea Pearl, Tide Coral, Kraken Ink.
 - `Landscape.Version` is now 5: re-bake the terrain in Studio.
 
-## Building polish (less boxy)
+## Building polish and one connected world
 
-- Houses everywhere (village cottages, city townhouses, cottages and shops) now have bell-cast
-  roofs that flare out at the eaves, round ridges with ball finials, round chimney pots with
-  caps, arched doors and arched windows, round timber corner posts and a round gable window.
-- Market stalls and village stalls have round posts and scalloped striped awnings.
-- To stay phone-safe (about 39.7k parts), wildflower patches use 2 bigger blooms instead of 4
-  and there are a few fewer boulders on steep slopes.
+- **Part budget raised to 100,000** (the map is about 63k parts, plus a 17k-part preview ground
+  that is removed at run time). StreamingEnabled keeps phones loading only what is near them.
+- **Houses** (village cottages, city townhouses, cottages, shops): bell-cast roofs with flared
+  eaves, tile courses, bargeboards and round ridges with finials; dormers; round chimney pots;
+  arched doors under little slate hoods with a step; arched windows on every side, painted
+  shutters and flower boxes at the front; round gable windows; round corner posts;
+  weathervanes on some roofs. Shops get striped scalloped awnings over the shop window.
+- **Landmarks**: guild halls get arched windows, roof dormers, banded turrets with finials; the
+  cathedral gets pinnacles, arched tower windows and capped buttresses; the mage tower gets
+  arched windows, balcony corbels and railings, two clinging turrets and a glowing rune halo.
+- **Nature**: fuller, rounder tree crowns; lamps get a base, collar and cap.
+- **One big map**: `Shared/GroundBuilder` lays a low-poly ground of wedge triangles (with the
+  roads drawn on it) over the whole landmass, so Studio's edit view shows every area standing
+  on the same land, and players have a floor while the real terrain builds. TerrainBuilder
+  removes it (`workspace.EditGround`) once the terrain is in. Guideposts mark the journey:
+  city, Ember Trail, Highcrag, Saltwind Pass, Saltmere (and the other tracks).
 
 ## New players
 

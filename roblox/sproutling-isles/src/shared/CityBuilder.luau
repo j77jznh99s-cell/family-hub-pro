@@ -247,17 +247,29 @@ local function gableFront(parent: Instance, rel: (number, number, number) -> CFr
 	part(parent, "Attic", Vector3.new(attic, attic, d - 0.2), rel(0, y, 0) * CFrame.Angles(0, 0, math.rad(45)), wall, Enum.Material.Plaster)
 	local len = math.sqrt(2) * rise + 1.6
 	local flare = math.rad(22)
+	local dark = Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75)
 	for _, side in { 1, -1 } do
-		part(parent, "Roof", Vector3.new(len, 0.8, d + 1.6), rel(side * w / 4, y + rise / 2 + 0.35, 0) * CFrame.Angles(0, 0, -side * math.rad(45)), roof, Enum.Material.Slate)
+		local tilt = CFrame.Angles(0, 0, -side * math.rad(45))
+		part(parent, "Roof", Vector3.new(len, 0.8, d + 1.6), rel(side * w / 4, y + rise / 2 + 0.35, 0) * tilt, roof, Enum.Material.Slate)
+		-- courses of tiles: darker bands standing proud of the slab
+		for _, f in { 0.3, 0.62 } do
+			part(parent, "RoofTiles", Vector3.new(0.7, 0.35, d + 1.7), rel(side * (w / 2 * f + 0.3), y + rise * (1 - f) + 0.77, 0) * tilt, dark, Enum.Material.Slate)
+		end
 		-- the eave kicks out at a shallower angle where the slab ends (a bell-cast curve)
 		local eu, ey = side * (w / 2 + 0.55), y - 0.2
 		part(parent, "Eave", Vector3.new(3, 0.6, d + 1.8), rel(eu + side * math.cos(flare) * 1.3, ey - math.sin(flare) * 1.3, 0) * CFrame.Angles(0, 0, -side * flare), roof, Enum.Material.Slate)
+		-- bargeboards down both gable edges
+		for _, e in { -1, 1 } do
+			part(parent, "Barge", Vector3.new(len, 0.9, 0.5), rel(side * w / 4, y + rise / 2 + 0.5, e * (d / 2 + 0.85)) * tilt, dark, Enum.Material.Wood)
+		end
 	end
-	-- a round ridge with a ball finial over the gable
-	local dark = Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75)
+	-- a round ridge with ball finials, and a round window in each gable
 	tube(parent, "Ridge", d + 2, 1.2, rel(0, y + rise + 0.4, 0), dark, Enum.Material.Wood)
-	local tip = rel(0, y + rise + 0.6, d / 2 + 1.1).Position
-	ball(parent, "Finial", 1.5, tip.X, tip.Y, tip.Z, dark, Enum.Material.Wood)
+	for _, e in { -1, 1 } do
+		local tip = rel(0, y + rise + 0.6, e * (d / 2 + 1.1)).Position
+		ball(parent, "Finial", 1.5, tip.X, tip.Y, tip.Z, dark, Enum.Material.Wood)
+		tube(parent, "GableWindow", 0.3, math.min(2.6, w * 0.2), rel(0, y + rise * 0.35, e * (d / 2 - 0.05)), LANTERN, Enum.Material.Neon)
+	end
 end
 
 -- A round brick chimney pot with a wider cap, standing at rel(u, y, v) (y = its middle).
@@ -279,12 +291,60 @@ local function gableSide(parent: Instance, rel: (number, number, number) -> CFra
 	part(parent, "Attic", Vector3.new(w - 0.2, attic, attic), rel(0, y, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, wallMaterial or Enum.Material.Plaster)
 	local len = math.sqrt(2) * rise + 1.6
 	local flare = math.rad(22)
+	local dark = Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75)
 	for _, side in { 1, -1 } do
-		part(parent, "Roof", Vector3.new(w + 1.6, 0.9, len), rel(0, y + rise / 2 + 0.35, side * d / 4) * CFrame.Angles(-side * math.rad(45), 0, 0), roof, Enum.Material.Slate)
+		local tilt = CFrame.Angles(-side * math.rad(45), 0, 0)
+		part(parent, "Roof", Vector3.new(w + 1.6, 0.9, len), rel(0, y + rise / 2 + 0.35, side * d / 4) * tilt, roof, Enum.Material.Slate)
+		for _, f in { 0.3, 0.62 } do
+			part(parent, "RoofTiles", Vector3.new(w + 1.7, 0.35, 0.7), rel(0, y + rise * (1 - f) + 0.77, side * (d / 2 * f + 0.3)) * tilt, dark, Enum.Material.Slate)
+		end
 		local ev, ey = side * (d / 2 + 0.55), y - 0.2
 		part(parent, "Eave", Vector3.new(w + 1.8, 0.7, 3), rel(0, ey - math.sin(flare) * 1.3, ev + side * math.cos(flare) * 1.3) * CFrame.Angles(-side * flare, 0, 0), roof, Enum.Material.Slate)
+		for _, e in { -1, 1 } do
+			part(parent, "Barge", Vector3.new(0.5, 0.9, len), rel(e * (w / 2 + 0.85), y + rise / 2 + 0.5, side * d / 4) * tilt, dark, Enum.Material.Wood)
+		end
 	end
-	tube(parent, "Ridge", w + 2, 1.3, rel(0, y + rise + 0.45, 0) * CFrame.Angles(0, math.rad(90), 0), Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75), Enum.Material.Wood)
+	tube(parent, "Ridge", w + 2, 1.3, rel(0, y + rise + 0.45, 0) * CFrame.Angles(0, math.rad(90), 0), dark, Enum.Material.Wood)
+	for _, e in { -1, 1 } do
+		tube(parent, "GableWindow", 0.3, math.min(3, d * 0.22), rel(e * (w / 2 - 0.05), y + rise * 0.35, 0) * CFrame.Angles(0, math.rad(90), 0), LANTERN, Enum.Material.Neon)
+	end
+end
+
+-- An arched window in a wall facing along v (side = 1: the front, -1: the back) at rel(u, y, v):
+-- a pane with a round top, and painted shutters if `shutter` is given.
+local function archWindow(parent: Instance, rel: (number, number, number) -> CFrame, u: number, y: number, v: number, side: number, size: number, glass: Color3, shutter: Color3?)
+	part(parent, "Window", Vector3.new(size, size * 0.9, 0.3), rel(u, y, v), glass, Enum.Material.Glass)
+	tube(parent, "Arch", 0.3, size, rel(u, y + size * 0.45, v), glass, Enum.Material.Glass)
+	tube(parent, "ArchFrame", 0.25, size + 0.8, rel(u, y + size * 0.45, v - side * 0.08), TIMBER, Enum.Material.Wood)
+	if shutter then
+		for _, k in { -1, 1 } do
+			part(parent, "Shutter", Vector3.new(size * 0.45, size * 1.25, 0.25), rel(u + k * (size * 0.5 + size * 0.25 + 0.15), y + size * 0.15, v + side * 0.02), shutter, Enum.Material.WoodPlanks)
+		end
+	end
+end
+
+-- An arched window in a wall facing along u (the sides of a building) at rel(u, y, v).
+local function sideWindow(parent: Instance, rel: (number, number, number) -> CFrame, u: number, y: number, v: number, size: number, glass: Color3)
+	part(parent, "Window", Vector3.new(0.3, size * 0.9, size), rel(u, y, v), glass, Enum.Material.Glass)
+	tube(parent, "Arch", 0.3, size, rel(u, y + size * 0.45, v) * CFrame.Angles(0, math.rad(90), 0), glass, Enum.Material.Glass)
+end
+
+-- A window box with three blooms, under a window at rel(u, y, v).
+local function windowBox(parent: Instance, rel: (number, number, number) -> CFrame, u: number, y: number, v: number, seed: number)
+	part(parent, "WindowBox", Vector3.new(3.2, 0.8, 1), rel(u, y, v + 0.4), TIMBER, Enum.Material.WoodPlanks)
+	local flowers = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255), rgb(255, 255, 255) }
+	for k = 1, 3 do
+		local p = rel(u - 2 + k, y + 0.7, v + 0.5).Position
+		ball(parent, "Bloom", 1, p.X, p.Y, p.Z, flowers[(seed + k) % #flowers + 1])
+	end
+end
+
+-- A little slate hood on brackets over a door at rel(u, y, v) (y: the hood's height).
+local function doorHood(parent: Instance, rel: (number, number, number) -> CFrame, u: number, y: number, v: number, roof: Color3)
+	part(parent, "Hood", Vector3.new(4.8, 0.4, 2.4), rel(u, y, v + 1) * CFrame.Angles(math.rad(-25), 0, 0), roof, Enum.Material.Slate)
+	for _, k in { -1, 1 } do
+		part(parent, "HoodBracket", Vector3.new(0.4, 1.3, 1.1), rel(u + k * 2, y - 0.8, v + 0.5), TIMBER, Enum.Material.Wood)
+	end
 end
 
 ----------------------------------------------------------------------------------------------
@@ -310,6 +370,8 @@ local function cityTree(parent: Instance, x: number, z: number, seed: number)
 	local leaf = if pick < 0.18 then rgb(255, 178, 205) elseif pick < 0.3 then rgb(235, 160, 60) else rgb(70 + math.floor(hash(seed + 1) * 40), 155 + math.floor(hash(seed + 2) * 45), 70)
 	ball(parent, "Canopy", 7, x, PAVE + 9.5, z, leaf, Enum.Material.Grass)
 	ball(parent, "Canopy", 4.6, x + 1.5, PAVE + 11.8, z - 1, leaf, Enum.Material.Grass)
+	ball(parent, "Canopy", 4.4, x - 2.2, PAVE + 10.6, z + 1.2, leaf, Enum.Material.Grass)
+	ball(parent, "Canopy", 3.6, x + 0.6, PAVE + 9.4, z + 2.6, leaf, Enum.Material.Grass)
 end
 
 local function bench(parent: Instance, x: number, z: number, facing: Vector3)
@@ -566,13 +628,19 @@ local function shop(parent: Instance, x: number, z: number, w: number, facing: V
 	arch(m, rel, 4.6, w * 0.28, PAVE + 5.4, d / 2 + 0.1, DARKSTONE, Enum.Material.Cobblestone)
 	arch(m, rel, 3.6, w * 0.28, PAVE + 5.4, d / 2 + 0.25, rgb(110, 70, 45), Enum.Material.WoodPlanks)
 	for _, u in { -w / 4, w / 4 } do
-		part(m, "UpperWindow", Vector3.new(2.6, 3, 0.3), rel(u, PAVE + 12.4, d / 2 + 1.75), rgb(80, 105, 130), Enum.Material.Glass)
-		part(m, "WindowBox", Vector3.new(3.2, 0.8, 1), rel(u, PAVE + 10.6, d / 2 + 2.1), TIMBER, Enum.Material.WoodPlanks)
-		local flowers = { rgb(255, 110, 150), rgb(255, 225, 90), rgb(170, 130, 255) }
-		for k = 1, 3 do
-			local bloom = part(m, "Bloom", Vector3.new(0.8, 0.8, 0.8), rel(u - 1.6 + k * 0.8, PAVE + 11.3, d / 2 + 2.2), flowers[(seed + k) % 3 + 1])
-			bloom.Shape = Enum.PartType.Ball
-		end
+		archWindow(m, rel, u, PAVE + 11.9, d / 2 + 1.8, 1, 2.4, rgb(80, 105, 130), roof)
+		windowBox(m, rel, u, PAVE + 10.2, d / 2 + 1.7, seed)
+	end
+	archWindow(m, rel, 0, PAVE + 11.9, -d / 2 - 0.1, -1, 2.4, LANTERN)
+	for _, u in { -1, 1 } do
+		sideWindow(m, rel, u * (w / 2 + 0.6), PAVE + 11.9, 0.8, 2.4, rgb(80, 105, 130))
+	end
+	-- a striped, scalloped awning over the shop window
+	for i = 1, 3 do
+		local u = -w * 0.18 + (i - 2) * (w * 0.15)
+		local stripe = if i % 2 == 0 then WHITE else roof
+		part(m, "Awning", Vector3.new(w * 0.15, 0.3, 2.2), rel(u, PAVE + 6.1, d / 2 + 1.3) * CFrame.Angles(math.rad(-20), 0, 0), stripe, Enum.Material.Fabric)
+		deco(tube(m, "Scallop", 0.25, w * 0.15 * 0.8, rel(u, PAVE + 5.6, d / 2 + 2.35), stripe, Enum.Material.Fabric))
 	end
 	chimney(m, rel, w / 3, PAVE + 20, -d / 4, 8)
 	-- hanging sign on an iron bracket, readable from both directions along the street
@@ -609,28 +677,43 @@ local function townhouse(parent: Instance, x: number, z: number, w: number, d: n
 	local rel = frame(x, z, facing)
 	local wall = PLASTER[(seed * 3) % #PLASTER + 1]
 	local roof = ROOFS[seed % #ROOFS + 1]
+	local shutter = ROOFS[(seed + 2) % #ROOFS + 1]
+	local glassBlue = rgb(80, 105, 130)
 	part(m, "Ground", Vector3.new(w, 7, d), rel(0, PAVE + 3.5, 0), STONE, Enum.Material.Cobblestone)
 	part(m, "Door", Vector3.new(3, 4.6, 0.3), rel(-w / 4, PAVE + 2.3, d / 2 + 0.15), rgb(105, 65, 42), Enum.Material.WoodPlanks)
 	arch(m, rel, 3, -w / 4, PAVE + 4.6, d / 2 + 0.15, rgb(105, 65, 42), Enum.Material.WoodPlanks)
-	part(m, "Window", Vector3.new(3, 2, 0.3), rel(w / 4, PAVE + 3.5, d / 2 + 0.15), rgb(80, 105, 130), Enum.Material.Glass)
-	arch(m, rel, 3, w / 4, PAVE + 4.5, d / 2 + 0.15, rgb(80, 105, 130), Enum.Material.Glass)
+	arch(m, rel, 4, -w / 4, PAVE + 4.6, d / 2 + 0.05, DARKSTONE, Enum.Material.Cobblestone)
+	part(m, "Step", Vector3.new(4.2, 0.5, 1.4), rel(-w / 4, PAVE + 0.25, d / 2 + 0.8), DARKSTONE, Enum.Material.Slate)
+	archWindow(m, rel, w / 4, PAVE + 3.3, d / 2 + 0.15, 1, 2.8, glassBlue)
 	local y = PAVE + 7
 	local jut = 0
 	for f = 1, floors - 1 do
 		jut += 0.8
-		part(m, "Floor", Vector3.new(w + jut * 0.6, 7, d + jut), rel(0, y + 3.5, jut / 2), wall, Enum.Material.Plaster)
-		part(m, "Beam", Vector3.new(w + jut * 0.6 + 0.4, 0.6, 0.4), rel(0, y + 0.3, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
-		part(m, "Post", Vector3.new(0.6, 7, 0.35), rel(0, y + 3.5, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
+		local fw = w + jut * 0.6
+		local front = d / 2 + jut
+		part(m, "Floor", Vector3.new(fw, 7, d + jut), rel(0, y + 3.5, jut / 2), wall, Enum.Material.Plaster)
+		part(m, "Beam", Vector3.new(fw + 0.4, 0.6, d + jut + 0.4), rel(0, y + 0.3, jut / 2), TIMBER, Enum.Material.Wood)
+		part(m, "Post", Vector3.new(0.6, 7, 0.35), rel(0, y + 3.5, front + 0.1), TIMBER, Enum.Material.Wood)
 		-- round corner posts
 		for _, u in { -1, 1 } do
-			local post = rel(u * (w + jut * 0.6) / 2, y + 3.5, d / 2 + jut).Position
+			local post = rel(u * fw / 2, y + 3.5, front).Position
 			cylinder(m, "Post", 7, 0.9, post.X, post.Y, post.Z, TIMBER, Enum.Material.Wood)
 		end
+		-- arched, shuttered windows at the front (flower boxes on the first floor), one at the
+		-- back and one on each side
 		for _, u in { -w / 4, w / 4 } do
-			part(m, "Window", Vector3.new(2.4, 2.8, 0.3), rel(u, y + 3.8, d / 2 + jut + 0.05), if (seed + f + u) % 3 == 0 then LANTERN else rgb(80, 105, 130), Enum.Material.Glass)
+			archWindow(m, rel, u, y + 3.2, front + 0.1, 1, 2.2, if (seed + f) % 3 == 0 then LANTERN else glassBlue, shutter)
+			if f == 1 then
+				windowBox(m, rel, u, y + 1.6, front, seed + f)
+			end
+		end
+		archWindow(m, rel, 0, y + 3.2, -d / 2 - 0.1, -1, 2.2, LANTERN)
+		for _, u in { -1, 1 } do
+			sideWindow(m, rel, u * (fw / 2 + 0.1), y + 3.2, jut / 2, 2, glassBlue)
 		end
 		y += 7
 	end
+	doorHood(m, rel, -w / 4, PAVE + 7.4, d / 2, roof)
 	gableFront(m, rel, w + jut * 0.6, d + jut, y, wall, roof)
 	chimney(m, rel, w / 4, y + w / 3, -d / 4, 6)
 end
@@ -642,17 +725,38 @@ local function cottageHome(parent: Instance, x: number, z: number, facing: Vecto
 	local roof = ROOFS[(seed * 7) % #ROOFS + 1]
 	local W, D, H = 16, 12, 9
 	part(m, "Walls", Vector3.new(W, H, D), rel(0, PAVE + H / 2, 0), wall, Enum.Material.Plaster)
-	for _, u in { -W / 2, -2.4, 2.4, W / 2 } do
+	for _, u in { -2.4, 2.4 } do
 		part(m, "Timber", Vector3.new(0.7, H, 0.4), rel(u, PAVE + H / 2, D / 2 + 0.1), TIMBER, Enum.Material.Wood)
 	end
 	part(m, "Timber", Vector3.new(W, 0.7, 0.4), rel(0, PAVE + H - 0.3, D / 2 + 0.1), TIMBER, Enum.Material.Wood)
 	gableSide(m, rel, W, D, PAVE + H, wall, roof)
 	part(m, "Door", Vector3.new(3.2, 5, 0.3), rel(0, PAVE + 2.5, D / 2 + 0.15), rgb(110, 70, 45), Enum.Material.WoodPlanks)
 	arch(m, rel, 3.2, 0, PAVE + 5, D / 2 + 0.15, rgb(110, 70, 45), Enum.Material.WoodPlanks)
-	for _, u in { -5, 5 } do
-		part(m, "Window", Vector3.new(2.6, 2.2, 0.3), rel(u, PAVE + 4.8, D / 2 + 0.15), LANTERN, Enum.Material.Glass)
-		arch(m, rel, 2.6, u, PAVE + 5.9, D / 2 + 0.15, LANTERN, Enum.Material.Glass)
+	doorHood(m, rel, 0, PAVE + 7.6, D / 2, roof)
+	local shutter = ROOFS[(seed + 3) % #ROOFS + 1]
+	for _, u in { -5.2, 5.2 } do
+		archWindow(m, rel, u, PAVE + 4.4, D / 2 + 0.15, 1, 2.4, LANTERN, shutter)
+		windowBox(m, rel, u, PAVE + 2.6, D / 2, seed)
+		archWindow(m, rel, u, PAVE + 4.4, -D / 2 - 0.15, -1, 2.4, LANTERN)
 	end
+	for _, u in { -1, 1 } do
+		sideWindow(m, rel, u * (W / 2 + 0.15), PAVE + 4.4, 0, 2.4, LANTERN)
+	end
+	-- round corner posts
+	for _, u in { -W / 2, W / 2 } do
+		for _, v in { -D / 2, D / 2 } do
+			local post = rel(u, PAVE + H / 2, v).Position
+			cylinder(m, "Timber", H, 1, post.X, post.Y, post.Z, TIMBER, Enum.Material.Wood)
+		end
+	end
+	-- a dormer on the front slope
+	local du = -W / 4
+	local top = PAVE + H
+	part(m, "Dormer", Vector3.new(3.6, 3.2, 3.4), rel(du, top + 2.6, 3.2), wall, Enum.Material.Plaster)
+	for _, k in { -1, 1 } do
+		part(m, "DormerRoof", Vector3.new(2.9, 0.4, 4.2), rel(du + k * 0.95, top + 5.35, 3.1) * CFrame.Angles(0, 0, -k * math.rad(45)), roof, Enum.Material.Slate)
+	end
+	archWindow(m, rel, du, top + 2.7, 4.95, 1, 1.6, LANTERN)
 	chimney(m, rel, W / 3, PAVE + H + 4, -D / 4, 7)
 	-- front garden with a low stone wall and herb beds
 	part(m, "Garden", Vector3.new(W + 2, 0.2, 8), rel(0, PAVE + 0.1, D / 2 + 4.5), rgb(110, 180, 85), Enum.Material.Grass)
@@ -679,16 +783,34 @@ local function guildHall(parent: Instance, x: number, z: number, w: number, d: n
 		if k < 4 then
 			local wu = u + (w - 4) / 8
 			part(m, "TallWindow", Vector3.new(2.6, 8, 0.3), rel(wu, PAVE + 10, d / 2 + 0.15), rgb(90, 120, 170), Enum.Material.Glass)
-			part(m, "WindowArch", Vector3.new(3.2, 0.8, 0.4), rel(wu, PAVE + 14.2, d / 2 + 0.2), DARKSTONE, Enum.Material.Cobblestone)
+			tube(m, "WindowArch", 0.3, 2.6, rel(wu, PAVE + 14, d / 2 + 0.15), rgb(90, 120, 170), Enum.Material.Glass)
+			tube(m, "WindowArchStone", 0.3, 3.8, rel(wu, PAVE + 14, d / 2 + 0.05), DARKSTONE, Enum.Material.Cobblestone)
+			part(m, "Sill", Vector3.new(3.4, 0.5, 0.8), rel(wu, PAVE + 5.8, d / 2 + 0.3), DARKSTONE, Enum.Material.Cobblestone)
 		end
 	end
 	part(m, "Doors", Vector3.new(7, 10, 0.5), rel(0, PAVE + 5, d / 2 + 0.25), rgb(95, 60, 40), Enum.Material.WoodPlanks)
-	part(m, "DoorArch", Vector3.new(9, 1.4, 0.8), rel(0, PAVE + 10.6, d / 2 + 0.4), DARKSTONE, Enum.Material.Cobblestone)
+	tube(m, "DoorArch", 0.5, 7, rel(0, PAVE + 10, d / 2 + 0.25), rgb(95, 60, 40), Enum.Material.WoodPlanks)
+	tube(m, "DoorArchStone", 0.6, 9.4, rel(0, PAVE + 10, d / 2 + 0.1), DARKSTONE, Enum.Material.Cobblestone)
+	-- two dormers on the front slope of the roof
+	for _, du in { -w / 4, w / 4 } do
+		local top = PAVE + H
+		part(m, "Dormer", Vector3.new(4.4, 4, 4.2), rel(du, top + 3, d / 2 - 2.8), STONE, Enum.Material.Cobblestone)
+		for _, k in { -1, 1 } do
+			part(m, "DormerRoof", Vector3.new(3.4, 0.5, 6), rel(du + k * 1.15, top + 6.1, d / 2 - 3.4) * CFrame.Angles(0, 0, -k * math.rad(45)), ROOFS[2], Enum.Material.Slate)
+		end
+		part(m, "Window", Vector3.new(2, 1.6, 0.3), rel(du, top + 3, d / 2 - 0.65), rgb(255, 210, 130), Enum.Material.Neon)
+		tube(m, "Arch", 0.3, 2, rel(du, top + 3.8, d / 2 - 0.65), rgb(255, 210, 130), Enum.Material.Neon)
+	end
 	part(m, "Steps", Vector3.new(12, 1, 4), rel(0, PAVE + 0.5, d / 2 + 2), DARKSTONE, Enum.Material.Cobblestone)
 	for _, s in { -1, 1 } do
 		local tx, tz = (rel(s * w / 2, 0, d / 2)).Position.X, (rel(s * w / 2, 0, d / 2)).Position.Z
 		cylinder(m, "Turret", H + 8, 6, tx, PAVE + (H + 8) / 2, tz, STONE, Enum.Material.Cobblestone)
-		cone(m, "TurretRoof", tx, PAVE + H + 8, tz, 4, 7, ROOFS[2], Enum.Material.Slate, 6)
+		cylinder(m, "TurretBand", 1.2, 7.4, tx, PAVE + H + 7.6, tz, DARKSTONE, Enum.Material.Cobblestone)
+		cylinder(m, "TurretBand", 0.8, 6.6, tx, PAVE + H / 2, tz, DARKSTONE, Enum.Material.Cobblestone)
+		cone(m, "TurretRoof", tx, PAVE + H + 8, tz, 4.4, 9, ROOFS[2], Enum.Material.Slate, 8)
+		ball(m, "TurretFinial", 1.4, tx, PAVE + H + 17.4, tz, GOLD, Enum.Material.Metal)
+		local slit = rel(s * w / 2, 0, d / 2).Position + facing * 3.05
+		part(m, "TurretWindow", Vector3.new(1, 3, 0.3), CFrame.lookAt(Vector3.new(slit.X, PAVE + H + 2, slit.Z), Vector3.new(slit.X, PAVE + H + 2, slit.Z) + facing), rgb(255, 210, 130), Enum.Material.Neon)
 		banner(m, (rel(s * 6, 0, d / 2 + 0.3)).Position.X, PAVE + 16, (rel(s * 6, 0, d / 2 + 0.3)).Position.Z, facing, accent, 7)
 	end
 	local board = part(m, "NameBoard", Vector3.new(math.min(w * 0.6, 30), 2.6, 0.5), rel(0, PAVE + 12.4, d / 2 + 0.6), rgb(50, 40, 35), Enum.Material.WoodPlanks)
@@ -718,7 +840,10 @@ local function cathedral(parent: Instance, cx: number, cz: number, facing: Vecto
 		for k = 0, 5 do
 			local v = -D / 2 + 6 + k * (D - 14) / 5
 			part(m, "Buttress", Vector3.new(2, 20, 2.4), rel(s * (W / 2 + 10.6), PAVE + 10, v - 4), DARKSTONE, Enum.Material.Cobblestone)
-			part(m, "StainedGlass", Vector3.new(0.3, 9, 2.4), rel(s * (W / 2 + 0.1), PAVE + 22, v - 4), ({ rgb(90, 140, 255), rgb(255, 90, 120), rgb(255, 210, 80), rgb(120, 220, 140) })[k % 4 + 1], Enum.Material.Neon)
+			local glassColor = ({ rgb(90, 140, 255), rgb(255, 90, 120), rgb(255, 210, 80), rgb(120, 220, 140) })[k % 4 + 1]
+			part(m, "StainedGlass", Vector3.new(0.3, 9, 2.4), rel(s * (W / 2 + 0.1), PAVE + 22, v - 4), glassColor, Enum.Material.Neon)
+			tube(m, "StainedArch", 0.3, 2.4, rel(s * (W / 2 + 0.1), PAVE + 26.5, v - 4) * CFrame.Angles(0, math.rad(90), 0), glassColor, Enum.Material.Neon)
+			cone(m, "ButtressCap", (rel(s * (W / 2 + 10.6), 0, v - 4)).Position.X, PAVE + 20, (rel(s * (W / 2 + 10.6), 0, v - 4)).Position.Z, 1.4, 4, DARKSTONE, Enum.Material.Cobblestone, 4)
 		end
 	end
 	-- twin west towers with spires, a rose window and great doors
@@ -727,8 +852,19 @@ local function cathedral(parent: Instance, cx: number, cz: number, facing: Vecto
 		box(m, "Tower", tx, PAVE, tz, 12, 52, 12, STONE, Enum.Material.Cobblestone)
 		box(m, "Belfry", tx, PAVE + 44, tz, 12.6, 1, 12.6, DARKSTONE, Enum.Material.Cobblestone)
 		part(m, "BelfryOpening", Vector3.new(4, 6, 12.8), CFrame.new(tx, PAVE + 48, tz), rgb(40, 35, 40), Enum.Material.SmoothPlastic)
-		cone(m, "Spire", tx, PAVE + 52, tz, 8.6, 26, ROOFS[2], Enum.Material.Slate, 4)
-		ball(m, "SpireOrb", 1.6, tx, PAVE + 78.6, tz, GOLD, Enum.Material.Metal)
+		cone(m, "Spire", tx, PAVE + 52, tz, 7.4, 30, ROOFS[2], Enum.Material.Slate, 8)
+		ball(m, "SpireOrb", 1.6, tx, PAVE + 82.6, tz, GOLD, Enum.Material.Metal)
+		-- corner pinnacles round the spire, and tall arched windows up the tower front
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			local px, pz = tx + c[1] * 5.4, tz + c[2] * 5.4
+			cylinder(m, "Pinnacle", 4, 1.6, px, PAVE + 54, pz, DARKSTONE, Enum.Material.Cobblestone)
+			cone(m, "PinnacleTop", px, PAVE + 56, pz, 1.1, 6, ROOFS[2], Enum.Material.Slate, 4)
+		end
+		local front = rel(s * (W / 2 + 4), 0, D / 2 + 8.15)
+		for _, wy in { 16, 32 } do
+			part(m, "TowerWindow", Vector3.new(2.6, 7, 0.3), front * CFrame.new(0, PAVE + wy, 0), rgb(90, 140, 255), Enum.Material.Glass)
+			tube(m, "TowerArch", 0.3, 2.6, front * CFrame.new(0, PAVE + wy + 3.5, 0), rgb(90, 140, 255), Enum.Material.Glass)
+		end
 	end
 	local rose = cylinder(m, "RoseWindow", 0.6, 12, 0, 0, 0, rgb(255, 120, 170), Enum.Material.Neon)
 	rose.CFrame = rel(0, PAVE + 22, D / 2 - 3.6) * CFrame.Angles(0, math.rad(90), 0)
@@ -759,11 +895,34 @@ local function mageTower(parent: Instance, x: number, z: number)
 		cylinder(m, "Balcony", 1, d + 4, x, y + h, z, rgb(150, 145, 170), Enum.Material.Cobblestone)
 		for k = 0, 5 do
 			local a = k / 6 * math.pi * 2 + i
-			part(m, "GlowWindow", Vector3.new(1.6, 4, 0.4), CFrame.lookAt(Vector3.new(x + math.cos(a) * d / 2, y + h * 0.55, z + math.sin(a) * d / 2), Vector3.new(x + math.cos(a) * d, y + h * 0.55, z + math.sin(a) * d)), rgb(170, 120, 255), Enum.Material.Neon)
+			local wcf = CFrame.lookAt(Vector3.new(x + math.cos(a) * d / 2, y + h * 0.55, z + math.sin(a) * d / 2), Vector3.new(x + math.cos(a) * d, y + h * 0.55, z + math.sin(a) * d))
+			part(m, "GlowWindow", Vector3.new(1.6, 4, 0.4), wcf, rgb(170, 120, 255), Enum.Material.Neon)
+			tube(m, "WindowArch", 0.4, 1.6, wcf * CFrame.new(0, 2, 0), rgb(170, 120, 255), Enum.Material.Neon)
+			tube(m, "WindowStone", 0.3, 2.8, wcf * CFrame.new(0, 1.6, 0.15), rgb(150, 145, 170), Enum.Material.Cobblestone)
+		end
+		-- corbels under the balcony and a ring of little posts round its rim
+		for k = 0, 11 do
+			local a = k / 12 * math.pi * 2
+			ball(m, "Corbel", 1.6, x + math.cos(a) * (d / 2 + 0.6), y + h - 1.1, z + math.sin(a) * (d / 2 + 0.6), rgb(150, 145, 170), Enum.Material.Cobblestone)
+			cylinder(m, "RailPost", 2.2, 0.5, x + math.cos(a) * (d / 2 + 1.6), y + h + 1.5, z + math.sin(a) * (d / 2 + 1.6), rgb(120, 100, 160), Enum.Material.Metal)
 		end
 		y += h
 	end
-	cone(m, "Spire", x, y + 1, z, 12, 34, roof, Enum.Material.Slate, 8)
+	cone(m, "Spire", x, y + 1, z, 12, 34, roof, Enum.Material.Slate, 10)
+	-- a glowing halo of runes circling the spire
+	for k = 0, 13 do
+		local a = k / 14 * math.pi * 2
+		local p = Vector3.new(x + math.cos(a) * 15, y + 12, z + math.sin(a) * 15)
+		deco(part(m, "Halo", Vector3.new(0.6, 0.6, 6.4), CFrame.lookAt(p, p + Vector3.new(-math.sin(a), 0, math.cos(a))), rgb(190, 150, 255), Enum.Material.Neon))
+	end
+	-- two little turrets clinging to the lowest tier
+	for _, a in { 0.8, 3.9 } do
+		local tx, tz = x + math.cos(a) * 14, z + math.sin(a) * 14
+		cylinder(m, "Turret", 12, 5, tx, PAVE + 26, tz, stone, Enum.Material.Cobblestone)
+		ball(m, "TurretCorbel", 5.4, tx, PAVE + 20, tz, stone, Enum.Material.Cobblestone)
+		cone(m, "TurretRoof", tx, PAVE + 32, tz, 3.6, 8, roof, Enum.Material.Slate, 8)
+		ball(m, "TurretOrb", 1.2, tx, PAVE + 40.4, tz, rgb(170, 120, 255), Enum.Material.Neon)
+	end
 	local orb = ball(m, "ArcaneOrb", 4, x, y + 40, z, rgb(170, 120, 255), Enum.Material.Neon)
 	glowLight(orb, 40, 2, rgb(170, 120, 255))
 	part(m, "Door", Vector3.new(5, 8, 0.6), CFrame.new(x, PAVE + 4, z - 13.2), rgb(70, 50, 90), Enum.Material.WoodPlanks)

@@ -60,11 +60,20 @@ local function hideSeaParts(map: Instance?)
 	end
 end
 
+-- The low-poly part ground the bake ships (Shared/GroundBuilder): a floor until the terrain is in.
+local function removeEditGround()
+	local ground = workspace:FindFirstChild("EditGround")
+	if ground then
+		ground:Destroy()
+	end
+end
+
 -- bake = true when run from Studio's command bar: marks the terrain as baked into the place.
 function TerrainBuilder.build(map: Instance?, bake: boolean?)
 	local terrain = workspace.Terrain
 	if not bake and workspace:GetAttribute("TerrainBakedVersion") == Landscape.Version then
 		hideSeaParts(map)
+		removeEditGround()
 		workspace:SetAttribute("TerrainReady", true)
 		return
 	end
@@ -144,6 +153,7 @@ function TerrainBuilder.build(map: Instance?, bake: boolean?)
 	end
 	workspace:SetAttribute("TerrainReady", true) -- EnemyService waits for this before spawning camps
 	hideSeaParts(map)
+	removeEditGround()
 end
 
 return TerrainBuilder

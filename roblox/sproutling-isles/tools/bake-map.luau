@@ -25,6 +25,12 @@ WildsBuilder.useApi(roblox)
 MapBuilder.useWilds(WildsBuilder, require("../src/shared/Quests"), require("../src/shared/Waystones"))
 local map = MapBuilder.Build(workspace)
 
+-- One connected land under everything (TerrainBuilder swaps it for real terrain at run time).
+local GroundBuilder = require("../src/shared/GroundBuilder")
+GroundBuilder.useApi(roblox)
+local _, groundParts = GroundBuilder.Build(workspace, require("../src/shared/Landscape"))
+print(string.format("Edit ground: %d parts", groundParts))
+
 -- Bake the lighting look too, so edit mode in Studio matches play mode.
 Ambience.useApi(roblox)
 Ambience.Apply(game:GetService("Lighting"))
