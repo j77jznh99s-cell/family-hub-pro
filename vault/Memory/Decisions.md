@@ -78,3 +78,6 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 declined a separate VPS-based agent (from a tutorial video) in favor of staying on the current setup
 and adding a [[Knowledge Graph]] memory layer instead. See the 2026-10-08 row above. StarNet itself
 (the local pixel-art station) remains on hold, unchanged.
+
+- 2026-10-24: Sproutling Isles part budget raised from ~40k to 100k (owner). StreamingEnabled stays on.
+- 2026-10-24: The whole world must read as one connected map from the start island to the far coast (owner).

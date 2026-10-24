@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (night): 100k budget, repolish, one connected map
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner raised the part limit to 100,000 and asked to repolish, then asked that all areas sit on one big connected map. Richer houses/landmarks/trees (map ~63k parts). New Shared/GroundBuilder bakes a low-poly part ground + roads (~17k parts) so Studio edit mode shows one world; TerrainBuilder deletes it once real terrain is built. Guideposts along the route. Not Studio-tested.
+
 ## 2026-10-24 (evening): building polish
 **Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
 - Owner: "polish the build models, make them more sharp and fun looking without having them look so squarey and boxy." Reworked houses/shops/stalls (flared eaves, round ridges + finials, round chimneys, arched doors/windows, scalloped awnings). Checked with a new 3D z-buffer preview renderer (scratchpad r3d.py). 39.7k parts. Not Studio-tested.
