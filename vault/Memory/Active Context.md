@@ -1,18 +1,21 @@
 ---
 tags: [memory]
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 # Active Context
 
 > Rewrite this note at the end of every session so it's true *now*. Keep it short.
 
 ## Current focus
-**2026-10-21: Sproutling Isles open-world RPG is fully built** (all 7 plan steps, branch
-`claude/roblox-popular-game-trends-6u7sie`, place file `7271749`). Next: the owner's first Studio play-test of
-the whole thing, then a bug-fix round. Texture asset IDs still pending. Details in [[Sproutling Isles]].
-Later the same day the world was reshaped (`d393a2b`): vast irregular land, curvy roads at different heights, organic city.
-Owner's laptop clone is now up to date on the branch (`git pull` works; run commands one per line).
-Then quests + sky isles were added (`aa24a1c`): owner should pull again before the play-test, and re-bake terrain (Version 3).
+**Sproutling Isles is now a large open-world fantasy RPG, built almost entirely 2026-10-21 to 2026-10-24**
+(branch `claude/roblox-popular-game-trends-6u7sie`) — combat, vehicles, an arena, levels/crates, a world map,
+4 elemental dungeons (Deepdelve Mines, Emberdeep Caldera, Tidewrack Grotto, plus the original), waystone
+fast-travel (24 of them), a Monster Journal (bestiary), Daily Tasks with streaks, Greenhollow Gardens (the
+farm village, moved off the old garden island), a 100k part budget, and a full building-polish pass. **The
+owner also set up a session-only overnight cron** (`7 * * * *`, expires after 7 days, distinct from this
+workspace's own paused hourly worker) that compares the game against similar Roblox titles and builds one
+gap per run — see [[Sproutling Isles - Overnight Runs]] for the running log and an ideas queue for future runs.
+**Essentially none of this has been tested in Roblox Studio.** Details in [[Sproutling Isles]].
 
 **Hourly workflow is PAUSED (owner, 2026-09-27 ~15:04 UTC).** The "Hourly project work (worker)" Routine
 (`trig_012vmVxmbAkxxY59wCnKaG1J`) is disabled — it will not fire until the owner re-enables it. The morning-summary

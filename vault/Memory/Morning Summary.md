@@ -32,6 +32,45 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-24
+
+**Done overnight/today**
+- A huge amount of Sproutling Isles RPG work landed (owner's own sessions, including a self-running
+  overnight loop — see below), on top of yesterday's second dungeon:
+  - **Fast travel:** 24 waystones.
+  - **Two more dungeons:** Emberdeep Caldera (fire) plus a mountain/beach/water trio (Highcrag,
+    Saltwind Pass, Saltmere, Tidewrack Grotto) — 4 elemental dungeons total now.
+  - **Building polish pass:** houses/shops reworked to look less boxy (flared eaves, arches, round
+    details), checked against a custom 3D preview tool.
+  - **World scale:** part budget raised 40k → 100k; everything now sits on one connected map (a
+    low-poly placeholder ground/road layer makes Studio's edit view show the whole world before
+    terrain bakes).
+  - **Greenhollow Gardens:** garden plots moved off the old island into their own farm village.
+  - **You set up a session-only overnight cron** (hourly, expires in 7 days — separate from this
+    workspace's own paused hourly worker) that compares Sproutling Isles against similar Roblox
+    games and builds one improvement per run. So far: a Monster Journal (bestiary) and Daily Tasks
+    (streaks, task board). An ideas queue for future runs is in [[Sproutling Isles - Overnight Runs]].
+  - **Still essentially nothing has been tested in Roblox Studio.**
+
+**New projects waiting for your OK**
+- None — all owner-directed or owner-configured (the overnight cron).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- **The Studio play-test is now the single biggest open item by far** — the game has grown a lot
+  since the last time anything was actually run (one early, partial look that "looked good"). Worth
+  doing before the overnight cron adds much more on top of untested work.
+- Everything else from recent summaries still open (texture asset IDs, PonyTail/Agent Skills
+  approval, video-analyst's YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph
+  feedback, iPhone/Obsidian confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- The overnight cron keeps running on its own for up to 7 days unless stopped. Nothing else automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-23
 
 **Done overnight/today**
