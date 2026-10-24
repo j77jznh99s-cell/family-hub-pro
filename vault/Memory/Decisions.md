@@ -81,3 +81,4 @@ and adding a [[Knowledge Graph]] memory layer instead. See the 2026-10-08 row ab
 
 - 2026-10-24: Sproutling Isles part budget raised from ~40k to 100k (owner). StreamingEnabled stays on.
 - 2026-10-24: The whole world must read as one connected map from the start island to the far coast (owner).
+- 2026-10-24: Garden plots live in Greenhollow Gardens (a farm village off the city), not on the garden island (owner). Shop prices stay as they are (owner retracted "open shops free").

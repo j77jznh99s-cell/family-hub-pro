@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (late night): Greenhollow Gardens
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked to shrink the garden plots into individual buildings with jungle decor in a rural village branching off the city, slightly angled, ~20+ studs apart with tree-like paths, lanterns, trading carts, open backs. Done (Greenhollow Gardens, SW of the city; island narrowed to 280 wide). Owner's "all shops free" line was then retracted ("ignore"), so prices unchanged. Not Studio-tested: PlotService now uses rotated plot axes.
+
 ## 2026-10-24 (night): 100k budget, repolish, one connected map
 **Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
 - Owner raised the part limit to 100,000 and asked to repolish, then asked that all areas sit on one big connected map. Richer houses/landmarks/trees (map ~63k parts). New Shared/GroundBuilder bakes a low-poly part ground + roads (~17k parts) so Studio edit mode shows one world; TerrainBuilder deletes it once real terrain is built. Guideposts along the route. Not Studio-tested.
