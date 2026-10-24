@@ -72,7 +72,9 @@ end
 
 function PlotService.gateOutside(plot: Model): CFrame
 	local info = plotByModel[plot]
-	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, MapBuilder.PlotBaseY + 4, 0)
+	-- the house stands on its own pad: just outside its doors, at its floor's height
+	local floor = info.model.PrimaryPart :: BasePart
+	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, floor.Position.Y + 3.5, 0)
 	return CFrame.lookAt(pos, pos + info.facing)
 end
 

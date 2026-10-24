@@ -247,26 +247,26 @@ the client code `src/client/Combat.luau`.
 
 ## Greenhollow Gardens (the garden plots, moved off the island)
 
-- The 8 garden plots are now **garden houses** in **Greenhollow Gardens**, a small farm village
-  off the city's Grand Way (south-west of the walls), reached by Greenhollow Lane.
-- Each house is a timber-and-glass conservatory in its plot's colour (54 x 54 inside, about 40%
-  of the old 100 x 100 plot), turned a few degrees off square, with a painted front gable and
-  round window, its own name and plant theme (Rose Cottage, Sunflower Lodge, Fernery...), and
-  jungle decor: bamboo, monstera, banana plants, palms, vines hanging from the roof, mossy rocks.
-  Soil beds sit by the front doors, the display pads on a stage at the back. Doors open at the
-  front (the gate, lock button and owner sign) **and at the back**, so every garden can be
-  walked into from either path.
-- Paths branch like a tree: the lane down the middle, a path between every pair of houses
-  (about 30 studs apart) lined with lanterns and little trees, and a path behind each row.
-  A small **Trading Cart** (a Sell Stand) stands between each pair by the lane.
-- The village green at the top of the lane has a **Seed Barn** (a second Seed Shop with the
-  same stock), a Sell Stand, a well, a welcome arch and Mara the Guide. Fenced crop fields,
-  haystacks, a scarecrow, a red barn and a silo make it rural. Waystone and airship stop.
-- The garden island keeps the Bloom Plaza, Seed Shop, Pond, Parade and Sky Garden and is now
-  narrower (280 wide). Players spawn at their garden house.
-- Code: `MapBuilder.Garden`, `MapBuilder.plotPlacement` / `plotAxes` (houses are turned, so
-  PlotService works in each house's own axes), ShopService and the client handle every
-  "Seed Shop" and "Sell Stand" on the map. `Landscape.Version` 6: re-bake the terrain.
+- The 8 garden plots are now **garden houses** in **Greenhollow Gardens**, a farm village off the
+  city's Grand Way (south-west of the walls). The layout is a tree: Greenhollow Lane is the
+  trunk, and a curving branch path runs from it to each house's doors. The houses are spread
+  round the lane (four each side), each on its own levelled pad, turned to face its branch.
+- Each house is a timber-and-glass conservatory in its plot's colour (54 x 54 inside), with a
+  painted front gable and round window, its own name and plant theme, and jungle decor:
+  bamboo, monstera, banana plants, palms, vines hanging from the roof, mossy rocks. Soil beds
+  by the front doors, display pads on a stage at the back. Doors open at the front (gate, lock
+  button, owner sign) **and at the back**, so every garden can be walked into.
+- Branches are lined with lanterns and little trees; a **Trading Cart** (a Sell Stand) stands
+  where each branch meets the lane. Each house has a front garden (flower beds, bench,
+  birdbath, pots, corner lanterns), and the open ground is loaded with trees of every kind,
+  bushes, flower beds, mushroom rings, rocks, benches, picnic tables and crates.
+- The green at the top of the lane has the **Seed Barn** (a second Seed Shop), a Sell Stand, a
+  well, a welcome arch and Mara the Guide. Fenced crop fields, a barn and a silo sit on their
+  own pads. Waystone and airship stop. `Landscape.Reserved` keeps wild homesteads out.
+- The garden island keeps the plaza, Seed Shop, pond, parade and Sky Garden and is narrower.
+- Code: `MapBuilder.GardenPlots` / `Landscape.GardenPlots` (same numbers, checked at bake),
+  `plotPlacement` / `plotAxes` / `plotRot` (PlotService works in each house's own axes).
+  `Landscape.Version` 6: re-bake the terrain.
 
 ## New players
 

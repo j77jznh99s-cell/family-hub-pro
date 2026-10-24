@@ -1624,7 +1624,7 @@ local function cityPick(main: boolean): (number, number) -> string?
 end
 
 local function countryPick(x: number, z: number): string?
-	if L.cityWeight(x, z) > 0.05 or L.onSite(x, z, 40) or rand() > 0.09 then
+	if L.cityWeight(x, z) > 0.05 or L.onSite(x, z, 40) or (L.reserved and L.reserved(x, z, 20)) or rand() > 0.09 then
 		return nil
 	end
 	return "cottage"

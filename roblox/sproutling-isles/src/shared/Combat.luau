@@ -192,7 +192,7 @@ Combat.Camps = {
 	{ x = 200, z = -520, kind = "slime", count = 4 },
 	{ x = -200, z = -520, kind = "slime", count = 4 },
 	-- south of the city walls and out in the wider land
-	{ x = -440, z = 1480, kind = "goblin", count = 5 },
+	{ x = -570, z = 1430, kind = "goblin", count = 5 },
 	{ x = 330, z = 1420, kind = "wolf", count = 4 },
 	{ x = -700, z = 1300, kind = "slime", count = 5 },
 	{ x = -880, z = -300, kind = "wolf", count = 4 },

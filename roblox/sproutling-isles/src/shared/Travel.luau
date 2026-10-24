@@ -32,7 +32,7 @@ Travel.Destinations = {
 	{ id = "observatory", name = "Pell's Observatory (mountains)", modes = { air = true }, pos = Vector3.new(sites.observatory.x + 20, sites.observatory.h + 1, sites.observatory.z + 20) },
 	{ id = "hermitage", name = "Oswin's Hermitage (mountains)", modes = { air = true }, pos = Vector3.new(sites.hermitage.x + 20, sites.hermitage.h + 1, sites.hermitage.z + 20) },
 	{ id = "emberpeak", name = "Ember Peak (volcano)", modes = { air = true }, pos = Vector3.new(sites.emberpeak.x + 22, sites.emberpeak.h + 1, sites.emberpeak.z + 22) },
-	{ id = "greenhollow", name = "Greenhollow Gardens (your garden house)", modes = { air = true }, pos = Vector3.new(sites.greenhollow.x + 20, sites.greenhollow.h + 1, sites.greenhollow.z - 210) },
+	{ id = "greenhollow", name = "Greenhollow Gardens (your garden house)", modes = { air = true }, pos = Vector3.new(sites.greenhollow.x + 30, sites.greenhollow.h + 1, sites.greenhollow.z + 14) },
 	{ id = "highcrag", name = "Highcrag (mountain village)", modes = { air = true }, pos = Vector3.new(sites.highcrag.x - 28, sites.highcrag.h + 1, sites.highcrag.z + 24) },
 	{ id = "saltmere", name = "Saltmere (beach village)", modes = { air = true, sea = true }, pos = Vector3.new(sites.saltmere.x + 30, sites.saltmere.h + 1, sites.saltmere.z - 26) },
 	{ id = "cape", name = "Lighthouse Cape", modes = { air = true, sea = true }, pos = Vector3.new(sites.cape.x - 10, sites.cape.h + 1, sites.cape.z) },

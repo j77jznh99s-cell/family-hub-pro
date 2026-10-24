@@ -65,7 +65,12 @@ Landscape.SiteList = {
 	-- the volcanic peak above the Emberdeep Caldera (third dungeon)
 	{ name = "emberpeak", x = -850, z = 1520, r = 36 },
 	-- Greenhollow Gardens, the garden-house village off the city's Grand Way (MapBuilder.Garden)
-	{ name = "greenhollow", x = -170, z = 1440, r = 210, h = 24 },
+	-- (the village green; the garden houses' own pads are added from Landscape.GardenPlots below)
+	{ name = "greenhollow", x = -170, z = 1253, r = 44 },
+	{ name = "gardenfield1", x = -270, z = 1395, r = 30 },
+	{ name = "gardenfield2", x = -350, z = 1648, r = 28 },
+	{ name = "gardenfield3", x = -100, z = 1612, r = 26 },
+	{ name = "gardenbarn", x = -165, z = 1752, r = 30 },
 	-- Highcrag, the mountain village below Ember Peak; over Saltwind Pass to Saltmere on the beach
 	-- (and the Tidewrack Grotto, the fourth dungeon)
 	{ name = "highcrag", x = -770, z = 1615, r = 48, h = 168, ground = "LeafyGrass" },
@@ -74,6 +79,37 @@ Landscape.SiteList = {
 	{ name = "strand", x = -842, z = 1828, r = 40, h = 1.2 }, -- open beach either side of Saltmere
 	{ name = "cove", x = -985, z = 1776, r = 26, h = 1.2 },
 } :: { { name: string, x: number, z: number, r: number, h: number?, ground: string? } }
+
+-- Greenhollow Gardens' eight garden houses, spread round the village lane (x = -170): where each
+-- stands and where its branch path meets the lane (jz). Each gets a levelled pad (site
+-- "garden<i>") and a branch road to its doors. MapBuilder.GardenPlots holds the same numbers (the
+-- bake checks they match).
+Landscape.GardenLaneX = -170
+-- The village's whole area: the wild homesteads, camps and discoveries stay out of it.
+Landscape.Reserved = { { x0 = -470, x1 = 20, z0 = 1215, z1 = 1795 } }
+
+function Landscape.reserved(x: number, z: number, margin: number?): boolean
+	local m = margin or 0
+	for _, r in Landscape.Reserved do
+		if x > r.x0 - m and x < r.x1 + m and z > r.z0 - m and z < r.z1 + m then
+			return true
+		end
+	end
+	return false
+end
+Landscape.GardenPlots = {
+	{ x = -365, z = 1330, jz = 1305 },
+	{ x = -410, z = 1460, jz = 1440 },
+	{ x = -320, z = 1565, jz = 1585 },
+	{ x = -262, z = 1712, jz = 1690 },
+	{ x = -82, z = 1338, jz = 1320 },
+	{ x = -40, z = 1440, jz = 1455 },
+	{ x = -110, z = 1525, jz = 1530 },
+	{ x = -50, z = 1700, jz = 1680 },
+}
+for i, g in Landscape.GardenPlots do
+	table.insert(Landscape.SiteList, { name = "garden" .. i, x = g.x, z = g.z, r = 40 })
+end
 
 export type Site = { name: string, x: number, z: number, r: number, h: number, ground: string? } -- ground: plateau material
 Landscape.Sites = {} :: { [string]: Site }
@@ -122,7 +158,7 @@ Landscape.Roads = {
 	{ name = "Eastmere Road", width = 8, material = "Ground", points = { { 432, 345 }, { 560, 330 }, { 680, 392 }, { 752, 428 } } },
 	{ name = "Watch Road", width = 8, material = "Ground", points = { { -560, 905 }, { -625, 760 }, { -640, 610 }, { -600, 470 }, { -566, 362 } } },
 	{ name = "Pinecrest Road", width = 7, material = "Ground", points = { { -566, 362 }, { -700, 380 }, { -840, 330 }, { -985, 295 } } },
-	{ name = "Greenhollow Lane", width = 10, material = "Ground", points = { { 62, 1385 }, { 0, 1345 }, { -60, 1295 }, { -110, 1264 }, { -150, 1253 }, { -170, 1264 }, { -170, 1340 }, { -170, 1440 }, { -170, 1540 }, { -170, 1615 } } },
+	{ name = "Greenhollow Lane", width = 10, material = "Ground", points = { { 62, 1385 }, { 0, 1345 }, { -60, 1295 }, { -110, 1264 }, { -150, 1253 }, { -170, 1264 }, { -170, 1340 }, { -168, 1440 }, { -172, 1560 }, { -170, 1660 }, { -168, 1725 } } },
 	{ name = "Old Fort Track", width = 7, material = "Ground", points = { { 95, 1640 }, { 260, 1610 }, { 420, 1540 }, { 545, 1440 } } },
 	-- mountain tracks up to the quest camps
 	{ name = "Miners' Track", width = 7, material = "Ground", points = { { -465, -420 }, { -420, -560 }, { -380, -700 }, { -320, -850 }, { -275, -935 } } },
@@ -132,6 +168,17 @@ Landscape.Roads = {
 	{ name = "Saltwind Pass", width = 7, material = "Ground", points = { { -772, 1610 }, { -812, 1632 }, { -860, 1628 }, { -905, 1640 }, { -955, 1668 }, { -988, 1716 }, { -962, 1758 }, { -925, 1782 } } },
 	{ name = "Hermit's Climb", width = 6, material = "Ground", points = { { 408, -288 }, { 520, -340 }, { 620, -400 }, { 700, -420 } } },
 } :: { RoadDef }
+
+-- Greenhollow's branch paths: from the lane out to each garden house's doors, with a gentle bend.
+for i, g in Landscape.GardenPlots do
+	local jx = Landscape.GardenLaneX + (if g.x < Landscape.GardenLaneX then -5 else 5)
+	local dx, dz = jx - g.x, g.jz - g.z
+	local len = math.sqrt(dx * dx + dz * dz)
+	local ux, uz = dx / len, dz / len
+	local doorX, doorZ = g.x + ux * 36, g.z + uz * 36
+	local mx, mz = (jx + doorX) / 2 - uz * 6, (g.jz + doorZ) / 2 + ux * 6
+	table.insert(Landscape.Roads, { name = "Greenhollow Branch " .. i, width = 6, material = "Ground", points = { { jx, g.jz }, { mx, mz }, { doorX, doorZ } } })
+end
 
 -- Fenced crop fields on the farm plateau (centre x, z and size w along x, d along z).
 Landscape.Fields = {

@@ -24,7 +24,7 @@ export type Waystone = {
 
 Waystones.List = {
 	{ id = "island", name = "Garden Island Bridge", region = "Island", at = { -30, 0, 330 } },
-	{ id = "greenhollow", name = "Greenhollow Gardens", region = "Sproutling City", site = "greenhollow", dx = 16, dz = -204, onSite = true },
+	{ id = "greenhollow", name = "Greenhollow Gardens", region = "Sproutling City", site = "greenhollow", dx = 36, dz = -14, onSite = true },
 	{ id = "market", name = "City Market", region = "Sproutling City", find = { "TravelPoint", "market" } },
 	{ id = "harbour", name = "City Harbour", region = "Sproutling City", find = { "TravelPoint", "harbour" } },
 	{ id = "port", name = "Airship Port", region = "Sproutling City", find = { "TravelPoint", "port" } },

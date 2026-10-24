@@ -100,7 +100,7 @@ Quests.ItemSpots = {
 
 Quests.Npcs = {
 	mara = {
-		id = "mara", name = "Mara Brightfoot", title = "Guide to the Isles", camp = "guide", near = { 0, 0 }, fixed = { -156, 24, 1266 }, facing = { 0, 1 },
+		id = "mara", name = "Mara Brightfoot", title = "Guide to the Isles", camp = "guide", near = { 0, 0 }, fixed = { -156, 20, 1266 }, facing = { 0, 1 },
 		greeting = "Welcome to Greenhollow Gardens! Your garden house is down the lane, and the city's just up the road. Let me show you around.",
 		look = { skin = rgb(235, 195, 160), shirt = rgb(240, 170, 60), pants = rgb(90, 110, 70), hair = rgb(160, 80, 50), hat = "straw", hatColor = rgb(240, 215, 140), prop = "letter" },
 	},

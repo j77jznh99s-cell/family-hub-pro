@@ -192,7 +192,7 @@ local function findSpot(x: number, z: number, o: SpotOpts): (number?, number?, n
 		for k = 0, count - 1 do
 			local a = k / count * math.pi * 2 + ring * 0.7
 			local px, pz = x + math.cos(a) * ring * 16, z + math.sin(a) * ring * 16
-			if not L.inPlayArea(px, pz) and L.cityWeight(px, pz) < 0.03 and clearOfTaken(px, pz, o.radius) then
+			if not L.inPlayArea(px, pz) and L.cityWeight(px, pz) < 0.03 and not (L.reserved and L.reserved(px, pz, o.radius) and not o.allowSite) and clearOfTaken(px, pz, o.radius) then
 				local h = L.height(px, pz)
 				if h > (o.minHeight or 3) and not L.onRoad(px, pz, o.roadMargin or (o.radius * 0.6)) and (o.allowSite or not L.onSite(px, pz, o.radius + 10)) then
 					local lo, hi = groundRange(px, pz, o.radius)
