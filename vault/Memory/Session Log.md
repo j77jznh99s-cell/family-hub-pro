@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24: fire dungeon
+**Agents used:** none · `a46815e` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a bigger third cave with its own element. Built The Emberdeep Caldera (fire: Burning DoT, lava, Pyrrhax boss, Fireward Tonic, Brannoc quests). Terrain Version 4 needs a re-bake. Not Studio-tested.
+
 ## 2026-10-23: waystones
 **Agents used:** none · `8cc51cc` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner asked for a teleportation system like fast-travel checkpoints. Built 24 waystones (Shared/Waystones, WildsBuilder, WaystoneService, client window, map pins). Not Studio-tested.
