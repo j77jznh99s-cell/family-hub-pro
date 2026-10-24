@@ -61,6 +61,7 @@ Combat.Abilities = {
 -- for `windup` seconds first, so they can be dodged or walked out of.
 export type BossAttack = {
 	kind: string,
+	element: string?, -- e.g. "fire": a hit also sets the player burning (Combat.Elements)
 	damage: number,
 	radius: number,
 	windup: number,
@@ -83,6 +84,13 @@ export type EnemyType = {
 	boss: boolean?,
 	attacks: { BossAttack }?,
 	size: number?, -- model scale for bosses
+	element: string?, -- elemental damage on every hit (Combat.Elements)
+}
+
+-- Elemental damage: what a hit does on top of its damage. Fire sets you burning (damage every
+-- half second for `duration` seconds); the Fireward Tonic's "fireres" buff cuts both.
+Combat.Elements = {
+	fire = { name = "Burning", dps = 6, duration = 4, color = { 255, 120, 40 } },
 }
 
 Combat.Enemies = {
@@ -94,6 +102,20 @@ Combat.Enemies = {
 	-- the mountains and the sky isles (quest areas)
 	golem = { id = "golem", name = "Crag Golem", health = 150, damage = 16, speed = 9, attackRange = 7, attackWindup = 0.8, attackCooldown = 2, aggroRange = 40, reward = 14, respawn = 30 },
 	wisp = { id = "wisp", name = "Storm Wisp", health = 45, damage = 9, speed = 18, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 50, reward = 8, respawn = 25 },
+	-- the Emberdeep Caldera (fire)
+	emberimp = { id = "emberimp", name = "Ember Imp", health = 70, damage = 11, speed = 19, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 55, reward = 12, respawn = 25, element = "fire" },
+	magmahound = { id = "magmahound", name = "Magma Hound", health = 130, damage = 16, speed = 22, attackRange = 7, attackWindup = 0.45, attackCooldown = 1.3, aggroRange = 60, reward = 18, respawn = 30, element = "fire" },
+	cinderwraith = { id = "cinderwraith", name = "Cinder Wraith", health = 110, damage = 14, speed = 16, attackRange = 8, attackWindup = 0.6, attackCooldown = 1.6, aggroRange = 60, reward = 16, respawn = 30, element = "fire" },
+	pyrrhax = {
+		id = "pyrrhax", name = "Pyrrhax, the Molten Wyrm", health = 4200, damage = 32, speed = 11, attackRange = 15, attackWindup = 1.1, attackCooldown = 2.2, aggroRange = 90, reward = 500, respawn = 0,
+		boss = true, size = 2.6, element = "fire",
+		attacks = {
+			{ kind = "slam", damage = 36, radius = 22, windup = 1.4, element = "fire" },
+			{ kind = "roots", damage = 26, radius = 11, windup = 1, element = "fire" },
+			{ kind = "swipe", damage = 30, radius = 22, windup = 0.9, arc = 85, element = "fire" },
+			{ kind = "roots", damage = 26, radius = 11, windup = 0.8, element = "fire" },
+		},
+	},
 	cragking = {
 		id = "cragking", name = "The Crag King", health = 2400, damage = 28, speed = 9, attackRange = 13, attackWindup = 1.1, attackCooldown = 2.4, aggroRange = 75, reward = 300, respawn = 0,
 		boss = true, size = 2.4,

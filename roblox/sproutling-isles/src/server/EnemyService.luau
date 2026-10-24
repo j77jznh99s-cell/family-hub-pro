@@ -199,6 +199,97 @@ local function build(kind: Combat.EnemyType, at: Vector3): (Model, BasePart, num
 			piece(m, root, "Spark", Vector3.new(0.6, 0.6, 0.6), CFrame.new(math.cos(a) * 2.4, math.sin(a * 2) * 0.6, math.sin(a) * 2.4), Color3.fromRGB(255, 255, 200), Enum.Material.Neon, Enum.PartType.Ball)
 		end
 		radius = 2
+	elseif id == "emberimp" then
+		-- a small red imp with horns and a flame for hair
+		root.Size = Vector3.new(2, 2, 1.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 2.8, 0))
+		humanoid.HipHeight = 1.8
+		local skin = Color3.fromRGB(200, 60, 40)
+		piece(m, root, "Body", Vector3.new(2, 2, 1.4), CFrame.new(), skin)
+		local head = piece(m, root, "Head", Vector3.new(1.8, 1.6, 1.6), CFrame.new(0, 1.8, 0), skin)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Horn", Vector3.new(0.3, 1, 0.3), CFrame.new(s * 0.6, 2.9, 0) * CFrame.Angles(0, 0, s * math.rad(-25)), Color3.fromRGB(40, 30, 30))
+			piece(m, root, "Eye", Vector3.new(0.35, 0.35, 0.2), CFrame.new(s * 0.4, 1.9, -0.82), Color3.fromRGB(255, 230, 80), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.6, 1.8, 0.6), CFrame.new(s * 0.5, -1.8, 0), skin)
+			piece(m, root, "Arm", Vector3.new(0.5, 1.8, 0.5), CFrame.new(s * 1.3, -0.2, 0), skin)
+		end
+		piece(m, root, "Tail", Vector3.new(0.3, 0.3, 2.2), CFrame.new(0, -0.6, 1.6) * CFrame.Angles(math.rad(-30), 0, 0), skin)
+		local flame = Instance.new("Fire")
+		flame.Size = 3
+		flame.Heat = 6
+		flame.Parent = head
+		radius = 2
+	elseif id == "magmahound" then
+		-- a black hound with glowing lava cracks
+		root.Size = Vector3.new(2.6, 2.4, 6.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local hide = Color3.fromRGB(40, 32, 30)
+		local lava = Color3.fromRGB(255, 110, 30)
+		piece(m, root, "Body", Vector3.new(2.6, 2.4, 6.4), CFrame.new(), hide, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.2, 2, 2.6), CFrame.new(0, 0.9, -3.8), hide, Enum.Material.Basalt)
+		piece(m, root, "Jaw", Vector3.new(1.4, 0.8, 1.6), CFrame.new(0, 0.2, -5.4), lava, Enum.Material.Neon)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Crack", Vector3.new(0.2, 1.8, 4.6), CFrame.new(s * 1.31, 0.2, 0), lava, Enum.Material.Neon)
+			piece(m, root, "Eye", Vector3.new(0.4, 0.3, 0.2), CFrame.new(s * 0.55, 1.3, -5.12), Color3.fromRGB(255, 220, 80), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.8, 2.4, 0.8), CFrame.new(s * 0.85, -2.2, -2.2), hide, Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(0.8, 2.4, 0.8), CFrame.new(s * 0.85, -2.2, 2.2), hide, Enum.Material.Basalt)
+		end
+		local tail = piece(m, root, "Tail", Vector3.new(0.6, 0.6, 2.6), CFrame.new(0, 0.8, 4) * CFrame.Angles(math.rad(30), 0, 0), lava, Enum.Material.Neon)
+		local flame = Instance.new("Fire")
+		flame.Size = 3
+		flame.Parent = tail
+		radius = 3
+	elseif id == "cinderwraith" then
+		-- a floating cloak of ash around an ember heart
+		root.Size = Vector3.new(2.6, 3, 2.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.5, 0))
+		humanoid.HipHeight = 4
+		local ash = Color3.fromRGB(60, 55, 58)
+		piece(m, root, "Cloak", Vector3.new(3.2, 4.6, 3.2), CFrame.new(0, -0.6, 0), ash, Enum.Material.Fabric)
+		piece(m, root, "Hood", Vector3.new(2.6, 2.4, 2.6), CFrame.new(0, 2.2, 0), ash, Enum.Material.Fabric)
+		local heart = piece(m, root, "Heart", Vector3.new(1.4, 1.4, 1.4), CFrame.new(0, 0.4, -1.4), Color3.fromRGB(255, 140, 50), Enum.Material.Neon, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.25, 0.2), CFrame.new(s * 0.45, 2.2, -1.32), Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+			piece(m, root, "Sleeve", Vector3.new(0.9, 3, 0.9), CFrame.new(s * 2, -0.4, -0.4) * CFrame.Angles(math.rad(-30), 0, 0), ash, Enum.Material.Fabric)
+		end
+		local smoke = Instance.new("Fire")
+		smoke.Size = 4
+		smoke.Heat = 3
+		smoke.Color = Color3.fromRGB(255, 120, 40)
+		smoke.SecondaryColor = Color3.fromRGB(60, 50, 50)
+		smoke.Parent = heart
+		radius = 2.4
+	elseif id == "pyrrhax" then
+		-- the molten wyrm: a horned head, a ridged body and wings of cooling rock
+		local s = kind.size or 2.5
+		root.Size = Vector3.new(4, 4, 6) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.6 * s, 0))
+		humanoid.HipHeight = 3.6 * s
+		local rock = Color3.fromRGB(55, 40, 38)
+		local lava = Color3.fromRGB(255, 110, 30)
+		piece(m, root, "Body", Vector3.new(4, 4, 7) * s, CFrame.new(), rock, Enum.Material.Basalt)
+		piece(m, root, "Belly", Vector3.new(3.4, 1, 6) * s, CFrame.new(0, -1.8 * s, 0), lava, Enum.Material.Neon)
+		piece(m, root, "Neck", Vector3.new(2.2, 2.2, 4) * s, CFrame.new(0, 1.8 * s, -4.6 * s) * CFrame.Angles(math.rad(30), 0, 0), rock, Enum.Material.Basalt)
+		local head = piece(m, root, "Head", Vector3.new(2.6, 2.2, 3.6) * s, CFrame.new(0, 3.4 * s, -6.8 * s), rock, Enum.Material.Basalt)
+		piece(m, root, "Maw", Vector3.new(1.8, 0.6, 2) * s, CFrame.new(0, 2.6 * s, -8.2 * s), lava, Enum.Material.Neon)
+		for _, side in { -1, 1 } do
+			piece(m, root, "Horn", Vector3.new(0.5, 2.6, 0.5) * s, CFrame.new(side * 1 * s, 5 * s, -6.2 * s) * CFrame.Angles(math.rad(-30), 0, side * math.rad(-20)), Color3.fromRGB(30, 25, 25))
+			piece(m, root, "Eye", Vector3.new(0.6, 0.4, 0.2) * s, CFrame.new(side * 0.8 * s, 3.8 * s, -8.55 * s), Color3.fromRGB(255, 230, 90), Enum.Material.Neon)
+			piece(m, root, "Wing", Vector3.new(7, 0.4, 5) * s, CFrame.new(side * 5.2 * s, 2 * s, 0.4 * s) * CFrame.Angles(0, 0, side * math.rad(-25)), rock, Enum.Material.Basalt)
+			piece(m, root, "WingVein", Vector3.new(6.6, 0.45, 0.4) * s, CFrame.new(side * 5.2 * s, 2.05 * s, -0.6 * s) * CFrame.Angles(0, 0, side * math.rad(-25)), lava, Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(1.4, 3.2, 1.4) * s, CFrame.new(side * 1.6 * s, -3.6 * s, -2 * s), rock, Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(1.4, 3.2, 1.4) * s, CFrame.new(side * 1.6 * s, -3.6 * s, 2.2 * s), rock, Enum.Material.Basalt)
+		end
+		for k = 0, 4 do
+			piece(m, root, "Spine", Vector3.new(0.6, 1.4, 1) * s, CFrame.new(0, 2.5 * s, (-2.4 + k * 1.3) * s), lava, Enum.Material.Neon)
+		end
+		piece(m, root, "Tail", Vector3.new(1.6, 1.6, 7) * s, CFrame.new(0, -0.6 * s, 6.6 * s) * CFrame.Angles(math.rad(-15), 0, 0), rock, Enum.Material.Basalt)
+		local flame = Instance.new("Fire")
+		flame.Size = 10
+		flame.Heat = 12
+		flame.Parent = head
+		radius = 4 * s
 	elseif id == "cragking" then
 		-- a towering golem of dark rock, crowned with glowstone
 		local s = kind.size or 2
@@ -521,7 +612,8 @@ bossAttack = function(e: Enemy, targetPos: Vector3, facing: Vector3)
 	local attack = attacks[e.attackIndex]
 	local ground = e.root.Position - Vector3.new(0, e.humanoid.HipHeight + e.root.Size.Y / 2, 0)
 	local center = if attack.kind == "roots" then Vector3.new(targetPos.X, ground.Y, targetPos.Z) else ground
-	CombatService.fx("telegraph", { pos = center, radius = attack.radius, time = attack.windup, shape = attack.kind, dir = facing, arc = attack.arc, model = e.model })
+	local element = attack.element or e.kind.element
+	CombatService.fx("telegraph", { pos = center, radius = attack.radius, time = attack.windup, shape = attack.kind, dir = facing, arc = attack.arc, model = e.model, element = element })
 	task.delay(attack.windup, function()
 		e.winding = false
 		if e.dead then
@@ -529,9 +621,9 @@ bossAttack = function(e: Enemy, targetPos: Vector3, facing: Vector3)
 		end
 		local dir = if attack.kind == "swipe" then facing else nil
 		for _, p in playersIn(center, attack.radius, dir, attack.arc) do
-			CombatService.hurtPlayer(p, attack.damage, if attack.kind == "roots" then center - facing * 3 else e.root.Position)
+			CombatService.hurtPlayer(p, attack.damage, if attack.kind == "roots" then center - facing * 3 else e.root.Position, element)
 		end
-		CombatService.fx("burst", { pos = center, radius = attack.radius, shape = attack.kind, dir = facing, arc = attack.arc })
+		CombatService.fx("burst", { pos = center, radius = attack.radius, shape = attack.kind, dir = facing, arc = attack.arc, element = element })
 	end)
 end
 
@@ -610,7 +702,7 @@ local function think(e: Enemy, t: number)
 		if vRoot then
 			local gap = vRoot.Position - e.root.Position
 			if Vector3.new(gap.X, 0, gap.Z).Magnitude <= e.kind.attackRange + e.radius + 2 then
-				CombatService.hurtPlayer(victim, e.kind.damage, e.root.Position)
+				CombatService.hurtPlayer(victim, e.kind.damage, e.root.Position, e.kind.element)
 			end
 		end
 		CombatService.fx("strike", { pos = e.root.Position + e.root.CFrame.LookVector * (e.radius + 1), kind = e.kind.id })

@@ -13,7 +13,7 @@ local BuffService = {}
 type Buff = { value: number, ends: number, name: string }
 local buffs: { [Player]: { [string]: Buff } } = {}
 
-local DEFAULTS = { damage = 1, defense = 0, speed = 0, stamina = 1, regen = 0 }
+local DEFAULTS = { damage = 1, defense = 0, speed = 0, stamina = 1, regen = 0, fireres = 0 }
 
 local function now(): number
 	return Workspace:GetServerTimeNow()

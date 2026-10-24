@@ -31,6 +31,7 @@ Travel.Destinations = {
 	{ id = "minecamp", name = "Deepdelve Mine (mountains)", modes = { air = true }, pos = Vector3.new(sites.minecamp.x + 20, sites.minecamp.h + 1, sites.minecamp.z + 20) },
 	{ id = "observatory", name = "Pell's Observatory (mountains)", modes = { air = true }, pos = Vector3.new(sites.observatory.x + 20, sites.observatory.h + 1, sites.observatory.z + 20) },
 	{ id = "hermitage", name = "Oswin's Hermitage (mountains)", modes = { air = true }, pos = Vector3.new(sites.hermitage.x + 20, sites.hermitage.h + 1, sites.hermitage.z + 20) },
+	{ id = "emberpeak", name = "Ember Peak (volcano)", modes = { air = true }, pos = Vector3.new(sites.emberpeak.x + 22, sites.emberpeak.h + 1, sites.emberpeak.z + 22) },
 	{ id = "cape", name = "Lighthouse Cape", modes = { air = true, sea = true }, pos = Vector3.new(sites.cape.x - 10, sites.cape.h + 1, sites.cape.z) },
 	{ id = "harbour", name = "City Harbour", modes = { sea = true, air = true }, pos = Vector3.new(sites.harbour.x - 20, sites.harbour.h + 1, sites.harbour.z) },
 	{ id = "docks", name = "Fishing Docks", modes = { sea = true }, pos = Vector3.new(sites.docks.x - 20, sites.docks.h + 1, sites.docks.z) },

@@ -359,6 +359,34 @@ local function updateArena()
 	end
 end
 player:GetAttributeChangedSignal("ArenaWave"):Connect(updateArena)
+
+-- burning warning
+local burnLabel = make("TextLabel", {
+	AnchorPoint = Vector2.new(0.5, 1),
+	Position = UDim2.new(0.5, 0, 1, -186),
+	Size = UDim2.fromOffset(240, 30),
+	BackgroundColor3 = Color3.fromRGB(150, 50, 10),
+	BackgroundTransparency = 0.2,
+	Font = FONT,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255, 220, 120),
+	TextStrokeTransparency = 0.3,
+	Text = "BURNING!",
+	Visible = false,
+	Parent = gui,
+}, { corner(8) })
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+		local ends = player:GetAttribute("Burning")
+		local left = if typeof(ends) == "number" then ends - workspace:GetServerTimeNow() else 0
+		burnLabel.Visible = left > 0
+		if left > 0 then
+			burnLabel.Text = string.format("BURNING! %.1fs", left)
+			burnLabel.BackgroundTransparency = 0.15 + 0.15 * math.sin(os.clock() * 10)
+		end
+	end
+end)
 player:GetAttributeChangedSignal("ArenaLeft"):Connect(updateArena)
 
 ----------------------------------------------------------------------------------------------

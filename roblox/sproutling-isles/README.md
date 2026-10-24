@@ -172,6 +172,22 @@ the client code `src/client/Combat.luau`.
 - `DungeonBuilder.Dungeons` now describes every dungeon (rooms, look, entrance, level), and
   DungeonService runs each one on its own, so more can be added as data.
 
+## Third dungeon: The Emberdeep Caldera (fire)
+
+- Entrance: a molten stairwell at **Ember Peak**, a volcanic site at the end of the new Ember Trail
+  in the far north-west (level 20+). It has its own waystone and an airship stop.
+- Eight bigger rooms: Scorched Entry, Ash Gallery, River of Fire (lava channel with two bridges),
+  Obsidian Hall, Forge of the Deep, the Ember Vault (chest), Magma Lake and **Pyrrhax's Caldera**,
+  where the fire wyrm Pyrrhax waits (4,200 HP, four fire attacks, drops Legendary-tier loot).
+- **Fire element:** Ember Imps, Magma Hounds, Cinder Wraiths and Pyrrhax set you **Burning**
+  (6 damage a second for 4 seconds, shown as "BURNING!" above your bars, orange damage numbers and
+  orange telegraphs). Glowing lava floors are hazards that burn you on touch.
+- **Fireward Tonic** (Alchemist, 150 Dew): halves burn time and damage for 5 minutes.
+- **Brannoc Ashbeard the Firesmith** runs a forge camp at Ember Peak: "Sparks on the Slopes"
+  (8 Ember Imps) and then "Heart of the Caldera" (slay Pyrrhax: 1,200 Dew, a top weapon, a Golden Crate).
+- New materials: Ember Core, Obsidian, Wyrmscale.
+- `Landscape.Version` is now 4: re-bake the terrain in Studio.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you

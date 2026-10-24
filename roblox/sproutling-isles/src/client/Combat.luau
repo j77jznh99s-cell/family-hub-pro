@@ -451,7 +451,7 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		floatText(data.pos, tostring(data.amount), Color3.fromRGB(255, 240, 120))
 	elseif kind == "damage" then
 		if data.player then
-			floatText(data.pos, "-" .. tostring(data.amount), Color3.fromRGB(255, 90, 90))
+			floatText(data.pos, "-" .. tostring(data.amount), if data.element == "fire" then Color3.fromRGB(255, 150, 40) else Color3.fromRGB(255, 90, 90))
 		end
 	elseif kind == "windup" then
 		if data.model then
@@ -472,17 +472,19 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		local radius = data.radius or 10
 		local pos = data.pos + Vector3.new(0, 0.3, 0)
 		local parts: { BasePart } = {}
+		local fire = data.element == "fire"
+		local warn = if fire then Color3.fromRGB(255, 110, 20) else Color3.fromRGB(255, 60, 60)
 		if data.shape == "swipe" and data.dir then
 			local arc = math.rad(data.arc or 60)
 			local base = CFrame.lookAt(pos, pos + data.dir)
 			for k = -3, 3 do
-				local wedgeLine = fxPart(Vector3.new(radius * 0.32, 0.2, radius), base * CFrame.Angles(0, k / 3 * arc, 0) * CFrame.new(0, 0, -radius / 2), Color3.fromRGB(255, 60, 60), nil, 0.65)
+				local wedgeLine = fxPart(Vector3.new(radius * 0.32, 0.2, radius), base * CFrame.Angles(0, k / 3 * arc, 0) * CFrame.new(0, 0, -radius / 2), warn, nil, 0.65)
 				table.insert(parts, wedgeLine)
 			end
 		else
-			local disc = fxPart(Vector3.new(0.2, radius * 2, radius * 2), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 60, 60), Enum.PartType.Cylinder, 0.7)
+			local disc = fxPart(Vector3.new(0.2, radius * 2, radius * 2), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), warn, Enum.PartType.Cylinder, 0.7)
 			table.insert(parts, disc)
-			local inner = fxPart(Vector3.new(0.25, 0.5, 0.5), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 120, 80), Enum.PartType.Cylinder, 0.4)
+			local inner = fxPart(Vector3.new(0.25, 0.5, 0.5), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), if fire then Color3.fromRGB(255, 200, 60) else Color3.fromRGB(255, 120, 80), Enum.PartType.Cylinder, 0.4)
 			TweenService:Create(inner, TweenInfo.new(data.time or 1, Enum.EasingStyle.Linear), { Size = Vector3.new(0.25, radius * 2, radius * 2) }):Play()
 			table.insert(parts, inner)
 		end
@@ -494,10 +496,19 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		end
 	elseif kind == "burst" then
 		local radius = data.radius or 10
-		local color = if data.shape == "roots" then Color3.fromRGB(120, 200, 80) else Color3.fromRGB(255, 170, 90)
+		local fire = data.element == "fire"
+		local color = if fire then Color3.fromRGB(255, 110, 30) elseif data.shape == "roots" then Color3.fromRGB(120, 200, 80) else Color3.fromRGB(255, 170, 90)
 		local ring = fxPart(Vector3.new(1, 2, 2), CFrame.new(data.pos + Vector3.new(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder, 0.2)
 		fadeOut(ring, 0.4, Vector3.new(1, radius * 2, radius * 2))
-		if data.shape == "roots" then
+		if fire then
+			-- pillars of flame burst up through the blast
+			for k = 0, 7 do
+				local a = k / 8 * math.pi * 2
+				local r = radius * (0.3 + (k % 2) * 0.4)
+				local flame = fxPart(Vector3.new(2, 7, 2), CFrame.new(data.pos + Vector3.new(math.cos(a) * r, 3.5, math.sin(a) * r)), Color3.fromRGB(255, 140 + (k % 3) * 30, 40), Enum.PartType.Ball, 0.1)
+				fadeOut(flame, 0.7, Vector3.new(0.5, 14, 0.5))
+			end
+		elseif data.shape == "roots" then
 			for k = 0, 5 do
 				local a = k / 6 * math.pi * 2
 				local spike = fxPart(Vector3.new(1, 6, 1), CFrame.new(data.pos + Vector3.new(math.cos(a) * radius * 0.5, 3, math.sin(a) * radius * 0.5)), Color3.fromRGB(110, 80, 50), nil, 0)

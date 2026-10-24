@@ -140,6 +140,11 @@ Quests.Npcs = {
 		greeting = "I'm not lost! I'm... taking the scenic route. For the third day.",
 		look = { skin = rgb(245, 210, 180), shirt = rgb(70, 140, 200), pants = rgb(200, 180, 140), hair = rgb(240, 200, 90), hat = "cap", hatColor = rgb(200, 60, 60), prop = "letter" },
 	},
+	brannoc = {
+		id = "brannoc", site = "emberpeak", name = "Brannoc Ashbeard", title = "Firesmith", camp = "forge", near = { -850, 1520 },
+		greeting = "Hot enough for you? This peak's my forge. And under it sleeps the hottest thing in the Isles.",
+		look = { skin = rgb(190, 130, 95), shirt = rgb(70, 50, 40), pants = rgb(50, 45, 42), hair = rgb(200, 80, 30), hat = "cap", hatColor = rgb(60, 55, 50), prop = "pick" },
+	},
 	lyra = {
 		id = "lyra", name = "Lyra", title = "Cloudkeeper", camp = "skycamp", near = { 0, 0 }, isle = "Cloudkeeper's Rest",
 		greeting = "Welcome to the high air. Breathe slowly; the wind here has opinions.",
@@ -174,6 +179,7 @@ Quests.Camps = {
 	{ npc = "gorrim", offset = { -120, 40 }, kind = "golem", count = 2 },
 	{ npc = "pell", offset = { 80, 70 }, kind = "bat", count = 5 },
 	{ npc = "dorran", offset = { -80, 40 }, kind = "skeleton", count = 5 },
+	{ npc = "brannoc", offset = { 90, 60 }, kind = "emberimp", count = 5 },
 	{ isle = "Windward Isle", kind = "wisp", count = 3 },
 	{ isle = "Starfall Isle", kind = "wisp", count = 3 },
 	{ isle = "Gale Rock", kind = "wisp", count = 3 },
@@ -311,6 +317,20 @@ Quests.List = {
 		finish = "The mountain's quiet. Too quiet. Ha! Take this, you've earned it.",
 		objective = { kind = "slay", target = "cragking", count = 1, text = "Defeat the Crag King in the Deepdelve Mines" },
 		reward = { dew = 500, weapon = 4, crate = "gold" },
+	},
+	{
+		id = "brannoc_imps", name = "Sparks on the Slopes", giver = "brannoc",
+		intro = "Ember imps keep crawling out of the vents and stealing my coal. Stamp them out. Mind your boots: their touch sets you alight. The Alchemist sells Fireward Tonic.",
+		finish = "Ha! Nothing like a quiet forge. Take this, and take it seriously: what's below is worse.",
+		objective = { kind = "slay", target = "emberimp", count = 8, text = "Defeat Ember Imps" },
+		reward = { dew = 400, potions = 3, crate = "silver" },
+	},
+	{
+		id = "brannoc_heart", name = "Heart of the Caldera", giver = "brannoc", requires = { "brannoc_imps" },
+		intro = "Pyrrhax, the Molten Wyrm, stirs in the caldera under this peak (level 20 or more). Burning hounds, ash wraiths, rivers of lava. Bring back one of its scales and I'll forge you something legendary.",
+		finish = "A real wyrm scale, still warm! You're a legend now, friend. Here's your reward, fresh from the anvil.",
+		objective = { kind = "slay", target = "pyrrhax", count = 1, text = "Defeat Pyrrhax in the Emberdeep Caldera" },
+		reward = { dew = 1200, weapon = 5, crate = "gold" },
 	},
 	{
 		id = "oswin_cairns", name = "The Hermit's Cairns", giver = "oswin",

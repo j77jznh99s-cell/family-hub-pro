@@ -181,7 +181,7 @@ local function clearOfTaken(x: number, z: number, r: number): boolean
 	return true
 end
 
-type SpotOpts = { radius: number, maxRange: number?, roadMargin: number?, search: number?, minHeight: number? }
+type SpotOpts = { radius: number, maxRange: number?, roadMargin: number?, search: number?, minHeight: number?, allowSite: boolean? }
 
 -- Nearest open, fairly flat spot to (x, z): dry land, off roads and building sites, outside the
 -- city, and clear of everything already placed.
@@ -194,7 +194,7 @@ local function findSpot(x: number, z: number, o: SpotOpts): (number?, number?, n
 			local px, pz = x + math.cos(a) * ring * 16, z + math.sin(a) * ring * 16
 			if not L.inPlayArea(px, pz) and L.cityWeight(px, pz) < 0.03 and clearOfTaken(px, pz, o.radius) then
 				local h = L.height(px, pz)
-				if h > (o.minHeight or 3) and not L.onRoad(px, pz, o.roadMargin or (o.radius * 0.6)) and not L.onSite(px, pz, o.radius + 10) then
+				if h > (o.minHeight or 3) and not L.onRoad(px, pz, o.roadMargin or (o.radius * 0.6)) and (o.allowSite or not L.onSite(px, pz, o.radius + 10)) then
 					local lo, hi = groundRange(px, pz, o.radius)
 					if hi - lo <= (o.maxRange or 5) then
 						table.insert(taken, { px, pz, o.radius })
@@ -601,6 +601,29 @@ CAMPS.courier = function(f, x, z, face, _seed)
 	campfire(f, x - 4, z + 8)
 end
 
+CAMPS.forge = function(f, x, z, face, _seed)
+	local side = Vector3.new(-face.Z, 0, face.X)
+	-- the furnace: a stone hearth glowing with coals
+	local fx, fz = x - side.X * 10, z - side.Z * 10
+	part(f, "Furnace", Vector3.new(8, 7, 8), CFrame.new(fx, 3.5, fz), rgb(70, 60, 58), Enum.Material.Basalt)
+	part(f, "Chimney", Vector3.new(3, 12, 3), CFrame.new(fx, 13, fz), rgb(60, 52, 50), Enum.Material.Basalt)
+	local coals = part(f, "Coals", Vector3.new(5, 0.6, 5), CFrame.new(fx, 7.3, fz), rgb(255, 110, 30), Enum.Material.Neon)
+	glow(coals, 24, 1.6, rgb(255, 140, 60))
+	local fire = Instance.new("Fire")
+	fire.Size = 6
+	fire.Heat = 12
+	fire.Parent = coals
+	part(f, "Anvil", Vector3.new(2, 2.6, 4), CFrame.new(x + side.X * 2, 1.3, z + side.Z * 2), rgb(50, 50, 55), Enum.Material.Metal)
+	part(f, "Quench", Vector3.new(4, 2, 3), CFrame.new(x + side.X * 7, 1, z + side.Z * 7), rgb(110, 80, 52), Enum.Material.WoodPlanks)
+	part(f, "WeaponRack", Vector3.new(6, 3, 0.6), CFrame.new(x - face.X * 8, 1.5, z - face.Z * 8), rgb(110, 80, 52), Enum.Material.Wood)
+	tent(f, x + side.X * 14 - face.X * 6, z + side.Z * 14 - face.Z * 6, face, rgb(140, 70, 50))
+	K.barrel(f, x + side.X * 10 + face.X * 6, z + side.Z * 10 + face.Z * 6)
+	-- a little lava pool for show (not the burning kind)
+	local pool = part(f, "LavaPool", Vector3.new(7, 0.3, 5), CFrame.new(x - side.X * 4 + face.X * 9, 0.2, z - side.Z * 4 + face.Z * 9), rgb(255, 100, 30), Enum.Material.Neon)
+	pool.CanCollide = false
+	glow(pool, 16, 1, rgb(255, 120, 40))
+end
+
 CAMPS.guide = function(f, x, z, face, seed)
 	local side = Vector3.new(-face.Z, 0, face.X)
 	local sx, sz = x + side.X * 5, z + side.Z * 5
@@ -999,7 +1022,7 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 			elseif w.site then
 				local s = L.Sites[w.site]
 				if s then
-					local x, z, h = findSpot(s.x + (w.dx or 0), s.z + (w.dz or 0), { radius = 6, maxRange = 3, search = 6, roadMargin = 3, minHeight = -10 })
+					local x, z, h = findSpot(s.x + (w.dx or 0), s.z + (w.dz or 0), { radius = 6, maxRange = 3, search = 6, roadMargin = 3, minHeight = -10, allowSite = w.onSite })
 					if x and z and h then
 						waystone(wf, w, x, h - 0.2, z)
 					else

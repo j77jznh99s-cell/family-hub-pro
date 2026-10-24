@@ -34,6 +34,7 @@ local SITE_NAMES = {
 	eastmere = "Eastmere",
 	pinecrest = "Pinecrest",
 	oldfort = "The Old Fort",
+	emberpeak = "Ember Peak",
 }
 
 -- shops worth a pin, with the map category they show under
@@ -82,6 +83,8 @@ function MapService.init(map: Instance)
 			table.insert(pois, { name = "The Arena", kind = "arena", x = p.X, z = p.Z })
 		elseif d.Name == "CryptPortal" then
 			table.insert(pois, { name = "The Hollow Crypt (dungeon)", kind = "dungeon", x = p.X, z = p.Z })
+		elseif d.Name == "EmberPortal" then
+			table.insert(pois, { name = "The Emberdeep Caldera (fire dungeon, level 20+)", kind = "dungeon", x = p.X, z = p.Z })
 		elseif d.Name == "MinePortal" then
 			table.insert(pois, { name = "The Deepdelve Mines (dungeon, level 12+)", kind = "dungeon", x = p.X, z = p.Z })
 		end

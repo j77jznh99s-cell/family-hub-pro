@@ -38,6 +38,9 @@ Loot.Materials = {
 	heartwood = { id = "heartwood", name = "Ironbark Heartwood", color = Color3.fromRGB(150, 100, 60), value = 150 },
 	ore = { id = "ore", name = "Crag Ore", color = Color3.fromRGB(150, 160, 175), value = 9 },
 	stormglass = { id = "stormglass", name = "Stormglass", color = Color3.fromRGB(140, 220, 255), value = 10 },
+	embercore = { id = "embercore", name = "Ember Core", color = Color3.fromRGB(255, 130, 50), value = 14 },
+	obsidian = { id = "obsidian", name = "Obsidian Shard", color = Color3.fromRGB(60, 45, 70), value = 11 },
+	wyrmscale = { id = "wyrmscale", name = "Molten Wyrm Scale", color = Color3.fromRGB(255, 90, 40), value = 300 },
 	galecore = { id = "galecore", name = "Gale Core", color = Color3.fromRGB(200, 240, 255), value = 180 },
 	-- herbs: gathered from wild herb patches and harvested alongside garden hatches
 	sunleaf = { id = "sunleaf", name = "Sunleaf", color = Color3.fromRGB(240, 220, 90), value = 2 },
@@ -62,6 +65,10 @@ Loot.Drops = {
 	wisp = { material = "stormglass", materialChance = 0.55, weaponChance = 0.12, minRarity = 2 },
 	stormcaller = { material = "galecore", materialChance = 1, weaponChance = 1, minRarity = 4 },
 	cragking = { material = "ore", materialChance = 1, weaponChance = 1, minRarity = 4 },
+	emberimp = { material = "embercore", materialChance = 0.55, weaponChance = 0.12, minRarity = 2 },
+	magmahound = { material = "obsidian", materialChance = 0.6, weaponChance = 0.16, minRarity = 3 },
+	cinderwraith = { material = "embercore", materialChance = 0.6, weaponChance = 0.16, minRarity = 3 },
+	pyrrhax = { material = "wyrmscale", materialChance = 1, weaponChance = 1, minRarity = 5 },
 } :: { [string]: DropTable }
 
 -- Chests in the crypt: how many weapons and their minimum rarity.

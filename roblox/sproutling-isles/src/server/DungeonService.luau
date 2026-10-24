@@ -331,7 +331,7 @@ end
 
 function DungeonService.init(map: Instance)
 	local found = false
-	for _, def in { { "Dungeon", "Crypt", "CryptPortal" }, { "Mines", "Depths", "MinePortal" } } do
+	for _, def in { { "Dungeon", "Crypt", "CryptPortal" }, { "Mines", "Depths", "MinePortal" }, { "Emberdeep", "Caldera", "EmberPortal" } } do
 		local root = map:FindFirstChild(def[1])
 		if root then
 			found = true

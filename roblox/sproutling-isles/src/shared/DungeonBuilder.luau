@@ -78,6 +78,27 @@ DungeonBuilder.Dungeons = {
 			{ name = "Heart of the Mountain", w = 90, d = 90, spawns = { { "cragking", 1 } }, chest = "boss", boss = "cragking", crystals = true },
 		},
 	},
+	{
+		id = "emberdeep",
+		root = "Emberdeep",
+		interior = "Caldera",
+		portal = "EmberPortal",
+		title = "The Emberdeep Caldera",
+		minLevel = 20,
+		origin = { x = -1300, y = -440, z = 400 },
+		theme = "fire",
+		entrance = { site = "emberpeak", dx = 26, dz = -22 },
+		rooms = {
+			{ name = "Scorched Entry", w = 48, d = 42, spawns = {}, lavaPools = true },
+			{ name = "Ash Gallery", w = 72, d = 56, spawns = { { "emberimp", 6 } }, obsidian = true },
+			{ name = "River of Fire", w = 84, d = 72, spawns = { { "magmahound", 3 }, { "emberimp", 3 } }, lavaRiver = true },
+			{ name = "Obsidian Hall", w = 76, d = 76, spawns = { { "cinderwraith", 4 }, { "emberimp", 2 } }, obsidian = true, lavaPools = true },
+			{ name = "Forge of the Deep", w = 80, d = 62, spawns = { { "emberimp", 4 }, { "magmahound", 2 }, { "cinderwraith", 2 } }, forge = true },
+			{ name = "Ember Vault", w = 42, d = 34, spawns = {}, chest = "vault", lavaPools = true },
+			{ name = "Magma Lake", w = 90, d = 88, spawns = { { "magmahound", 4 }, { "cinderwraith", 3 } }, lavaRiver = true, lavaPools = true },
+			{ name = "Pyrrhax's Caldera", w = 120, d = 116, spawns = { { "pyrrhax", 1 } }, chest = "boss", boss = "pyrrhax", calderaRing = true },
+		},
+	},
 }
 DungeonBuilder.Rooms = DungeonBuilder.Dungeons[1].rooms
 
@@ -167,8 +188,19 @@ end
 
 -- Colours, built once Color3 is available (Lune passes it in via useApi).
 local STONE: Color3, DARK: Color3, FLOOR: Color3, BONE: Color3, MOSS: Color3, FLAME: Color3, GLOW: Color3
+local THEME = "crypt"
+local LAVA: Color3
+
 local function initColors(theme: string?)
-	if theme == "mines" then
+	THEME = theme or "crypt"
+	LAVA = rgb(255, 100, 30)
+	if theme == "fire" then
+		STONE = rgb(58, 48, 46)
+		DARK = rgb(38, 32, 32)
+		FLOOR = rgb(66, 54, 50)
+		MOSS = rgb(90, 80, 78)
+		GLOW = rgb(255, 130, 40)
+	elseif theme == "mines" then
 		STONE = rgb(110, 96, 82)
 		DARK = rgb(72, 62, 54)
 		FLOOR = rgb(96, 82, 68)
@@ -229,6 +261,14 @@ local function cobweb(parent: Instance, x: number, y: number, z: number, turn: n
 	w.CastShadow = false
 end
 
+-- A lava slab on the floor: walkable, but it sets you burning (Hazard = "fire", HazardService).
+local function lava(parent: Instance, x: number, y: number, z: number, sx: number, sz: number): BasePart
+	local p = part(parent, "Lava", Vector3.new(sx, 0.4, sz), CFrame.new(x, y + 0.2, z), LAVA, Enum.Material.Neon)
+	p:SetAttribute("Hazard", "fire")
+	light(p, math.min(30, math.max(sx, sz) + 8), 1.2, LAVA)
+	return p
+end
+
 ----------------------------------------------------------------------------------------------
 -- rooms
 
@@ -266,8 +306,10 @@ local function room(f: Instance, index: number, plan: any, cx: number, y: number
 		end
 		box(r, "Moss", cx + s * (w / 2 - 0.2), y + 3, cz + s * d / 5, 0.3, 4, d / 3, MOSS, Enum.Material.Grass)
 	end
-	for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
-		cobweb(r, cx + c[1] * (w / 2 - 2), y + H - 3, cz + c[2] * (d / 2 - 2), c[1] * c[2] * math.rad(45))
+	if THEME ~= "fire" then
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			cobweb(r, cx + c[1] * (w / 2 - 2), y + H - 3, cz + c[2] * (d / 2 - 2), c[1] * c[2] * math.rad(45))
+		end
 	end
 	bonePile(r, cx - w / 3, y, cz + d / 3, index)
 	bonePile(r, cx + w / 3, y, cz - d / 4, index + 5)
@@ -333,6 +375,62 @@ local function room(f: Instance, index: number, plan: any, cx: number, y: number
 				end
 			end
 		end
+	end
+	if plan.lavaPools then
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			lava(r, cx + c[1] * w / 3.2, y, cz + c[2] * d / 3.4, math.min(14, w / 5), math.min(12, d / 5))
+		end
+	end
+	if plan.lavaRiver then
+		-- a channel of lava right across the room; cross on the two stone bridges
+		lava(r, cx, y, cz, w - 1, 10)
+		for _, s in { -1, 1 } do
+			local bx = cx + s * w / 4
+			box(r, "Bridge", bx, y + 0.3, cz, 10, 1, 14, STONE, Enum.Material.Basalt)
+			for _, e in { -1, 1 } do
+				box(r, "BridgeRail", bx + e * 4.6, y + 1.3, cz, 0.8, 1.6, 14, DARK, Enum.Material.Basalt)
+			end
+		end
+	end
+	if plan.obsidian then
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			local px, pz = cx + c[1] * w / 4, cz + c[2] * d / 4
+			local pillar = part(r, "Obsidian", Vector3.new(5, H, 5), CFrame.new(px, y + H / 2, pz) * CFrame.Angles(0, math.rad(45), 0), rgb(30, 22, 36), Enum.Material.Glass)
+			pillar.Reflectance = 0.2
+			local vein = part(r, "LavaVein", Vector3.new(0.4, H - 2, 0.6), CFrame.new(px, y + H / 2, pz) * CFrame.Angles(0, math.rad(45), 0) * CFrame.new(0, 0, -2.55), LAVA, Enum.Material.Neon)
+			vein.CanCollide = false
+		end
+	end
+	if plan.forge then
+		for _, s in { -1, 1 } do
+			for k = -1, 1 do
+				local fx, fz = cx + s * (w / 2 - 7), cz + k * (d / 3.4)
+				box(r, "Forge", fx, y, fz, 7, 4, 6, DARK, Enum.Material.Basalt)
+				local coals = box(r, "ForgeCoals", fx, y + 4, fz, 5, 0.6, 4, LAVA, Enum.Material.Neon)
+				light(coals, 22, 1.4, LAVA)
+				local fire = Instance.new("Fire")
+				fire.Size = 5
+				fire.Heat = 9
+				fire.Parent = coals
+				box(r, "Anvil", fx - s * 7, y, fz, 2, 2.6, 4, rgb(50, 50, 55), Enum.Material.Metal)
+			end
+		end
+	end
+	if plan.calderaRing then
+		-- a broken ring of lava round the dais, with four ways through
+		local ringR = 34
+		local segs = 16
+		for k = 0, segs - 1 do
+			if k % 4 ~= 0 then
+				local a = (k + 0.5) / segs * math.pi * 2
+				local len = 2 * math.pi * ringR / segs + 1
+				local p = Vector3.new(cx + math.cos(a) * ringR, y, cz + d / 6 + math.sin(a) * ringR)
+				local slab = lava(r, p.X, y, p.Z, len, 8)
+				slab.CFrame = CFrame.lookAt(slab.CFrame.Position, slab.CFrame.Position + Vector3.new(-math.sin(a), 0, math.cos(a)))
+			end
+		end
+		lava(r, cx - w / 2 + 14, y, cz - d / 2 + 14, 16, 16)
+		lava(r, cx + w / 2 - 14, y, cz - d / 2 + 14, 16, 16)
 	end
 	if plan.niches then
 		for _, s in { -1, 1 } do

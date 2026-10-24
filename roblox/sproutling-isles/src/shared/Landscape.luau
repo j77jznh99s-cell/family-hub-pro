@@ -17,7 +17,7 @@
 local Landscape = {}
 
 -- Bump when the terrain shape changes, so a terrain baked into the place in Studio is rebuilt.
-Landscape.Version = 3
+Landscape.Version = 4
 
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
@@ -62,6 +62,8 @@ Landscape.SiteList = {
 	{ name = "minecamp", x = -260, z = -960, r = 30 },
 	{ name = "hermitage", x = 720, z = -420, r = 28 },
 	{ name = "observatory", x = 280, z = -860, r = 30 },
+	-- the volcanic peak above the Emberdeep Caldera (third dungeon)
+	{ name = "emberpeak", x = -850, z = 1520, r = 36 },
 } :: { { name: string, x: number, z: number, r: number, h: number? } }
 
 export type Site = { name: string, x: number, z: number, r: number, h: number }
@@ -115,6 +117,7 @@ Landscape.Roads = {
 	-- mountain tracks up to the quest camps
 	{ name = "Miners' Track", width = 7, material = "Ground", points = { { -465, -420 }, { -420, -560 }, { -380, -700 }, { -320, -850 }, { -275, -935 } } },
 	{ name = "Observatory Trail", width = 7, material = "Ground", points = { { 362, -240 }, { 330, -420 }, { 250, -600 }, { 300, -760 }, { 285, -835 } } },
+	{ name = "Ember Trail", width = 7, material = "Ground", points = { { -470, 990 }, { -600, 1150 }, { -720, 1330 }, { -800, 1460 }, { -830, 1500 } } },
 	{ name = "Hermit's Climb", width = 6, material = "Ground", points = { { 408, -288 }, { 520, -340 }, { 620, -400 }, { 700, -420 } } },
 } :: { RoadDef }
 

@@ -44,6 +44,7 @@ local CrateService = require(script.CrateService)
 local ArenaService = require(script.ArenaService)
 local MapService = require(script.MapService)
 local WaystoneService = require(script.WaystoneService)
+local HazardService = require(script.HazardService)
 local Levels = require(Shared.Levels)
 local Combat = require(Shared.Combat)
 
@@ -81,6 +82,7 @@ CrateService.init() -- reward crates
 ArenaService.init(map) -- wave trials in the colosseum
 MapService.init(map) -- points of interest for the world map (M)
 WaystoneService.init(map) -- fast-travel waystones (T)
+HazardService.init(map) -- lava and other floor hazards
 EnemyService.onKill(function(player, kindId)
 	local kind = Combat.Enemies[kindId]
 	if kind then

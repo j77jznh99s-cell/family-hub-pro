@@ -60,6 +60,7 @@ C.tome_small = { id = "tome_small", kind = "consumable", name = "Traveller's Jou
 C.tome_large = { id = "tome_large", kind = "consumable", name = "Tome of Heroes", xp = 1500, price = 1600, level = 8 }
 C.manual = { id = "manual", kind = "consumable", name = "Sparring Manual", xp = 500, price = 550 }
 C.cloak = { id = "cloak", kind = "consumable", name = "Windrunner Cloak (+8 speed, 5 min)", buff = { speed = 8 }, duration = 300, price = 120 }
+C.fireward = { id = "fireward", kind = "consumable", name = "Fireward Tonic (halves burning, 5 min)", buff = { fireres = 0.5 }, duration = 300, price = 150 }
 C.warpaint = { id = "warpaint", kind = "consumable", name = "War Paint (+20% damage, 5 min)", buff = { damage = 1.2 }, duration = 300, price = 180 }
 
 local function vehicles(shop: string): { Item }
@@ -86,7 +87,7 @@ Shops.Catalog = {
 	fletcher = { name = "Fletcher", greeting = "Straight shafts, true aim.", items = weapons("bow", "Hunter's Bow") },
 	enchanter = { name = "Enchanter", greeting = "Staves humming with power.", items = weapons("staff", "Arcane Staff") },
 	armorer = { name = "Armorer", greeting = "Better to wear it than need it.", items = Shops.Armor },
-	alchemist = { name = "Alchemist", greeting = "Mind the fumes.", items = { C.potion_health, C.potion_stamina } },
+	alchemist = { name = "Alchemist", greeting = "Mind the fumes.", items = { C.potion_health, C.potion_stamina, C.fireward } },
 	tavern = { name = "The Gilded Tankard", greeting = "Sit, eat, rest your feet. Use the kitchen if you like.", items = { C.meal_stew, C.meal_pie }, cooking = true },
 	cook = { name = "Cook & Larder", greeting = "Bring me monster bits and herbs and we'll make a feast.", items = { C.meal_stew, C.meal_pie }, cooking = true },
 	inn = { name = "The Cloud's Rest Inn", greeting = "Welcome, sky-traveller. The stove's yours.", items = { C.meal_stew, C.potion_stamina }, cooking = true },

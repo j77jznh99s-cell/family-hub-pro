@@ -19,6 +19,7 @@ export type Waystone = {
 	find: { any }?,
 	at: { number }?,
 	isle: string?,
+	onSite: boolean?, -- may stand on its site's levelled plateau (steep mountain sites)
 }
 
 Waystones.List = {
@@ -41,6 +42,7 @@ Waystones.List = {
 	{ id = "minecamp", name = "Deepdelve Mine Camp", region = "The Mountains", site = "minecamp", dx = 24, dz = -20 },
 	{ id = "observatory", name = "Pell's Observatory", region = "The Mountains", site = "observatory", dx = -24, dz = 20 },
 	{ id = "hermitage", name = "Oswin's Hermitage", region = "The Mountains", site = "hermitage", dx = -22, dz = 18 },
+	{ id = "emberpeak", name = "Ember Peak", region = "The Mountains", site = "emberpeak", dx = -30, dz = 20, onSite = true },
 	{ id = "windward", name = "Windward Isle", region = "The Sky Isles", isle = "Windward Isle" },
 	{ id = "cloudkeeper", name = "Cloudkeeper's Rest", region = "The Sky Isles", isle = "Cloudkeeper's Rest" },
 	{ id = "starfall", name = "Starfall Isle", region = "The Sky Isles", isle = "Starfall Isle" },

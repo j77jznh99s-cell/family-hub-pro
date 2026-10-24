@@ -109,8 +109,66 @@ end
 ----------------------------------------------------------------------------------------------
 -- damage
 
--- Called by enemies. Respects the dodge's invulnerability window.
-function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3)
+-- Burning (Combat.Elements.fire): damage every half second until it runs out, shown as flames on
+-- the character and a "Burning" attribute (end time) for the HUD. A new burn refreshes the
+-- timer. The Fireward Tonic's fireres buff shortens and weakens it.
+local burning: { [Player]: { ends: number, dps: number, fire: Fire? } } = {}
+
+function CombatService.ignite(player: Player, element: string?)
+	local info = element and Combat.Elements[element]
+	local root = rootOf(player)
+	if not info or not root then
+		return
+	end
+	local resist = math.clamp(BuffService.get(player, "fireres"), 0, 0.9)
+	local ends = now() + info.duration * (1 - resist)
+	local b = burning[player]
+	if b then
+		b.ends = math.max(b.ends, ends)
+	else
+		local fire = Instance.new("Fire")
+		fire.Size = 4
+		fire.Heat = 8
+		fire.Color = Color3.fromRGB(255, 120, 40)
+		fire.SecondaryColor = Color3.fromRGB(255, 220, 90)
+		fire.Parent = root
+		burning[player] = { ends = ends, dps = info.dps * (1 - resist), fire = fire }
+	end
+	player:SetAttribute("Burning", burning[player].ends)
+end
+
+local function extinguish(player: Player)
+	local b = burning[player]
+	if b and b.fire then
+		b.fire:Destroy()
+	end
+	burning[player] = nil
+	player:SetAttribute("Burning", nil)
+end
+
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		local t = now()
+		for player, b in burning do
+			local _, humanoid = rootOf(player)
+			if not player.Parent or not humanoid or humanoid.Health <= 0 or t >= b.ends then
+				extinguish(player)
+			else
+				local tick = math.max(1, math.floor(b.dps * 0.5 + 0.5))
+				humanoid:TakeDamage(tick)
+				local root = rootOf(player)
+				if root then
+					CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = tick, player = true, element = "fire" })
+				end
+			end
+		end
+	end
+end)
+
+-- Called by enemies. Respects the dodge's invulnerability window. `element` adds its effect
+-- (fire: burning).
+function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3, element: string?)
 	local root, humanoid = rootOf(player)
 	local f = fighters[player]
 	if not root or not humanoid or not f then
@@ -127,6 +185,9 @@ function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3)
 	local dir = if push.Magnitude > 0.01 then push.Unit else Vector3.zero
 	FxRemote:FireClient(player, "knock", { vector = dir * 35 + Vector3.new(0, 18, 0) })
 	CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = amount, player = true })
+	if element then
+		CombatService.ignite(player, element)
+	end
 end
 
 local function hitEnemy(player: Player, enemy: any, damage: number, knockDir: Vector3, knockback: number)
