@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (evening): building polish
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner: "polish the build models, make them more sharp and fun looking without having them look so squarey and boxy." Reworked houses/shops/stalls (flared eaves, round ridges + finials, round chimneys, arched doors/windows, scalloped awnings). Checked with a new 3D z-buffer preview renderer (scratchpad r3d.py). 39.7k parts. Not Studio-tested.
+
 ## 2026-10-24 (later): mountain village, beach village, water dungeon
 **Agents used:** none · `cd0e4db` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner asked for a mountain village outside a cave with its own quests, a route over the mountain to a beach village, a new water cave from there, and each cave with its own element enemies and bosses. Built Highcrag, Saltwind Pass, Saltmere, The Tidewrack Grotto (Thalvorn), and elements for all four dungeons (shadow/earth/fire/water). Terrain Version 5. Not Studio-tested.
