@@ -246,10 +246,30 @@ local function gableFront(parent: Instance, rel: (number, number, number) -> CFr
 	local attic = math.sqrt(2) * rise
 	part(parent, "Attic", Vector3.new(attic, attic, d - 0.2), rel(0, y, 0) * CFrame.Angles(0, 0, math.rad(45)), wall, Enum.Material.Plaster)
 	local len = math.sqrt(2) * rise + 1.6
+	local flare = math.rad(22)
 	for _, side in { 1, -1 } do
 		part(parent, "Roof", Vector3.new(len, 0.8, d + 1.6), rel(side * w / 4, y + rise / 2 + 0.35, 0) * CFrame.Angles(0, 0, -side * math.rad(45)), roof, Enum.Material.Slate)
+		-- the eave kicks out at a shallower angle where the slab ends (a bell-cast curve)
+		local eu, ey = side * (w / 2 + 0.55), y - 0.2
+		part(parent, "Eave", Vector3.new(3, 0.6, d + 1.8), rel(eu + side * math.cos(flare) * 1.3, ey - math.sin(flare) * 1.3, 0) * CFrame.Angles(0, 0, -side * flare), roof, Enum.Material.Slate)
 	end
-	part(parent, "Ridge", Vector3.new(1, 1, d + 2), rel(0, y + rise + 0.4, 0), roof, Enum.Material.Wood)
+	-- a round ridge with a ball finial over the gable
+	local dark = Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75)
+	tube(parent, "Ridge", d + 2, 1.2, rel(0, y + rise + 0.4, 0), dark, Enum.Material.Wood)
+	local tip = rel(0, y + rise + 0.6, d / 2 + 1.1).Position
+	ball(parent, "Finial", 1.5, tip.X, tip.Y, tip.Z, dark, Enum.Material.Wood)
+end
+
+-- A round brick chimney pot with a wider cap, standing at rel(u, y, v) (y = its middle).
+local function chimney(parent: Instance, rel: (number, number, number) -> CFrame, u: number, y: number, v: number, height: number)
+	local p = rel(u, y, v).Position
+	cylinder(parent, "Chimney", height, 2.2, p.X, p.Y, p.Z, rgb(150, 100, 85), Enum.Material.Brick)
+	cylinder(parent, "ChimneyCap", 0.8, 3, p.X, p.Y + height / 2 + 0.2, p.Z, rgb(110, 75, 62), Enum.Material.Brick)
+end
+
+-- A round arch on top of a door or window: a disc facing out of the front wall at rel(u, y, v).
+local function arch(parent: Instance, rel: (number, number, number) -> CFrame, d: number, u: number, y: number, v: number, color: Color3, material: any?)
+	tube(parent, "Arch", 0.3, d, rel(u, y, v), color, material)
 end
 
 -- Steep gable roof whose ridge runs along u (gables on the sides), for long halls.
@@ -258,9 +278,13 @@ local function gableSide(parent: Instance, rel: (number, number, number) -> CFra
 	local attic = math.sqrt(2) * rise
 	part(parent, "Attic", Vector3.new(w - 0.2, attic, attic), rel(0, y, 0) * CFrame.Angles(math.rad(45), 0, 0), wall, wallMaterial or Enum.Material.Plaster)
 	local len = math.sqrt(2) * rise + 1.6
+	local flare = math.rad(22)
 	for _, side in { 1, -1 } do
 		part(parent, "Roof", Vector3.new(w + 1.6, 0.9, len), rel(0, y + rise / 2 + 0.35, side * d / 4) * CFrame.Angles(-side * math.rad(45), 0, 0), roof, Enum.Material.Slate)
+		local ev, ey = side * (d / 2 + 0.55), y - 0.2
+		part(parent, "Eave", Vector3.new(w + 1.8, 0.7, 3), rel(0, ey - math.sin(flare) * 1.3, ev + side * math.cos(flare) * 1.3) * CFrame.Angles(-side * flare, 0, 0), roof, Enum.Material.Slate)
 	end
+	tube(parent, "Ridge", w + 2, 1.3, rel(0, y + rise + 0.45, 0) * CFrame.Angles(0, math.rad(90), 0), Color3.new(roof.R * 0.75, roof.G * 0.75, roof.B * 0.75), Enum.Material.Wood)
 end
 
 ----------------------------------------------------------------------------------------------
@@ -321,11 +345,18 @@ local function marketStall(parent: Instance, x: number, z: number, facing: Vecto
 	part(parent, "StallCounter", Vector3.new(8, 3.2, 3), rel(0, PAVE + 1.6, 0), rgb(150, 105, 68), Enum.Material.WoodPlanks)
 	for _, u in { -3.8, 3.8 } do
 		for _, v in { -2.5, 1.4 } do
-			part(parent, "StallPost", Vector3.new(0.5, 8, 0.5), rel(u, PAVE + 4, v), TIMBER, Enum.Material.Wood)
+			local post = rel(u, PAVE + 4, v).Position
+			cylinder(parent, "StallPost", 8, 0.6, post.X, post.Y, post.Z, TIMBER, Enum.Material.Wood)
 		end
 	end
+	-- a striped canopy with a scalloped front edge
 	for i = 1, 4 do
-		part(parent, "StallCanopy", Vector3.new(2.2, 0.3, 5.4), rel(-3.3 + (i - 1) * 2.2, PAVE + 8.2, -0.5) * CFrame.Angles(math.rad(-12), 0, 0), if i % 2 == 0 then WHITE else color, Enum.Material.Fabric)
+		local u = -3.3 + (i - 1) * 2.2
+		local stripe = if i % 2 == 0 then WHITE else color
+		part(parent, "StallCanopy", Vector3.new(2.2, 0.3, 5.4), rel(u, PAVE + 8.2, -0.5) * CFrame.Angles(math.rad(-12), 0, 0), stripe, Enum.Material.Fabric)
+		for _, k in { -0.55, 0.55 } do
+			deco(tube(parent, "Scallop", 0.25, 1.1, rel(u + k, PAVE + 7.5, 2.2), stripe, Enum.Material.Fabric))
+		end
 	end
 	local goods = { rgb(230, 60, 60), rgb(250, 200, 60), rgb(120, 200, 80), rgb(240, 140, 50), rgb(170, 120, 220) }
 	for i = 1, 5 do
@@ -531,8 +562,9 @@ local function shop(parent: Instance, x: number, z: number, w: number, facing: V
 	-- shop window, door and shutters
 	part(m, "ShopWindow", Vector3.new(w * 0.45, 4.2, 0.3), rel(-w * 0.18, PAVE + 4, d / 2 + 0.1), LANTERN, Enum.Material.Glass)
 	part(m, "WindowFrame", Vector3.new(w * 0.45 + 1, 0.6, 0.5), rel(-w * 0.18, PAVE + 1.8, d / 2 + 0.2), TIMBER, Enum.Material.Wood)
-	part(m, "Door", Vector3.new(3.6, 6.4, 0.4), rel(w * 0.28, PAVE + 3.2, d / 2 + 0.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
-	part(m, "DoorArch", Vector3.new(4.4, 0.8, 0.5), rel(w * 0.28, PAVE + 6.6, d / 2 + 0.25), DARKSTONE, Enum.Material.Cobblestone)
+	part(m, "Door", Vector3.new(3.6, 5.4, 0.4), rel(w * 0.28, PAVE + 2.7, d / 2 + 0.2), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	arch(m, rel, 4.6, w * 0.28, PAVE + 5.4, d / 2 + 0.1, DARKSTONE, Enum.Material.Cobblestone)
+	arch(m, rel, 3.6, w * 0.28, PAVE + 5.4, d / 2 + 0.25, rgb(110, 70, 45), Enum.Material.WoodPlanks)
 	for _, u in { -w / 4, w / 4 } do
 		part(m, "UpperWindow", Vector3.new(2.6, 3, 0.3), rel(u, PAVE + 12.4, d / 2 + 1.75), rgb(80, 105, 130), Enum.Material.Glass)
 		part(m, "WindowBox", Vector3.new(3.2, 0.8, 1), rel(u, PAVE + 10.6, d / 2 + 2.1), TIMBER, Enum.Material.WoodPlanks)
@@ -542,7 +574,7 @@ local function shop(parent: Instance, x: number, z: number, w: number, facing: V
 			bloom.Shape = Enum.PartType.Ball
 		end
 	end
-	part(m, "Chimney", Vector3.new(2, 8, 2), rel(w / 3, PAVE + 20, -d / 4), rgb(150, 100, 85), Enum.Material.Brick)
+	chimney(m, rel, w / 3, PAVE + 20, -d / 4, 8)
 	-- hanging sign on an iron bracket, readable from both directions along the street
 	local bracket = part(m, "SignBracket", Vector3.new(0.3, 0.3, 4), rel(-w / 2 + 1, PAVE + 9.4, d / 2 + 3.6), IRON, Enum.Material.Metal)
 	bracket.Name = "SignBracket"
@@ -578,16 +610,21 @@ local function townhouse(parent: Instance, x: number, z: number, w: number, d: n
 	local wall = PLASTER[(seed * 3) % #PLASTER + 1]
 	local roof = ROOFS[seed % #ROOFS + 1]
 	part(m, "Ground", Vector3.new(w, 7, d), rel(0, PAVE + 3.5, 0), STONE, Enum.Material.Cobblestone)
-	part(m, "Door", Vector3.new(3, 5.6, 0.3), rel(-w / 4, PAVE + 2.8, d / 2 + 0.15), rgb(105, 65, 42), Enum.Material.WoodPlanks)
-	part(m, "Window", Vector3.new(3, 2.6, 0.3), rel(w / 4, PAVE + 3.8, d / 2 + 0.15), rgb(80, 105, 130), Enum.Material.Glass)
+	part(m, "Door", Vector3.new(3, 4.6, 0.3), rel(-w / 4, PAVE + 2.3, d / 2 + 0.15), rgb(105, 65, 42), Enum.Material.WoodPlanks)
+	arch(m, rel, 3, -w / 4, PAVE + 4.6, d / 2 + 0.15, rgb(105, 65, 42), Enum.Material.WoodPlanks)
+	part(m, "Window", Vector3.new(3, 2, 0.3), rel(w / 4, PAVE + 3.5, d / 2 + 0.15), rgb(80, 105, 130), Enum.Material.Glass)
+	arch(m, rel, 3, w / 4, PAVE + 4.5, d / 2 + 0.15, rgb(80, 105, 130), Enum.Material.Glass)
 	local y = PAVE + 7
 	local jut = 0
 	for f = 1, floors - 1 do
 		jut += 0.8
 		part(m, "Floor", Vector3.new(w + jut * 0.6, 7, d + jut), rel(0, y + 3.5, jut / 2), wall, Enum.Material.Plaster)
 		part(m, "Beam", Vector3.new(w + jut * 0.6 + 0.4, 0.6, 0.4), rel(0, y + 0.3, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
-		for _, u in { -w / 2, 0, w / 2 } do
-			part(m, "Post", Vector3.new(0.6, 7, 0.35), rel(u, y + 3.5, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
+		part(m, "Post", Vector3.new(0.6, 7, 0.35), rel(0, y + 3.5, d / 2 + jut + 0.1), TIMBER, Enum.Material.Wood)
+		-- round corner posts
+		for _, u in { -1, 1 } do
+			local post = rel(u * (w + jut * 0.6) / 2, y + 3.5, d / 2 + jut).Position
+			cylinder(m, "Post", 7, 0.9, post.X, post.Y, post.Z, TIMBER, Enum.Material.Wood)
 		end
 		for _, u in { -w / 4, w / 4 } do
 			part(m, "Window", Vector3.new(2.4, 2.8, 0.3), rel(u, y + 3.8, d / 2 + jut + 0.05), if (seed + f + u) % 3 == 0 then LANTERN else rgb(80, 105, 130), Enum.Material.Glass)
@@ -595,7 +632,7 @@ local function townhouse(parent: Instance, x: number, z: number, w: number, d: n
 		y += 7
 	end
 	gableFront(m, rel, w + jut * 0.6, d + jut, y, wall, roof)
-	part(m, "Chimney", Vector3.new(1.8, 6, 1.8), rel(w / 4, y + w / 3, -d / 4), rgb(150, 100, 85), Enum.Material.Brick)
+	chimney(m, rel, w / 4, y + w / 3, -d / 4, 6)
 end
 
 local function cottageHome(parent: Instance, x: number, z: number, facing: Vector3, seed: number)
@@ -610,11 +647,13 @@ local function cottageHome(parent: Instance, x: number, z: number, facing: Vecto
 	end
 	part(m, "Timber", Vector3.new(W, 0.7, 0.4), rel(0, PAVE + H - 0.3, D / 2 + 0.1), TIMBER, Enum.Material.Wood)
 	gableSide(m, rel, W, D, PAVE + H, wall, roof)
-	part(m, "Door", Vector3.new(3.2, 6, 0.3), rel(0, PAVE + 3, D / 2 + 0.15), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	part(m, "Door", Vector3.new(3.2, 5, 0.3), rel(0, PAVE + 2.5, D / 2 + 0.15), rgb(110, 70, 45), Enum.Material.WoodPlanks)
+	arch(m, rel, 3.2, 0, PAVE + 5, D / 2 + 0.15, rgb(110, 70, 45), Enum.Material.WoodPlanks)
 	for _, u in { -5, 5 } do
-		part(m, "Window", Vector3.new(2.6, 2.6, 0.3), rel(u, PAVE + 5, D / 2 + 0.15), LANTERN, Enum.Material.Glass)
+		part(m, "Window", Vector3.new(2.6, 2.2, 0.3), rel(u, PAVE + 4.8, D / 2 + 0.15), LANTERN, Enum.Material.Glass)
+		arch(m, rel, 2.6, u, PAVE + 5.9, D / 2 + 0.15, LANTERN, Enum.Material.Glass)
 	end
-	part(m, "Chimney", Vector3.new(2, 7, 2), rel(W / 3, PAVE + H + 4, -D / 4), rgb(150, 100, 85), Enum.Material.Brick)
+	chimney(m, rel, W / 3, PAVE + H + 4, -D / 4, 7)
 	-- front garden with a low stone wall and herb beds
 	part(m, "Garden", Vector3.new(W + 2, 0.2, 8), rel(0, PAVE + 0.1, D / 2 + 4.5), rgb(110, 180, 85), Enum.Material.Grass)
 	for _, s in { -1, 1 } do

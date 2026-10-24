@@ -226,6 +226,15 @@ the client code `src/client/Combat.luau`.
 - New materials: Glittering Geode, Sea Pearl, Tide Coral, Kraken Ink.
 - `Landscape.Version` is now 5: re-bake the terrain in Studio.
 
+## Building polish (less boxy)
+
+- Houses everywhere (village cottages, city townhouses, cottages and shops) now have bell-cast
+  roofs that flare out at the eaves, round ridges with ball finials, round chimney pots with
+  caps, arched doors and arched windows, round timber corner posts and a round gable window.
+- Market stalls and village stalls have round posts and scalloped striped awnings.
+- To stay phone-safe (about 39.7k parts), wildflower patches use 2 bigger blooms instead of 4
+  and there are a few fewer boulders on steep slopes.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you
