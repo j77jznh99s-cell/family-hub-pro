@@ -1,6 +1,6 @@
 -- Dungeons: teleports, room-by-room clearing, doors, chests and the boss, for every dungeon
--- DungeonBuilder made (The Hollow Crypt under the castle, The Deepdelve Mines under Gorrim's
--- camp). Each runs on its own:
+-- DungeonBuilder made (The Hollow Crypt, The Deepdelve Mines, The Emberdeep Caldera and The
+-- Tidewrack Grotto). Each runs on its own:
 --
 -- One run per dungeon per server, shared by everyone inside. The first player through the
 -- entrance portal wakes it: every room's monsters spawn and all doors close except the first.
@@ -331,7 +331,7 @@ end
 
 function DungeonService.init(map: Instance)
 	local found = false
-	for _, def in { { "Dungeon", "Crypt", "CryptPortal" }, { "Mines", "Depths", "MinePortal" }, { "Emberdeep", "Caldera", "EmberPortal" } } do
+	for _, def in { { "Dungeon", "Crypt", "CryptPortal" }, { "Mines", "Depths", "MinePortal" }, { "Emberdeep", "Caldera", "EmberPortal" }, { "Tidewrack", "Grotto", "TidePortal" } } do
 		local root = map:FindFirstChild(def[1])
 		if root then
 			found = true

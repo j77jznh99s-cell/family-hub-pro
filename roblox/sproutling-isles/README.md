@@ -188,6 +188,44 @@ the client code `src/client/Combat.luau`.
 - New materials: Ember Core, Obsidian, Wyrmscale.
 - `Landscape.Version` is now 4: re-bake the terrain in Studio.
 
+## Highcrag, Saltmere and the fourth dungeon: The Tidewrack Grotto (water)
+
+- **Highcrag**, a mountain village on a grassy terrace just below Ember Peak (and the Emberdeep
+  Caldera's entrance): ten tall houses, a beacon plaza with prayer flags, a bell tower, the
+  Highcrag Outfitter and the Climbers' Lodge (cooking). Waystone and airship stop.
+  - Elder Hesk: "Mites in the Terraces" (8 Rockmites), then "Snowbloom for the Beacon".
+  - Old Tobbin the Goatherd: "Goats on the Cliffs", then "The Grey Pack" (wolves).
+  - Yara Swiftwind the Mountain Guide: "The Three Lookouts", then "Over Saltwind Pass" (carry her
+    letter to Saltmere).
+- **Saltwind Pass**: a switchback trail out of Highcrag, through a notch at the summit (cairn and
+  prayer flags; one of Yara's lookouts) and down to the sea.
+- **Saltmere**, a fishing village on the beach: ten cottages, parasols and palms, a long pier with
+  a lighthouse and moored boats, the Tide Market and The Salty Gull inn (cooking). Open beaches
+  either side. Waystone, airship and ship stop.
+  - Harbourmaster Quill: "Claws on the Sand" (8 Reefclaw Crabs on the beach), then "Wreck Timber".
+  - Finnick the Pearl Diver: "Pearls of the Shallows", then "Sting of the Tide" (Drift Jellies).
+  - Coralie the Tidesinger: "Song of the Abyss" (after Quill's and Finnick's first quests): slay
+    Thalvorn for 1,500 Dew, a top weapon and a Golden Crate.
+- **The Tidewrack Grotto** (level 25+), a sea cave at the water's edge in Saltmere: eight rooms
+  (Sea Cave Mouth, Coral Gallery, The Drowned Wreck, Jellyfish Hollow, Whirlpool Steps, Pearl
+  Vault, Sunken Cathedral, Thalvorn's Abyss). Monsters: Reefclaw Crabs, Drift Jellies, Deepscale
+  Lurkers; boss **Thalvorn, the Tide Kraken** (5,200 HP). Whirlpools on the floor soak you.
+- **Every dungeon now has its own element and its own monsters:**
+
+  | Dungeon | Element | Effect on you | Monsters and boss |
+  | --- | --- | --- | --- |
+  | The Hollow Crypt | Shadow | Cursed: 2 damage a second for 4s | Skeletons, Gloom Bats, the Bone Warden |
+  | The Deepdelve Mines | Earth | Shattered: you take 30% more damage for 4s | Crag Golems, **Rockmites**, **Shardback Beetles**, the Crag King |
+  | The Emberdeep Caldera | Fire | Burning: 6 damage a second for 4s | Ember Imps, Magma Hounds, Cinder Wraiths, Pyrrhax |
+  | The Tidewrack Grotto | Water | Soaked: 40% slower and 2 damage a second for 4s | Reefclaw Crabs, Drift Jellies, Deepscale Lurkers, Thalvorn |
+
+  Each effect shows as a coloured warning above your bars, coloured damage numbers and coloured
+  attack telegraphs (water bursts as geysers, earth as rock spikes, shadow as a dark cloud). The
+  Mines no longer borrow the Crypt's bats and skeletons.
+- **Tidebalm** (Alchemist and Tide Market, 180 Dew) halves soaking, like Fireward Tonic for fire.
+- New materials: Glittering Geode, Sea Pearl, Tide Coral, Kraken Ink.
+- `Landscape.Version` is now 5: re-bake the terrain in Studio.
+
 ## New players
 
 - **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you

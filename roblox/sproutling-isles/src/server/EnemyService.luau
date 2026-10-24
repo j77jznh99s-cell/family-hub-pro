@@ -290,6 +290,129 @@ local function build(kind: Combat.EnemyType, at: Vector3): (Model, BasePart, num
 		flame.Heat = 12
 		flame.Parent = head
 		radius = 4 * s
+	elseif id == "rockmite" then
+		-- a low, quick burrower with a shell of grey stone and glowing quartz spines
+		root.Size = Vector3.new(2.4, 1.4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 2, 0))
+		humanoid.HipHeight = 1.3
+		local stone = Color3.fromRGB(120, 112, 104)
+		local quartz = Color3.fromRGB(200, 170, 255)
+		piece(m, root, "Shell", Vector3.new(2.6, 1.4, 3.2), CFrame.new(), stone, Enum.Material.Slate)
+		piece(m, root, "Head", Vector3.new(1.6, 1, 1.2), CFrame.new(0, -0.1, -2), stone, Enum.Material.Slate)
+		for k = -1, 1 do
+			piece(m, root, "Spine", Vector3.new(0.4, 1.2, 0.4), CFrame.new(k * 0.7, 1.1, k * 0.5) * CFrame.Angles(math.rad(-20), 0, k * math.rad(15)), quartz, Enum.Material.Neon)
+		end
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.3, 0.3, 0.2), CFrame.new(s * 0.45, 0.1, -2.62), Color3.fromRGB(255, 200, 90), Enum.Material.Neon)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.3, 1.2, 0.3), CFrame.new(s * 1.4, -0.9, k * 1) * CFrame.Angles(0, 0, s * math.rad(30)), stone, Enum.Material.Slate)
+			end
+		end
+		radius = 2
+	elseif id == "shardback" then
+		-- a big beetle with a back of jagged crystal plates
+		root.Size = Vector3.new(3.4, 2.4, 4.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3, 0))
+		humanoid.HipHeight = 1.8
+		local shell = Color3.fromRGB(90, 80, 72)
+		local crystal = Color3.fromRGB(150, 230, 210)
+		piece(m, root, "Body", Vector3.new(3.4, 2.2, 4.6), CFrame.new(), shell, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.2, 1.6, 1.6), CFrame.new(0, -0.2, -3), shell, Enum.Material.Basalt)
+		for k = 0, 3 do
+			piece(m, root, "Plate", Vector3.new(2.6 - k * 0.3, 1.6, 0.5), CFrame.new(0, 1.4, -1.4 + k * 1) * CFrame.Angles(math.rad(-25), 0, 0), crystal, Enum.Material.Glass).Transparency = 0.2
+		end
+		for _, s in { -1, 1 } do
+			piece(m, root, "Mandible", Vector3.new(0.4, 0.4, 1.4), CFrame.new(s * 0.7, -0.4, -4.2) * CFrame.Angles(0, s * math.rad(-25), 0), Color3.fromRGB(60, 52, 48), Enum.Material.Basalt)
+			piece(m, root, "Eye", Vector3.new(0.35, 0.35, 0.2), CFrame.new(s * 0.6, 0.1, -3.82), Color3.fromRGB(150, 230, 210), Enum.Material.Neon)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.4, 1.8, 0.4), CFrame.new(s * 2, -1.2, k * 1.4) * CFrame.Angles(0, 0, s * math.rad(35)), shell, Enum.Material.Basalt)
+			end
+		end
+		radius = 2.6
+	elseif id == "reefcrab" then
+		-- a broad crab in a coral-crusted shell, one claw bigger than the other
+		root.Size = Vector3.new(4.4, 2, 3.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3, 0))
+		humanoid.HipHeight = 2
+		local shell = Color3.fromRGB(215, 90, 60)
+		piece(m, root, "Shell", Vector3.new(4.6, 2, 3.4), CFrame.new(), shell, Enum.Material.SmoothPlastic)
+		piece(m, root, "Coral", Vector3.new(1.2, 1.4, 1.2), CFrame.new(-0.9, 1.5, 0.4), Color3.fromRGB(255, 140, 170), Enum.Material.Pebble)
+		piece(m, root, "Coral", Vector3.new(0.8, 1, 0.8), CFrame.new(1, 1.3, -0.2), Color3.fromRGB(120, 220, 200), Enum.Material.Pebble)
+		for _, s in { -1, 1 } do
+			local big = if s == 1 then 1.5 else 1
+			piece(m, root, "Arm", Vector3.new(0.5, 0.5, 1.6), CFrame.new(s * 2.2, 0, -1.8), shell)
+			piece(m, root, "Claw", Vector3.new(1.4, 1, 1.8) * big, CFrame.new(s * 2.4, 0.2, -3.2), shell)
+			piece(m, root, "EyeStalk", Vector3.new(0.25, 1, 0.25), CFrame.new(s * 0.6, 1.4, -1.4), shell)
+			piece(m, root, "Eye", Vector3.new(0.4, 0.4, 0.4), CFrame.new(s * 0.6, 2, -1.4), Color3.fromRGB(20, 20, 30), nil, Enum.PartType.Ball)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.35, 1.8, 0.35), CFrame.new(s * 2.5, -1.2, k * 0.9 + 0.4) * CFrame.Angles(0, 0, s * math.rad(40)), shell)
+			end
+		end
+		radius = 3
+	elseif id == "driftjelly" then
+		-- a floating glassy bell trailing glowing ribbons
+		root.Size = Vector3.new(3, 2.4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.6, 0))
+		humanoid.HipHeight = 4.4
+		local bell = piece(m, root, "Bell", Vector3.new(3.6, 3, 3.6), CFrame.new(0, 0.4, 0), Color3.fromRGB(150, 210, 255), Enum.Material.Glass, Enum.PartType.Ball)
+		bell.Transparency = 0.35
+		local core = piece(m, root, "Core", Vector3.new(1.4, 1.4, 1.4), CFrame.new(0, 0.4, 0), Color3.fromRGB(110, 240, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2
+			piece(m, root, "Ribbon", Vector3.new(0.25, 3.4, 0.25), CFrame.new(math.cos(a) * 1.1, -2.2, math.sin(a) * 1.1) * CFrame.Angles(math.sin(a) * 0.3, 0, math.cos(a) * 0.3), Color3.fromRGB(160, 120, 255), Enum.Material.Neon)
+		end
+		local glowLight = Instance.new("PointLight")
+		glowLight.Range = 12
+		glowLight.Color = Color3.fromRGB(110, 240, 255)
+		glowLight.Parent = core
+		radius = 2.4
+	elseif id == "lurker" then
+		-- a hunched fish-folk hunter with fins, gills and a coral spear
+		root.Size = Vector3.new(2, 2.4, 1.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local scale = Color3.fromRGB(50, 110, 120)
+		local belly = Color3.fromRGB(170, 210, 190)
+		piece(m, root, "Body", Vector3.new(2.2, 2.6, 1.6), CFrame.new(), scale, Enum.Material.SmoothPlastic)
+		piece(m, root, "Belly", Vector3.new(1.6, 2, 0.2), CFrame.new(0, -0.1, -0.85), belly)
+		piece(m, root, "Head", Vector3.new(1.8, 1.6, 2), CFrame.new(0, 2, -0.3), scale)
+		piece(m, root, "Fin", Vector3.new(0.2, 1.6, 2.4), CFrame.new(0, 3, 0.2), Color3.fromRGB(80, 200, 190), Enum.Material.Glass)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.4, 0.2), CFrame.new(s * 0.55, 2.2, -1.32), Color3.fromRGB(255, 240, 120), Enum.Material.Neon)
+			piece(m, root, "Gill", Vector3.new(0.2, 0.8, 0.8), CFrame.new(s * 0.95, 1.7, 0), Color3.fromRGB(230, 90, 100))
+			piece(m, root, "Arm", Vector3.new(0.6, 2.4, 0.6), CFrame.new(s * 1.4, -0.2, -0.2), scale)
+			piece(m, root, "Leg", Vector3.new(0.7, 2.2, 0.7), CFrame.new(s * 0.55, -2.3, 0), scale)
+		end
+		piece(m, root, "Spear", Vector3.new(0.3, 0.3, 6), CFrame.new(1.5, -0.6, -1.6), Color3.fromRGB(120, 90, 70), Enum.Material.Wood)
+		piece(m, root, "SpearTip", Vector3.new(0.6, 0.6, 1.2), CFrame.new(1.5, -0.6, -5), Color3.fromRGB(255, 120, 150), Enum.Material.Pebble)
+		radius = 2.2
+	elseif id == "thalvorn" then
+		-- the tide kraken: a great domed head, glowing eyes and a ring of curling tentacles
+		local s = kind.size or 2.5
+		root.Size = Vector3.new(5, 4, 5) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5 * s, 0))
+		humanoid.HipHeight = 3 * s
+		local hide = Color3.fromRGB(70, 60, 130)
+		local spots = Color3.fromRGB(110, 230, 255)
+		piece(m, root, "Mantle", Vector3.new(6, 7, 6) * s, CFrame.new(0, 2.6 * s, 0.6 * s), hide, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		piece(m, root, "Brow", Vector3.new(5.4, 1.2, 1.4) * s, CFrame.new(0, 1.6 * s, -2.4 * s), Color3.fromRGB(55, 46, 105))
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(1.4, 1.4, 0.6) * s, CFrame.new(side * 1.4 * s, 0.8 * s, -2.75 * s), Color3.fromRGB(255, 230, 90), Enum.Material.Neon, Enum.PartType.Ball)
+			piece(m, root, "Spot", Vector3.new(0.8, 0.8, 0.8) * s, CFrame.new(side * 2.4 * s, 3.6 * s, -0.6 * s), spots, Enum.Material.Neon, Enum.PartType.Ball)
+		end
+		piece(m, root, "Crest", Vector3.new(0.6, 2, 3) * s, CFrame.new(0, 6.2 * s, 0.6 * s), spots, Enum.Material.Neon)
+		for k = 0, 7 do
+			local a = k / 8 * math.pi * 2
+			local cx, cz = math.cos(a), math.sin(a)
+			piece(m, root, "Tentacle", Vector3.new(1.2, 1.2, 5) * s, CFrame.new(cx * 2.6 * s, -2.4 * s, cz * 2.6 * s) * CFrame.Angles(0, -a + math.pi / 2, 0) * CFrame.Angles(math.rad(25), 0, 0), hide)
+			piece(m, root, "TentacleTip", Vector3.new(0.8, 0.8, 3) * s, CFrame.new(cx * 5 * s, -4 * s, cz * 5 * s) * CFrame.Angles(0, -a + math.pi / 2, 0) * CFrame.Angles(math.rad(-15), 0, 0), Color3.fromRGB(150, 110, 210))
+		end
+		local light = Instance.new("PointLight")
+		light.Range = 30
+		light.Brightness = 1.4
+		light.Color = spots
+		light.Parent = root
+		radius = 4.4 * s
 	elseif id == "cragking" then
 		-- a towering golem of dark rock, crowned with glowstone
 		local s = kind.size or 2

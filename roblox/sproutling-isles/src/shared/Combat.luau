@@ -87,20 +87,33 @@ export type EnemyType = {
 	element: string?, -- elemental damage on every hit (Combat.Elements)
 }
 
--- Elemental damage: what a hit does on top of its damage. Fire sets you burning (damage every
--- half second for `duration` seconds); the Fireward Tonic's "fireres" buff cuts both.
+-- Elemental damage: what a hit does on top of its damage. Every dungeon has its own element, and
+-- its monsters (and their boss) carry it:
+--   shadow (The Hollow Crypt)        Cursed: damage every half second for `duration` seconds
+--   earth (The Deepdelve Mines)      Shattered: you take `vulnerable` more damage for a while
+--   fire (The Emberdeep Caldera)     Burning: damage every half second
+--   water (The Tidewrack Grotto)     Soaked: a little damage and `slow` off your walk speed
+-- A new hit refreshes the timer. A tonic's `resist` buff (BuffService) cuts duration and effect.
+-- `name` is also the player attribute (its end time, server clock) the HUD reads.
+export type Element = { name: string, dps: number, duration: number, color: { number }, resist: string?, slow: number?, vulnerable: number? }
 Combat.Elements = {
-	fire = { name = "Burning", dps = 6, duration = 4, color = { 255, 120, 40 } },
-}
+	fire = { name = "Burning", dps = 6, duration = 4, color = { 255, 120, 40 }, resist = "fireres" },
+	water = { name = "Soaked", dps = 2, duration = 4, slow = 0.4, color = { 70, 170, 255 }, resist = "waterres" },
+	earth = { name = "Shattered", dps = 0, duration = 4, vulnerable = 0.3, color = { 200, 160, 100 } },
+	shadow = { name = "Cursed", dps = 2, duration = 4, color = { 170, 90, 235 } },
+} :: { [string]: Element }
 
 Combat.Enemies = {
 	slime = { id = "slime", name = "Bog Slime", health = 40, damage = 8, speed = 10, attackRange = 5, attackWindup = 0.6, attackCooldown = 1.6, aggroRange = 35, reward = 4, respawn = 18 },
 	goblin = { id = "goblin", name = "Thornback Goblin", health = 70, damage = 12, speed = 15, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.3, aggroRange = 45, reward = 9, respawn = 25 },
 	wolf = { id = "wolf", name = "Ashen Wolf", health = 55, damage = 10, speed = 21, attackRange = 6, attackWindup = 0.35, attackCooldown = 1.1, aggroRange = 55, reward = 7, respawn = 22 },
-	skeleton = { id = "skeleton", name = "Crypt Skeleton", health = 60, damage = 11, speed = 13, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 50, reward = 8, respawn = 30 },
-	bat = { id = "bat", name = "Gloom Bat", health = 25, damage = 6, speed = 24, attackRange = 5, attackWindup = 0.3, attackCooldown = 1, aggroRange = 60, reward = 3, respawn = 25 },
+	skeleton = { id = "skeleton", name = "Crypt Skeleton", health = 60, damage = 11, speed = 13, attackRange = 6, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 50, reward = 8, respawn = 30, element = "shadow" },
+	bat = { id = "bat", name = "Gloom Bat", health = 25, damage = 6, speed = 24, attackRange = 5, attackWindup = 0.3, attackCooldown = 1, aggroRange = 60, reward = 3, respawn = 25, element = "shadow" },
 	-- the mountains and the sky isles (quest areas)
-	golem = { id = "golem", name = "Crag Golem", health = 150, damage = 16, speed = 9, attackRange = 7, attackWindup = 0.8, attackCooldown = 2, aggroRange = 40, reward = 14, respawn = 30 },
+	golem = { id = "golem", name = "Crag Golem", health = 150, damage = 16, speed = 9, attackRange = 7, attackWindup = 0.8, attackCooldown = 2, aggroRange = 40, reward = 14, respawn = 30, element = "earth" },
+	-- the Deepdelve Mines (earth)
+	rockmite = { id = "rockmite", name = "Rockmite", health = 55, damage = 9, speed = 20, attackRange = 5, attackWindup = 0.35, attackCooldown = 1.1, aggroRange = 50, reward = 8, respawn = 22, element = "earth" },
+	shardback = { id = "shardback", name = "Shardback Beetle", health = 120, damage = 14, speed = 12, attackRange = 6, attackWindup = 0.6, attackCooldown = 1.6, aggroRange = 45, reward = 13, respawn = 28, element = "earth" },
 	wisp = { id = "wisp", name = "Storm Wisp", health = 45, damage = 9, speed = 18, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 50, reward = 8, respawn = 25 },
 	-- the Emberdeep Caldera (fire)
 	emberimp = { id = "emberimp", name = "Ember Imp", health = 70, damage = 11, speed = 19, attackRange = 6, attackWindup = 0.4, attackCooldown = 1.2, aggroRange = 55, reward = 12, respawn = 25, element = "fire" },
@@ -116,9 +129,23 @@ Combat.Enemies = {
 			{ kind = "roots", damage = 26, radius = 11, windup = 0.8, element = "fire" },
 		},
 	},
+	-- the Tidewrack Grotto (water)
+	reefcrab = { id = "reefcrab", name = "Reefclaw Crab", health = 140, damage = 15, speed = 12, attackRange = 6, attackWindup = 0.55, attackCooldown = 1.5, aggroRange = 45, reward = 16, respawn = 25, element = "water" },
+	driftjelly = { id = "driftjelly", name = "Drift Jelly", health = 90, damage = 12, speed = 14, attackRange = 7, attackWindup = 0.5, attackCooldown = 1.4, aggroRange = 55, reward = 14, respawn = 25, element = "water" },
+	lurker = { id = "lurker", name = "Deepscale Lurker", health = 150, damage = 18, speed = 20, attackRange = 7, attackWindup = 0.45, attackCooldown = 1.3, aggroRange = 60, reward = 20, respawn = 30, element = "water" },
+	thalvorn = {
+		id = "thalvorn", name = "Thalvorn, the Tide Kraken", health = 5200, damage = 34, speed = 10, attackRange = 16, attackWindup = 1.1, attackCooldown = 2.2, aggroRange = 95, reward = 650, respawn = 0,
+		boss = true, size = 2.6, element = "water",
+		attacks = {
+			{ kind = "swipe", damage = 32, radius = 24, windup = 0.9, arc = 90 },
+			{ kind = "roots", damage = 28, radius = 12, windup = 1 },
+			{ kind = "slam", damage = 38, radius = 24, windup = 1.4 },
+			{ kind = "roots", damage = 28, radius = 12, windup = 0.8 },
+		},
+	},
 	cragking = {
 		id = "cragking", name = "The Crag King", health = 2400, damage = 28, speed = 9, attackRange = 13, attackWindup = 1.1, attackCooldown = 2.4, aggroRange = 75, reward = 300, respawn = 0,
-		boss = true, size = 2.4,
+		boss = true, size = 2.4, element = "earth",
 		attacks = {
 			{ kind = "slam", damage = 34, radius = 20, windup = 1.4 },
 			{ kind = "roots", damage = 24, radius = 10, windup = 1 },
@@ -136,7 +163,7 @@ Combat.Enemies = {
 	},
 	warden = {
 		id = "warden", name = "The Bone Warden", health = 1400, damage = 22, speed = 11, attackRange = 12, attackWindup = 1, attackCooldown = 2.2, aggroRange = 70, reward = 150, respawn = 0,
-		boss = true, size = 2.2,
+		boss = true, size = 2.2, element = "shadow",
 		attacks = {
 			{ kind = "swipe", damage = 24, radius = 16, windup = 0.8, arc = 70 },
 			{ kind = "slam", damage = 30, radius = 18, windup = 1.3 },

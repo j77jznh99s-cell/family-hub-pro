@@ -1,6 +1,9 @@
 --!strict
--- Builds the dungeons: The Hollow Crypt (six rooms, reached through a stairway in the hilltop
--- castle's courtyard) and The Deepdelve Mines (below Gorrim's mountain camp, level 12+).
+-- Builds the dungeons, each with its own element and monsters (Shared/Combat):
+--   The Hollow Crypt (shadow; a stairway in the hilltop castle's courtyard),
+--   The Deepdelve Mines (earth; below Gorrim's mountain camp, level 12+),
+--   The Emberdeep Caldera (fire; at Ember Peak above Highcrag, level 20+),
+--   The Tidewrack Grotto (water; a sea cave on Saltmere beach, level 25+).
 -- Geometry plus named markers only; DungeonService adds the behaviour (teleports, room
 -- clearing, doors, chests, the boss). Each dungeon is the same shape of markers under its own
 -- root folder (Map.Dungeon for the crypt, Map.Mines for the mines); see DungeonBuilder.Dungeons.
@@ -71,9 +74,9 @@ DungeonBuilder.Dungeons = {
 		entrance = { site = "minecamp", dx = -24, dz = 22 },
 		rooms = {
 			{ name = "Mine Mouth", w = 44, d = 40, spawns = {}, timbers = true },
-			{ name = "Collapsed Gallery", w = 62, d = 50, spawns = { { "golem", 3 } }, timbers = true, rails = true },
-			{ name = "Glowstone Cavern", w = 64, d = 64, spawns = { { "bat", 5 }, { "golem", 1 } }, pillars = true, crystals = true },
-			{ name = "Lost Miners' Rest", w = 60, d = 48, spawns = { { "skeleton", 5 }, { "golem", 2 } }, timbers = true, rails = true },
+			{ name = "Collapsed Gallery", w = 62, d = 50, spawns = { { "golem", 2 }, { "rockmite", 3 } }, timbers = true, rails = true },
+			{ name = "Glowstone Cavern", w = 64, d = 64, spawns = { { "shardback", 3 }, { "rockmite", 3 } }, pillars = true, crystals = true },
+			{ name = "Lost Miners' Rest", w = 60, d = 48, spawns = { { "rockmite", 4 }, { "shardback", 2 }, { "golem", 1 } }, timbers = true, rails = true },
 			{ name = "Ore Vault", w = 36, d = 30, spawns = {}, chest = "vault", crystals = true },
 			{ name = "Heart of the Mountain", w = 90, d = 90, spawns = { { "cragking", 1 } }, chest = "boss", boss = "cragking", crystals = true },
 		},
@@ -97,6 +100,27 @@ DungeonBuilder.Dungeons = {
 			{ name = "Ember Vault", w = 42, d = 34, spawns = {}, chest = "vault", lavaPools = true },
 			{ name = "Magma Lake", w = 90, d = 88, spawns = { { "magmahound", 4 }, { "cinderwraith", 3 } }, lavaRiver = true, lavaPools = true },
 			{ name = "Pyrrhax's Caldera", w = 120, d = 116, spawns = { { "pyrrhax", 1 } }, chest = "boss", boss = "pyrrhax", calderaRing = true },
+		},
+	},
+	{
+		id = "tidewrack",
+		root = "Tidewrack",
+		interior = "Grotto",
+		portal = "TidePortal",
+		title = "The Tidewrack Grotto",
+		minLevel = 25,
+		origin = { x = 1300, y = -460, z = -400 },
+		theme = "water",
+		entrance = { site = "saltmere", dx = -34, dz = 30 },
+		rooms = {
+			{ name = "Sea Cave Mouth", w = 48, d = 42, spawns = {}, tidePools = true, coral = true },
+			{ name = "Coral Gallery", w = 70, d = 58, spawns = { { "reefcrab", 4 }, { "driftjelly", 2 } }, coral = true },
+			{ name = "The Drowned Wreck", w = 86, d = 74, spawns = { { "lurker", 3 }, { "reefcrab", 2 } }, wreck = true, tidePools = true },
+			{ name = "Jellyfish Hollow", w = 74, d = 74, spawns = { { "driftjelly", 5 }, { "lurker", 1 } }, coral = true, kelp = true },
+			{ name = "Whirlpool Steps", w = 80, d = 66, spawns = { { "lurker", 3 }, { "reefcrab", 2 }, { "driftjelly", 2 } }, whirlpools = true, kelp = true },
+			{ name = "Pearl Vault", w = 42, d = 34, spawns = {}, chest = "vault", coral = true },
+			{ name = "Sunken Cathedral", w = 92, d = 90, spawns = { { "lurker", 3 }, { "driftjelly", 3 }, { "reefcrab", 2 } }, tidePools = true, pillars = true },
+			{ name = "Thalvorn's Abyss", w = 124, d = 120, spawns = { { "thalvorn", 1 } }, chest = "boss", boss = "thalvorn", abyssRing = true },
 		},
 	},
 }
@@ -190,11 +214,19 @@ end
 local STONE: Color3, DARK: Color3, FLOOR: Color3, BONE: Color3, MOSS: Color3, FLAME: Color3, GLOW: Color3
 local THEME = "crypt"
 local LAVA: Color3
+local SEA: Color3
 
 local function initColors(theme: string?)
 	THEME = theme or "crypt"
 	LAVA = rgb(255, 100, 30)
-	if theme == "fire" then
+	SEA = rgb(40, 150, 220)
+	if theme == "water" then
+		STONE = rgb(60, 92, 104)
+		DARK = rgb(36, 58, 72)
+		FLOOR = rgb(150, 140, 110)
+		MOSS = rgb(60, 140, 110)
+		GLOW = rgb(90, 220, 255)
+	elseif theme == "fire" then
 		STONE = rgb(58, 48, 46)
 		DARK = rgb(38, 32, 32)
 		FLOOR = rgb(66, 54, 50)
@@ -219,30 +251,33 @@ end
 
 local function torch(parent: Instance, x: number, y: number, z: number, out: Vector3, lit: boolean)
 	box(parent, "TorchBracket", x, y - 1, z, 0.8, 1.6, 0.8, rgb(50, 50, 55), Enum.Material.Metal)
-	local flame = ball(parent, "TorchFlame", 1.2, x + out.X * 0.6, y + 0.9, z + out.Z * 0.6, FLAME, Enum.Material.Neon)
+	-- the grotto's "torches" are glowing sea-lamps (blue flame)
+	local wet = THEME == "water"
+	local flame = ball(parent, "TorchFlame", 1.2, x + out.X * 0.6, y + 0.9, z + out.Z * 0.6, if wet then GLOW else FLAME, Enum.Material.Neon)
 	flame.CanCollide = false
 	local fire = Instance.new("Fire")
 	fire.Size = 2.5
 	fire.Heat = 6
-	fire.Color = rgb(255, 150, 60)
-	fire.SecondaryColor = rgb(255, 220, 120)
+	fire.Color = if wet then rgb(60, 180, 255) else rgb(255, 150, 60)
+	fire.SecondaryColor = if wet then rgb(190, 240, 255) else rgb(255, 220, 120)
 	fire.Parent = flame
 	if lit then
-		light(flame, 26, 1.6, rgb(255, 170, 90))
+		light(flame, 26, 1.6, if wet then rgb(120, 210, 255) else rgb(255, 170, 90))
 	end
 end
 
 local function brazier(parent: Instance, x: number, y: number, z: number)
 	cylinder(parent, "BrazierStand", 4, 1.2, x, y + 2, z, rgb(50, 50, 55), Enum.Material.Metal)
 	cylinder(parent, "BrazierBowl", 1.4, 4, x, y + 4.6, z, rgb(60, 55, 55), Enum.Material.Metal)
-	local coals = cylinder(parent, "BrazierCoals", 0.4, 3.4, x, y + 5.3, z, rgb(255, 110, 40), Enum.Material.Neon)
+	local wet = THEME == "water"
+	local coals = cylinder(parent, "BrazierCoals", 0.4, 3.4, x, y + 5.3, z, if wet then GLOW else rgb(255, 110, 40), Enum.Material.Neon)
 	local fire = Instance.new("Fire")
 	fire.Size = 5
 	fire.Heat = 9
-	fire.Color = rgb(255, 120, 40)
-	fire.SecondaryColor = rgb(255, 210, 90)
+	fire.Color = if wet then rgb(60, 180, 255) else rgb(255, 120, 40)
+	fire.SecondaryColor = if wet then rgb(190, 240, 255) else rgb(255, 210, 90)
 	fire.Parent = coals
-	light(coals, 34, 1.8, rgb(255, 150, 70))
+	light(coals, 34, 1.8, if wet then rgb(120, 210, 255) else rgb(255, 150, 70))
 end
 
 local function bonePile(parent: Instance, x: number, y: number, z: number, seed: number)
@@ -267,6 +302,29 @@ local function lava(parent: Instance, x: number, y: number, z: number, sx: numbe
 	p:SetAttribute("Hazard", "fire")
 	light(p, math.min(30, math.max(sx, sz) + 8), 1.2, LAVA)
 	return p
+end
+
+-- Deep churning water: it soaks you (Hazard = "water": slowed and a little damage).
+local function whirlpool(parent: Instance, x: number, y: number, z: number, sx: number, sz: number): BasePart
+	local p = part(parent, "TideWater", Vector3.new(sx, 0.4, sz), CFrame.new(x, y + 0.2, z), SEA, Enum.Material.Glass)
+	p.Transparency = 0.25
+	p:SetAttribute("Hazard", "water")
+	light(p, math.min(30, math.max(sx, sz) + 8), 0.9, rgb(90, 200, 255))
+	local swirl = part(parent, "Swirl", Vector3.new(math.min(sx, sz) * 0.5, 0.45, math.min(sx, sz) * 0.5), CFrame.new(x, y + 0.25, z) * CFrame.Angles(0, math.rad(30), 0), rgb(190, 240, 255), Enum.Material.Neon)
+	swirl.Transparency = 0.5
+	swirl.CanCollide = false
+	return p
+end
+
+local function coralClump(parent: Instance, x: number, y: number, z: number, seed: number)
+	local colors = { rgb(255, 120, 150), rgb(255, 170, 80), rgb(120, 220, 200), rgb(190, 120, 255) }
+	for k = 0, 3 do
+		local a = seed * 1.3 + k * 1.6
+		local h = 2 + (k % 3) * 1.4
+		local c = part(parent, "Coral", Vector3.new(0.9, h, 0.9), CFrame.new(x + math.cos(a) * 1.4, y + h / 2, z + math.sin(a) * 1.4) * CFrame.Angles(math.cos(a) * 0.4, a, math.sin(a) * 0.4), colors[(seed + k) % #colors + 1], Enum.Material.Pebble)
+		c.CanCollide = false
+	end
+	ball(parent, "CoralBrain", 2.2, x, y + 0.8, z, colors[seed % #colors + 1], Enum.Material.Pebble)
 end
 
 ----------------------------------------------------------------------------------------------
@@ -306,13 +364,24 @@ local function room(f: Instance, index: number, plan: any, cx: number, y: number
 		end
 		box(r, "Moss", cx + s * (w / 2 - 0.2), y + 3, cz + s * d / 5, 0.3, 4, d / 3, MOSS, Enum.Material.Grass)
 	end
-	if THEME ~= "fire" then
+	if THEME ~= "fire" and THEME ~= "water" then
 		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
 			cobweb(r, cx + c[1] * (w / 2 - 2), y + H - 3, cz + c[2] * (d / 2 - 2), c[1] * c[2] * math.rad(45))
 		end
 	end
-	bonePile(r, cx - w / 3, y, cz + d / 3, index)
-	bonePile(r, cx + w / 3, y, cz - d / 4, index + 5)
+	if THEME == "water" then
+		-- wet sand, shells and dripping light instead of bones
+		for k = 0, 5 do
+			local a = k * 1.9 + index
+			ball(r, "Shell", 0.9, cx + math.cos(a) * w / 3, y + 0.2, cz + math.sin(a) * d / 3, rgb(245, 225, 210), Enum.Material.SmoothPlastic).CanCollide = false
+		end
+		local drip = box(r, "Shimmer", cx, y + H - 0.4, cz, w * 0.6, 0.2, d * 0.6, rgb(120, 220, 255), Enum.Material.Neon)
+		drip.Transparency = 0.85
+		drip.CanCollide = false
+	else
+		bonePile(r, cx - w / 3, y, cz + d / 3, index)
+		bonePile(r, cx + w / 3, y, cz - d / 4, index + 5)
+	end
 	if plan.sarcophagi then
 		for k = -1, 1 do
 			for _, s in { -1, 1 } do
@@ -431,6 +500,70 @@ local function room(f: Instance, index: number, plan: any, cx: number, y: number
 		end
 		lava(r, cx - w / 2 + 14, y, cz - d / 2 + 14, 16, 16)
 		lava(r, cx + w / 2 - 14, y, cz - d / 2 + 14, 16, 16)
+	end
+	if plan.tidePools then
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			whirlpool(r, cx + c[1] * w / 3.2, y, cz + c[2] * d / 3.4, math.min(14, w / 5), math.min(12, d / 5))
+		end
+	end
+	if plan.coral then
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2 + index * 0.5
+			coralClump(r, cx + math.cos(a) * (w / 2 - 6), y, cz + math.sin(a) * (d / 2 - 6), k + index)
+		end
+	end
+	if plan.kelp then
+		for k = 0, 9 do
+			local a = k * 2.3 + index
+			local kx, kz = cx + math.cos(a) * w / 2.8, cz + math.sin(a) * d / 2.8
+			local h = 10 + (k % 4) * 3
+			local kelp = part(r, "Kelp", Vector3.new(0.6, h, 1.4), CFrame.new(kx, y + h / 2, kz) * CFrame.Angles(0, a, math.rad((k % 3 - 1) * 6)), rgb(60, 150 + (k % 3) * 20, 80), Enum.Material.Grass)
+			kelp.CanCollide = false
+		end
+	end
+	if plan.wreck then
+		-- a broken ship's hull lying on its side, ribs showing
+		local hx = cx + w / 5
+		box(r, "Hull", hx, y, cz, 12, 6, 30, rgb(100, 72, 50), Enum.Material.WoodPlanks)
+		for k = -2, 2 do
+			local rib = part(r, "Rib", Vector3.new(1, 10, 1), CFrame.new(hx - 7, y + 5, cz + k * 6) * CFrame.Angles(0, 0, math.rad(-30)), rgb(90, 64, 44), Enum.Material.Wood)
+			rib.CanCollide = false
+		end
+		local mast = part(r, "BrokenMast", Vector3.new(1.4, 1.4, 26), CFrame.new(cx - w / 5, y + 1, cz - 4) * CFrame.Angles(0, math.rad(35), math.rad(8)), rgb(110, 80, 55), Enum.Material.Wood)
+		mast.CanCollide = false
+		box(r, "Sail", cx - w / 5 + 4, y, cz + 6, 10, 0.3, 8, rgb(220, 210, 185), Enum.Material.Fabric).CanCollide = false
+		for k = 0, 2 do
+			box(r, "Barrel", hx - 9, y, cz - 12 + k * 4, 2.6, 3, 2.6, rgb(120, 85, 55), Enum.Material.WoodPlanks)
+		end
+	end
+	if plan.whirlpools then
+		-- a channel of churning water across the room; cross on the two stepping-stone causeways
+		whirlpool(r, cx, y, cz, w - 1, 12)
+		for _, s in { -1, 1 } do
+			for k = -1, 1 do
+				box(r, "SteppingStone", cx + s * w / 4 + (k % 2) * 1.5, y + 0.3, cz + k * 5, 7, 1, 4, STONE, Enum.Material.Slate)
+			end
+		end
+	end
+	if plan.abyssRing then
+		-- a broken ring of deep water round the dais, with four ways through
+		local ringR = 36
+		local segs = 16
+		for k = 0, segs - 1 do
+			if k % 4 ~= 0 then
+				local a = (k + 0.5) / segs * math.pi * 2
+				local len = 2 * math.pi * ringR / segs + 1
+				local p = Vector3.new(cx + math.cos(a) * ringR, y, cz + d / 6 + math.sin(a) * ringR)
+				local slab = whirlpool(r, p.X, y, p.Z, len, 8)
+				slab.CFrame = CFrame.lookAt(slab.CFrame.Position, slab.CFrame.Position + Vector3.new(-math.sin(a), 0, math.cos(a)))
+			end
+		end
+		whirlpool(r, cx - w / 2 + 14, y, cz - d / 2 + 14, 16, 16)
+		whirlpool(r, cx + w / 2 - 14, y, cz - d / 2 + 14, 16, 16)
+		for k = 0, 7 do
+			local a = k / 8 * math.pi * 2
+			coralClump(r, cx + math.cos(a) * (w / 2 - 8), y, cz + math.sin(a) * (d / 2 - 8), k)
+		end
 	end
 	if plan.niches then
 		for _, s in { -1, 1 } do

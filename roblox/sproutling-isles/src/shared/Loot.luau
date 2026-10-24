@@ -41,6 +41,10 @@ Loot.Materials = {
 	embercore = { id = "embercore", name = "Ember Core", color = Color3.fromRGB(255, 130, 50), value = 14 },
 	obsidian = { id = "obsidian", name = "Obsidian Shard", color = Color3.fromRGB(60, 45, 70), value = 11 },
 	wyrmscale = { id = "wyrmscale", name = "Molten Wyrm Scale", color = Color3.fromRGB(255, 90, 40), value = 300 },
+	geode = { id = "geode", name = "Glittering Geode", color = Color3.fromRGB(190, 150, 230), value = 10 },
+	pearl = { id = "pearl", name = "Sea Pearl", color = Color3.fromRGB(240, 245, 255), value = 13 },
+	coral = { id = "coral", name = "Tide Coral", color = Color3.fromRGB(255, 120, 140), value = 11 },
+	krakenink = { id = "krakenink", name = "Kraken Ink", color = Color3.fromRGB(40, 50, 90), value = 320 },
 	galecore = { id = "galecore", name = "Gale Core", color = Color3.fromRGB(200, 240, 255), value = 180 },
 	-- herbs: gathered from wild herb patches and harvested alongside garden hatches
 	sunleaf = { id = "sunleaf", name = "Sunleaf", color = Color3.fromRGB(240, 220, 90), value = 2 },
@@ -69,6 +73,12 @@ Loot.Drops = {
 	magmahound = { material = "obsidian", materialChance = 0.6, weaponChance = 0.16, minRarity = 3 },
 	cinderwraith = { material = "embercore", materialChance = 0.6, weaponChance = 0.16, minRarity = 3 },
 	pyrrhax = { material = "wyrmscale", materialChance = 1, weaponChance = 1, minRarity = 5 },
+	rockmite = { material = "geode", materialChance = 0.5, weaponChance = 0.1, minRarity = 2 },
+	shardback = { material = "geode", materialChance = 0.6, weaponChance = 0.14, minRarity = 2 },
+	reefcrab = { material = "coral", materialChance = 0.6, weaponChance = 0.14, minRarity = 3 },
+	driftjelly = { material = "pearl", materialChance = 0.5, weaponChance = 0.12, minRarity = 3 },
+	lurker = { material = "pearl", materialChance = 0.6, weaponChance = 0.18, minRarity = 3 },
+	thalvorn = { material = "krakenink", materialChance = 1, weaponChance = 1, minRarity = 5 },
 } :: { [string]: DropTable }
 
 -- Chests in the crypt: how many weapons and their minimum rarity.

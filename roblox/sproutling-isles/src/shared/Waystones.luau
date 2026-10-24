@@ -43,6 +43,8 @@ Waystones.List = {
 	{ id = "observatory", name = "Pell's Observatory", region = "The Mountains", site = "observatory", dx = -24, dz = 20 },
 	{ id = "hermitage", name = "Oswin's Hermitage", region = "The Mountains", site = "hermitage", dx = -22, dz = 18 },
 	{ id = "emberpeak", name = "Ember Peak", region = "The Mountains", site = "emberpeak", dx = -30, dz = 20, onSite = true },
+	{ id = "highcrag", name = "Highcrag Village", region = "The Mountains", site = "highcrag", dx = -20, dz = 34, onSite = true },
+	{ id = "saltmere", name = "Saltmere Beach", region = "The Wider Land", site = "saltmere", dx = 24, dz = -30, onSite = true },
 	{ id = "windward", name = "Windward Isle", region = "The Sky Isles", isle = "Windward Isle" },
 	{ id = "cloudkeeper", name = "Cloudkeeper's Rest", region = "The Sky Isles", isle = "Cloudkeeper's Rest" },
 	{ id = "starfall", name = "Starfall Isle", region = "The Sky Isles", isle = "Starfall Isle" },

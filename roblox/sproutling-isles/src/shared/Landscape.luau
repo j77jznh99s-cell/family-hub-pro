@@ -17,7 +17,7 @@
 local Landscape = {}
 
 -- Bump when the terrain shape changes, so a terrain baked into the place in Studio is rebuilt.
-Landscape.Version = 4
+Landscape.Version = 5
 
 Landscape.WaterLevel = -2
 Landscape.SeaFloor = -22
@@ -64,9 +64,16 @@ Landscape.SiteList = {
 	{ name = "observatory", x = 280, z = -860, r = 30 },
 	-- the volcanic peak above the Emberdeep Caldera (third dungeon)
 	{ name = "emberpeak", x = -850, z = 1520, r = 36 },
-} :: { { name: string, x: number, z: number, r: number, h: number? } }
+	-- Highcrag, the mountain village below Ember Peak; over Saltwind Pass to Saltmere on the beach
+	-- (and the Tidewrack Grotto, the fourth dungeon)
+	{ name = "highcrag", x = -770, z = 1615, r = 48, h = 168, ground = "LeafyGrass" },
+	{ name = "windpass", x = -900, z = 1636, r = 18, h = 182 },
+	{ name = "saltmere", x = -905, z = 1792, r = 50, h = 1.4 },
+	{ name = "strand", x = -842, z = 1828, r = 40, h = 1.2 }, -- open beach either side of Saltmere
+	{ name = "cove", x = -985, z = 1776, r = 26, h = 1.2 },
+} :: { { name: string, x: number, z: number, r: number, h: number?, ground: string? } }
 
-export type Site = { name: string, x: number, z: number, r: number, h: number }
+export type Site = { name: string, x: number, z: number, r: number, h: number, ground: string? } -- ground: plateau material
 Landscape.Sites = {} :: { [string]: Site }
 
 -- Sea inlets: the east bay by the island, the city harbour and its channel out to the open sea,
@@ -118,6 +125,8 @@ Landscape.Roads = {
 	{ name = "Miners' Track", width = 7, material = "Ground", points = { { -465, -420 }, { -420, -560 }, { -380, -700 }, { -320, -850 }, { -275, -935 } } },
 	{ name = "Observatory Trail", width = 7, material = "Ground", points = { { 362, -240 }, { 330, -420 }, { 250, -600 }, { 300, -760 }, { 285, -835 } } },
 	{ name = "Ember Trail", width = 7, material = "Ground", points = { { -470, 990 }, { -600, 1150 }, { -720, 1330 }, { -800, 1460 }, { -830, 1500 } } },
+	{ name = "Highcrag Steps", width = 8, material = "Cobblestone", points = { { -830, 1500 }, { -812, 1545 }, { -790, 1580 }, { -772, 1610 } } },
+	{ name = "Saltwind Pass", width = 7, material = "Ground", points = { { -772, 1610 }, { -812, 1632 }, { -860, 1628 }, { -905, 1640 }, { -955, 1668 }, { -988, 1716 }, { -962, 1758 }, { -925, 1782 } } },
 	{ name = "Hermit's Climb", width = 6, material = "Ground", points = { { 408, -288 }, { 520, -340 }, { 620, -400 }, { 700, -420 } } },
 } :: { RoadDef }
 
@@ -459,6 +468,12 @@ function Landscape.material(x: number, z: number, h: number): string
 	end
 	if h < 1.5 then
 		return "Sand"
+	end
+	-- a village terrace high on the mountain keeps its own ground (grass, not bare rock)
+	for _, site in Landscape.SiteList do
+		if site.ground and (x - site.x) ^ 2 + (z - site.z) ^ 2 < (site.r + 4) ^ 2 then
+			return site.ground
+		end
 	end
 	local s = Landscape.slope(x, z)
 	if s > 0.95 or h > 150 then

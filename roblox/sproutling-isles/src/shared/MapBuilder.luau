@@ -1854,6 +1854,280 @@ local function bridge(parent: Instance, x0: number, z0: number, x1: number, z1: 
 	end
 end
 
+-- A list of round footprints already used in a village, so nothing lands on top of anything.
+local function footprints()
+	local used: { { number } } = {}
+	local function free(x: number, z: number, r: number, roadMargin: number?): boolean
+		if Landscape.onRoad(x, z, roadMargin or r) then
+			return false
+		end
+		for _, u in used do
+			if (x - u[1]) ^ 2 + (z - u[2]) ^ 2 < (r + u[3]) ^ 2 then
+				return false
+			end
+		end
+		return true
+	end
+	local function take(x: number, z: number, r: number)
+		table.insert(used, { x, z, r })
+	end
+	return free, take
+end
+
+-- Highcrag: a mountain village of tall timber houses on a terrace below Ember Peak, with a
+-- beacon plaza, prayer flags, a bell tower, an outfitter and a climbers' lodge. Quest givers
+-- (Shared/Quests) stand round the plaza; WildsBuilder places them.
+local function mountainVillage(parent: Instance, s: any)
+	local model = Instance.new("Model")
+	model.Name = "Highcrag"
+	model.Parent = parent
+	local x, z = s.x, s.z
+	local free, take = footprints()
+	-- the people round the plaza (Quests: hesk, yara, tobbin) and the plaza itself
+	take(x, z, 10)
+	for _, o in { { 16, 0 }, { 5.5, 15 }, { 10.3, -12.3 } } do
+		take(x + o[1], z + o[2], 4)
+	end
+	cylinder(model, "Plaza", 0.4, 24, x, 0.2, z, rgb(150, 145, 140), Enum.Material.Slate)
+	cylinder(model, "BeaconBase", 3, 6, x, 1.5, z, rgb(120, 115, 110), Enum.Material.Cobblestone)
+	cylinder(model, "BeaconPillar", 8, 2.6, x, 7, z, rgb(135, 128, 120), Enum.Material.Cobblestone)
+	cylinder(model, "BeaconBowl", 1.4, 5, x, 11.6, z, rgb(60, 55, 55), Enum.Material.Metal)
+	local flame = ball(model, "BeaconFlame", 3, x, 13, z, rgb(255, 160, 60), Enum.Material.Neon)
+	glowLight(flame, 40, 1.6, rgb(255, 180, 100))
+	-- shops: the Highcrag Outfitter and the Climbers' Lodge (cooking)
+	local shops = { { "Highcrag Outfitter", 200, "outfitter", rgb(80, 130, 90) }, { "Climbers' Lodge", 35, "lodge", rgb(170, 70, 50) } }
+	for _, sh in shops do
+		local a = math.rad(sh[2])
+		local sx, sz = x + math.cos(a) * 26, z + math.sin(a) * 26
+		take(sx, sz, 9)
+		local face = Vector3.new(x - sx, 0, z - sz).Unit
+		local st = stall(model, sh[1], sx, sz, face, 12, sh[4])
+		local anchor = part(st, "ShopAnchor", Vector3.new(3, 3, 3), CFrame.new(sx + face.X * 3, 2, sz + face.Z * 3), rgb(255, 255, 255), nil, { Transparency = 1, CanCollide = false })
+		anchor:SetAttribute("Shop", sh[3])
+	end
+	-- the bell tower
+	local ta = math.rad(115)
+	local tx, tz = x + math.cos(ta) * 38, z + math.sin(ta) * 38
+	if free(tx, tz, 7) then
+		take(tx, tz, 7)
+		coneTower(model, tx, 0, tz, 9, 26, rgb(70, 80, 95), rgb(230, 120, 60))
+		ball(model, "Bell", 3, tx, 22, tz, rgb(220, 180, 70), Enum.Material.Metal)
+	end
+	-- tall houses round the terrace, facing the plaza
+	local n = 0
+	for k = 0, 119 do -- walk round the ring, building wherever a house fits
+		local a = k / 120 * math.pi * 2 + 0.2
+		for _, r in { 39, 33 } do
+			local px, pz = x + math.cos(a) * r, z + math.sin(a) * r
+			if free(px, pz, 7.5, 6) then
+				take(px, pz, 8)
+				n += 1
+				cottage(model, px, pz, Vector3.new(x - px, 0, z - pz).Unit, 40 + n, if n % 3 == 0 then 1 else 2)
+				break
+			end
+		end
+	end
+	-- lamps with prayer flags strung between them
+	local lamps = {}
+	for k = 0, 9 do
+		local a = (k + 0.5) / 10 * math.pi * 2
+		local lx, lz = x + math.cos(a) * 12, z + math.sin(a) * 12
+		if free(lx, lz, 1, 2) then
+			take(lx, lz, 3)
+			lamp(model, lx, lz)
+			table.insert(lamps, Vector3.new(lx, 11.4, lz))
+		end
+	end
+	for k = 1, #lamps - 1 do
+		festoon(model, lamps[k], lamps[k + 1], k)
+	end
+	for _, b in { { 9, -6 }, { -8, 8 } } do
+		if free(x + b[1], z + b[2], 2, 3) then
+			barrel(model, x + b[1], z + b[2])
+		end
+	end
+	lift(model, s.h)
+	-- pines on the slopes round the terrace (on the real ground, not lifted)
+	local trees = Instance.new("Model")
+	trees.Name = "HighcragPines"
+	trees.Parent = parent
+	for k = 0, 17 do
+		local a = k / 18 * math.pi * 2 + hash(k + 70) * 0.3
+		local r = 56 + hash(k + 90) * 22
+		local px, pz = x + math.cos(a) * r, z + math.sin(a) * r
+		if not Landscape.onRoad(px, pz, 6) and not Landscape.onSite(px, pz, 4) then
+			pine(trees, px, pz, 1 + hash(k + 11) * 0.5, 300 + k, Landscape.height(px, pz) - 0.5)
+		end
+	end
+end
+
+-- Saltmere: a fishing village on the beach over Saltwind Pass, with a long pier and lighthouse,
+-- moored boats, palms, parasols, a tide market and an inn. The Tidewrack Grotto opens at the
+-- water's edge (DungeonBuilder); quest givers stand round the boardwalk square (WildsBuilder).
+local function beachVillage(parent: Instance, s: any)
+	local model = Instance.new("Model")
+	model.Name = "Saltmere"
+	model.Parent = parent
+	local x, z = s.x, s.z
+	local free, take = footprints()
+	take(x, z, 12)
+	for _, o in { { 0, 16 }, { 15, 5.5 }, { -15, 5.5 } } do
+		take(x + o[1], z + o[2], 4)
+	end
+	take(x - 30, z + 28, 14) -- the grotto's sea-cave entrance
+	-- boardwalk square with a fish-drying rack and a fountain of shells
+	part(model, "Boardwalk", Vector3.new(24, 0.6, 24), at(x, 0.3, z), rgb(190, 150, 105), Enum.Material.WoodPlanks)
+	cylinder(model, "ShellFountain", 1.6, 8, x, 1.4, z, rgb(235, 225, 210), Enum.Material.Marble)
+	ball(model, "Pearl", 2.6, x, 3.6, z, rgb(240, 245, 255), Enum.Material.Glass)
+	-- the pier south into the sea, with a lighthouse on its end and boats alongside
+	local pier = Instance.new("Model")
+	pier.Name = "Pier"
+	pier.Parent = parent
+	local p0, p1 = z + 40, z + 125
+	take(x, z + 44, 6)
+	part(pier, "PierDeck", Vector3.new(8, 0.8, p1 - p0), at(x, s.h + 1.4, (p0 + p1) / 2), rgb(165, 120, 80), Enum.Material.WoodPlanks)
+	for pz = p0 + 4, p1 - 2, 10 do
+		for _, sg in { -1, 1 } do
+			part(pier, "PierPost", Vector3.new(1, 18, 1), at(x + sg * 3.6, s.h - 7.4, pz), rgb(110, 80, 55), Enum.Material.Wood)
+			part(pier, "PierRail", Vector3.new(0.4, 0.4, 10), at(x + sg * 3.8, s.h + 3.6, pz + 5), rgb(130, 95, 60), Enum.Material.Wood)
+		end
+	end
+	part(pier, "PierEnd", Vector3.new(18, 0.8, 18), at(x, s.h + 1.4, p1 + 8), rgb(165, 120, 80), Enum.Material.WoodPlanks)
+	lighthouse(pier, x, s.h + 1.8, p1 + 8)
+	boat(pier, x - 11, z + 75, math.rad(5), rgb(80, 160, 230))
+	boat(pier, x + 11, z + 100, math.rad(-8), rgb(240, 200, 70))
+	boat(pier, x - 12, z + 108, math.rad(12), rgb(230, 100, 90))
+	for _, b in pier:GetChildren() do
+		if b.Name == "Boat" then
+			lift(b, -1.5)
+		end
+	end
+	-- shops: the Tide Market and the Salty Gull inn (cooking)
+	local shops = { { "Tide Market", -40, "tidemarket", rgb(60, 150, 210) }, { "The Salty Gull", -100, "gull", rgb(240, 170, 60) } }
+	for _, sh in shops do
+		local a = math.rad(sh[2])
+		local sx, sz = x + math.cos(a) * 26, z + math.sin(a) * 26
+		take(sx, sz, 9)
+		local face = Vector3.new(x - sx, 0, z - sz).Unit
+		local st = stall(model, sh[1], sx, sz, face, 12, sh[4])
+		local anchor = part(st, "ShopAnchor", Vector3.new(3, 3, 3), CFrame.new(sx + face.X * 3, 2, sz + face.Z * 3), rgb(255, 255, 255), nil, { Transparency = 1, CanCollide = false })
+		anchor:SetAttribute("Shop", sh[3])
+	end
+	-- fishers' cottages round the square
+	local n = 0
+	for k = 0, 119 do -- walk round the ring, building wherever a house fits
+		local a = k / 120 * math.pi * 2 + 0.1
+		for _, r in { 40, 34 } do
+			local px, pz = x + math.cos(a) * r, z + math.sin(a) * r
+			if free(px, pz, 7.5, 6) then
+				take(px, pz, 8)
+				n += 1
+				cottage(model, px, pz, Vector3.new(x - px, 0, z - pz).Unit, 60 + n, 1, if n % 2 == 0 then rgb(80, 170, 220) else rgb(250, 250, 245))
+				break
+			end
+		end
+	end
+	-- parasols, nets and lamps on the sand
+	local colors = { rgb(240, 80, 90), rgb(255, 210, 70), rgb(80, 180, 240), rgb(120, 220, 140) }
+	for k = 0, 13 do
+		local a = k / 14 * math.pi * 2 + 0.5
+		local px, pz = x + math.cos(a) * 21, z + math.sin(a) * 21
+		if free(px, pz, 2.5, 2) then
+			take(px, pz, 3)
+			cylinder(model, "ParasolPole", 7, 0.4, px, 3.5, pz, rgb(240, 240, 240))
+			cone(model, "Parasol", px, 6.6, pz, 4.5, 2, colors[k % #colors + 1], Enum.Material.Fabric, 8)
+		end
+	end
+	for k = 0, 7 do
+		local a = (k + 0.5) / 8 * math.pi * 2
+		local lx, lz = x + math.cos(a) * 13.5, z + math.sin(a) * 13.5
+		if free(lx, lz, 1, 2) then
+			take(lx, lz, 4)
+			lamp(model, lx, lz)
+		end
+	end
+	for _, c in { { 30, 8 }, { -8, -30 }, { 28, -24 } } do
+		if free(x + c[1], z + c[2], 3.5, 2) then
+			take(x + c[1], z + c[2], 3.5)
+			part(model, "NetRack", Vector3.new(6, 0.4, 0.4), at(x + c[1], 4, z + c[2]), rgb(110, 80, 55), Enum.Material.Wood)
+			part(model, "Net", Vector3.new(5.6, 3.4, 0.1), at(x + c[1], 2.2, z + c[2]), rgb(200, 190, 160), Enum.Material.Fabric).Transparency = 0.4
+			for _, sg in { -1, 1 } do
+				part(model, "NetPost", Vector3.new(0.4, 4, 0.4), at(x + c[1] + sg * 3, 2, z + c[2]), rgb(110, 80, 55), Enum.Material.Wood)
+			end
+		end
+	end
+	-- palms along the beach
+	for k = 0, 15 do
+		local a = k / 16 * math.pi * 2 + hash(k + 40) * 0.3
+		local r = 43 + hash(k + 50) * 6
+		local px, pz = x + math.cos(a) * r, z + math.sin(a) * r
+		if free(px, pz, 3, 5) then
+			take(px, pz, 3)
+			palm(model, px, pz, Vector3.new(math.cos(a), 0, math.sin(a)) * 0.6, 80 + k)
+		end
+	end
+	-- rocks round the grotto mouth
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		ball(model, "CaveRock", 6 + hash(k + 3) * 5, x - 30 + math.cos(a) * 11, 1, z + 28 + math.sin(a) * 11, rgb(120, 125, 130), Enum.Material.Rock)
+	end
+	lift(model, s.h)
+	-- palms along the open beaches either side (Landscape sites "strand" and "cove")
+	local beachPalms = Instance.new("Model")
+	beachPalms.Name = "BeachPalms"
+	beachPalms.Parent = parent
+	for i, name in { "strand", "cove" } do
+		local b = Landscape.Sites[name]
+		if b then
+			for k = 0, 7 do
+				local a = k / 8 * math.pi * 2 + i
+				local r = b.r * (0.65 + hash(k * 7 + i) * 0.3)
+				local px, pz = b.x + math.cos(a) * r, b.z + math.sin(a) * r
+				if Landscape.height(px, pz) > 0.5 and not Landscape.onRoad(px, pz, 4) then
+					palm(beachPalms, px, pz, Vector3.new(math.cos(a), 0, math.sin(a)) * 0.6, 120 + k + i * 10)
+				end
+			end
+		end
+	end
+	lift(beachPalms, 1.2)
+	-- sea stacks offshore
+	seaStack(parent, x - 150, z + 40, 34, 61)
+	seaStack(parent, x - 120, z + 130, 26, 62)
+	seaStack(parent, x + 90, z + 150, 30, 63)
+end
+
+-- The cairn and prayer flags on the Saltwind Pass summit, beside the trail (Lookout = "pass" is
+-- Yara's quest spot).
+local function passSummit(parent: Instance, s: any)
+	local model = Instance.new("Model")
+	model.Name = "SaltwindSummit"
+	model.Parent = parent
+	local d, sample = Landscape.nearestRoad(s.x, s.z)
+	local x, z = s.x, s.z
+	if sample and d < 30 then
+		local nx, nz = -sample.tz, sample.tx
+		x, z = sample.x + nx * (sample.hw + 7), sample.z + nz * (sample.hw + 7)
+	end
+	local y = Landscape.height(x, z)
+	for k = 0, 4 do
+		local dd = 3.6 - k * 0.6
+		ball(model, "CairnStone", dd, x, y + 0.4 + k * 1.9, z, rgb(150 - k * 6, 145 - k * 6, 135 - k * 6), Enum.Material.Slate)
+	end
+	cylinder(model, "FlagPole", 12, 0.4, x, y + 6, z, rgb(110, 80, 50), Enum.Material.Wood)
+	for k = 0, 3 do
+		local a = k / 4 * math.pi * 2
+		festoon(model, Vector3.new(x, y + 11.6, z), Vector3.new(x + math.cos(a) * 12, y + 3, z + math.sin(a) * 12), k)
+	end
+	signpost(model, x + 4, z + 4, "Saltwind Pass", rgb(190, 230, 255))
+	for _, p in model:GetChildren() do
+		if p.Name == "SignPole" or p.Name == "SignBoard" then
+			p.CFrame = p.CFrame + Vector3.new(0, y, 0)
+		end
+	end
+	local spot = part(model, "LookoutSpot", Vector3.new(4, 1, 4), CFrame.new(x, y + 1.5, z), rgb(255, 255, 255), nil, { Transparency = 1, CanCollide = false })
+	spot:SetAttribute("Lookout", "pass")
+end
+
 local function nearPath(x: number, z: number, margin: number): boolean
 	if Landscape.onRoad(x, z, margin) then
 		return true
@@ -1891,6 +2165,15 @@ local function buildHills(scenery: Instance)
 	hamlet(hills, sites.southvale, 3, "Cheesemonger", rgb(250, 210, 90))
 	hamlet(hills, sites.eastmere, 4, "Weaver", rgb(120, 170, 240))
 	hamlet(hills, sites.pinecrest, 5, "Woodcutter", rgb(150, 110, 70))
+	if sites.highcrag then
+		mountainVillage(hills, sites.highcrag)
+	end
+	if sites.saltmere then
+		beachVillage(hills, sites.saltmere)
+	end
+	if sites.windpass then
+		passSummit(hills, sites.windpass)
+	end
 	for _, br in Landscape.Bridges do
 		bridge(hills, br[1], br[2], br[3], br[4])
 	end

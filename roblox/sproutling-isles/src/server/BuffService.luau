@@ -13,7 +13,7 @@ local BuffService = {}
 type Buff = { value: number, ends: number, name: string }
 local buffs: { [Player]: { [string]: Buff } } = {}
 
-local DEFAULTS = { damage = 1, defense = 0, speed = 0, stamina = 1, regen = 0, fireres = 0 }
+local DEFAULTS = { damage = 1, defense = 0, speed = 0, stamina = 1, regen = 0, fireres = 0, waterres = 0 }
 
 local function now(): number
 	return Workspace:GetServerTimeNow()
@@ -28,13 +28,26 @@ function BuffService.get(player: Player, kind: string): number
 	return DEFAULTS[kind] or 0
 end
 
+-- slows from elemental effects (CombatService: Soaked), as a fraction of walk speed
+local slows: { [Player]: number } = {}
+
 local function applySpeed(player: Player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		local mounted = player:GetAttribute("MountSpeed") or 0
-		humanoid.WalkSpeed = StarterPlayer.CharacterWalkSpeed + BuffService.get(player, "speed") + mounted
+		humanoid.WalkSpeed = (StarterPlayer.CharacterWalkSpeed + BuffService.get(player, "speed") + mounted) * (1 - (slows[player] or 0))
 	end
+end
+
+function BuffService.setSlow(player: Player, fraction: number?)
+	local f = fraction or 0
+	if f > 0 then
+		slows[player] = math.clamp(f, 0, 0.8)
+	else
+		slows[player] = nil
+	end
+	applySpeed(player)
 end
 BuffService.refreshSpeed = applySpeed
 
@@ -71,6 +84,7 @@ function BuffService.init()
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		buffs[player] = nil
+		slows[player] = nil
 	end)
 	-- expiry and health regen, once a second
 	task.spawn(function()

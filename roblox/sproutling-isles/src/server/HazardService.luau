@@ -1,5 +1,6 @@
--- Floor hazards: parts with a Hazard attribute (the lava in the Emberdeep Caldera). Touching
--- one hurts a little and applies its element (fire: burning), at most twice a second.
+-- Floor hazards: parts with a Hazard attribute (lava in the Emberdeep Caldera, whirlpools in the
+-- Tidewrack Grotto). Touching one hurts a little and applies its element (Combat.Elements), at
+-- most twice a second.
 
 local Players = game:GetService("Players")
 

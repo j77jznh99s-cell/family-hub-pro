@@ -624,6 +624,15 @@ CAMPS.forge = function(f, x, z, face, _seed)
 	glow(pool, 16, 1, rgb(255, 120, 40))
 end
 
+-- a villager standing in a village square: just a crate and a lantern beside them
+CAMPS.villager = function(f, x, z, face, _seed)
+	local side = Vector3.new(-face.Z, 0, face.X)
+	K.crate(f, x + side.X * 3 - face.X * 2, 0, z + side.Z * 3 - face.Z * 2, 2.2, 0.3)
+	part(f, "LanternPost", Vector3.new(0.4, 5, 0.4), CFrame.new(x - side.X * 3, 2.5, z - side.Z * 3), rgb(90, 70, 50), Enum.Material.Wood)
+	local lantern = part(f, "Lantern", Vector3.new(1, 1.2, 1), CFrame.new(x - side.X * 3, 5.4, z - side.Z * 3), rgb(255, 220, 140), Enum.Material.Neon)
+	glow(lantern, 12, 0.8, rgb(255, 210, 140))
+end
+
 CAMPS.guide = function(f, x, z, face, seed)
 	local side = Vector3.new(-face.Z, 0, face.X)
 	local sx, sz = x + side.X * 5, z + side.Z * 5
@@ -862,6 +871,20 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 				person(f, npc, x + 2, y, z + 6, Vector3.new(0, 0, 1))
 				npcPos[id] = Vector3.new(x, y, z)
 			end
+		elseif npc.site and npc.offset and L.Sites[npc.site] then
+			-- villagers stand round their village square (MapBuilder leaves these spots open)
+			local site = L.Sites[npc.site]
+			local x, z, h = site.x + npc.offset[1], site.z + npc.offset[2], site.h
+			local toward = Vector3.new(site.x - x, 0, site.z - z)
+			local face = if toward.Magnitude > 0.1 then toward.Unit else Vector3.new(0, 0, 1)
+			local f = folder(camps, npc.camp .. "_" .. id)
+			if builder then
+				raised(f, h, function(t)
+					builder(t, x, z, face, i)
+				end)
+			end
+			person(f, npc, x, h, z, face)
+			npcPos[id] = Vector3.new(x, h, z)
 		else
 			local x, z, h
 			local site = npc.site and L.Sites[npc.site]
@@ -890,7 +913,11 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 
 	-- enemy camps for the quests
 	for _, c in Q.Camps do
-		if c.isle then
+		local campSite = c.site and L.Sites[c.site]
+		if campSite then
+			local off = c.offset or { 0, 0 }
+			marker(camps, "EnemyCamp", Vector3.new(campSite.x + off[1], campSite.h, campSite.z + off[2]), { CampKind = c.kind, CampCount = c.count, CampSpread = 10, CampLeash = 70 })
+		elseif c.isle then
 			local it = isles[c.isle]
 			if it then
 				local y = it.y + 1.5
@@ -911,7 +938,17 @@ function WildsBuilder.Build(map: Instance, landscape: any, quests: any, kit: any
 	-- quest items scattered round each camp, and across the sky isles
 	local nodeCount = 0
 	for _, spot in Q.ItemSpots do
-		if spot.isles then
+		if spot.sites then
+			for k = 1, spot.count do
+				local site = L.Sites[spot.sites[(k - 1) % #spot.sites + 1]]
+				if site then
+					nodeCount += 1
+					local a = rand() * math.pi * 2
+					local d = site.r * (0.2 + rand() * 0.6)
+					questItem(items, spot.item, string.format("%s_%d", spot.item, k), site.x + math.cos(a) * d, site.h - 0.2, site.z + math.sin(a) * d, nodeCount)
+				end
+			end
+		elseif spot.isles then
 			for name, it in isles do
 				for k = 1, spot.perIsle do
 					nodeCount += 1

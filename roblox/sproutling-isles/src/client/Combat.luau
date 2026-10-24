@@ -401,6 +401,14 @@ end
 -- effects from the server
 
 local liveProjectiles: { [number]: { part: BasePart, dir: Vector3, speed: number, left: number } } = {}
+-- each element's look: warning colour, inner fill, burst ring, damage number (Shared/Combat.Elements)
+local ELEMENT_FX: { [string]: { warn: Color3, inner: Color3, burst: Color3, text: Color3 } } = {
+	fire = { warn = Color3.fromRGB(255, 110, 20), inner = Color3.fromRGB(255, 200, 60), burst = Color3.fromRGB(255, 110, 30), text = Color3.fromRGB(255, 150, 40) },
+	water = { warn = Color3.fromRGB(40, 140, 255), inner = Color3.fromRGB(160, 230, 255), burst = Color3.fromRGB(70, 180, 255), text = Color3.fromRGB(110, 200, 255) },
+	earth = { warn = Color3.fromRGB(200, 140, 60), inner = Color3.fromRGB(240, 200, 120), burst = Color3.fromRGB(190, 150, 90), text = Color3.fromRGB(230, 190, 120) },
+	shadow = { warn = Color3.fromRGB(150, 60, 230), inner = Color3.fromRGB(210, 150, 255), burst = Color3.fromRGB(160, 80, 240), text = Color3.fromRGB(200, 140, 255) },
+}
+
 local projectileColors = { bow = Color3.fromRGB(240, 230, 200), staff = Color3.fromRGB(170, 120, 255), firebolt = Color3.fromRGB(255, 120, 40) }
 
 RunService.Heartbeat:Connect(function(dt)
@@ -451,7 +459,8 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		floatText(data.pos, tostring(data.amount), Color3.fromRGB(255, 240, 120))
 	elseif kind == "damage" then
 		if data.player then
-			floatText(data.pos, "-" .. tostring(data.amount), if data.element == "fire" then Color3.fromRGB(255, 150, 40) else Color3.fromRGB(255, 90, 90))
+			local look = data.element and ELEMENT_FX[data.element]
+			floatText(data.pos, "-" .. tostring(data.amount), if look then look.text else Color3.fromRGB(255, 90, 90))
 		end
 	elseif kind == "windup" then
 		if data.model then
@@ -472,8 +481,8 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		local radius = data.radius or 10
 		local pos = data.pos + Vector3.new(0, 0.3, 0)
 		local parts: { BasePart } = {}
-		local fire = data.element == "fire"
-		local warn = if fire then Color3.fromRGB(255, 110, 20) else Color3.fromRGB(255, 60, 60)
+		local look = data.element and ELEMENT_FX[data.element]
+		local warn = if look then look.warn else Color3.fromRGB(255, 60, 60)
 		if data.shape == "swipe" and data.dir then
 			local arc = math.rad(data.arc or 60)
 			local base = CFrame.lookAt(pos, pos + data.dir)
@@ -484,7 +493,7 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 		else
 			local disc = fxPart(Vector3.new(0.2, radius * 2, radius * 2), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), warn, Enum.PartType.Cylinder, 0.7)
 			table.insert(parts, disc)
-			local inner = fxPart(Vector3.new(0.25, 0.5, 0.5), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), if fire then Color3.fromRGB(255, 200, 60) else Color3.fromRGB(255, 120, 80), Enum.PartType.Cylinder, 0.4)
+			local inner = fxPart(Vector3.new(0.25, 0.5, 0.5), CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90)), if look then look.inner else Color3.fromRGB(255, 120, 80), Enum.PartType.Cylinder, 0.4)
 			TweenService:Create(inner, TweenInfo.new(data.time or 1, Enum.EasingStyle.Linear), { Size = Vector3.new(0.25, radius * 2, radius * 2) }):Play()
 			table.insert(parts, inner)
 		end
@@ -497,7 +506,8 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 	elseif kind == "burst" then
 		local radius = data.radius or 10
 		local fire = data.element == "fire"
-		local color = if fire then Color3.fromRGB(255, 110, 30) elseif data.shape == "roots" then Color3.fromRGB(120, 200, 80) else Color3.fromRGB(255, 170, 90)
+		local look = data.element and ELEMENT_FX[data.element]
+		local color = if look then look.burst elseif data.shape == "roots" then Color3.fromRGB(120, 200, 80) else Color3.fromRGB(255, 170, 90)
 		local ring = fxPart(Vector3.new(1, 2, 2), CFrame.new(data.pos + Vector3.new(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder, 0.2)
 		fadeOut(ring, 0.4, Vector3.new(1, radius * 2, radius * 2))
 		if fire then
@@ -508,6 +518,25 @@ FxRemote.OnClientEvent:Connect(function(kind: string, data: { [string]: any })
 				local flame = fxPart(Vector3.new(2, 7, 2), CFrame.new(data.pos + Vector3.new(math.cos(a) * r, 3.5, math.sin(a) * r)), Color3.fromRGB(255, 140 + (k % 3) * 30, 40), Enum.PartType.Ball, 0.1)
 				fadeOut(flame, 0.7, Vector3.new(0.5, 14, 0.5))
 			end
+		elseif data.element == "water" then
+			-- geysers of spray
+			for k = 0, 7 do
+				local a = k / 8 * math.pi * 2
+				local r = radius * (0.3 + (k % 2) * 0.4)
+				local spout = fxPart(Vector3.new(2, 6, 2), CFrame.new(data.pos + Vector3.new(math.cos(a) * r, 3, math.sin(a) * r)), Color3.fromRGB(150, 220, 255), Enum.PartType.Ball, 0.25)
+				fadeOut(spout, 0.7, Vector3.new(0.6, 15, 0.6))
+			end
+		elseif data.element == "earth" then
+			-- rock shards jut up through the floor
+			for k = 0, 6 do
+				local a = k / 7 * math.pi * 2
+				local spike = fxPart(Vector3.new(1.6, 5, 1.6), CFrame.new(data.pos + Vector3.new(math.cos(a) * radius * 0.55, 2.5, math.sin(a) * radius * 0.55)) * CFrame.Angles(math.cos(a) * 0.3, 0, math.sin(a) * 0.3), Color3.fromRGB(140, 120, 100), nil, 0)
+				spike.Material = Enum.Material.Slate
+				fadeOut(spike, 0.7)
+			end
+		elseif data.element == "shadow" then
+			local gloom = fxPart(Vector3.new(radius * 1.6, 3, radius * 1.6), CFrame.new(data.pos + Vector3.new(0, 1.5, 0)), Color3.fromRGB(90, 30, 140), Enum.PartType.Ball, 0.4)
+			fadeOut(gloom, 0.8, Vector3.new(radius * 2.2, 8, radius * 2.2))
 		elseif data.shape == "roots" then
 			for k = 0, 5 do
 				local a = k / 6 * math.pi * 2

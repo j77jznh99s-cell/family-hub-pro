@@ -109,65 +109,137 @@ end
 ----------------------------------------------------------------------------------------------
 -- damage
 
--- Burning (Combat.Elements.fire): damage every half second until it runs out, shown as flames on
--- the character and a "Burning" attribute (end time) for the HUD. A new burn refreshes the
--- timer. The Fireward Tonic's fireres buff shortens and weakens it.
-local burning: { [Player]: { ends: number, dps: number, fire: Fire? } } = {}
+-- Elemental effects (Combat.Elements): Burning, Soaked, Shattered, Cursed. Each runs on its own
+-- timer per player, refreshed by every new hit, and is mirrored as a player attribute named
+-- after it (its end time) for the HUD. Damage ticks every half second; Soaked also slows you;
+-- Shattered makes hits land harder. Tonics (fireres, waterres) shorten and weaken their element.
+type Status = { ends: number, dps: number, fx: Instance? }
+local statuses: { [Player]: { [string]: Status } } = {}
 
-function CombatService.ignite(player: Player, element: string?)
-	local info = element and Combat.Elements[element]
-	local root = rootOf(player)
-	if not info or not root then
-		return
-	end
-	local resist = math.clamp(BuffService.get(player, "fireres"), 0, 0.9)
-	local ends = now() + info.duration * (1 - resist)
-	local b = burning[player]
-	if b then
-		b.ends = math.max(b.ends, ends)
-	else
+local STATUS_FX: { [string]: (BasePart) -> Instance } = {
+	fire = function(root)
 		local fire = Instance.new("Fire")
 		fire.Size = 4
 		fire.Heat = 8
 		fire.Color = Color3.fromRGB(255, 120, 40)
 		fire.SecondaryColor = Color3.fromRGB(255, 220, 90)
 		fire.Parent = root
-		burning[player] = { ends = ends, dps = info.dps * (1 - resist), fire = fire }
+		return fire
+	end,
+	water = function(root)
+		local drip = Instance.new("ParticleEmitter")
+		drip.Color = ColorSequence.new(Color3.fromRGB(120, 200, 255))
+		drip.Size = NumberSequence.new(0.35, 0.1)
+		drip.Rate = 30
+		drip.Lifetime = NumberRange.new(0.5, 0.9)
+		drip.Speed = NumberRange.new(1, 3)
+		drip.Acceleration = Vector3.new(0, -40, 0)
+		drip.SpreadAngle = Vector2.new(60, 60)
+		drip.Parent = root
+		return drip
+	end,
+	earth = function(root)
+		local dust = Instance.new("Smoke")
+		dust.Color = Color3.fromRGB(190, 160, 110)
+		dust.Opacity = 0.25
+		dust.Size = 2
+		dust.RiseVelocity = 1
+		dust.Parent = root
+		return dust
+	end,
+	shadow = function(root)
+		local gloom = Instance.new("Sparkles")
+		gloom.SparkleColor = Color3.fromRGB(170, 90, 235)
+		gloom.Parent = root
+		return gloom
+	end,
+}
+
+local function clearStatus(player: Player, element: string)
+	local mine = statuses[player]
+	local st = mine and mine[element]
+	if not mine or not st then
+		return
 	end
-	player:SetAttribute("Burning", burning[player].ends)
+	if st.fx then
+		st.fx:Destroy()
+	end
+	mine[element] = nil
+	local info = Combat.Elements[element]
+	if info then
+		player:SetAttribute(info.name, nil)
+		if info.slow then
+			BuffService.setSlow(player, nil)
+		end
+	end
 end
 
-local function extinguish(player: Player)
-	local b = burning[player]
-	if b and b.fire then
-		b.fire:Destroy()
+-- Applies an element's effect (refreshing its timer).
+function CombatService.ignite(player: Player, element: string?)
+	local info = element and Combat.Elements[element]
+	local root = rootOf(player)
+	if not element or not info or not root then
+		return
 	end
-	burning[player] = nil
-	player:SetAttribute("Burning", nil)
+	local resist = if info.resist then math.clamp(BuffService.get(player, info.resist), 0, 0.9) else 0
+	local ends = now() + info.duration * (1 - resist)
+	statuses[player] = statuses[player] or {}
+	local st = statuses[player][element]
+	if st then
+		st.ends = math.max(st.ends, ends)
+	else
+		local make = STATUS_FX[element]
+		st = { ends = ends, dps = info.dps * (1 - resist), fx = if make then make(root) else nil }
+		statuses[player][element] = st
+		if info.slow then
+			BuffService.setSlow(player, info.slow * (1 - resist))
+		end
+	end
+	player:SetAttribute(info.name, st.ends)
+end
+
+-- Extra damage taken while Shattered (earth), as a multiplier.
+local function vulnerability(player: Player): number
+	local mine = statuses[player]
+	local m = 1
+	if mine then
+		for element in mine do
+			local info = Combat.Elements[element]
+			if info and info.vulnerable then
+				m += info.vulnerable
+			end
+		end
+	end
+	return m
 end
 
 task.spawn(function()
 	while true do
 		task.wait(0.5)
 		local t = now()
-		for player, b in burning do
+		for player, mine in statuses do
 			local _, humanoid = rootOf(player)
-			if not player.Parent or not humanoid or humanoid.Health <= 0 or t >= b.ends then
-				extinguish(player)
-			else
-				local tick = math.max(1, math.floor(b.dps * 0.5 + 0.5))
-				humanoid:TakeDamage(tick)
-				local root = rootOf(player)
-				if root then
-					CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = tick, player = true, element = "fire" })
+			for element, st in mine do
+				if not player.Parent or not humanoid or humanoid.Health <= 0 or t >= st.ends then
+					clearStatus(player, element)
+				elseif st.dps > 0 then
+					local tick = math.max(1, math.floor(st.dps * 0.5 + 0.5))
+					humanoid:TakeDamage(tick)
+					local root = rootOf(player)
+					if root then
+						CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = tick, player = true, element = element })
+					end
 				end
+			end
+			if not player.Parent then
+				statuses[player] = nil
 			end
 		end
 	end
 end)
 
--- Called by enemies. Respects the dodge's invulnerability window. `element` adds its effect
--- (fire: burning).
+-- Called by enemies and hazards. Respects the dodge's invulnerability window. `element` adds its
+-- effect (Combat.Elements).
 function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3, element: string?)
 	local root, humanoid = rootOf(player)
 	local f = fighters[player]
@@ -178,13 +250,13 @@ function CombatService.hurtPlayer(player: Player, amount: number, from: Vector3,
 		CombatService.fx("dodged", { pos = root.Position })
 		return
 	end
-	amount = math.max(1, math.floor(amount * (1 - InventoryService.armorReduction(player)) + 0.5))
+	amount = math.max(1, math.floor(amount * (1 - InventoryService.armorReduction(player)) * vulnerability(player) + 0.5))
 	humanoid:TakeDamage(amount)
 	local push = root.Position - from
 	push = Vector3.new(push.X, 0, push.Z)
 	local dir = if push.Magnitude > 0.01 then push.Unit else Vector3.zero
 	FxRemote:FireClient(player, "knock", { vector = dir * 35 + Vector3.new(0, 18, 0) })
-	CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = amount, player = true })
+	CombatService.fx("damage", { pos = root.Position + Vector3.new(0, 3, 0), amount = amount, player = true, element = element })
 	if element then
 		CombatService.ignite(player, element)
 	end

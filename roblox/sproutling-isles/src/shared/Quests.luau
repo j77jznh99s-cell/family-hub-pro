@@ -26,6 +26,7 @@ export type Npc = {
 	near: { number }, -- desired x, z (or a sky isle by name in `isle`)
 	isle: string?,
 	site: string?, -- a levelled Landscape site to camp on (the mountain camps)
+	offset: { number }?, -- with site: stand this x, z from its centre (villagers round a square)
 	fixed: { number }?, -- exact x, y, z (the guide on the garden island)
 	facing: { number }?, -- with fixed: x, z direction to face
 	camp: string, -- what WildsBuilder builds round them
@@ -72,10 +73,14 @@ Quests.Items = {
 	glowstone = { name = "Glowstone", color = rgb(120, 235, 255) },
 	relic = { name = "Old Fort Relic", color = rgb(205, 160, 90) },
 	shard = { name = "Starfall Shard", color = rgb(255, 235, 150) },
+	snowbloom = { name = "Snowbloom", color = rgb(235, 245, 255) },
+	goat = { name = "Runaway Goat", color = rgb(225, 215, 200) },
+	pearlshell = { name = "Pearl Oyster", color = rgb(230, 220, 240) },
+	driftwood = { name = "Wreck Timber", color = rgb(160, 120, 80) },
 } :: { [string]: { name: string, color: RGB } }
 
--- Where the items lie: around a person's camp (`npc`, `count`, `spread` studs), or on the
--- sky isles (`isles`, `perIsle`).
+-- Where the items lie: around a person's camp (`npc`, `count`, `spread` studs), on the sky isles
+-- (`isles`, `perIsle`), or across open Landscape sites (`sites`, `count`: Saltmere's beaches).
 Quests.ItemSpots = {
 	{ item = "satchel", npc = "bryn", count = 7, spread = 220 },
 	{ item = "amber", npc = "maple", count = 7, spread = 180 },
@@ -84,6 +89,10 @@ Quests.ItemSpots = {
 	{ item = "glowstone", npc = "gorrim", count = 8, spread = 190 },
 	{ item = "relic", npc = "dorran", count = 6, spread = 110 },
 	{ item = "shard", isles = true, perIsle = 2 },
+	{ item = "snowbloom", npc = "hesk", count = 8, spread = 170 },
+	{ item = "goat", npc = "tobbin", count = 7, spread = 160 },
+	{ item = "pearlshell", sites = { "cove", "strand" }, count = 8 },
+	{ item = "driftwood", sites = { "strand", "cove" }, count = 7 },
 } :: { any }
 
 ----------------------------------------------------------------------------------------------
@@ -145,6 +154,38 @@ Quests.Npcs = {
 		greeting = "Hot enough for you? This peak's my forge. And under it sleeps the hottest thing in the Isles.",
 		look = { skin = rgb(190, 130, 95), shirt = rgb(70, 50, 40), pants = rgb(50, 45, 42), hair = rgb(200, 80, 30), hat = "cap", hatColor = rgb(60, 55, 50), prop = "pick" },
 	},
+	-- Highcrag, the mountain village below Ember Peak
+	hesk = {
+		id = "hesk", site = "highcrag", offset = { 16, 0 }, name = "Elder Hesk", title = "Highcrag Elder", camp = "villager", near = { -770, 1615 },
+		greeting = "Welcome to Highcrag, the last hearth before the peak. Sit, warm yourself. Then, if you would, help us.",
+		look = { skin = rgb(210, 165, 125), shirt = rgb(120, 60, 50), pants = rgb(80, 70, 60), hair = rgb(230, 230, 225), hat = "hood", hatColor = rgb(140, 70, 55), prop = "staff" },
+	},
+	yara = {
+		id = "yara", site = "highcrag", offset = { 5.5, 15 }, name = "Yara Swiftwind", title = "Mountain Guide", camp = "villager", near = { -770, 1615 },
+		greeting = "Every path on this mountain, I've walked twice. The best one goes over Saltwind Pass to the sea.",
+		look = { skin = rgb(190, 140, 105), shirt = rgb(70, 120, 160), pants = rgb(90, 80, 70), hair = rgb(40, 30, 25), hat = "goggles", hatColor = rgb(110, 80, 50), prop = "spyglass" },
+	},
+	tobbin = {
+		id = "tobbin", site = "highcrag", offset = { 10.3, -12.3 }, name = "Old Tobbin", title = "Goatherd", camp = "villager", near = { -770, 1615 },
+		greeting = "Goats! Up the cliffs, down the cliffs. Never where I left them.",
+		look = { skin = rgb(220, 180, 140), shirt = rgb(150, 120, 70), pants = rgb(90, 75, 55), hair = rgb(190, 190, 185), hat = "cap", hatColor = rgb(110, 90, 60), prop = "crook" },
+	},
+	-- Saltmere, the beach village over Saltwind Pass
+	quill = {
+		id = "quill", site = "saltmere", offset = { 0, 16 }, name = "Harbourmaster Quill", title = "Keeper of Saltmere Pier", camp = "villager", near = { -905, 1792 },
+		greeting = "Ahoy! Mind the tide. Lately it's been coming in when it shouldn't, and bringing things with it.",
+		look = { skin = rgb(200, 150, 110), shirt = rgb(40, 60, 110), pants = rgb(220, 215, 200), hair = rgb(120, 70, 40), hat = "cap", hatColor = rgb(30, 40, 80), prop = "spyglass" },
+	},
+	finn = {
+		id = "finn", site = "saltmere", offset = { 15, 5.5 }, name = "Finnick Deepbreath", title = "Pearl Diver", camp = "villager", near = { -905, 1792 },
+		greeting = "Hold your breath long enough and the sea tells you its secrets. Mostly where the pearls are.",
+		look = { skin = rgb(170, 120, 85), shirt = rgb(60, 170, 170), pants = rgb(230, 200, 140), hair = rgb(250, 230, 160), hat = "goggles", hatColor = rgb(60, 120, 140), prop = "letter" },
+	},
+	coralie = {
+		id = "coralie", site = "saltmere", offset = { -15, 5.5 }, name = "Coralie", title = "Tidesinger", camp = "villager", near = { -905, 1792 },
+		greeting = "Listen. Under the waves, something vast is singing back to me. It is not a friendly song.",
+		look = { skin = rgb(235, 200, 175), shirt = rgb(80, 190, 200), pants = rgb(50, 110, 150), hair = rgb(60, 160, 170), hat = "circlet", hatColor = rgb(255, 210, 230), prop = "staff" },
+	},
 	lyra = {
 		id = "lyra", name = "Lyra", title = "Cloudkeeper", camp = "skycamp", near = { 0, 0 }, isle = "Cloudkeeper's Rest",
 		greeting = "Welcome to the high air. Breathe slowly; the wind here has opinions.",
@@ -168,9 +209,14 @@ Quests.Spots = {
 	cairnWest = { name = "West Peak Cairn", near = { -1060, -260 } },
 	cairnNorth = { name = "North Peak Cairn", near = { 620, -1000 } },
 	cairnSouth = { name = "South Peak Cairn", near = { 820, 1700 } },
+	-- Yara's lookouts round Highcrag
+	lookEmber = { name = "Westcrag Lookout", near = { -1060, 1330 } },
+	lookPass = { name = "Saltwind Pass Summit", find = { "Lookout", "pass" } },
+	lookEast = { name = "Eastcrag Lookout", near = { -700, 1790 } },
 } :: { [string]: any }
 
--- Enemy camps the quests need, beside a person's camp (offset x, z from it) or on a named isle.
+-- Enemy camps the quests need, beside a person's camp (offset x, z from it), on a levelled
+-- Landscape site (`site`, offset from its centre) or on a named isle.
 Quests.Camps = {
 	{ npc = "bryn", offset = { -90, 70 }, kind = "wolf", count = 4 },
 	{ npc = "maple", offset = { 100, -80 }, kind = "goblin", count = 4 },
@@ -180,6 +226,12 @@ Quests.Camps = {
 	{ npc = "pell", offset = { 80, 70 }, kind = "bat", count = 5 },
 	{ npc = "dorran", offset = { -80, 40 }, kind = "skeleton", count = 5 },
 	{ npc = "brannoc", offset = { 90, 60 }, kind = "emberimp", count = 5 },
+	{ npc = "hesk", offset = { 110, 40 }, kind = "rockmite", count = 5 },
+	{ npc = "hesk", offset = { -60, -110 }, kind = "rockmite", count = 4 },
+	{ npc = "tobbin", offset = { 140, 90 }, kind = "wolf", count = 4 },
+	{ site = "strand", offset = { -10, -4 }, kind = "reefcrab", count = 4 },
+	{ site = "cove", offset = { 0, 0 }, kind = "reefcrab", count = 3 },
+	{ site = "strand", offset = { 22, 14 }, kind = "driftjelly", count = 4 },
 	{ isle = "Windward Isle", kind = "wisp", count = 3 },
 	{ isle = "Starfall Isle", kind = "wisp", count = 3 },
 	{ isle = "Gale Rock", kind = "wisp", count = 3 },
@@ -331,6 +383,85 @@ Quests.List = {
 		finish = "A real wyrm scale, still warm! You're a legend now, friend. Here's your reward, fresh from the anvil.",
 		objective = { kind = "slay", target = "pyrrhax", count = 1, text = "Defeat Pyrrhax in the Emberdeep Caldera" },
 		reward = { dew = 1200, weapon = 5, crate = "gold" },
+	},
+	-- Highcrag
+	{
+		id = "hesk_mites", name = "Mites in the Terraces", giver = "hesk",
+		intro = "Rockmites have burrowed up from the deep mines and are chewing through our terrace walls. Crush them before the houses slide down the mountain. Careful: their bite cracks your guard (Shattered) and the next blow lands harder.",
+		finish = "The walls are holding. Highcrag thanks you. Take this; our smiths made it for days like this.",
+		objective = { kind = "slay", target = "rockmite", count = 8, text = "Crush Rockmites round Highcrag" },
+		reward = { dew = 450, weapon = 4 },
+	},
+	{
+		id = "hesk_snowbloom", name = "Snowbloom for the Beacon", giver = "hesk", requires = { "hesk_mites" },
+		intro = "The beacon in our square burns on snowbloom oil. The flowers grow in the cold cracks round the village. Gather them before the frost bites them black.",
+		finish = "Smell that? The beacon will burn bright all winter. Brannoc up the peak could use a hand too, if you're brave.",
+		objective = { kind = "collect", target = "snowbloom", count = 6, text = "Gather Snowbloom round Highcrag" },
+		reward = { dew = 380, potions = 3, crate = "silver" },
+	},
+	{
+		id = "tobbin_goats", name = "Goats on the Cliffs", giver = "tobbin",
+		intro = "My goats have scattered up every ledge again. Bring them home and I'll have cheese for you by supper.",
+		finish = "All home and bleating. Here, mountain cheese and coin. Don't tell the goats.",
+		objective = { kind = "collect", target = "goat", count = 5, text = "Find Runaway Goats" },
+		reward = { dew = 340, materials = { pelt = 3 } },
+	},
+	{
+		id = "tobbin_wolves", name = "The Grey Pack", giver = "tobbin", requires = { "tobbin_goats" },
+		intro = "Wolves have followed the goats up from the valley. Chase them off for good.",
+		finish = "Not a howl tonight. You've a herder's heart and a hunter's arm.",
+		objective = { kind = "slay", target = "wolf", count = 6, text = "Defeat Ashen Wolves above Highcrag" },
+		reward = { dew = 360, weapon = 4 },
+	},
+	{
+		id = "yara_lookouts", name = "The Three Lookouts", giver = "yara",
+		intro = "A guide has to know the land. Climb to the three lookouts round Highcrag: Westcrag beyond Ember Peak, the Saltwind Pass summit and Eastcrag. From the pass you'll see the sea.",
+		finish = "Now you know the mountain. And you've seen Saltmere down on the beach. They've been asking for help.",
+		objective = { kind = "visit", spots = { "lookEmber", "lookPass", "lookEast" }, text = "Visit the three lookouts" },
+		reward = { dew = 420, potions = 2 },
+	},
+	{
+		id = "yara_pass", name = "Over Saltwind Pass", giver = "yara", requires = { "yara_lookouts" }, turnIn = "quill",
+		intro = "Take this letter over Saltwind Pass to Harbourmaster Quill in Saltmere. Follow the trail west out of the square, over the summit and down to the beach.",
+		finish = "A letter from Yara! She says you're the one to help us. Welcome to Saltmere, friend.",
+		objective = { kind = "talk", npc = "quill", text = "Deliver Yara's letter to Harbourmaster Quill in Saltmere" },
+		reward = { dew = 300, crate = "silver" },
+	},
+	-- Saltmere
+	{
+		id = "quill_crabs", name = "Claws on the Sand", giver = "quill",
+		intro = "Reefclaw crabs have marched out of the sea cave and taken the beach. Their pinch soaks you to the bone and slows you right down. Drive them back. The Tide Market sells Tidebalm if you need it.",
+		finish = "The fishers can mend their nets again. Here's your share of the catch money.",
+		objective = { kind = "slay", target = "reefcrab", count = 8, text = "Defeat Reefclaw Crabs on Saltmere beach" },
+		reward = { dew = 500, potions = 3 },
+	},
+	{
+		id = "quill_timber", name = "Wreck Timber", giver = "quill", requires = { "quill_crabs" },
+		intro = "The storm tide broke three boats. Wreck timber's washed up all along the shore; bring me enough to patch them.",
+		finish = "Good seasoned planks, salt and all. The boats will float by morning.",
+		objective = { kind = "collect", target = "driftwood", count = 6, text = "Gather Wreck Timber along the shore" },
+		reward = { dew = 420, weapon = 4 },
+	},
+	{
+		id = "finn_pearls", name = "Pearls of the Shallows", giver = "finn",
+		intro = "The tide has thrown oysters fat with pearls up along the shore and the dunes. Bring me some, and mind the jellies.",
+		finish = "Look at the shine on these! You've a diver's eye.",
+		objective = { kind = "collect", target = "pearlshell", count = 6, text = "Gather Pearl Oysters along the shore" },
+		reward = { dew = 400, materials = { pearl = 3 } },
+	},
+	{
+		id = "finn_jellies", name = "Sting of the Tide", giver = "finn", requires = { "finn_pearls" },
+		intro = "Drift jellies are crowding the shallows. One brush and you're soaked and stung. Clear a few so we can dive again.",
+		finish = "The water's clear. Fancy a swim? No? Fair. Take this instead.",
+		objective = { kind = "slay", target = "driftjelly", count = 6, text = "Defeat Drift Jellies in the shallows" },
+		reward = { dew = 450, weapon = 4, crate = "silver" },
+	},
+	{
+		id = "coralie_abyss", name = "Song of the Abyss", giver = "coralie", requires = { "quill_crabs", "finn_pearls" },
+		intro = "The singer under the waves is Thalvorn, the Tide Kraken. It wakes in the Tidewrack Grotto, the sea cave by our beach (level 25 or more). Crabs, jellies, the deepscale lurkers... all of them are its children. Silence it, and the tide will turn back.",
+		finish = "The sea is singing a gentler song. Saltmere will never forget you. Take Thalvorn's ink; it holds the tide's own colour.",
+		objective = { kind = "slay", target = "thalvorn", count = 1, text = "Defeat Thalvorn in the Tidewrack Grotto" },
+		reward = { dew = 1500, weapon = 5, crate = "gold" },
 	},
 	{
 		id = "oswin_cairns", name = "The Hermit's Cairns", giver = "oswin",

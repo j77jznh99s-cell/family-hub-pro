@@ -35,6 +35,8 @@ local SITE_NAMES = {
 	pinecrest = "Pinecrest",
 	oldfort = "The Old Fort",
 	emberpeak = "Ember Peak",
+	highcrag = "Highcrag",
+	saltmere = "Saltmere",
 }
 
 -- shops worth a pin, with the map category they show under
@@ -43,7 +45,7 @@ local SHOP_KINDS = {
 	coachpaint = "custom", sailmaker = "custom", aeriepaint = "custom",
 	bank = "crates", library = "hall", trainer = "hall", guild = "hall", maps = "hall",
 	airships = "travel", shipwright = "travel", stable = "vehicles", tamer = "hall",
-	blacksmith = "shop", armorer = "shop", alchemist = "shop", fletcher = "shop", enchanter = "shop", tailor = "shop",
+	blacksmith = "shop", armorer = "shop", alchemist = "shop", outfitter = "shop", tidemarket = "shop", fletcher = "shop", enchanter = "shop", tailor = "shop",
 }
 
 function MapService.init(map: Instance)
@@ -85,6 +87,8 @@ function MapService.init(map: Instance)
 			table.insert(pois, { name = "The Hollow Crypt (dungeon)", kind = "dungeon", x = p.X, z = p.Z })
 		elseif d.Name == "EmberPortal" then
 			table.insert(pois, { name = "The Emberdeep Caldera (fire dungeon, level 20+)", kind = "dungeon", x = p.X, z = p.Z })
+		elseif d.Name == "TidePortal" then
+			table.insert(pois, { name = "The Tidewrack Grotto (water dungeon, level 25+)", kind = "dungeon", x = p.X, z = p.Z })
 		elseif d.Name == "MinePortal" then
 			table.insert(pois, { name = "The Deepdelve Mines (dungeon, level 12+)", kind = "dungeon", x = p.X, z = p.Z })
 		end

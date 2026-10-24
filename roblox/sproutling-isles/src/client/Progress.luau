@@ -360,30 +360,45 @@ local function updateArena()
 end
 player:GetAttributeChangedSignal("ArenaWave"):Connect(updateArena)
 
--- burning warning
-local burnLabel = make("TextLabel", {
-	AnchorPoint = Vector2.new(0.5, 1),
-	Position = UDim2.new(0.5, 0, 1, -186),
-	Size = UDim2.fromOffset(240, 30),
-	BackgroundColor3 = Color3.fromRGB(150, 50, 10),
-	BackgroundTransparency = 0.2,
-	Font = FONT,
-	TextScaled = true,
-	TextColor3 = Color3.fromRGB(255, 220, 120),
-	TextStrokeTransparency = 0.3,
-	Text = "BURNING!",
-	Visible = false,
-	Parent = gui,
-}, { corner(8) })
+-- elemental warnings (Burning, Soaked, Shattered, Cursed): one pulsing label each, stacked
+local STATUS_LOOK = {
+	{ attr = "Burning", text = "BURNING!", bg = Color3.fromRGB(150, 50, 10), fg = Color3.fromRGB(255, 220, 120) },
+	{ attr = "Soaked", text = "SOAKED! (slowed)", bg = Color3.fromRGB(20, 80, 150), fg = Color3.fromRGB(190, 235, 255) },
+	{ attr = "Shattered", text = "SHATTERED! (hits harder)", bg = Color3.fromRGB(110, 80, 40), fg = Color3.fromRGB(255, 225, 170) },
+	{ attr = "Cursed", text = "CURSED!", bg = Color3.fromRGB(70, 20, 110), fg = Color3.fromRGB(225, 190, 255) },
+}
+local statusLabels = {}
+for _, look in STATUS_LOOK do
+	table.insert(statusLabels, make("TextLabel", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -186),
+		Size = UDim2.fromOffset(280, 30),
+		BackgroundColor3 = look.bg,
+		BackgroundTransparency = 0.2,
+		Font = FONT,
+		TextScaled = true,
+		TextColor3 = look.fg,
+		TextStrokeTransparency = 0.3,
+		Text = look.text,
+		Visible = false,
+		Parent = gui,
+	}, { corner(8) }))
+end
 task.spawn(function()
 	while true do
 		task.wait(0.2)
-		local ends = player:GetAttribute("Burning")
-		local left = if typeof(ends) == "number" then ends - workspace:GetServerTimeNow() else 0
-		burnLabel.Visible = left > 0
-		if left > 0 then
-			burnLabel.Text = string.format("BURNING! %.1fs", left)
-			burnLabel.BackgroundTransparency = 0.15 + 0.15 * math.sin(os.clock() * 10)
+		local row = 0
+		for i, look in STATUS_LOOK do
+			local label = statusLabels[i]
+			local ends = player:GetAttribute(look.attr)
+			local left = if typeof(ends) == "number" then ends - workspace:GetServerTimeNow() else 0
+			label.Visible = left > 0
+			if left > 0 then
+				label.Position = UDim2.new(0.5, 0, 1, -186 - row * 34)
+				row += 1
+				label.Text = string.format("%s %.1fs", look.text, left)
+				label.BackgroundTransparency = 0.15 + 0.15 * math.sin(os.clock() * 10)
+			end
 		end
 	end
 end)
