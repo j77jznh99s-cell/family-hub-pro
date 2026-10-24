@@ -10,6 +10,12 @@ job (`7 * * * *`, session-only, expires after 7 days) runs one gap per run. Part
 
 ## Runs (newest first)
 
+### Run 2, 2026-10-24: Daily Tasks
+- **Compared with:** Grow a Garden and most top Roblox sims, which give players a reason to come back each day beyond a login gift.
+- **Gap:** only a daily login gift; no daily goals that steer players round the game.
+- **Built:** Daily Tasks (Y / Tasks button / Task Board on Greenhollow green): 3 level-appropriate tasks a day from a pool of 11, Dew + XP each, silver crate for all 3, golden crate every 5th full day in a row, streak. New `State.track` hooks in PlotService (plant/harvest/sell), QuestService, CrateService, WaystoneService. Commit `9dee71e`.
+- **Test in Studio:** plant/harvest/sell and watch the bars; finish all three; check tasks re-roll after midnight UTC and the streak counts.
+
 ### Run 1, 2026-10-24 ~05:00: Monster Journal
 - **Compared with:** Fisch (bestiaries per region are its main long-term collection layer), Grow a Garden (simple loop + collection chase).
 - **Gap:** no collection log for the 21 monster kinds across the wilds and four elemental dungeons.
@@ -18,7 +24,6 @@ job (`7 * * * *`, session-only, expires after 7 days) runs one gap per run. Part
 
 ## Ideas queue (for later runs)
 - Weather-driven crop mutations shown on Greenhollow plants (garden sims' biggest hook).
-- Daily goals / quests board with streaks.
 - Ambient sound hooks (birdsong in Greenhollow, surf at Saltmere, lava rumble).
 - Fishing at Saltmere pier.
 - Pet/companion perks tied to gardening.

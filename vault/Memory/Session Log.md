@@ -1,6 +1,10 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-24 (overnight run 2): Daily Tasks
+**Agents used:** none · `9dee71e` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner said "next". Added Daily Tasks with streaks and a Task Board. Not Studio-tested.
+
 ## 2026-10-24 (overnight run 1): Monster Journal
 **Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
 - Owner asked for hourly overnight improvement runs comparing with similar Roblox games. Cron job set (session-only). Run 1 added the Monster Journal (bestiary). Also earlier: Greenhollow re-laid out from the owner's sketch (tree of paths, houses spread out, loaded decor). See [[Sproutling Isles - Overnight Runs]]. Not Studio-tested.
