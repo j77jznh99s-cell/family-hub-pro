@@ -32,6 +32,32 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-25
+
+**Done overnight/today**
+- Nothing new — no commits since yesterday's huge build-out. (The owner's overnight improvement
+  cron is session-only, so it likely stopped when that session ended rather than running for its
+  full 7-day window — not something this session can check or restart.)
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item — a large amount
+  of content (4 dungeons, waystones, Daily Tasks, Monster Journal, the whole world-scale/polish
+  pass) has never been run. Texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
 ## 2026-10-24
 
 **Done overnight/today**
