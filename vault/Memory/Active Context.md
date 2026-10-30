@@ -70,7 +70,9 @@ once found still red there too, on the Sproutling Isles branch (`c5e7884`) — a
 before the fix may need the same port, check CI before pushing) · [[Trading Agent]] (documented 2026-09-26 from
 its README/CHANGELOG; blocked on OANDA setup) · [[Gumroad Digital Products]] (demand brief for all 3 product
 lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · [[StarNet Automation]] (plan ready,
-needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
+needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]] (scaffold built & pushed 2026-09-21 to
+`claude/bybit-trading-bot-risk-gate-r7apfr`, 14/14 tests pass, dry-run validated; logged late 2026-10-30;
+blocked on the owner supplying a real Bybit testnet key — see [[Bybit Trading Bot]]).
 
 ## Waiting on the owner
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).

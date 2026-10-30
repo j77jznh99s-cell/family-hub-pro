@@ -1,6 +1,42 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-30 (logged late — work done 2026-09-21): Bybit bot risk-gate scaffold
+**Device:** scheduled/cloud session · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (repo root) · **Agents used:** none
+
+**Owner asked**
+- Build the full risk-gated Bybit perpetuals bot tutorial end to end: strategy file, memory schema, cycle
+  prompt, a deterministic TypeScript MCP risk gate holding the only trading key, monitoring/Telegram scripts,
+  cron, and a README — on this designated branch.
+
+**What was done**
+- Built everything from the tutorial: `STRATEGY.md`, `prompts/cycle.md`, `memory/{decision.json,trades.jsonl,
+  learnings.md}`, `risk-gate/src/{index,checks,bybit,audit,paths,types}.ts` (kill switch, 5%/day loss cap,
+  30% notional cap, 10x BTC/5x ETH-SOL leverage cap, 2% price-sanity, 3-position cap, all logged to
+  `logs/audit.jsonl`), `scripts/{position-check,funding-check,telegram-alert,telegram-commands}.js`,
+  `crontab.txt`, `.env.example`, `.gitignore`, `README.md`.
+- `npm run build:gate` compiles clean; 14 `node:test` unit tests in `risk-gate/src/checks.test.ts` cover every
+  rejection path against a fake Bybit client — all pass.
+- Ran a dry-run harness against the real compiled `checks.js`/`audit.js` with a fake exchange client:
+  approved a well-formed order, rejected an oversized one (`notional_cap`), and confirmed `HALT_TRADING`
+  blocks both `place_order` and `close_position` (kill switch is a full stop, not just an entry filter).
+  Real `logs/audit.jsonl` entries produced and inspected; log file itself is gitignored (runtime output).
+- Committed (root commit, repo was empty) and pushed to `claude/bybit-trading-bot-risk-gate-r7apfr`. Verified
+  on origin: `6722583`.
+
+**Not verified**
+- No real Bybit testnet account/API key was available in-session, so nothing was validated against the
+  actual exchange — only against a fake client and the compiled logic. The README's manual-cycle, live
+  rejection-path, and cron steps still need to be run for real before this goes anywhere near cron/mainnet.
+- This note is being written five weeks after the work (vault protocol wasn't visible to that session) —
+  dates split as shown above so the log stays honest about when the code vs. the write-up happened.
+
+**Decisions**
+- None made by the owner yet — see the open task in [[Bybit Trading Bot]] (confirm paper vs. live intent,
+  supply testnet keys).
+
+**Next:** see [[Active Context]] and [[Bybit Trading Bot]].
+
 ## 2026-10-24 (overnight run 2): Daily Tasks
 **Agents used:** none · `9dee71e` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner said "next". Added Daily Tasks with streaks and a Task Board. Not Studio-tested.
