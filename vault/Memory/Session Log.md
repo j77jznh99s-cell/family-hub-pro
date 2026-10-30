@@ -21,6 +21,9 @@ tags: [memory, log]
 - Owner is now setting up **Shopify Payments** in the Shopify app (step 3 of 4). Gave wording for the
   "I sell..." description (original printable PDFs, instant digital download), category advice, and a note to
   change the bank-statement name to the store name once one is chosen. Store name not chosen yet.
+- Owner started adding the first product in the Shopify app. Advised: set status to **Draft** (it defaulted to
+  Active), draft listing "Weekly Family Chore Chart – Printable PDF" at $5, turn off "physical product", install
+  Shopify's free Digital Downloads app. Offered to design the original PDF; waiting on the owner's yes.
 
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
