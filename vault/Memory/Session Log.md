@@ -18,6 +18,9 @@ tags: [memory, log]
 - Follow-up: owner said to use past work. Vault points to a **new store** for original family-organization
   printables (Decisions #19/#20 recommendation), with print-on-demand added later. Proposed that and asked
   for the look/style. Shopify still showed "needs authentication"; no computer folders shared via Remote Control.
+- Owner is now setting up **Shopify Payments** in the Shopify app (step 3 of 4). Gave wording for the
+  "I sell..." description (original printable PDFs, instant digital download), category advice, and a note to
+  change the bank-statement name to the store name once one is chosen. Store name not chosen yet.
 
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
