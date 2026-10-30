@@ -75,6 +75,7 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]] (scaffold built & p
 blocked on the owner supplying a real Bybit testnet key — see [[Bybit Trading Bot]]).
 
 ## Waiting on the owner
+- [ ] **Shopify set-up** (2026-10-30): reconnect the Shopify connector (claude.ai Settings → Connectors), then say new vs existing store, what it sells, who for, and the look.
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).
 - [ ] **Play-test the finished Sproutling Isles RPG** (all 7 steps done 2026-10-21, none tested in Studio). Pull the branch, open `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`, press Play, paste red Output errors. Also pending: the 12 texture asset IDs (see [[Sproutling Isles]]).
 - [ ] **Look at the new Sproutling Isles map in Studio** (2026-10-21): first play-test done ("looks good"), then a big atmosphere/buildings/landscape upgrade was pushed (`544640a`). Now includes terrain hills (`3e61f50`, only visible after pressing Play; first real test of TerrainBuilder). On the laptop: `cd $HOME\Documents\family-hub-pro`, `git pull`, then reopen `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`. Check phone frame rate; say what to change.
