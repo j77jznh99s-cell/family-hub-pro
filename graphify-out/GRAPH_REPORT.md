@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-30)
 
 ## Corpus Check
-- 90 files · ~96,523 words
+- 90 files · ~96,652 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 796 nodes · 1160 edges · 75 communities (66 shown, 9 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 127 edges (avg confidence: 0.9)
+- 797 nodes · 1162 edges · 75 communities (66 shown, 9 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 128 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2fa6bdee`
+- Built from commit: `e706589a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,7 +28,7 @@
 - Sproutling Isles: Art Brief
 - pipeline.js
 - Sproutling Isles — Game Design Doc
-- main
+- billing.test.js
 - Gumroad Digital Products
 - ioredis
 - Clip Studio
@@ -93,7 +93,7 @@
 - Crypto Signals (momentum checkpoint system)
 
 ## God Nodes (most connected - your core abstractions)
-1. `main()` - 61 edges
+1. `main()` - 62 edges
 2. `Session Log` - 39 edges
 3. `Morning Summary` - 36 edges
 4. `Sproutling Isles: Art Brief` - 14 edges
@@ -122,12 +122,12 @@
 ## Communities (75 total, 9 thin omitted)
 
 ### Community 0 - "Session Log.md"
-Cohesion: 0.10
-Nodes (27): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, 2026-10-22 (later): onboarding, 2026-10-22: levels, vehicles, arena, crates, map, 2026-10-23: second dungeon, 2026-10-23: waystones (+19 more)
+Cohesion: 0.08
+Nodes (37): Hand-offs that work well, Team Roster, 2026-09-27: OANDA re-check and hourly cost check, 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop, 2026-10-07: owner request — "Catch-Up Recorder" built into Family Hub, 2026-10-08: owner request — iPhone/Obsidian setup guide written, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-16: owner request — Claude Code add-ons from a reel (researched, install blocked) (+29 more)
 
 ### Community 1 - "main"
-Cohesion: 0.07
-Nodes (27): 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-26: agent platform comparison (StarNet alternatives), 2026-09-26 (evening): hourly workflow restarted, 2026-09-26: hourly run — audit-economy now auto-checks Codes.luau against the paid catalogue, 2026-09-26: hourly run — audit-economy's 4th section, steady-state Dew/hour, 2026-09-26: hourly run — audit-economy's third section (Robux pricing); Work Queue now empty, 2026-09-26: hourly run — built Sproutling Isles analytics wrapper, 2026-09-26: hourly run — Config.EventTimeOffset Studio test hook built (+19 more)
+Cohesion: 0.09
+Nodes (40): main(), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: agent platform comparison (StarNet alternatives) (+32 more)
 
 ### Community 2 - "upload.js"
 Cohesion: 0.05
@@ -169,9 +169,9 @@ Nodes (9): Transcript-based scoring + captions: off (default) or Whisper, fs, pa
 Cohesion: 0.12
 Nodes (17): Build status, Core loop, Developer products (repeatable), Economy and monetization, Game passes (one-time), Map, Other systems, Overview (+9 more)
 
-### Community 12 - "main"
-Cohesion: 0.09
-Nodes (22): main(), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: AI memory export for migrating to another assistant, 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete) (+14 more)
+### Community 12 - "billing.test.js"
+Cohesion: 0.50
+Nodes (3): assert, Stripe, { test }
 
 ### Community 13 - "Gumroad Digital Products"
 Cohesion: 0.12
@@ -218,16 +218,16 @@ Cohesion: 0.17
 Nodes (12): First jobs to schedule, How the tools work (what to place in each room), How this was checked (2026-09-25), Keep it lean (owner: "don't overwork it", 2026-09-26), Laptop install (about 20 minutes), One-click settings file (2026-09-26), Online selling agents (checked in StarNet's code, 2026-09-26), Safety rules (+4 more)
 
 ### Community 24 - "ref_node_assert"
-Cohesion: 0.18
-Nodes (8): assert, Stripe, { test }, assert, { test }, assert, { test }, transcript
+Cohesion: 0.20
+Nodes (7): assert, { test }, assert, { test }, assert, { test }, transcript
 
 ### Community 25 - "queue.test.js"
 Cohesion: 0.22
 Nodes (6): assert, fs, os, path, { test, before, after }, tmpDataDir
 
 ### Community 26 - "segmenter.js"
-Cohesion: 0.31
-Nodes (8): buildCandidateSegments(), DEFAULTS, invertSilences(), mergeCloseSegments(), pickEvenlySpaced(), splitLongSegment(), assert, { test }
+Cohesion: 0.48
+Nodes (6): buildCandidateSegments(), DEFAULTS, invertSilences(), mergeCloseSegments(), pickEvenlySpaced(), splitLongSegment()
 
 ### Community 27 - "Sproutling Isles: Launch & Live Ops"
 Cohesion: 0.18
@@ -396,16 +396,16 @@ Nodes (6): Blocked, Crypto Signals (momentum checkpoint system), Planned build o
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `start()` connect `3. Analytics event spec` to `upload.js`?**
-  _High betweenness centrality (0.297) - this node is a cross-community bridge._
-- **Are the 57 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
-  _`main()` has 57 INFERRED edges - model-reasoned connections that need verification._
+  _High betweenness centrality (0.296) - this node is a cross-community bridge._
+- **Are the 58 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
+  _`main()` has 58 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Session Log.md` be split into smaller, more focused modules?**
-  _Cohesion score 0.09994711792702274 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07785602503912363 - nodes in this community are weakly interconnected._
 - **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
-  _High betweenness centrality (0.256) - this node is a cross-community bridge._
+  _High betweenness centrality (0.255) - this node is a cross-community bridge._
 - **Should `main` be split into smaller, more focused modules?**
-  _Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected._
-- **Why does `main()` connect `main` to `main`, `AI Memory Export`, `cli.js`, `Clip Studio`, `3. Analytics event spec`, `Decisions`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.202) - this node is a cross-community bridge._
+  _Cohesion score 0.0858974358974359 - nodes in this community are weakly interconnected._
+- **Why does `main()` connect `main` to `Session Log.md`, `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Decisions`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+  _High betweenness centrality (0.203) - this node is a cross-community bridge._
 - **Should `upload.js` be split into smaller, more focused modules?**
   _Cohesion score 0.0514216575922565 - nodes in this community are weakly interconnected._

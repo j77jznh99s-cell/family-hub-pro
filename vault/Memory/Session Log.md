@@ -15,6 +15,9 @@ tags: [memory, log]
 
 **Next**
 - Owner: reconnect Shopify and say new vs existing store (plus what it sells, audience, look).
+- Follow-up: owner said to use past work. Vault points to a **new store** for original family-organization
+  printables (Decisions #19/#20 recommendation), with print-on-demand added later. Proposed that and asked
+  for the look/style. Shopify still showed "needs authentication"; no computer folders shared via Remote Control.
 
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
