@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-30)
 
 ## Corpus Check
-- 90 files · ~96,800 words
+- 91 files · ~97,505 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 797 nodes · 1162 edges · 75 communities (66 shown, 9 thin omitted)
+- 803 nodes · 1168 edges · 76 communities (67 shown, 9 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 128 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3e27b2b7`
+- Built from commit: `8d18c4c8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,7 +28,7 @@
 - Sproutling Isles: Art Brief
 - pipeline.js
 - Sproutling Isles — Game Design Doc
-- billing.test.js
+- transcription.js
 - Gumroad Digital Products
 - ioredis
 - Clip Studio
@@ -91,6 +91,7 @@
 - express-rate-limit
 - openai
 - Crypto Signals (momentum checkpoint system)
+- ref_path
 
 ## God Nodes (most connected - your core abstractions)
 1. `main()` - 62 edges
@@ -119,7 +120,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (75 total, 9 thin omitted)
+## Communities (76 total, 9 thin omitted)
 
 ### Community 0 - "Session Log.md"
 Cohesion: 0.08
@@ -131,7 +132,7 @@ Nodes (40): main(), 2026-09-23 (evening): moved everything into the vault for th
 
 ### Community 2 - "upload.js"
 Cohesion: 0.05
-Nodes (30): express@^4.21.1, express, path, ROOT, requireAccessToken(), express, router, express (+22 more)
+Nodes (28): express@^4.21.1, express, requireAccessToken(), express, router, express, router, express (+20 more)
 
 ### Community 3 - "graph.js"
 Cohesion: 0.07
@@ -142,7 +143,7 @@ Cohesion: 0.24
 Nodes (10): checkAvailable(), detectSilences(), escapeForFilterPath(), { execFile }, execFileAsync, extractAudio(), extractClip(), extractFrame() (+2 more)
 
 ### Community 5 - "postgres.js"
-Cohesion: 0.21
+Cohesion: 0.19
 Nodes (19): addCredits(), createJob(), failStaleProcessingJobs(), fs, getClip(), getClipsForJob(), getJob(), getOrCreateAccount() (+11 more)
 
 ### Community 6 - "Morning Summary"
@@ -162,16 +163,16 @@ Cohesion: 0.11
 Nodes (19): 10. Game icon and thumbnails, 11. Deliverables and file formats, 12. Rough effort estimate (unverified, for quoting only), 13. What `roblox-engineer` must build to use this art (later task), 1. The game in one paragraph (for the artist), 2. Art direction, 3. Palette, 4. Silhouette rules (+11 more)
 
 ### Community 10 - "pipeline.js"
-Cohesion: 0.15
-Nodes (9): Transcript-based scoring + captions: off (default) or Whisper, fs, path, safeTranscribe(), { v4: uuid }, fs, getClient(), OpenAI (+1 more)
+Cohesion: 0.19
+Nodes (5): path, ROOT, fs, path, { v4: uuid }
 
 ### Community 11 - "Sproutling Isles — Game Design Doc"
 Cohesion: 0.12
 Nodes (17): Build status, Core loop, Developer products (repeatable), Economy and monetization, Game passes (one-time), Map, Other systems, Overview (+9 more)
 
-### Community 12 - "billing.test.js"
-Cohesion: 0.50
-Nodes (3): assert, Stripe, { test }
+### Community 12 - "transcription.js"
+Cohesion: 0.28
+Nodes (6): Transcript-based scoring + captions: off (default) or Whisper, safeTranscribe(), fs, getClient(), OpenAI, transcribe()
 
 ### Community 13 - "Gumroad Digital Products"
 Cohesion: 0.12
@@ -202,7 +203,7 @@ Cohesion: 0.15
 Nodes (13): 10. Build checklist for roblox-engineer, 11. Out of scope (later), 1. Goals, 2. Player flow, 3. Rules, 4. UI screens and text, 5. Server authority and anti-dupe requirements, 6. Data changes (+5 more)
 
 ### Community 21 - "inProcess.js"
-Cohesion: 0.17
+Cohesion: 0.15
 Nodes (9): processJob(), connection, IORedis, queue, { Queue, Worker }, worker, enqueue(), pending (+1 more)
 
 ### Community 22 - "s3.js"
@@ -218,8 +219,8 @@ Cohesion: 0.17
 Nodes (12): First jobs to schedule, How the tools work (what to place in each room), How this was checked (2026-09-25), Keep it lean (owner: "don't overwork it", 2026-09-26), Laptop install (about 20 minutes), One-click settings file (2026-09-26), Online selling agents (checked in StarNet's code, 2026-09-26), Safety rules (+4 more)
 
 ### Community 24 - "ref_node_assert"
-Cohesion: 0.20
-Nodes (7): assert, { test }, assert, { test }, assert, { test }, transcript
+Cohesion: 0.15
+Nodes (10): assert, Stripe, { test }, assert, { test }, assert, { test }, assert (+2 more)
 
 ### Community 25 - "queue.test.js"
 Cohesion: 0.22
@@ -389,6 +390,10 @@ Nodes (4): 6. Marketing, Creator outreach, Sponsored ads (Roblox Ads Manager). *
 Cohesion: 0.33
 Nodes (6): Blocked, Crypto Signals (momentum checkpoint system), Planned build order, Status, Tasks, What it is
 
+### Community 75 - "ref_path"
+Cohesion: 0.29
+Nodes (4): { chromium }, path, sizes, themes
+
 ## Knowledge Gaps
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -396,16 +401,16 @@ Nodes (6): Blocked, Crypto Signals (momentum checkpoint system), Planned build o
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `start()` connect `3. Analytics event spec` to `upload.js`?**
-  _High betweenness centrality (0.296) - this node is a cross-community bridge._
+  _High betweenness centrality (0.300) - this node is a cross-community bridge._
 - **Are the 58 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
   _`main()` has 58 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Session Log.md` be split into smaller, more focused modules?**
   _Cohesion score 0.07785602503912363 - nodes in this community are weakly interconnected._
 - **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
-  _High betweenness centrality (0.255) - this node is a cross-community bridge._
+  _High betweenness centrality (0.258) - this node is a cross-community bridge._
 - **Should `main` be split into smaller, more focused modules?**
   _Cohesion score 0.0858974358974359 - nodes in this community are weakly interconnected._
 - **Why does `main()` connect `main` to `Session Log.md`, `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Decisions`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.203) - this node is a cross-community bridge._
+  _High betweenness centrality (0.202) - this node is a cross-community bridge._
 - **Should `upload.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.0514216575922565 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.052244897959183675 - nodes in this community are weakly interconnected._
