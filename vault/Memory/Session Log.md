@@ -1,6 +1,49 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
+**Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
+
+**Owner asked**
+- Build a new crypto trading-signal system: parallel momentum agents (UP/DOWN + confidence),
+  weighted aggregator across timeframes, orderbook pressure metrics, checkpoint-meter UI matching
+  "Xvantage." Build order: Python data fetcher (Binance) → momentum agent (RSI/MACD) → aggregator →
+  Node API → React dashboard.
+
+**What was done**
+- Scaffolded step 1 in the sandbox (`BinanceDataFetcher` wrapping `/api/v3/klines`, multi-timeframe
+  helper); parsing-verified against a sample payload (live calls blocked by sandbox egress policy —
+  `api.binance.com` gets a 403 on CONNECT, org proxy policy). This code did **not** survive a
+  session/worker restart and will need rebuilding.
+- Spent most of the session chasing GitHub repo access for a `trading-agent`-named repo the owner
+  initially pointed at, before discovering **a real, unrelated `trading-agent` repo already exists**
+  (forex/OANDA research toolkit, documented in [[Trading Agent]], explicit "read-only, no pushes"
+  rule). Owner confirmed (2026-10-30) the crypto idea is a **different project** and should get its
+  own repo — written up as [[Crypto Signals]].
+- Walked the owner through GitHub's mobile app and web settings looking for where to grant repo
+  access to Claude's GitHub App; ended up finding Claude isn't an installed GitHub App on the
+  account at all (`github.com/settings/installations` only shows Railway App) — this session's repo
+  scope is actually controlled from `claude.ai/customize/connectors` instead. Session restarted
+  before the owner finished that step.
+- Tried creating the repo directly via GitHub's API as a shortcut — failed, 403 "Resource not
+  accessible by integration" (the installed app/credential isn't permissioned to create repos).
+- Earlier in the session (before this topic): reconstructed a `BENITO_PROJECTS_MASTER.md` outline
+  on `claude/projects-overview-roadmap-2dnfnn` from a summary the owner pasted (original file lived
+  outside this repo/session and wasn't accessible) — committed locally but push also failed (same
+  GitHub-access gap). Marked with `[TBD]` placeholders throughout; owner has not yet reviewed it.
+
+**Not verified**
+- `BinanceDataFetcher` only checked against a hand-built sample payload, never a live Binance
+  response (egress blocked in-sandbox).
+- `BENITO_PROJECTS_MASTER.md` is a reconstruction from a short bullet summary, not the real source
+  file — most of its content is `[TBD]` placeholders, not verified facts.
+
+**Decisions** (also add to [[Decisions]])
+- Crypto Signals is a separate project/repo from Trading Agent (forex), not a rename or pivot of it.
+
+**Next:** see [[Active Context]] — needs the repo name confirmed + GitHub connector access granted
+before any of this session's crypto-signals code can be pushed or rebuilt productively.
+
 ## 2026-10-24 (overnight run 2): Daily Tasks
 **Agents used:** none · `9dee71e` on `claude/roblox-popular-game-trends-6u7sie`
 - Owner said "next". Added Daily Tasks with streaks and a Task Board. Not Studio-tested.

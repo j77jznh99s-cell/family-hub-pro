@@ -89,6 +89,7 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]].
 - [ ] StarNet itself (the local pixel-art station) is still on hold, separate from the VPS-agent idea declined 2026-10-08; if you want to revisit StarNet specifically, the next step is just the Gumroad account.
 - [ ] Say what's next for Clip Studio — including whether to merge `claude/hourly-project-processing-ejbqs4` (QA'd clean, 2 minor bugs to fix either way).
 - [ ] **Family Hub: build and test the new Catch-Up Recorder** (`0f097d3`, 2026-10-07) — `swift test` for the new logic tests, then Xcode on a real iPhone. Completely unverified until you do (no Xcode in the sandbox). See [[Family Hub]] for exact steps. Also still open: what's next for Family Hub overall (TestFlight? App Store?).
+- [ ] **New: [[Crypto Signals]]** (2026-10-30) — confirmed separate from [[Trading Agent]] (forex). Needs: a repo (name not yet confirmed, `crypto-signals` suggested) and GitHub access granted via `claude.ai/customize/connectors` (Claude isn't an installed GitHub App on your account at all — access for this session is only via that connector page, not `github.com/settings/installations`). Until then this stays local-only; the one file built this session (`src/data_fetcher.py`, Binance klines wrapper) didn't survive a session restart and needs rebuilding once unblocked.
 
 ## Timeline at risk
 **Superseded, not current.** The old "beta 2–8 Oct, skip Halloween if launch slips past 24 Oct" plan was for

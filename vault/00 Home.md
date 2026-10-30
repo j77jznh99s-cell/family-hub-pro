@@ -32,6 +32,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
 - [[Gumroad Digital Products]]: original digital products sold by the agent crew (planning)
 - [[Trading Agent]]: forex setup alerts for the owner to review (separate repo)
+- [[Crypto Signals]]: new idea, Binance momentum-signal checkpoint dashboard (separate repo, blocked on access, 2026-10-30)
 
 ## Team
 - [[Team Roster]]: agent job titles, what each one reads, writes and owns
