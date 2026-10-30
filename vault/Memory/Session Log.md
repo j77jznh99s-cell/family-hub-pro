@@ -1,6 +1,21 @@
 ---
 tags: [memory, log]
 ---
+## 2026-10-30: Shopify set-up request (blocked on sign-in)
+**Device:** phone · **Branch:** `main` · **Agents used:** none
+
+**Owner asked**
+- "Shopify set up" (no other detail).
+
+**What was done**
+- Tried the Shopify connector: it needs the owner to sign in again (claude.ai Settings → Connectors).
+- Asked whether this is a new store or an existing one, and whether it's the print-on-demand plan
+  from [[Decisions]] #19. No vault project note for Shopify yet.
+- Committed an automatic graphify graph rebuild (no code changes).
+
+**Next**
+- Owner: reconnect Shopify and say new vs existing store (plus what it sells, audience, look).
+
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
 

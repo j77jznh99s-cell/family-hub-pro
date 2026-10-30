@@ -1,17 +1,17 @@
 # Graph Report - family-hub-pro  (2026-10-30)
 
 ## Corpus Check
-- 89 files · ~95,019 words
+- 90 files · ~96,523 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 787 nodes · 1145 edges · 74 communities (65 shown, 9 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 126 edges (avg confidence: 0.9)
+- 796 nodes · 1160 edges · 75 communities (66 shown, 9 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 127 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e966341d`
+- Built from commit: `2fa6bdee`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -90,9 +90,10 @@
 - dotenv@^16.4.5
 - express-rate-limit
 - openai
+- Crypto Signals (momentum checkpoint system)
 
 ## God Nodes (most connected - your core abstractions)
-1. `main()` - 60 edges
+1. `main()` - 61 edges
 2. `Session Log` - 39 edges
 3. `Morning Summary` - 36 edges
 4. `Sproutling Isles: Art Brief` - 14 edges
@@ -118,15 +119,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (74 total, 9 thin omitted)
+## Communities (75 total, 9 thin omitted)
 
 ### Community 0 - "Session Log.md"
 Cohesion: 0.10
-Nodes (26): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, 2026-10-22 (later): onboarding, 2026-10-22: levels, vehicles, arena, crates, map, 2026-10-23: second dungeon, 2026-10-23: waystones (+18 more)
+Nodes (27): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-21 (night): quests, wilds and sky isles, 2026-10-22 (later): onboarding, 2026-10-22: levels, vehicles, arena, crates, map, 2026-10-23: second dungeon, 2026-10-23: waystones (+19 more)
 
 ### Community 1 - "main"
-Cohesion: 0.08
-Nodes (26): 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: AI memory export for migrating to another assistant, 2026-09-26 (evening): hourly workflow restarted, 2026-09-26: hourly run — audit-economy now auto-checks Codes.luau against the paid catalogue (+18 more)
+Cohesion: 0.07
+Nodes (27): 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-26: agent platform comparison (StarNet alternatives), 2026-09-26 (evening): hourly workflow restarted, 2026-09-26: hourly run — audit-economy now auto-checks Codes.luau against the paid catalogue, 2026-09-26: hourly run — audit-economy's 4th section, steady-state Dew/hour, 2026-09-26: hourly run — audit-economy's third section (Robux pricing); Work Queue now empty, 2026-09-26: hourly run — built Sproutling Isles analytics wrapper, 2026-09-26: hourly run — Config.EventTimeOffset Studio test hook built (+19 more)
 
 ### Community 2 - "upload.js"
 Cohesion: 0.05
@@ -170,7 +171,7 @@ Nodes (17): Build status, Core loop, Developer products (repeatable), Economy an
 
 ### Community 12 - "main"
 Cohesion: 0.09
-Nodes (22): main(), 2026-09-23 (later): first agent team run, 2026-09-26: agent platform comparison (StarNet alternatives), 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete), 2026-09-26: hourly run — built Sproutling Isles analytics wrapper, 2026-09-26: hourly run — confirmed Frostbloom Festival numbers, 2026-09-26: hourly run — documented Trading Agent, 2026-09-26: hourly run — Gumroad product-line demand brief (+14 more)
+Nodes (22): main(), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: AI memory export for migrating to another assistant, 2026-09-26: hourly run — analytics recurring funnels + custom events (run complete) (+14 more)
 
 ### Community 13 - "Gumroad Digital Products"
 Cohesion: 0.12
@@ -384,6 +385,10 @@ Nodes (4): CI fix on `main` (2026-09-26), Clip Studio, QA Review (2026-09-26), T
 Cohesion: 0.50
 Nodes (4): 6. Marketing, Creator outreach, Sponsored ads (Roblox Ads Manager). *All tiers spend real money, so the owner decides.*, TikTok / YouTube Shorts clip ideas (9:16, 10–25 s, hook in the first second, captions on)
 
+### Community 74 - "Crypto Signals (momentum checkpoint system)"
+Cohesion: 0.33
+Nodes (6): Blocked, Crypto Signals (momentum checkpoint system), Planned build order, Status, Tasks, What it is
+
 ## Knowledge Gaps
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -392,15 +397,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `start()` connect `3. Analytics event spec` to `upload.js`?**
   _High betweenness centrality (0.297) - this node is a cross-community bridge._
-- **Are the 56 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
-  _`main()` has 56 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 57 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
+  _`main()` has 57 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Session Log.md` be split into smaller, more focused modules?**
-  _Cohesion score 0.10282485875706214 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09994711792702274 - nodes in this community are weakly interconnected._
 - **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
-  _High betweenness centrality (0.255) - this node is a cross-community bridge._
+  _High betweenness centrality (0.256) - this node is a cross-community bridge._
 - **Should `main` be split into smaller, more focused modules?**
-  _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected._
 - **Why does `main()` connect `main` to `main`, `AI Memory Export`, `cli.js`, `Clip Studio`, `3. Analytics event spec`, `Decisions`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.203) - this node is a cross-community bridge._
+  _High betweenness centrality (0.202) - this node is a cross-community bridge._
 - **Should `upload.js` be split into smaller, more focused modules?**
   _Cohesion score 0.0514216575922565 - nodes in this community are weakly interconnected._

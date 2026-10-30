@@ -72,5 +72,6 @@
   "70": "Decisions",
   "71": "dotenv@^16.4.5",
   "72": "express-rate-limit",
-  "73": "openai"
+  "73": "openai",
+  "74": "Crypto Signals (momentum checkpoint system)"
 }
