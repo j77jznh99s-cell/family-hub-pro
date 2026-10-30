@@ -24,6 +24,9 @@ tags: [memory, log]
 - Owner started adding the first product in the Shopify app. Advised: set status to **Draft** (it defaulted to
   Active), draft listing "Weekly Family Chore Chart – Printable PDF" at $5, turn off "physical product", install
   Shopify's free Digital Downloads app. Offered to design the original PDF; waiting on the owner's yes.
+- Owner said yes: built the original **Weekly Family Chore Chart** in `products/chore-chart/` (`chart.html` +
+  `build.js`, Playwright → PDF). Letter + A4 PDFs, each 2 pages (colour + black-and-white), plus `preview.png`
+  for the Shopify listing image. Checked visually. Not yet uploaded to Shopify (owner does that via Digital Downloads).
 
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
