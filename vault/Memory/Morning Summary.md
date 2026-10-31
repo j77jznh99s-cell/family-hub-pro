@@ -32,6 +32,48 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-10-31
+
+**Done overnight/today**
+- A lot landed yesterday after my last check-in (your own phone session):
+  - **Shopify store is underway** — the long-pending Gumroad/printables decision finally moved,
+    but to Shopify instead. Payments set up, first product drafted (Weekly Family Chore Chart, $5),
+    and I built the actual original PDF (`products/chore-chart/` — Letter + A4, colour + B&W, plus
+    a preview image). Not live yet: still need Digital Downloads app to attach the PDFs, a store
+    name, and a test purchase before going Active.
+  - **New project: [[Crypto Signals]]** — a crypto trading-signal system (separate from the
+    existing forex Trading Agent). Confirmed as its own project, but blocked: it needs its own
+    GitHub repo and connector access before any code can be pushed. One file built this session
+    didn't survive a restart and needs rebuilding once unblocked.
+  - **Bybit Trading Bot scaffold logged** (the actual work was from 2026-09-21, only just written
+    up in the vault): full risk-gated scaffold built and pushed, 14/14 tests pass, dry-run
+    validated. Blocked on you supplying a real Bybit testnet key.
+
+**New projects waiting for your OK**
+- Crypto Signals is already approved/underway, just blocked on GitHub access (see above).
+
+**Needs you: costs money**
+- Nothing new flagged, though the Shopify store itself is a new paid-service consideration worth
+  keeping in mind as it goes live (Shopify's own subscription).
+
+**Needs you**
+- **Finish the Shopify store:** attach the PDFs via Digital Downloads, pick a store name, test
+  purchase, then set the listing Active.
+- **Grant GitHub access for Crypto Signals** via `claude.ai/customize/connectors` (not
+  `github.com/settings/installations` — Claude isn't installed as a GitHub App on your account at
+  all), and confirm the repo name.
+- **Bybit bot:** supply a real Bybit testnet API key to unblock live dry-run testing.
+- Unchanged and still the single biggest item: **play-test the Sproutling Isles RPG in Studio** —
+  now over a week with no update.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring, texture asset IDs).
+
+**Next up**
+- Waiting on you for the Shopify finish line, the GitHub access grant, and the Sproutling Isles play-test.
+
+---
+
 ## 2026-10-30
 
 **Done overnight/today**
