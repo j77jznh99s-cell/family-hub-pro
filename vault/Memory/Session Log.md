@@ -27,6 +27,10 @@ tags: [memory, log]
 - Owner said yes: built the original **Weekly Family Chore Chart** in `products/chore-chart/` (`chart.html` +
   `build.js`, Playwright → PDF). Letter + A4 PDFs, each 2 pages (colour + black-and-white), plus `preview.png`
   for the Shopify listing image. Checked visually. Not yet uploaded to Shopify (owner does that via Digital Downloads).
+- Owner filled in the product (title, description, $5, category Organizers); advised turning off inventory tracking
+  and "physical product". Then generated a store theme ("printable PDF planners and chore charts for busy families,
+  soft teal + warm coral" to match the chart). Still to do: Digital Downloads + attach PDFs, store name (bank
+  statement still shows the owner's personal name), test purchase, then set Active.
 
 ## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
 **Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
