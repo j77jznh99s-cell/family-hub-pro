@@ -32,6 +32,30 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-01
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged from yesterday: finish the Shopify store (Digital Downloads, store name, test
+  purchase), grant GitHub access for Crypto Signals, supply a Bybit testnet key, and — still the
+  single biggest item — play-test the Sproutling Isles RPG in Studio.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring, texture asset IDs).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
 ## 2026-10-31
 
 **Done overnight/today**
