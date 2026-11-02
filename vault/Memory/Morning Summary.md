@@ -32,6 +32,26 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-02
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list as yesterday — see [[Active Context]] for the full picture (Shopify store,
+  Crypto Signals GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
 ## 2026-11-01
 
 **Done overnight/today**
