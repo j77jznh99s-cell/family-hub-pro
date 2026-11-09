@@ -7,6 +7,8 @@ updated: 2026-11-09
 > Rewrite this note at the end of every session so it's true *now*. Keep it short.
 
 ## Current focus
+**Newest (2026-11-09): [[Game Asset Store]]**: sell original game assets. Research picked Roblox Luau kits; the first kit is built and waiting on the owner's Studio test.
+
 **Sproutling Isles is now a large open-world fantasy RPG, built almost entirely 2026-10-21 to 2026-10-24**
 (branch `claude/roblox-popular-game-trends-6u7sie`) — combat, vehicles, an arena, levels/crates, a world map,
 4 elemental dungeons (Deepdelve Mines, Emberdeep Caldera, Tidewrack Grotto, plus the original), waystone
@@ -75,6 +77,7 @@ needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]] (scaffold built & p
 blocked on the owner supplying a real Bybit testnet key — see [[Bybit Trading Bot]]).
 
 ## Waiting on the owner
+- [ ] **New: [[Game Asset Store]]** (2026-11-09): first pack built, the **Daily Streaks Kit** for Roblox (branch `claude/elegant-carson-k0ja0u`, `products/game-assets/daily-streaks-kit/`). Untested. Next: run `luau tests/Logic.spec.luau`, play-test in Studio (checklist in `LISTING.md`), screenshots, then list on Gumroad/itch.io at $9.99 with the itch.io "AI Generated" tag.
 - [ ] **Shopify store (family printables)** (2026-10-31): payments set up, first product drafted (Weekly Family Chore Chart, $5, files in `products/chore-chart/`), theme generated. Next: attach PDFs via Digital Downloads app, pick a store name, test purchase, set Active.
 - [ ] **Approve the Claude Code add-ons** (2026-10-16): PonyTail + Agent Skills (recommended), OmniRoute declined. Steps in [[Claude Code Add-ons]]. **Graphify is done** (installed 2026-10-16, graph in `graphify-out/`; owner says laptop install done too).
 - [ ] **Play-test the finished Sproutling Isles RPG** (all 7 steps done 2026-10-21, none tested in Studio). Pull the branch, open `roblox\sproutling-isles\build\SproutlingIsles.rbxlx`, press Play, paste red Output errors. Also pending: the 12 texture asset IDs (see [[Sproutling Isles]]).

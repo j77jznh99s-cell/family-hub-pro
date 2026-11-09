@@ -1,0 +1,18 @@
+Daily Streaks Kit - Licence
+
+Copyright (c) 2026 the kit's author. All rights reserved except as granted below.
+
+When you buy the kit, you get a lifetime, non-exclusive licence to:
+- use and change the kit in any number of your own Roblox experiences, including commercial ones
+  and ones that make money;
+- publish those experiences, with the kit's code inside them, to Roblox.
+
+You may not:
+- resell, share, sublicense or give away the kit's files, changed or unchanged, on their own or
+  as part of another asset, kit, template, model or plugin (including on the Roblox Creator Store);
+- claim you made the kit.
+
+You don't have to credit anyone, though credit is appreciated.
+
+THE KIT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHOR IS NOT LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM ITS USE, INCLUDING LOST PLAYER DATA.
