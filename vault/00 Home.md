@@ -1,6 +1,6 @@
 ---
 tags: [index]
-updated: 2026-09-26
+updated: 2026-11-09
 ---
 # Home
 
@@ -30,6 +30,7 @@ Open this folder in Obsidian as a vault to browse it with links and graph view.
 - [[Claude Code Add-ons]]: PonyTail, Agent Skills, Graphify, OmniRoute — verdicts and install steps (2026-10-16)
 - [[Agent Platform Comparison]]: StarNet vs. other agent platforms (2026-09-26); recommends staying on the cloud setup
 - [[StarNet Automation]]: run the agent team as a pixel-art "station" on the laptop (setup)
+- [[Game Asset Store]]: original Roblox game kits for sale; first pack (Daily Streaks Kit) built 2026-11-09
 - [[Gumroad Digital Products]]: original digital products sold by the agent crew (planning)
 - [[Trading Agent]]: forex setup alerts for the owner to review (separate repo)
 - [[Crypto Signals]]: new idea, Binance momentum-signal checkpoint dashboard (separate repo, blocked on access, 2026-10-30)

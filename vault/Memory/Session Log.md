@@ -1,6 +1,24 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-09: Game asset selling (research + first pack)
+**Device:** phone · **Branch:** `claude/elegant-carson-k0ja0u` · **Agents used:** market-researcher
+
+**Owner asked**
+- "Game asset selling". Chose "research first" plus "plan + first pack".
+
+**What was done**
+- market-researcher wrote the demand brief in [[Game Asset Store]]. Pick: a Roblox Luau systems kit ($9.99, Gumroad + itch.io). The 2D pixel and 3D low-poly lines are crowded and need art skills we don't have. itch.io requires an AI-disclosure tag.
+- Built the **Daily Streaks Kit** in `products/game-assets/daily-streaks-kit/`: config, pure logic, server service with DataStore saving and signals, code-built client panel, Rojo project, README, licence, example, logic tests and listing draft (`LISTING.md`). It's a game-agnostic rewrite of our own Sproutling Isles daily tasks.
+
+**Not verified**
+- Nothing has been run. The Luau CLI download was blocked from executing in the sandbox, so the tests haven't been run, and nothing has been tested in Studio. Roblox Creator Store rules are search-summary only.
+
+**Decisions** (also add to [[Decisions]])
+- First game-asset product line: a Roblox Luau kit (owner chose research-first and accepted the recommendation by asking for the first pack).
+
+**Next:** see [[Active Context]].
+
 ## 2026-10-30: Shopify set-up request (blocked on sign-in)
 **Device:** phone · **Branch:** `main` · **Agents used:** none
 

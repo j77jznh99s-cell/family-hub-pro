@@ -7,6 +7,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-11-09 | Game Asset Store | First game-asset product is a Roblox Luau systems kit (Daily Streaks Kit, $9.99 test price, Gumroad + itch.io first, Creator Store after a Studio test) | Research brief: the only line where a code-only team can compete; pixel/3D packs are crowded at $1-$6 and need art skills | Owner asked for research-first + first pack; Claude chose from the brief |
 | 2026-10-30 | Crypto Signals | Separate project and separate new repo from [[Trading Agent]] (forex/OANDA) — not a pivot of the existing repo | Owner: "Different project, new repo" when asked to reconcile the two | Owner |
 | 2026-10-21 | Sproutling Isles | Build all remaining RPG steps (5 cooking, 6 companions/mounts/travel, 7 performance) without stopping for approval; report only when finished | Owner: "Stop asking me for approval and continue the process until it is finished" | Owner |
 | 2026-10-21 | Sproutling Isles | No Studio play-tests until the RPG is done; keep building steps in order | Owner: "not trying to do any playtest before it's done" (warned that bugs will pile up) | Owner |
