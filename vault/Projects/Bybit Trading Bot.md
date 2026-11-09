@@ -1,6 +1,6 @@
 ---
 tags: [project, trading, high-risk]
-updated: 2026-10-20
+updated: 2026-10-30
 ---
 # Bybit Trading Bot
 
@@ -17,6 +17,12 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   2026-10-14: all tests run for the first time (Node on the PC) and pass; gate now audits before every exchange
   write and fails closed if it can't (`5c34a45`, local only; gate 69/69, scripts 46/46). 2026-10-15: audit
   entries linked by `attempt_id`; timeouts/network errors report "outcome unknown" not "rejected" (`df80168`, local only; gate 97/97).
+- **Cloud note (2026-10-30, merged into this note 2026-11-09):** this branch is an orphan root commit (repo was empty when the scaffold
+  was built), so it does **not** contain `vault/`/`CLAUDE.md` — don't expect them there.
+- **State (2026-10-30):** full scaffold built, builds clean, 14/14 unit tests pass, dry-run validated against
+  a fake exchange client (approval + notional-cap rejection + kill-switch blocking both entries and closes).
+  Pushed to origin as `6722583`. **Nothing has touched a real Bybit testnet account yet.** See
+  [[Session Log]] (2026-10-30 entry, logged late — the build happened 2026-09-21).
 
 ## Hard rules for every agent
 - Never weaken, bypass or disable the risk gate's checks.
@@ -48,3 +54,10 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   `position-check` run against an old-format `state` snapshot: expect no alerts and a file re-keyed to `symbol:side`
 - [x] **app-engineer:** if `position-check` keeps failing (bad data / outage), nothing tells the owner (cron only logs); send one Telegram alert on repeated failures —
   `0ba3a2b`, 2026-10-20 20:03: one alert after 3 failed runs in a row, one on recovery (`failureStep`, counter in `scripts/.state/`); scripts 49/49; real Telegram send not tested; not pushed
+- [ ] **owner:** create a Bybit **testnet** account + API key (contract-trading permission only), set it in
+  `~/.codex/config.toml`'s `risk-gate` MCP env block (not in the repo), and run one real manual cycle
+  (README §6). Nothing further can be verified without this.
+- [ ] **owner:** confirm intent — is this headed anywhere near real money eventually, or staying a
+  testnet/paper exercise? Decides whether cron + Telegram get enabled at all.
+- [ ] once a real manual cycle runs clean: trigger each rejection path live (halt / daily-loss / notional /
+  leverage / price / position-cap) before enabling `crontab.txt`.

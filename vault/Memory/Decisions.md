@@ -7,6 +7,19 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 
 | Date | Project | Decision | Why | Decided by |
 | --- | --- | --- | --- | --- |
+| 2026-11-09 | Game Asset Store | First game-asset product is a Roblox Luau systems kit (Daily Streaks Kit, $9.99 test price, Gumroad + itch.io first, Creator Store after a Studio test) | Research brief: the only line where a code-only team can compete; pixel/3D packs are crowded at $1-$6 and need art skills | Owner asked for research-first + first pack; Claude chose from the brief |
+| 2026-10-30 | Crypto Signals | Separate project and separate new repo from [[Trading Agent]] (forex/OANDA) — not a pivot of the existing repo | Owner: "Different project, new repo" when asked to reconcile the two | Owner |
+| 2026-10-21 | Sproutling Isles | Build all remaining RPG steps (5 cooking, 6 companions/mounts/travel, 7 performance) without stopping for approval; report only when finished | Owner: "Stop asking me for approval and continue the process until it is finished" | Owner |
+| 2026-10-21 | Sproutling Isles | No Studio play-tests until the RPG is done; keep building steps in order | Owner: "not trying to do any playtest before it's done" (warned that bugs will pile up) | Owner |
+| 2026-10-21 | Sproutling Isles | **Open-world fantasy RPG** (Renaissance style, older dungeon-crawl feel; genre ideas from Elden Ring, Shangri-La Frontier, Delicious in Dungeon, Diablo, nothing copied). Replaces the modern-city direction from earlier the same day | Owner | Owner |
+| 2026-10-21 | Sproutling Isles | City rebuilt as a fantasy city (horses/carriages, ships, airships instead of cars/boats/planes) | Owner picked the recommended option | Owner |
+| 2026-10-21 | Sproutling Isles | Core loop: dungeon loot crawl AND overworld bosses, built side by side | Owner chose 'both equally' | Owner |
+| 2026-10-21 | Sproutling Isles | Combat: real-time action (click to attack, dodge roll, stamina, hotkey abilities, phone buttons) | Owner picked the recommended option | Owner |
+| 2026-10-21 | Sproutling Isles | Gardening kept: plots grow RPG ingredients for potions and cooking; Sproutlings become companion pets that fight | Owner picked the recommended option | Owner |
+| 2026-10-21 | Sproutling Isles | **Turn Sproutling Isles into a city game**: whole city with boats, planes, pets, shops, weapons, tools and abilities. Gardening plots kept for now as player homes (whether to keep the gardening loop is still open) | Owner chose this over a separate new game or a city district add-on | Owner |
+| 2026-10-21 | Sproutling Isles | Combat: cartoon, no blood (blasters, swords, abilities with knockback and respawns) | Fits Roblox's widest age rating | Owner (recommended option) |
+| 2026-10-21 | Sproutling Isles | Part budget: big but phone-safe, ~25-40k parts with streaming, not 100k | Owner asked for 100k; 100k would crash phones | Owner (recommended option) |
+| 2026-10-21 | Sproutling Isles | Visual upgrade: more vibrant effects, buildings and landscape, using owner's reference screenshots for mood only (original designs) | Owner: "more vibrant effects... more structures, more buildings, more landscape" after a play-test that "looks good" | Owner |
 | 2026-10-16 | Workspace | Installed Graphify (code knowledge graph) in the repo, with hooks and a SessionStart installer | Owner ran the install command and said "whatever you need to do to get it done" | Owner |
 | 2026-10-08 | Workspace | Declined the standalone VPS-based agent project (from a tutorial video); built a [[Knowledge Graph]] memory layer instead, inside the existing sandbox, no new server/cost | Confirms #21: matches the already-researched recommendation (cost, security, duplicates existing setup); gets the real learning/recall benefit without the VPS/Tailscale/messaging-bridge parts | Owner asked for pros/cons, then chose |
 | 2026-10-03 | Starling Heist | Build a brand-new Roblox game from scratch that follows what's popular now (steal-and-collect, weekly drops, Halloween event) and Roblox's current rules; Sproutling Isles is kept as it is, not deleted | Owner: "start from the beginning and build it completely fresh… follows what's popular right now and the rules and regulations that Roblox set" | Owner (Claude chose the concept from the 2026-10-03 market refresh) |
@@ -59,6 +72,8 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 | 14 | Rewarded video ads plan + ad-reward products | Yes, once eligible |
 | 15 | Gate look: glowing vine curtain instead of a laser? | Yes (fits the art style) |
 
+**2026-10-22 (session call, owner can override):** vehicles stay in the Renaissance theme (carriages for cars, ornithopter for planes, aerial screw for helicopters) because the owner earlier chose a Renaissance fantasy RPG; a modern reskin is possible if the owner wants real cars/planes.
+
 **Selling agents ([[StarNet Automation]])**
 | # | Decision | Recommendation |
 | --- | --- | --- |
@@ -68,3 +83,7 @@ Newest first. Record who decided, what was decided, and why. Mark decisions that
 declined a separate VPS-based agent (from a tutorial video) in favor of staying on the current setup
 and adding a [[Knowledge Graph]] memory layer instead. See the 2026-10-08 row above. StarNet itself
 (the local pixel-art station) remains on hold, unchanged.
+
+- 2026-10-24: Sproutling Isles part budget raised from ~40k to 100k (owner). StreamingEnabled stays on.
+- 2026-10-24: The whole world must read as one connected map from the start island to the far coast (owner).
+- 2026-10-24: Garden plots live in Greenhollow Gardens (a farm village off the city), not on the garden island (owner). Shop prices stay as they are (owner retracted "open shops free").

@@ -32,6 +32,481 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-09
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-08
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-07
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-06
+
+**Done overnight/today**
+- Nothing substantive — one graphify-only graph-rebuild commit (no code or vault content change).
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-05
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-04
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-03
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list — see [[Active Context]] for the full picture (Shopify store, Crypto Signals
+  GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-02
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Still the same list as yesterday — see [[Active Context]] for the full picture (Shopify store,
+  Crypto Signals GitHub access, Bybit testnet key, Sproutling Isles play-test, and the rest).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-11-01
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged from yesterday: finish the Shopify store (Digital Downloads, store name, test
+  purchase), grant GitHub access for Crypto Signals, supply a Bybit testnet key, and — still the
+  single biggest item — play-test the Sproutling Isles RPG in Studio.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring, texture asset IDs).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-31
+
+**Done overnight/today**
+- A lot landed yesterday after my last check-in (your own phone session):
+  - **Shopify store is underway** — the long-pending Gumroad/printables decision finally moved,
+    but to Shopify instead. Payments set up, first product drafted (Weekly Family Chore Chart, $5),
+    and I built the actual original PDF (`products/chore-chart/` — Letter + A4, colour + B&W, plus
+    a preview image). Not live yet: still need Digital Downloads app to attach the PDFs, a store
+    name, and a test purchase before going Active.
+  - **New project: [[Crypto Signals]]** — a crypto trading-signal system (separate from the
+    existing forex Trading Agent). Confirmed as its own project, but blocked: it needs its own
+    GitHub repo and connector access before any code can be pushed. One file built this session
+    didn't survive a restart and needs rebuilding once unblocked.
+  - **Bybit Trading Bot scaffold logged** (the actual work was from 2026-09-21, only just written
+    up in the vault): full risk-gated scaffold built and pushed, 14/14 tests pass, dry-run
+    validated. Blocked on you supplying a real Bybit testnet key.
+
+**New projects waiting for your OK**
+- Crypto Signals is already approved/underway, just blocked on GitHub access (see above).
+
+**Needs you: costs money**
+- Nothing new flagged, though the Shopify store itself is a new paid-service consideration worth
+  keeping in mind as it goes live (Shopify's own subscription).
+
+**Needs you**
+- **Finish the Shopify store:** attach the PDFs via Digital Downloads, pick a store name, test
+  purchase, then set the listing Active.
+- **Grant GitHub access for Crypto Signals** via `claude.ai/customize/connectors` (not
+  `github.com/settings/installations` — Claude isn't installed as a GitHub App on your account at
+  all), and confirm the repo name.
+- **Bybit bot:** supply a real Bybit testnet API key to unblock live dry-run testing.
+- Unchanged and still the single biggest item: **play-test the Sproutling Isles RPG in Studio** —
+  now over a week with no update.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring, texture asset IDs).
+
+**Next up**
+- Waiting on you for the Shopify finish line, the GitHub access grant, and the Sproutling Isles play-test.
+
+---
+
+## 2026-10-30
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item, over a week
+  now with no update. Texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-29
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item, now going on a
+  week with no update. Texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-28
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item. Texture asset
+  IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-27
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item. Texture asset
+  IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-26
+
+**Done overnight/today**
+- Nothing — no new commits from any session since yesterday.
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item. Texture asset
+  IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-25
+
+**Done overnight/today**
+- Nothing new — no commits since yesterday's huge build-out. (The owner's overnight improvement
+  cron is session-only, so it likely stopped when that session ended rather than running for its
+  full 7-day window — not something this session can check or restart.)
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged: **play-test the Sproutling Isles RPG in Studio** is still the top item — a large amount
+  of content (4 dungeons, waystones, Daily Tasks, Monster Journal, the whole world-scale/polish
+  pass) has never been run. Texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Nothing automatic until you resume work or the hourly worker.
+
+---
+
+## 2026-10-24
+
+**Done overnight/today**
+- A huge amount of Sproutling Isles RPG work landed (owner's own sessions, including a self-running
+  overnight loop — see below), on top of yesterday's second dungeon:
+  - **Fast travel:** 24 waystones.
+  - **Two more dungeons:** Emberdeep Caldera (fire) plus a mountain/beach/water trio (Highcrag,
+    Saltwind Pass, Saltmere, Tidewrack Grotto) — 4 elemental dungeons total now.
+  - **Building polish pass:** houses/shops reworked to look less boxy (flared eaves, arches, round
+    details), checked against a custom 3D preview tool.
+  - **World scale:** part budget raised 40k → 100k; everything now sits on one connected map (a
+    low-poly placeholder ground/road layer makes Studio's edit view show the whole world before
+    terrain bakes).
+  - **Greenhollow Gardens:** garden plots moved off the old island into their own farm village.
+  - **You set up a session-only overnight cron** (hourly, expires in 7 days — separate from this
+    workspace's own paused hourly worker) that compares Sproutling Isles against similar Roblox
+    games and builds one improvement per run. So far: a Monster Journal (bestiary) and Daily Tasks
+    (streaks, task board). An ideas queue for future runs is in [[Sproutling Isles - Overnight Runs]].
+  - **Still essentially nothing has been tested in Roblox Studio.**
+
+**New projects waiting for your OK**
+- None — all owner-directed or owner-configured (the overnight cron).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- **The Studio play-test is now the single biggest open item by far** — the game has grown a lot
+  since the last time anything was actually run (one early, partial look that "looked good"). Worth
+  doing before the overnight cron adds much more on top of untested work.
+- Everything else from recent summaries still open (texture asset IDs, PonyTail/Agent Skills
+  approval, video-analyst's YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph
+  feedback, iPhone/Obsidian confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- The overnight cron keeps running on its own for up to 7 days unless stopped. Nothing else automatic until the hourly worker is resumed.
+
+---
+
+## 2026-10-23
+
+**Done overnight/today**
+- Sproutling Isles RPG build continued (owner's own session): a second dungeon, "The Deepdelve
+  Mines," with a data-driven dungeon builder, a boss (Crag King), a quest and a map pin. Same as
+  everything else built this week — **not yet tested in Studio.**
+
+**New projects waiting for your OK**
+- None.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (likely stale now that the game concept changed — worth re-confirming whether they still apply).
+
+**Needs you**
+- Unchanged from yesterday: **play-test the Sproutling Isles RPG in Studio** is the real priority —
+  it keeps growing (now 2 dungeons, an arena, vehicles, quests, a guide NPC) with nothing run yet.
+  12 texture asset IDs also still pending.
+- Everything else from recent summaries still open (PonyTail/Agent Skills approval, video-analyst's
+  YouTube import, Family Hub's Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian
+  confirmation, OANDA setup, Clip Studio direction, Command Deck wiring).
+
+**Next up**
+- Waiting on your RPG play-test above all else. Nothing automatic until the hourly worker is resumed.
+
+---
+
+## 2026-10-22
+
+**Done overnight/today**
+- Big one: over the last ~36 hours (owner's own laptop/phone sessions, not the paused hourly
+  worker), **Sproutling Isles was completely rebuilt** into a different game. The owner iterated
+  through several directions in one stretch — modern city game → open-world fantasy RPG (Renaissance
+  style, genre ideas from Elden Ring/Diablo/Delicious in Dungeon, nothing copied) — and asked to
+  "continue the process until it is finished" without stopping for check-ins. What landed: combat
+  (dodge, stamina, abilities), companions/mounts/travel (airship, boat, horse), a reshaped world
+  (vast irregular land, curvy roads, sky isles, quests, new enemies), vehicles/garages/paint shops,
+  an arena with leaderboards, crates, a world map, levels, and today a guide NPC (Mara) with tour
+  quests, an F1 help panel, and a daily crate. Gardening was kept — plots now grow RPG ingredients,
+  and Sproutlings became companion pets.
+- **Almost none of this has been tested in Roblox Studio.** The owner ran one early play-test
+  partway through ("looks good") on an older map version; everything built since — most of the RPG
+  systems — has never been run. The owner explicitly chose to build first, test later.
+- The old "beta 2–8 Oct, skip Halloween by 24 Oct" plan no longer applies — that was for the
+  original grow-and-snatch game, which this replaced. Updated [[Active Context]] to stop carrying
+  that stale deadline forward.
+- Also fixed upstream: `graphify-out/manifest.json` (pure local-timestamp noise I'd been manually
+  stashing around on every morning run) is no longer tracked — that workaround isn't needed going forward.
+
+**New projects waiting for your OK**
+- None — all owner-directed, not autonomous.
+
+**Needs you: costs money**
+- Nothing new. Same two proposed-not-created Robux items (Summon Spooky Fog ~149 R$, Winter Bundle ~99 R$) — note these were scoped for the old game and may no longer be relevant.
+
+**Needs you**
+- **Play-test the finished Sproutling Isles RPG in Studio** — this is now the real priority, not
+  the old beta/Halloween dates. Pull the branch, open the place file, press Play, send back any red
+  Output errors. See [[Active Context]] and [[Sproutling Isles]] for exact steps.
+- 12 texture asset IDs are still pending (material kit built, waiting on you to paste real Roblox IDs).
+- Approve or decline PonyTail + Agent Skills per [[Claude Code Add-ons]] (Graphify already done).
+- Everything else from recent summaries still open: video-analyst's YouTube import, Family Hub's
+  Catch-Up Recorder test, Knowledge Graph feedback, iPhone/Obsidian confirmation, OANDA setup, Clip
+  Studio direction, Command Deck wiring.
+
+**Next up**
+- Waiting on your RPG play-test above all else. Nothing automatic until the hourly worker is resumed.
+
+---
+
 ## 2026-10-21
 
 **Done overnight/today**

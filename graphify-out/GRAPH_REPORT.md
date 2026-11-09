@@ -1,43 +1,43 @@
-# Graph Report - family-hub-pro  (2026-10-16)
+# Graph Report - family-hub-pro  (2026-11-05)
 
 ## Corpus Check
-- 87 files · ~89,621 words
+- 91 files · ~98,372 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 5, .example 1, .toml 1)
 
 ## Summary
-- 772 nodes · 1109 edges · 70 communities (67 shown, 3 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 122 edges (avg confidence: 0.9)
+- 809 nodes · 1179 edges · 74 communities (67 shown, 7 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 128 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `feb2452b`
+- Built from commit: `b0754804`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Session Log.md
 - main
-- upload.js
+- server.js
 - graph.js
 - claudeAnalyzer.js
 - postgres.js
 - Morning Summary
 - sqlite.js
-- server.js
+- steps
 - Sproutling Isles: Art Brief
 - pipeline.js
 - Sproutling Isles — Game Design Doc
-- dependencies
+- upload.js
 - Gumroad Digital Products
-- bullmq.js
-- Clip Studio
-- config.js
 - services/billing.js
+- config.js
+- config.js
+- package.json
 - 1. Pre-launch checklist
 - 5. Week 1–8 live-ops calendar
 - Sproutling Isles: Trading Booths (Phase 2 spec)
-- inProcess.js
+- bullmq.js
 - s3.js
 - StarNet Automation
 - ref_node_assert
@@ -46,16 +46,16 @@
 - Sproutling Isles: Launch & Live Ops
 - CLAUDE.md — read this first, every session
 - storage.test.js
-- db/index.js
-- captions.test.js
+- routes/billing.js
+- dependencies
 - knowledgeGraph.test.js
 - db.test.js
 - AI Memory Export
 - cli.js
-- routes/billing.js
+- Runs (newest first)
 - 3. Analytics event spec
-- config.js
-- jobs.js
+- scripts
+- captions.test.js
 - Hourly Workflow (the standing rule)
 - Trading Agent (forex setups)
 - install-graphify.sh
@@ -84,16 +84,20 @@
 - Clip Studio
 - 6. Marketing
 - .claude/CLAUDE.md
-- Decisions
-- billing.test.js
+- bullmq
+- better-sqlite3
+- cors
+- stripe
+- Crypto Signals (momentum checkpoint system)
+- ref_path
 
 ## God Nodes (most connected - your core abstractions)
-1. `main()` - 57 edges
-2. `Session Log` - 39 edges
-3. `Morning Summary` - 21 edges
-4. `query()` - 15 edges
-5. `Sproutling Isles: Art Brief` - 14 edges
-6. `Sproutling Isles: Launch & Live Ops` - 14 edges
+1. `main()` - 62 edges
+2. `Morning Summary` - 42 edges
+3. `Session Log` - 39 edges
+4. `Sproutling Isles: Art Brief` - 14 edges
+5. `Sproutling Isles: Launch & Live Ops` - 14 edges
+6. `query()` - 13 edges
 7. `1. Pre-launch checklist` - 13 edges
 8. `5. Week 1–8 live-ops calendar` - 12 edges
 9. `Sproutling Isles: Trading Booths (Phase 2 spec)` - 12 edges
@@ -114,86 +118,79 @@
 ## Import Cycles
 - None detected.
 
-## Communities (70 total, 3 thin omitted)
+## Communities (74 total, 7 thin omitted)
 
 ### Community 0 - "Session Log.md"
-Cohesion: 0.15
-Nodes (14): Hand-offs that work well, Team Roster, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), Bybit Trading Bot, Hard rules for every agent, Tasks, Claude Code Add-ons, How to install (approve once) (+6 more)
+Cohesion: 0.08
+Nodes (37): Hand-offs that work well, Team Roster, 2026-09-27: OANDA re-check and hourly cost check, 2026-10-03: owner request — polish the Sproutling Isles test plan for the laptop, 2026-10-07: owner request — "Catch-Up Recorder" built into Family Hub, 2026-10-08: owner request — iPhone/Obsidian setup guide written, 2026-10-08: owner request — knowledge graph built (VPS agent idea declined), 2026-10-16: owner request — Claude Code add-ons from a reel (researched, install blocked) (+29 more)
 
 ### Community 1 - "main"
-Cohesion: 0.07
-Nodes (46): main(), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided, 2026-09-25: StarNet automation setup, 2026-09-26: agent platform comparison (StarNet alternatives) (+38 more)
+Cohesion: 0.08
+Nodes (42): main(), Decisions, Pending owner decisions (answer any time; recommendations in brackets), 2026-09-23 (evening): moved everything into the vault for the laptop, 2026-09-23 (later): first agent team run, 2026-09-23: Roblox research → design doc → Sproutling Isles build → memory system, 2026-09-25 (later): StarNet plan checked against its source code, 2026-09-25 (latest): StarNet brain and budget decided (+34 more)
 
-### Community 2 - "upload.js"
-Cohesion: 0.06
-Nodes (30): description, engines, node, main, name, scripts, dev, start (+22 more)
+### Community 2 - "server.js"
+Cohesion: 0.13
+Nodes (11): express@^4.21.1, express, express, router, express, router, router, app (+3 more)
 
 ### Community 3 - "graph.js"
 Cohesion: 0.07
 Nodes (27): addNode(), emptyGraph(), fs, load(), neighbors(), path, slugify(), traversePath() (+19 more)
 
 ### Community 4 - "claudeAnalyzer.js"
-Cohesion: 0.08
-Nodes (31): @anthropic-ai/sdk, openai, analyzeSegments(), Anthropic, { extractFrame }, extractJsonArray(), extractSegmentFrames(), fallbackResults() (+23 more)
+Cohesion: 0.10
+Nodes (25): analyzeSegments(), Anthropic, extractJsonArray(), extractSegmentFrames(), fallbackResults(), frameTimestamps(), fs, getClient() (+17 more)
 
 ### Community 5 - "postgres.js"
 Cohesion: 0.19
-Nodes (20): addCredits(), createJob(), { DATABASE_URL }, failStaleProcessingJobs(), fs, getClip(), getClipsForJob(), getJob() (+12 more)
+Nodes (19): addCredits(), createJob(), failStaleProcessingJobs(), fs, getClip(), getClipsForJob(), getJob(), getOrCreateAccount() (+11 more)
 
 ### Community 6 - "Morning Summary"
-Cohesion: 0.10
-Nodes (21): 2026-09-26 (first morning summary), 2026-09-27, 2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-03 (+13 more)
+Cohesion: 0.05
+Nodes (42): 2026-09-26 (first morning summary), 2026-09-27, 2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-03 (+34 more)
 
 ### Community 7 - "sqlite.js"
 Cohesion: 0.12
-Nodes (9): better-sqlite3, addCredits(), Database, db, fs, getOrCreateAccount(), path, schema (+1 more)
+Nodes (8): addCredits(), Database, db, fs, getOrCreateAccount(), path, schema, spendCreditIfAvailable()
 
-### Community 8 - "server.js"
-Cohesion: 0.11
-Nodes (15): { ACCESS_TOKEN }, requireAccessToken(), app, billingRouter, clipsRouter, cors, db, express (+7 more)
+### Community 8 - "steps"
+Cohesion: 0.06
+Nodes (31): DATABASE_URL, POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER, REDIS_URL, jobs, test, name (+23 more)
 
 ### Community 9 - "Sproutling Isles: Art Brief"
 Cohesion: 0.11
 Nodes (19): 10. Game icon and thumbnails, 11. Deliverables and file formats, 12. Rough effort estimate (unverified, for quoting only), 13. What `roblox-engineer` must build to use this art (later task), 1. The game in one paragraph (for the artist), 2. Art direction, 3. Palette, 4. Silhouette rules (+11 more)
 
 ### Community 10 - "pipeline.js"
-Cohesion: 0.12
-Nodes (12): { analyzeSegments }, { buildCandidateSegments }, { buildSrt }, {
-  CLIPS_DIR,
-  CLIP_COUNT,
-  DELETE_SOURCE_AFTER_PROCESSING,
-  S3_BUCKET,
-  OPENAI_API_KEY,
-  BURN_IN_CAPTIONS,
-}, db, ffmpeg, fs, path (+4 more)
+Cohesion: 0.25
+Nodes (3): fs, path, { v4: uuid }
 
 ### Community 11 - "Sproutling Isles — Game Design Doc"
 Cohesion: 0.12
 Nodes (17): Build status, Core loop, Developer products (repeatable), Economy and monetization, Game passes (one-time), Map, Other systems, Overview (+9 more)
 
-### Community 12 - "dependencies"
-Cohesion: 0.12
-Nodes (16): dependencies, @anthropic-ai/sdk, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, better-sqlite3, bullmq, cors, dotenv (+8 more)
+### Community 12 - "upload.js"
+Cohesion: 0.15
+Nodes (9): diskStorage, express, fs, multer, path, rateLimit, upload, uploadLimiter (+1 more)
 
 ### Community 13 - "Gumroad Digital Products"
 Cohesion: 0.12
 Nodes (16): 1. Family organization printables (chore charts, weekly/meal planners), 1. Originality rule (read first, applies to every product), 2. Beginner Roblox game-making guides (from the Sproutling Isles build), 2. The goal, 3. Costs (checked 2026-09-26), 3. Spreadsheet / Notion templates (budget trackers, habit trackers, content calendars), 4. What to sell first (the research agent checks demand before we build), 5. One-time setup (owner, about 20 minutes) (+8 more)
 
-### Community 14 - "bullmq.js"
-Cohesion: 0.18
-Nodes (8): bullmq, ioredis, connection, IORedis, { processJob }, queue, { Queue, Worker }, { REDIS_URL, MAX_CONCURRENT_JOBS }
+### Community 14 - "services/billing.js"
+Cohesion: 0.31
+Nodes (5): stripeWebhookHandler(), createCheckoutSession(), getClient(), Stripe, verifyWebhookSignature()
 
-### Community 15 - "Clip Studio"
-Cohesion: 0.13
-Nodes (14): API, Clip Studio, Configuration, Database: SQLite (default) or Postgres, Deploying, How it works, Payments: unlimited (default) or Stripe credits, Queue: in-process (default) or BullMQ/Redis (+6 more)
+### Community 15 - "config.js"
+Cohesion: 0.25
+Nodes (3): path, ROOT, requireAccessToken()
 
 ### Community 16 - "config.js"
-Cohesion: 0.25
-Nodes (5): { CLIPS_DIR }, fs, getServeInfo(), path, resolveSafePath()
+Cohesion: 0.29
+Nodes (4): fs, getServeInfo(), path, resolveSafePath()
 
-### Community 17 - "services/billing.js"
-Cohesion: 0.22
-Nodes (8): db, stripeWebhookHandler(), { verifyWebhookSignature }, createCheckoutSession(), getClient(), Stripe, { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_CREDIT_PRICE_CENTS }, verifyWebhookSignature()
+### Community 17 - "package.json"
+Cohesion: 0.17
+Nodes (11): dotenv@^16.4.5, ioredis@^5.4.1, description, engines, node, main, name, type (+3 more)
 
 ### Community 18 - "1. Pre-launch checklist"
 Cohesion: 0.15
@@ -207,19 +204,13 @@ Nodes (13): 5. Week 1–8 live-ops calendar, Halloween event spec "Hollow Harves
 Cohesion: 0.15
 Nodes (13): 10. Build checklist for roblox-engineer, 11. Out of scope (later), 1. Goals, 2. Player flow, 3. Rules, 4. UI screens and text, 5. Server authority and anti-dupe requirements, 6. Data changes (+5 more)
 
-### Community 21 - "inProcess.js"
-Cohesion: 0.24
-Nodes (7): processJob(), worker, enqueue(), { MAX_CONCURRENT_JOBS }, pending, { processJob }, pump()
+### Community 21 - "bullmq.js"
+Cohesion: 0.08
+Nodes (23): API, Clip Studio, Configuration, Database: SQLite (default) or Postgres, Deploying, How it works, Payments: unlimited (default) or Stripe credits, Queue: in-process (default) or BullMQ/Redis (+15 more)
 
 ### Community 22 - "s3.js"
-Cohesion: 0.17
-Nodes (5): client, fs, presigner, {
-  S3_BUCKET,
-  S3_REGION,
-  S3_ENDPOINT,
-  S3_FORCE_PATH_STYLE,
-  S3_DOWNLOAD_URL_TTL_SECONDS,
-}, {
+Cohesion: 0.15
+Nodes (6): @aws-sdk/s3-request-presigner@^3.699.0, @aws-sdk/s3-request-presigner, client, fs, presigner, {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
@@ -230,16 +221,16 @@ Cohesion: 0.17
 Nodes (12): First jobs to schedule, How the tools work (what to place in each room), How this was checked (2026-09-25), Keep it lean (owner: "don't overwork it", 2026-09-26), Laptop install (about 20 minutes), One-click settings file (2026-09-26), Online selling agents (checked in StarNet's code, 2026-09-26), Safety rules (+4 more)
 
 ### Community 24 - "ref_node_assert"
-Cohesion: 0.15
-Nodes (10): assert, { extractJsonArray }, { test }, assert, { buildCandidateSegments }, { test }, assert, { test } (+2 more)
+Cohesion: 0.18
+Nodes (8): assert, Stripe, { test }, assert, { test }, assert, { test }, transcript
 
 ### Community 25 - "queue.test.js"
-Cohesion: 0.18
-Nodes (8): assert, db, { enqueue }, fs, os, path, { test, before, after }, tmpDataDir
+Cohesion: 0.22
+Nodes (6): assert, fs, os, path, { test, before, after }, tmpDataDir
 
 ### Community 26 - "segmenter.js"
-Cohesion: 0.48
-Nodes (6): buildCandidateSegments(), DEFAULTS, invertSilences(), mergeCloseSegments(), pickEvenlySpaced(), splitLongSegment()
+Cohesion: 0.31
+Nodes (8): buildCandidateSegments(), DEFAULTS, invertSilences(), mergeCloseSegments(), pickEvenlySpaced(), splitLongSegment(), assert, { test }
 
 ### Community 27 - "Sproutling Isles: Launch & Live Ops"
 Cohesion: 0.18
@@ -251,47 +242,43 @@ Nodes (9): Agents, Branches, CLAUDE.md — read this first, every session, End o
 
 ### Community 29 - "storage.test.js"
 Cohesion: 0.20
-Nodes (9): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, assert, fs, os, path, presigner, { S3Client } (+1 more)
+Nodes (9): @aws-sdk/client-s3@^3.699.0, @aws-sdk/client-s3, assert, fs, os, path, presigner, { S3Client } (+1 more)
 
-### Community 30 - "db/index.js"
-Cohesion: 0.20
-Nodes (5): { DATABASE_URL }, db, express, router, storage
-
-### Community 31 - "captions.test.js"
-Cohesion: 0.32
-Nodes (6): buildSrt(), formatSrtTimestamp(), assert, { buildSrt }, { test }, transcript
+### Community 31 - "dependencies"
+Cohesion: 0.15
+Nodes (13): dependencies, @anthropic-ai/sdk@^0.32.1, express-rate-limit@^7.4.1, multer@^2.4.0, openai@^4.73.0, pg@^8.13.1, uuid@^11.1.0, @anthropic-ai/sdk (+5 more)
 
 ### Community 32 - "knowledgeGraph.test.js"
-Cohesion: 0.22
-Nodes (6): assert, fs, graphLib, os, path, { test }
+Cohesion: 0.25
+Nodes (5): assert, fs, os, path, { test }
 
 ### Community 33 - "db.test.js"
-Cohesion: 0.22
-Nodes (6): assert, db, fs, os, path, { test, before, after }
+Cohesion: 0.25
+Nodes (5): assert, fs, os, path, { test, before, after }
 
 ### Community 34 - "AI Memory Export"
 Cohesion: 0.22
 Nodes (9): AI Memory Export, Anything else durable, Communication preferences, Identity, Interests & hobbies, Ongoing projects, Profession & work, Tools & environment (+1 more)
 
 ### Community 35 - "cli.js"
-Cohesion: 0.25
-Nodes (6): DEFAULT_GRAPH_PATH, graphLib, parseData(), parseFlags(), path, printJSON()
+Cohesion: 0.29
+Nodes (5): DEFAULT_GRAPH_PATH, parseData(), parseFlags(), path, printJSON()
 
-### Community 36 - "routes/billing.js"
-Cohesion: 0.25
-Nodes (5): { createCheckoutSession }, db, express, router, { STRIPE_SUCCESS_URL, STRIPE_CANCEL_URL }
+### Community 36 - "Runs (newest first)"
+Cohesion: 0.40
+Nodes (5): Ideas queue (for later runs), Run 1, 2026-10-24 ~05:00: Monster Journal, Run 2, 2026-10-24: Daily Tasks, Runs (newest first), Sproutling Isles: Overnight Runs
 
 ### Community 37 - "3. Analytics event spec"
-Cohesion: 0.25
-Nodes (8): start(), 3. Analytics event spec, 3a. Onboarding funnel (`LogOnboardingFunnelStepEvent`), once per player, 3b. Recurring funnels (`LogFunnelStepEvent`), 3c. Economy events (`LogEconomyEvent`), 3d. Custom events (`LogCustomEvent`), Acceptance (for qa-tester), Build notes
+Cohesion: 0.22
+Nodes (9): start(), 2026-10-21 (late): Sproutling Isles world reshape, 3. Analytics event spec, 3a. Onboarding funnel (`LogOnboardingFunnelStepEvent`), once per player, 3b. Recurring funnels (`LogFunnelStepEvent`), 3c. Economy events (`LogEconomyEvent`), 3d. Custom events (`LogCustomEvent`), Acceptance (for qa-tester) (+1 more)
 
-### Community 38 - "config.js"
-Cohesion: 0.29
-Nodes (3): path, ROOT, { REDIS_URL }
+### Community 38 - "scripts"
+Cohesion: 0.50
+Nodes (4): scripts, dev, start, test
 
-### Community 39 - "jobs.js"
-Cohesion: 0.29
-Nodes (4): express, db, express, router
+### Community 39 - "captions.test.js"
+Cohesion: 0.38
+Nodes (5): buildSrt(), formatSrtTimestamp(), assert, { test }, transcript
 
 ### Community 40 - "Hourly Workflow (the standing rule)"
 Cohesion: 0.29
@@ -310,8 +297,8 @@ Cohesion: 0.33
 Nodes (6): Bottom line, Genre leaders (third-party trackers, Aug–Sep 2026), Monetization patterns that work, Platform facts (2026), Roblox Market Research 2026, Sources
 
 ### Community 45 - "Sproutling Isles"
-Cohesion: 0.33
-Nodes (6): Bugs, Gotchas for agents, Key numbers (full tables in the design doc and `src/shared/*.luau`), Sproutling Isles, Status, Tasks
+Cohesion: 0.29
+Nodes (7): Bugs, Gotchas for agents, Key numbers (full tables in the design doc and `src/shared/*.luau`), RPG plan (owner decisions 2026-10-21), Sproutling Isles, Status, Tasks
 
 ### Community 46 - "Start Here: laptop"
 Cohesion: 0.33
@@ -397,29 +384,31 @@ Nodes (4): CI fix on `main` (2026-09-26), Clip Studio, QA Review (2026-09-26), T
 Cohesion: 0.50
 Nodes (4): 6. Marketing, Creator outreach, Sponsored ads (Roblox Ads Manager). *All tiers spend real money, so the owner decides.*, TikTok / YouTube Shorts clip ideas (9:16, 10–25 s, hook in the first second, captions on)
 
-### Community 69 - "billing.test.js"
+### Community 74 - "Crypto Signals (momentum checkpoint system)"
 Cohesion: 0.33
-Nodes (5): stripe, assert, billing, Stripe, { test }
+Nodes (6): Blocked, Crypto Signals (momentum checkpoint system), Planned build order, Status, Tasks, What it is
+
+### Community 75 - "ref_path"
+Cohesion: 0.29
+Nodes (4): { chromium }, path, sizes, themes
 
 ## Knowledge Gaps
-- **1 isolated node(s):** `dotenv`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 488 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `main()` connect `main` to `Clip Studio`, `AI Memory Export`, `cli.js`, `Decisions`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
-  _High betweenness centrality (0.328) - this node is a cross-community bridge._
-- **Are the 53 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
-  _`main()` has 53 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `dotenv` to the rest of the system?**
-  _1 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `start()` connect `3. Analytics event spec` to `server.js`?**
+  _High betweenness centrality (0.299) - this node is a cross-community bridge._
+- **Are the 58 inferred relationships involving `main()` (e.g. with `Branches` and `End of every session / task (not optional)`) actually correct?**
+  _`main()` has 58 INFERRED edges - model-reasoned connections that need verification._
+- **Should `Session Log.md` be split into smaller, more focused modules?**
+  _Cohesion score 0.0782472613458529 - nodes in this community are weakly interconnected._
+- **Why does `2026-10-21 (late): Sproutling Isles world reshape` connect `3. Analytics event spec` to `Session Log.md`, `main`?**
+  _High betweenness centrality (0.258) - this node is a cross-community bridge._
 - **Should `main` be split into smaller, more focused modules?**
-  _Cohesion score 0.07053140096618357 - nodes in this community are weakly interconnected._
-- **Why does `Sproutling Isles: Launch & Live Ops` connect `Sproutling Isles: Launch & Live Ops` to `Session Log.md`, `6. Marketing`, `3. Analytics event spec`, `1. Pre-launch checklist`, `5. Week 1–8 live-ops calendar`, `4. Rewarded video ads plan`?**
-  _High betweenness centrality (0.182) - this node is a cross-community bridge._
-- **Should `upload.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.06050420168067227 - nodes in this community are weakly interconnected._
-- **Why does `3. Analytics event spec` connect `3. Analytics event spec` to `Sproutling Isles: Launch & Live Ops`?**
-  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+  _Cohesion score 0.08013937282229965 - nodes in this community are weakly interconnected._
+- **Why does `main()` connect `main` to `Session Log.md`, `Clip Studio`, `AI Memory Export`, `cli.js`, `3. Analytics event spec`, `Morning Summary`, `Hourly Workflow (the standing rule)`, `Start Here: laptop`, `Active Context`, `Work Queue`, `StarNet Automation`, `CLAUDE.md — read this first, every session`?**
+  _High betweenness centrality (0.205) - this node is a cross-community bridge._
+- **Should `server.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.13157894736842105 - nodes in this community are weakly interconnected._

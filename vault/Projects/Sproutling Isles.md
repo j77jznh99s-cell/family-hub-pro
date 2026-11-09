@@ -32,10 +32,31 @@ Original Roblox **grow-and-snatch simulator**. Players plant seeds that hatch in
 - Gate lock 60 s (90 s with a pass); snatch carry window 45 s; new-player shield 15 min.
 - Rebirth 250k Dew (x4 each time), +50% Dew permanently.
 
+## RPG plan (owner decisions 2026-10-21)
+
+Sproutling Isles is becoming an **open-world fantasy RPG**: Renaissance-style world, older dungeon-crawl feel,
+genre ideas from Elden Ring / Shangri-La Frontier / Delicious in Dungeon / Diablo (borrow ideas only — no names,
+characters, art or story). Built in steps; the owner tests each in Studio before the next. Steps 2+ are gameplay
+code that can't be run in the sandbox, so expect a bug-fix round after each Studio test.
+
+1. **Fantasy city** — done 2026-10-21 (`34cac1a`): walled city, guild, cathedral, mage tower, market square,
+   arena (`Arena` attribute), 24 trade shops with `Shop` attributes + `ShopAnchor`s, horses/carriages, ships,
+   airship port. (Replaced the modern city from `86c76d7`.)
+2. **Combat core** — health, stamina, dodge roll, real-time melee/ranged/magic on click, hotkey abilities,
+   phone buttons, enemy AI, respawns. Cartoon, no blood.
+3. **First dungeon + first overworld boss** — dungeon entrances in the hills, procedural rooms, a boss; a field
+   boss roaming a hill site; random loot with rarities.
+4. **Inventory, gear and shops** — equipment slots, the trade shops sell/buy, currency.
+5. **Cooking + garden ingredients** — monster drops + garden herbs → buff meals and potions.
+6. **Companions and mounts** — Sproutlings fight beside you; horses/ships/airships become rideable.
+7. **Performance** — StreamingEnabled after auditing client lookups; keep under ~40k parts.
+
+All 7 steps built 2026-10-21 (branch `claude/roblox-popular-game-trends-6u7sie`); none Studio-tested yet.
+
 ## Tasks
 Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner decisions are collected in [[Decisions]].
 
-- [ ] **owner:** play-test the `.rbxlx` in Studio using the test plan in [[Sproutling Isles - QA Review]] (Bonk is now **R**; the Studio shield is off automatically) and paste errors from the Output window
+- [x] **owner:** first Studio play-test done 2026-10-21 (owner: "it looks good"; no errors reported; full test-plan checklist not confirmed item by item). Original task: play-test the `.rbxlx` in Studio using the test plan in [[Sproutling Isles - QA Review]] (Bonk is now **R**; the Studio shield is off automatically) and paste errors from the Output window
 - [x] **qa-tester:** re-review the 2026-09-23 fixes and update the test plan — done 2026-09-26, all confirmed fixed, see [[Sproutling Isles - QA Review]]
 - [ ] **owner:** answer the pending decisions in [[Decisions]] (snatching, Starter Pack, gate cooldown, pond payout, trading rules, launch dates and budget)
 - [ ] **owner:** create 5 game passes + 8 dev products (steps in [[Sproutling Isles - Launch & Live Ops]]); **roblox-engineer:** paste the IDs into `Products.luau`
@@ -67,6 +88,34 @@ Owners are agent roles from [[Team Roster]]; `owner` means the human. Owner deci
 - [ ] **roblox-engineer / owner:** a leave-save can wait up to 120 s (`DataService.luau:181`) but BindToClose stops waiting after 25 s (`init.server.luau:314`), so at shutdown a leave-save stuck behind a hung write is lost. Owner choice: overlap writes sooner during shutdown (small risk older data lands last) or accept the loss.
 - [ ] **roblox-engineer:** when load gives up (`DataService.luau:137,172`) it reports a brand-new save, so a returning player can re-fire the "Joined" onboarding step and get the Founding Gardener badge (`init.server.luau:99,109`). Return `isNew = false` on those paths.
 - [ ] **owner:** decide whether refunds/chargebacks should take items back. Needs Roblox's refund webhook and an outside server (not built); today a refunded product or pass is never removed in-game.
+
+- [x] **roblox-engineer:** atmosphere + scenery upgrade, 2026-10-21 (`5d8fa89`, `544640a` on `claude/roblox-popular-game-trends-6u7sie`). Owner sent 2 reference screenshots (cosy village, floating islands, light beams) and asked for more vibrant effects, more buildings and more landscape; used for mood only, all designs original. New `src/shared/Ambience.luau` (Atmosphere, Bloom, ColorCorrection, SunRays, light DoF), `WeatherService` now tints the Atmosphere. `Map.Scenery`: 19 cottages/shop houses, 4 lantern towers, windmill + lighthouse (client-spun), castle keep, harbour pier + 3 boats, light beams, crystals, motes, pond mist, waterfalls, 11 floating islets, clouds, terraced hills, bushes, boulders, horizon mountains. Lint/build/bake clean, 1241 → 2886 parts, 63 PointLights, ~50 particle emitters. **Not yet seen in Studio**: previews were rough offline renders only.
+- [x] **roblox-engineer:** detail pass, 2026-10-21 (owner: "more"): yards, paths, market props, well, haystacks, signposts, palms, sea arch/stacks, ruins, giant Elder blossom tree, 5 hot-air balloons. 3528 parts. Not seen in Studio.
+- [x] **roblox-engineer:** terrain hills pass, 2026-10-21 (`3e61f50`; owner sent a reference screenshot and asked for "astronomically" more detail). New `Shared/Landscape.luau` (heightfield maths) + `server/TerrainBuilder.luau` (fills Terrain at server start, background task) give a ring of hills around the island in a lagoon. On the hills: walled castle, 2 hamlets, fenced farm with barn/silo/windmill, watchtower, lighthouse, ruins, waterfall cliff with rainbow, 3 bridges, ~300 trees incl. new wedge-cone pines. 8,713 parts. **Terrain code never run in real Roblox** (Lune can't write Terrain) — first Play in Studio is its test; hills only show in Play mode.
+- [x] **roblox-engineer:** city phase 1 (map), 2026-10-21 (`86c76d7`): roads, 24 shops, towers, apartments, houses, park, civic buildings, harbour, marina, airport, bridges, cars, boats, planes. 16,330 parts. Not seen in Studio.
+- [x] **roblox-engineer:** RPG step 1, fantasy city, 2026-10-21 (`34cac1a`). 18,371 parts. Not seen in Studio.
+- [x] **roblox-engineer:** royal material kit, 2026-10-21 (`3773671`): 12 Higgsfield textures (~3 credits), `Shared/MaterialKit.luau` applies them to ~3,900 parts by role. Inactive until asset ids are filled in.
+- [x] All 12 kit textures are in `roblox/sproutling-isles/assets/textures/` (owner sent them in chat 2026-10-21; crimson re-cropped to fix a tiling seam).
+- [ ] **owner:** bulk-import the 12 textures in Studio and send the asset ids (or paste them into `MaterialKit.luau`). Steps in `roblox/sproutling-isles/assets/textures/README.md`. Optional: allow the host `d8j0ntlcm91z4.cloudfront.net` in the cloud environment's network settings so sessions can download Higgsfield images directly.
+- [x] **roblox-engineer:** RPG step 2, combat core, 2026-10-21: `Shared/Combat.luau`, `CombatService`, `EnemyService`, `client/Combat.luau`. Sword/bow/staff, dodge, Q/X/C abilities, slimes/goblins/wolves at 9 hill camps, training dummies in the barracks yard. Lint + luau-lsp strict clean. **Not run in Studio** — expect a bug-fix round.
+- [ ] **owner:** play-test combat in Studio: hit the dummies in the barracks yard, then fight a hill camp; paste any red Output errors.
+- [x] **roblox-engineer:** RPG step 3, 2026-10-21: The Hollow Crypt (6 rooms, entrance in the castle courtyard, Bone Warden boss), Ironbark field boss (new `grove` site past the NW hamlet), loot with 5 rarities, gear upgrades/salvage, materials, saved in player data. Owner chose to skip play-tests until the game is done; all steps 2-3 untested in Studio.
+- [x] **roblox-engineer:** RPG step 4, 2026-10-21: inventory (bag, equip, salvage, B/H/J keys), armour tiers, 8 open trade shops (weapons, armour, potions, meals), sell materials. Untested in Studio.
+- [x] **roblox-engineer:** RPG step 5, 2026-10-21 (`e85c985`): cooking (8 recipes, cooking pots + tavern/cook/inn/herbalist), timed meal buffs (`BuffService`), wild herb patches (`ForageService`), herbs from garden hatches. Untested in Studio.
+- [x] **roblox-engineer:** RPG step 6, 2026-10-21 (`772dd37`): Beast Tamer (250 Dew) unlocks a Sproutling companion (P: best Sproutling zaps nearby monsters, damage scales with its Dew/s); Stables (800 Dew) unlock a horse (V: +14 speed, not in the crypt); airship (40 Dew) and boat (25 Dew) fast travel from the Skyward Shipyard and Shipwright shop windows (`Shared/Travel.luau`). Phone buttons. Untested in Studio.
+- [x] **roblox-engineer:** RPG step 7, 2026-10-21 (`ca13ad5`): StreamingEnabled (target 640, min 128, PauseOutsideLoadedArea); plaza HUD models Persistent, plots + animated props Atomic; scenery animation follows stream-in/out; teleports call `RequestStreamAroundAsync`. 18,851 parts. **RPG plan complete.** Baked place `7271749`.
+- [x] **roblox-engineer:** world + city reshape, 2026-10-21 (`d393a2b`; owner: lands less uniform and more vast, curvy roads of different sizes, directions and heights). Landscape v2: ~2.3k x 3.5k landmass, noisy coast, mountains near the edge, ragged lagoon shore, harbour channel to the sea; 17 Catmull-Rom roads with varying width, terrain cut/banked so they rise and fall; organic walled city (landmarks on free ground, houses along every road at varied setbacks/angles, back lanes, plinth terraces, wobbly wall with gatehouses); new Southvale/Eastmere/Pinecrest villages and the Old Fort; 6 new camps; travel/dummies use map markers. ~30k parts. Terrain can be baked into the place from the command bar (README). Not Studio-tested.
+- [x] **roblox-engineer:** quests + wilds, 2026-10-21 (`aa24a1c`; owner: fill the open land with quest items and village extensions, more quests and characters in the mountains, access to the sky islands). 11 quest givers, 18 quests, 53 quest items, 3 peak cairns, 5 wind shrines to 5 playable sky isles (caches, shards, wisps, Stormcaller boss), Skyward Charm unlock, 23 homesteads, ~90 discoveries, mountain tracks + airship stops. Also fixed: crypt skeletons/bats had no models (fell through to the dummy model). ~34k parts. Landscape.Version 3 (re-bake terrain). Not Studio-tested.
+- [x] **roblox-engineer:** levels + vehicles + arena + crates + leaderboards + world map, 2026-10-22 (`36aaaa8`; owner asked for working buildings, car/boat shops + customization, crates, leaderboards, world map, horse & trailer, unlockable planes/helicopters by level, fancy level-up). Kept the Renaissance theme: carriages = cars, ornithopter = plane, aerial screw = helicopter (flagged to owner; modern reskin possible). Levels 1-60, 10 vehicles, arena wave trials, 3 crate tiers, level/arena boards, world map (M). All city halls now functional. Not Studio-tested.
+- [x] **roblox-engineer:** onboarding, 2026-10-22 (`1a67526`): Mara the Guide's self-completing First Steps tour, F1 help panel, daily login crate (7-day silver). Arena access/ramp fixes in `c4bb510`. Not Studio-tested.
+- [x] **roblox-engineer:** second dungeon, The Deepdelve Mines (level 12+, Crag King boss, Gorrim's "Into the Deep"), 2026-10-23. DungeonBuilder/DungeonService now multi-dungeon. Not Studio-tested.
+- [x] **roblox-engineer:** waystones (fast-travel checkpoints), 2026-10-23 (`8cc51cc`): 24 stones, attune by touch, free travel between stones, map travel once a minute (T). Not Studio-tested.
+- [x] **roblox-engineer:** third dungeon, The Emberdeep Caldera (fire element), 2026-10-24 (`a46815e`): 8 bigger rooms, level 20+, boss Pyrrhax, Burning damage-over-time, lava hazards (HazardService), Fireward Tonic, Brannoc's 2 quests at Ember Peak, waystone + airship stop. `Landscape.Version` 4: re-bake terrain in Studio. Not Studio-tested.
+- [x] **roblox-engineer:** Highcrag (mountain village by Ember Peak), Saltwind Pass, Saltmere (beach village) and fourth dungeon The Tidewrack Grotto (water, level 25+, boss Thalvorn), 2026-10-24 (`cd0e4db`). Every dungeon now has its own element: Crypt shadow (Cursed), Mines earth (Shattered; new Rockmites + Shardback Beetles), Emberdeep fire, Tidewrack water (Soaked = slowed). 12 new quests, Tidebalm, 4 shops. `Landscape.Version` 5: re-bake terrain. Not Studio-tested.
+- [ ] **qa-tester:** play-test the four dungeons' elemental effects (slow from Soaked resets correctly, Shattered damage boost) and the Highcrag/Saltmere quest chain in Studio.
+- [ ] **roblox-engineer (next ideas):** more arena rewards/cosmetics, phone UI pass once the owner has seen it on a phone.
+- [ ] **owner:** first full Studio play-test of the finished RPG (city, combat, crypt, field boss, shops, cooking, companion, horse, travel). Expect a bug-fix round: none of steps 2-7 has run in real Roblox. Paste red Output errors.
+- [ ] **owner:** pull the branch and re-open the place in Studio to see the new look; check frame rate on a phone (the part, light and particle counts went up) and say what to tone down or add.
 
 ## Bugs
 Full details, file:line references and the Studio test plan are in [[Sproutling Isles - QA Review]] (2026-09-23, static review; nothing has been run in Studio yet).

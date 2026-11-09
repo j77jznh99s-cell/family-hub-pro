@@ -1,6 +1,15 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-09: local hourly run — Sproutling Isles: merged local receipts fixes with the cloud RPG work, pushed
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `96f39de`) · **Agents used:** none (orchestrator inline; merge only)
+
+- Local branch had 5 unpushed receipts commits (`01d455f`…`b918340`); GitHub had 33 new cloud commits (RPG, world, dungeons, dailies, 21–24 Oct). Merged: clean auto-merge (DataService, State, init.server).
+- Checked: no new service calls `DataService.save/load` (only init.server + MonetizationService, unchanged); new `defaultData` fields are filled for old saves by `reconcile()`.
+- **Pushed** (`9dee71e..96f39de`): GitHub pushes from the PC work again. Not linted/built (no selene/rojo/lune), not Studio-tested.
+- Vault `main` merged `origin/main` (66 commits; 3 conflicts: Active Context, Session Log, Bybit note — both sides kept, duplicate Clip/Family Hub lines dropped). Note: the other local project branches (Clip, Family Hub, Bybit) still have unpushed commits; not pushed this run.
+
+---
 ## 2026-10-21 14:11: local hourly run — Clip Studio: last two QA Review 2 minors (#7, #8)
 **Device:** PC (desktop app) · **Branch:** `claude/clip-studio-presenter-fixes` (worktree `fhp-clip-wt`, `61971ad`) · **Agents used:** none (orchestrator inline; small change)
 
@@ -107,6 +116,257 @@ tags: [memory, log]
 **Next:** owner: merge decision / what's next for Clip Studio; app-engineer: none open for Clip Studio.
 
 ---
+## 2026-11-09: Game asset selling (research + first pack)
+**Device:** phone · **Branch:** `claude/elegant-carson-k0ja0u` · **Agents used:** market-researcher
+
+**Owner asked**
+- "Game asset selling". Chose "research first" plus "plan + first pack".
+
+**What was done**
+- market-researcher wrote the demand brief in [[Game Asset Store]]. Pick: a Roblox Luau systems kit ($9.99, Gumroad + itch.io). The 2D pixel and 3D low-poly lines are crowded and need art skills we don't have. itch.io requires an AI-disclosure tag.
+- Built the **Daily Streaks Kit** in `products/game-assets/daily-streaks-kit/`: config, pure logic, server service with DataStore saving and signals, code-built client panel, Rojo project, README, licence, example, logic tests and listing draft (`LISTING.md`). It's a game-agnostic rewrite of our own Sproutling Isles daily tasks.
+
+**Not verified**
+- Nothing has been run. The Luau CLI download was blocked from executing in the sandbox, so the tests haven't been run, and nothing has been tested in Studio. Roblox Creator Store rules are search-summary only.
+
+**Decisions** (also add to [[Decisions]])
+- First game-asset product line: a Roblox Luau kit (owner chose research-first and accepted the recommendation by asking for the first pack).
+
+**Next:** see [[Active Context]].
+
+## 2026-10-30: Shopify set-up request (blocked on sign-in)
+**Device:** phone · **Branch:** `main` · **Agents used:** none
+
+**Owner asked**
+- "Shopify set up" (no other detail).
+
+**What was done**
+- Tried the Shopify connector: it needs the owner to sign in again (claude.ai Settings → Connectors).
+- Asked whether this is a new store or an existing one, and whether it's the print-on-demand plan
+  from [[Decisions]] #19. No vault project note for Shopify yet.
+- Committed an automatic graphify graph rebuild (no code changes).
+
+**Next**
+- Owner: reconnect Shopify and say new vs existing store (plus what it sells, audience, look).
+- Follow-up: owner said to use past work. Vault points to a **new store** for original family-organization
+  printables (Decisions #19/#20 recommendation), with print-on-demand added later. Proposed that and asked
+  for the look/style. Shopify still showed "needs authentication"; no computer folders shared via Remote Control.
+- Owner is now setting up **Shopify Payments** in the Shopify app (step 3 of 4). Gave wording for the
+  "I sell..." description (original printable PDFs, instant digital download), category advice, and a note to
+  change the bank-statement name to the store name once one is chosen. Store name not chosen yet.
+- Owner started adding the first product in the Shopify app. Advised: set status to **Draft** (it defaulted to
+  Active), draft listing "Weekly Family Chore Chart – Printable PDF" at $5, turn off "physical product", install
+  Shopify's free Digital Downloads app. Offered to design the original PDF; waiting on the owner's yes.
+- Owner said yes: built the original **Weekly Family Chore Chart** in `products/chore-chart/` (`chart.html` +
+  `build.js`, Playwright → PDF). Letter + A4 PDFs, each 2 pages (colour + black-and-white), plus `preview.png`
+  for the Shopify listing image. Checked visually. Not yet uploaded to Shopify (owner does that via Digital Downloads).
+- Owner filled in the product (title, description, $5, category Organizers); advised turning off inventory tracking
+  and "physical product". Then generated a store theme ("printable PDF planners and chore charts for busy families,
+  soft teal + warm coral" to match the chart). Still to do: Digital Downloads + attach PDFs, store name (bank
+  statement still shows the owner's personal name), test purchase, then set Active.
+
+## 2026-10-30: Crypto Signals idea + GitHub access troubleshooting
+**Device:** phone · **Branch:** `claude/projects-overview-roadmap-2dnfnn` (plus this entry copied to `main`) · **Agents used:** none
+
+**Owner asked**
+- Build a new crypto trading-signal system: parallel momentum agents (UP/DOWN + confidence),
+  weighted aggregator across timeframes, orderbook pressure metrics, checkpoint-meter UI matching
+  "Xvantage." Build order: Python data fetcher (Binance) → momentum agent (RSI/MACD) → aggregator →
+  Node API → React dashboard.
+
+**What was done**
+- Scaffolded step 1 in the sandbox (`BinanceDataFetcher` wrapping `/api/v3/klines`, multi-timeframe
+  helper); parsing-verified against a sample payload (live calls blocked by sandbox egress policy —
+  `api.binance.com` gets a 403 on CONNECT, org proxy policy). This code did **not** survive a
+  session/worker restart and will need rebuilding.
+- Spent most of the session chasing GitHub repo access for a `trading-agent`-named repo the owner
+  initially pointed at, before discovering **a real, unrelated `trading-agent` repo already exists**
+  (forex/OANDA research toolkit, documented in [[Trading Agent]], explicit "read-only, no pushes"
+  rule). Owner confirmed (2026-10-30) the crypto idea is a **different project** and should get its
+  own repo — written up as [[Crypto Signals]].
+- Walked the owner through GitHub's mobile app and web settings looking for where to grant repo
+  access to Claude's GitHub App; ended up finding Claude isn't an installed GitHub App on the
+  account at all (`github.com/settings/installations` only shows Railway App) — this session's repo
+  scope is actually controlled from `claude.ai/customize/connectors` instead. Session restarted
+  before the owner finished that step.
+- Tried creating the repo directly via GitHub's API as a shortcut — failed, 403 "Resource not
+  accessible by integration" (the installed app/credential isn't permissioned to create repos).
+- Earlier in the session (before this topic): reconstructed a `BENITO_PROJECTS_MASTER.md` outline
+  on `claude/projects-overview-roadmap-2dnfnn` from a summary the owner pasted (original file lived
+  outside this repo/session and wasn't accessible) — committed locally but push also failed (same
+  GitHub-access gap). Marked with `[TBD]` placeholders throughout; owner has not yet reviewed it.
+
+**Not verified**
+- `BinanceDataFetcher` only checked against a hand-built sample payload, never a live Binance
+  response (egress blocked in-sandbox).
+- `BENITO_PROJECTS_MASTER.md` is a reconstruction from a short bullet summary, not the real source
+  file — most of its content is `[TBD]` placeholders, not verified facts.
+
+**Decisions** (also add to [[Decisions]])
+- Crypto Signals is a separate project/repo from Trading Agent (forex), not a rename or pivot of it.
+
+**Next:** see [[Active Context]] — needs the repo name confirmed + GitHub connector access granted
+before any of this session's crypto-signals code can be pushed or rebuilt productively.
+
+## 2026-10-30 (logged late — work done 2026-09-21): Bybit bot risk-gate scaffold
+**Device:** scheduled/cloud session · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (repo root) · **Agents used:** none
+
+**Owner asked**
+- Build the full risk-gated Bybit perpetuals bot tutorial end to end: strategy file, memory schema, cycle
+  prompt, a deterministic TypeScript MCP risk gate holding the only trading key, monitoring/Telegram scripts,
+  cron, and a README — on this designated branch.
+
+**What was done**
+- Built everything from the tutorial: `STRATEGY.md`, `prompts/cycle.md`, `memory/{decision.json,trades.jsonl,
+  learnings.md}`, `risk-gate/src/{index,checks,bybit,audit,paths,types}.ts` (kill switch, 5%/day loss cap,
+  30% notional cap, 10x BTC/5x ETH-SOL leverage cap, 2% price-sanity, 3-position cap, all logged to
+  `logs/audit.jsonl`), `scripts/{position-check,funding-check,telegram-alert,telegram-commands}.js`,
+  `crontab.txt`, `.env.example`, `.gitignore`, `README.md`.
+- `npm run build:gate` compiles clean; 14 `node:test` unit tests in `risk-gate/src/checks.test.ts` cover every
+  rejection path against a fake Bybit client — all pass.
+- Ran a dry-run harness against the real compiled `checks.js`/`audit.js` with a fake exchange client:
+  approved a well-formed order, rejected an oversized one (`notional_cap`), and confirmed `HALT_TRADING`
+  blocks both `place_order` and `close_position` (kill switch is a full stop, not just an entry filter).
+  Real `logs/audit.jsonl` entries produced and inspected; log file itself is gitignored (runtime output).
+- Committed (root commit, repo was empty) and pushed to `claude/bybit-trading-bot-risk-gate-r7apfr`. Verified
+  on origin: `6722583`.
+
+**Not verified**
+- No real Bybit testnet account/API key was available in-session, so nothing was validated against the
+  actual exchange — only against a fake client and the compiled logic. The README's manual-cycle, live
+  rejection-path, and cron steps still need to be run for real before this goes anywhere near cron/mainnet.
+- This note is being written five weeks after the work (vault protocol wasn't visible to that session) —
+  dates split as shown above so the log stays honest about when the code vs. the write-up happened.
+
+**Decisions**
+- None made by the owner yet — see the open task in [[Bybit Trading Bot]] (confirm paper vs. live intent,
+  supply testnet keys).
+
+**Next:** see [[Active Context]] and [[Bybit Trading Bot]].
+
+## 2026-10-24 (overnight run 2): Daily Tasks
+**Agents used:** none · `9dee71e` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner said "next". Added Daily Tasks with streaks and a Task Board. Not Studio-tested.
+
+## 2026-10-24 (overnight run 1): Monster Journal
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for hourly overnight improvement runs comparing with similar Roblox games. Cron job set (session-only). Run 1 added the Monster Journal (bestiary). Also earlier: Greenhollow re-laid out from the owner's sketch (tree of paths, houses spread out, loaded decor). See [[Sproutling Isles - Overnight Runs]]. Not Studio-tested.
+
+## 2026-10-24 (late night): Greenhollow Gardens
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked to shrink the garden plots into individual buildings with jungle decor in a rural village branching off the city, slightly angled, ~20+ studs apart with tree-like paths, lanterns, trading carts, open backs. Done (Greenhollow Gardens, SW of the city; island narrowed to 280 wide). Owner's "all shops free" line was then retracted ("ignore"), so prices unchanged. Not Studio-tested: PlotService now uses rotated plot axes.
+
+## 2026-10-24 (night): 100k budget, repolish, one connected map
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner raised the part limit to 100,000 and asked to repolish, then asked that all areas sit on one big connected map. Richer houses/landmarks/trees (map ~63k parts). New Shared/GroundBuilder bakes a low-poly part ground + roads (~17k parts) so Studio edit mode shows one world; TerrainBuilder deletes it once real terrain is built. Guideposts along the route. Not Studio-tested.
+
+## 2026-10-24 (evening): building polish
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner: "polish the build models, make them more sharp and fun looking without having them look so squarey and boxy." Reworked houses/shops/stalls (flared eaves, round ridges + finials, round chimneys, arched doors/windows, scalloped awnings). Checked with a new 3D z-buffer preview renderer (scratchpad r3d.py). 39.7k parts. Not Studio-tested.
+
+## 2026-10-24 (later): mountain village, beach village, water dungeon
+**Agents used:** none · `cd0e4db` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a mountain village outside a cave with its own quests, a route over the mountain to a beach village, a new water cave from there, and each cave with its own element enemies and bosses. Built Highcrag, Saltwind Pass, Saltmere, The Tidewrack Grotto (Thalvorn), and elements for all four dungeons (shadow/earth/fire/water). Terrain Version 5. Not Studio-tested.
+
+## 2026-10-24: fire dungeon
+**Agents used:** none · `a46815e` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a bigger third cave with its own element. Built The Emberdeep Caldera (fire: Burning DoT, lava, Pyrrhax boss, Fireward Tonic, Brannoc quests). Terrain Version 4 needs a re-bake. Not Studio-tested.
+
+## 2026-10-23: waystones
+**Agents used:** none · `8cc51cc` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner asked for a teleportation system like fast-travel checkpoints. Built 24 waystones (Shared/Waystones, WildsBuilder, WaystoneService, client window, map pins). Not Studio-tested.
+
+## 2026-10-23: second dungeon
+**Agents used:** none · branch `claude/roblox-popular-game-trends-6u7sie`
+- Owner: "next". Built The Deepdelve Mines (data-driven DungeonBuilder, per-dungeon DungeonService, Crag King boss, quest, map pin). Not Studio-tested.
+
+## 2026-10-22 (later): onboarding
+**Agents used:** none · `1a67526` on `claude/roblox-popular-game-trends-6u7sie`
+- Owner: "Continue the development." Added Mara the Guide (tour quests that auto-complete via city markers), F1 help panel, daily crate. Earlier: arena/ramp fixes (`c4bb510`). Not Studio-tested.
+
+## 2026-10-22: levels, vehicles, arena, crates, map
+**Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
+
+**Owner asked**
+- Working buildings (colosseum fights etc.), car/boat shops + customization shops, crates, leaderboards, a world map with transport, horse & trailer, unlock planes/helicopters by level, a fancy level-up display.
+
+**What was done**
+- `36aaaa8`: Levels/Vehicles/Crates shared data; Level, Vehicle, Crate, Arena, Map services; client Progress (badge, celebration, arena banner, crates reel), Vehicles (garage, sail/flight controller, paint shops), WorldMap. Halls given purposes. Level/arena leaderboards.
+
+**Not verified**
+- Nothing run in Studio. Flight/boat physics (LinearVelocity + PlatformStand) and the arena loop are the riskiest parts.
+- Follow-up review (`c4bb510`): fixed the arena being unenterable (portcullis + stands blocked the gates) and a trial ending instantly when started from the gate; added ramps from raised plinths (landmarks all sides, shops front).
+
+## 2026-10-21 (night): quests, wilds and sky isles
+**Device:** laptop · **Branch:** `claude/roblox-popular-game-trends-6u7sie` · **Agents used:** none
+
+**Owner asked**
+- Fill the open land: quest items, village extensions, more quests and characters in the mountains, a way up to the sky islands.
+
+**What was done**
+- `aa24a1c`: Shared/Quests (data), Shared/WildsBuilder (camps, homesteads, discoveries, items, shrines, sky isle content), server QuestService, client QuestLog (talk window, tracker, beam, head marks). New enemies golem/wisp/stormcaller. Skeleton/bat models added (were missing). Landscape v3.
+
+**Not verified**
+- Nothing run in Studio. Quest flow, prompts, sky teleports and new enemy AI on islets are untested.
+
+## 2026-10-21 (late): Sproutling Isles world reshape
+**Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- Laptop was 18 commits behind (a paste joined `git pull` and `start` into one line); fixed with a plain `git pull`, now on the newest file.
+- "Make the lands less uniform and more vast... roads different sizes, directions, heights."
+
+**What was done**
+- `d393a2b`: Landscape v2 (vast landmass, mountains, ragged shores, curvy graded roads), organic city layout, new villages, camps, travel markers. ~30k parts.
+- README: command-bar line to bake terrain into the place so it shows in edit mode (otherwise terrain only appears after Play).
+
+**Not verified**
+- Not run in Studio. Terrain build time at server start is untested (bigger world); baking it from the command bar avoids it.
+
+## 2026-10-21 (later): Sproutling Isles RPG finished (steps 6-7)
+**Device:** phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- "Stop asking me for approval and continue the process until it is finished." No check-ins until done.
+
+**What was done**
+- Step 6 (`772dd37`): `CompanionService` (P companion, V horse), `TravelService` + `Shared/Travel.luau` (airship 40 / boat 25 Dew), tamer/stable unlock items, shop-window travel list, phone buttons.
+- Step 7 (`ca13ad5`): StreamingEnabled with Persistent plaza HUD models, Atomic plots/animated props, stream-before-teleport.
+- Baked place rebuilt (`7271749`), 18,851 parts. selene clean, luau-lsp shows only known pre-existing noise.
+
+**Not verified**
+- Nothing from RPG steps 2-7 has run in real Roblox. Streaming behaviour, horse seat height and companion welds need a Studio look.
+- Texture asset IDs still pending from the owner (kit stays off until then).
+
+## 2026-10-21: owner request — Sproutling Isles play-test + map atmosphere upgrade
+**Device:** laptop (Windows) + phone · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (vault on `main`) · **Agents used:** none
+
+**Owner asked**
+- Walked through cloning the repo on the Windows laptop (PowerShell doesn't take `&&`; Documents shown in Studio's dialog is the OneDrive one, real clone is `C:\Users\benit\Documents\family-hub-pro`).
+- Ran the Studio play-test: "it looks good".
+- Sent 2 reference screenshots and asked for a more vibrant, involving map: effects, more structures, buildings and landscape.
+
+**What was done**
+- `5d8fa89`: Ambience lighting module, weather tints the Atmosphere, scenery pass (cottages, lantern towers, windmill, festoons, beams, crystals, motes, waterfalls, floating islets, clouds, tree colours).
+- `544640a`: shop houses, more cottages, hills, bushes, boulders, lighthouse, castle keep, pier and boats, horizon mountains.
+- Detail pass (owner: "more"): yards, paths, props, well, signposts, palms, sea arch, ruins, giant Elder tree, hot-air balloons. Parts now 3528.
+- Terrain pass (owner: reference image, "increase the detail astronomically"): Landscape + TerrainBuilder modules, castle, hamlets, farm, waterfall cliff, bridges, ~300 trees. 8,713 parts. Terrain generation untested in real Roblox.
+- Owner then asked for a whole city game (boats, planes, pets, shops, weapons, abilities; ~100k parts). Decided: turn Sproutling into the city game, cartoon combat, phone-safe budget. Built phase 1 (`86c76d7`): Sproutling City + airport, 16,330 parts total. Phases 2-6 planned in [[Sproutling Isles]].
+- Owner then changed direction again: open-world fantasy RPG (dungeons + overworld bosses, action combat, gardens grow ingredients). Rebuilt the city as a walled fantasy city (`34cac1a`), 18,371 parts. RPG plan in [[Sproutling Isles]].
+- Higgsfield material kit (`3773671`): 12 royal Renaissance textures (~3 of 1,000 credits), MaterialKit module applies them by role once Roblox asset ids are pasted in. Image host blocked by sandbox network policy, so files not in the repo yet.
+- Combat core (RPG step 2) pushed: weapons, dodge, abilities, enemies, camps, dummies. Type-checked with luau-lsp (downloaded to scratch, not committed). Untested in Studio.
+- selene/rojo/lune clean; place rebuilt and baked; `docs/map-preview.png` refreshed.
+
+**Not verified**
+- Not seen in Studio yet. Previews were rough offline renders. Frame rate on phones unknown (parts 1241 → 2886).
+- Full QA test-plan checklist not confirmed item by item.
+
+**Decisions** (also add to [[Decisions]])
+- Owner: reference images are for mood; keep everything original.
+
+**Next:** see [[Active Context]].
+
+
 ## 2026-10-16: owner request — Graphify installed
 **Device:** phone · **Branch:** `claude/graphify-setup` → merged to `main` · **Agents used:** none
 

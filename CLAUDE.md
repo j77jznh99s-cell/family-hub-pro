@@ -35,6 +35,7 @@ Before you finish, update memory so the next session can pick up where you left 
 | Family Hub (iPhone app + widgets) | `claude/family-hub-widget-1w7cv9` → `FamilyHub/` | `vault/Projects/Family Hub.md` |
 | Bybit trading bot (risk-gated) | `claude/bybit-trading-bot-risk-gate-r7apfr` → repo root | `vault/Projects/Bybit Trading Bot.md` |
 | Gumroad digital products (selling agents) | No code; run by StarNet agents | `vault/Projects/Gumroad Digital Products.md` |
+| Game Asset Store (Roblox kits for sale) | `claude/elegant-carson-k0ja0u` → `products/game-assets/` | `vault/Projects/Game Asset Store.md` |
 | Trading Agent (forex setups, review only) | separate repo `j77jznh99s-cell/trading-agent`, branch `claude/hourly-project-processing-ejbqs4` | `vault/Projects/Trading Agent.md` |
 
 ## Branches
