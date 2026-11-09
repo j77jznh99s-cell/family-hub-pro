@@ -6,13 +6,41 @@ local process = require("@lune/process")
 local roblox = require("@lune/roblox")
 
 local MapBuilder = require("../src/shared/MapBuilder")
+local Ambience = require("../src/shared/Ambience")
 
 local path = process.args[1] or "build/SproutlingIsles.rbxlx"
 local game = roblox.deserializePlace(fs.readFile(path))
 local workspace = game:GetService("Workspace")
 
 MapBuilder.useApi(roblox)
+MapBuilder.useLandscape(require("../src/shared/Landscape"))
+local CityBuilder = require("../src/shared/CityBuilder")
+CityBuilder.useApi(roblox)
+MapBuilder.useCity(CityBuilder)
+local DungeonBuilder = require("../src/shared/DungeonBuilder")
+DungeonBuilder.useApi(roblox)
+MapBuilder.useDungeon(DungeonBuilder)
+local WildsBuilder = require("../src/shared/WildsBuilder")
+WildsBuilder.useApi(roblox)
+MapBuilder.useWilds(WildsBuilder, require("../src/shared/Quests"), require("../src/shared/Waystones"))
 local map = MapBuilder.Build(workspace)
+
+-- One connected land under everything (TerrainBuilder swaps it for real terrain at run time).
+local GroundBuilder = require("../src/shared/GroundBuilder")
+GroundBuilder.useApi(roblox)
+local _, groundParts = GroundBuilder.Build(workspace, require("../src/shared/Landscape"))
+print(string.format("Edit ground: %d parts", groundParts))
+
+-- Bake the lighting look too, so edit mode in Studio matches play mode.
+Ambience.useApi(roblox)
+Ambience.Apply(game:GetService("Lighting"))
+
+-- Royal material kit: variants for uploaded textures, then paint the map by role.
+local MaterialKit = require("../src/shared/MaterialKit")
+MaterialKit.useApi(roblox)
+local variants = MaterialKit.ensureVariants(game:GetService("MaterialService"))
+local painted = MaterialKit.paint(map)
+print(string.format("Material kit: %d variants, %d parts painted", variants, painted))
 
 local count = 0
 for _, descendant in map:GetDescendants() do

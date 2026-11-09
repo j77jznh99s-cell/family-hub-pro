@@ -29,7 +29,11 @@ globals:
     any: true
   NumberSequence:
     any: true
+  NumberSequenceKeypoint:
+    any: true
   ColorSequence:
+    any: true
+  ColorSequenceKeypoint:
     any: true
   Random:
     any: true

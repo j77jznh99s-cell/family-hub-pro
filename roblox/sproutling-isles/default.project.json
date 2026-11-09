@@ -30,7 +30,14 @@
       }
     },
     "Workspace": {
-      "$properties": { "Gravity": 196.2 }
+      "$properties": {
+        "Gravity": 196.2,
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 128,
+        "StreamingTargetRadius": 640,
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
+      }
     }
   }
 }

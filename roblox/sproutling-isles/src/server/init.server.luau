@@ -9,6 +9,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Species = require(Shared.Species)
 local MapBuilder = require(Shared.MapBuilder)
+local Ambience = require(Shared.Ambience)
 local Events = require(Shared.Events)
 
 local Net = require(script.Net)
@@ -26,8 +27,35 @@ local MonetizationService = require(script.MonetizationService)
 local LeaderboardService = require(script.LeaderboardService)
 local EventService = require(script.EventService)
 local CodesService = require(script.CodesService)
+local TerrainBuilder = require(script.TerrainBuilder)
+local CombatService = require(script.CombatService)
+local EnemyService = require(script.EnemyService)
+local BuffService = require(script.BuffService)
+local ForageService = require(script.ForageService)
+local InventoryService = require(script.InventoryService)
+local LootService = require(script.LootService)
+local DungeonService = require(script.DungeonService)
+local CompanionService = require(script.CompanionService)
+local TravelService = require(script.TravelService)
+local QuestService = require(script.QuestService)
+local LevelService = require(script.LevelService)
+local VehicleService = require(script.VehicleService)
+local CrateService = require(script.CrateService)
+local ArenaService = require(script.ArenaService)
+local MapService = require(script.MapService)
+local WaystoneService = require(script.WaystoneService)
+local HazardService = require(script.HazardService)
+local JournalService = require(script.JournalService)
+local DailyService = require(script.DailyService)
+local Levels = require(Shared.Levels)
+local Combat = require(Shared.Combat)
 
 local map = workspace:FindFirstChild("Map") or MapBuilder.Build(workspace)
+Ambience.Apply(game:GetService("Lighting")) -- before WeatherService.init, which captures the clear-sky defaults
+-- royal material kit (no-op until texture asset ids are filled in, see Shared/MaterialKit.luau)
+local MaterialKit = require(Shared.MaterialKit)
+pcall(MaterialKit.ensureVariants, game:GetService("MaterialService"))
+MaterialKit.paint(map)
 
 WeatherService.init()
 PlotService.init(map)
@@ -39,6 +67,32 @@ MonetizationService.init()
 LeaderboardService.init(map)
 EventService.init(map) -- after WeatherService.init so the Fog scheduler's onStart/onStop hooks are live
 CodesService.init() -- Week 5 live-ops: the in-world Codes box (client HUD), see CodesService.luau
+task.spawn(TerrainBuilder.build, map) -- hills, lagoon and sea around the island (cosmetic)
+CombatService.init() -- RPG step 2: weapons, stamina, dodge, abilities
+EnemyService.init() -- monsters at the hill camps + training dummies (camps wait for the terrain)
+LootService.init() -- RPG step 3: drops, pickups, gear upgrades
+InventoryService.init(map) -- RPG step 4: bag, equip, potions, armour, shop prompts
+BuffService.init() -- RPG step 5: meal buffs
+ForageService.init() -- RPG step 5: wild herb patches
+DungeonService.init(map) -- The Hollow Crypt (entrance in the castle courtyard)
+CompanionService.init() -- RPG step 6: Sproutling companions (P) and horses (V)
+TravelService.init(map) -- RPG step 6: airship and boat fast travel
+QuestService.init(map) -- quest givers in the wilds, wind shrines to the sky isles
+LevelService.init() -- levels, XP and the level-up celebration
+VehicleService.init() -- carriages, boats and flying machines (garage: G)
+CrateService.init() -- reward crates
+ArenaService.init(map) -- wave trials in the colosseum
+MapService.init(map) -- points of interest for the world map (M)
+WaystoneService.init(map) -- fast-travel waystones (T)
+HazardService.init(map) -- lava and other floor hazards
+JournalService.init() -- the Monster Journal (N)
+DailyService.init(map) -- Daily Tasks (Y, Task Boards)
+EnemyService.onKill(function(player, kindId)
+	local kind = Combat.Enemies[kindId]
+	if kind then
+		LevelService.addXP(player, kind.reward * Levels.Gain.killPerDew, "Kill")
+	end
+end)
 
 ----------------------------------------------------------------------------------------------
 -- player lifecycle

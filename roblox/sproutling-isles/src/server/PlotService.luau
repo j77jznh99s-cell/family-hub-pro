@@ -14,6 +14,9 @@ local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
 local Analytics = require(script.Parent.Analytics)
 local Prompts = require(script.Parent.Prompts)
+local InventoryService = require(script.Parent.InventoryService)
+local LevelService = require(script.Parent.LevelService)
+local Levels = require(Shared.Levels)
 local WeatherService = require(script.Parent.WeatherService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
 local EventService = require(script.Parent.EventService)
@@ -35,6 +38,8 @@ type PlotInfo = {
 	cx: number,
 	cz: number,
 	inward: number,
+	facing: Vector3, -- out of the house's doors (MapBuilder.plotAxes: houses are turned a little)
+	along: Vector3,
 	owner: Player?,
 	soilPrompts: { ProximityPrompt },
 	sellPrompts: { ProximityPrompt },
@@ -52,7 +57,7 @@ local plotByModel: { [Model]: PlotInfo } = {}
 -- geometry
 
 local function worldPoint(info: PlotInfo, u: number, y: number, v: number): Vector3
-	return Vector3.new(info.cx + info.inward * u, y, info.cz + v)
+	return Vector3.new(info.cx, y, info.cz) + info.facing * u + info.along * v
 end
 
 function PlotService.isInside(plot: Model, position: Vector3): boolean
@@ -61,13 +66,16 @@ function PlotService.isInside(plot: Model, position: Vector3): boolean
 		return false
 	end
 	local half = MapBuilder.PlotSize / 2
-	return math.abs(position.X - info.cx) <= half and math.abs(position.Z - info.cz) <= half + 2
+	local offset = Vector3.new(position.X - info.cx, 0, position.Z - info.cz)
+	return math.abs(offset:Dot(info.facing)) <= half + 2 and math.abs(offset:Dot(info.along)) <= half + 2
 end
 
 function PlotService.gateOutside(plot: Model): CFrame
 	local info = plotByModel[plot]
-	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, 4, 0)
-	return CFrame.lookAt(pos, pos + Vector3.new(info.inward, 0, 0))
+	-- the house stands on its own pad: just outside its doors, at its floor's height
+	local floor = info.model.PrimaryPart :: BasePart
+	local pos = worldPoint(info, MapBuilder.PlotSize / 2 + 10, floor.Position.Y + 3.5, 0)
+	return CFrame.lookAt(pos, pos + info.facing)
 end
 
 function PlotService.info(plot: Model): PlotInfo?
@@ -118,7 +126,7 @@ function PlotService.renderPads(session: State.Session)
 			info.sellPrompts[pad].HoldDuration = if species and RARE_OR_BETTER[species.rarity] then 1 else 0.4
 			local model = SproutModel.build(sprout, true)
 			local top = padPart.Position + Vector3.new(0, padPart.Size.X / 2, 0)
-			model:PivotTo(CFrame.lookAt(top, top + Vector3.new(info.inward, 0, 0)))
+			model:PivotTo(CFrame.lookAt(top, top + info.facing))
 			local incomeLabel = model:FindFirstChild("Income", true) :: TextLabel?
 			if incomeLabel then
 				incomeLabel.Text = "+" .. Format.number(SproutModel.income(sprout) * mult) .. " Dew/s"
@@ -293,6 +301,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		State.addSeeds(session, seedId, -1)
 		session.data.soil[key] = { s = seedId, ready = os.time() + species.growSeconds, total = species.growSeconds }
 		updateSoil(info, session)
+		State.track(session, "plant")
 		if not session.data.onb.FirstPlant then
 			session.data.onb.FirstPlant = true
 			Analytics.onboarding(player, "FirstPlant")
@@ -309,6 +318,7 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		end
 		session.data.soil[key] = nil
 		updateSoil(info, session)
+		State.track(session, "harvest")
 		if not session.data.onb.FirstHatch then
 			session.data.onb.FirstHatch = true
 			Analytics.onboarding(player, "FirstHatch")
@@ -320,6 +330,9 @@ local function onSoil(info: PlotInfo, tile: number, player: Player)
 		local species = Species.get(sprout.s) :: Species.Species
 		LeaderboardService.reportHatch(player, session, species)
 		WeatherService.registerHatch()
+		-- RPG: every hatch also yields a cooking herb (InventoryService.gardenHarvest)
+		InventoryService.gardenHarvest(player)
+		LevelService.addXP(player, Levels.Gain.hatch, "Hatch")
 		-- 7. Hollow Harvest hatch bonus: +1 Moonberry per hatch during the event, +5 if this hatch
 		-- came out Haunted (the event's own weather mutation, distinct from other mutations).
 		if Events.active(Events.Halloween2026, Events.now()) then
@@ -350,6 +363,7 @@ local function onSell(info: PlotInfo, pad: number, player: Player)
 	session.data.pads[tostring(pad)] = nil
 	local value = State.sellValue(sprout)
 	State.addDew(session, value, "Sell:" .. sprout.s)
+	State.track(session, "sell")
 	if not session.data.onb.FirstSell then
 		session.data.onb.FirstSell = true
 		Analytics.onboarding(player, "FirstSell")
@@ -386,6 +400,7 @@ function PlotService.sellStorage(session: State.Session)
 	sellConfirmUntil[player] = nil
 	table.clear(session.data.storage)
 	State.addDew(session, total, "SellStorage")
+	State.track(session, "sell", count)
 	if not session.data.onb.FirstSell then
 		session.data.onb.FirstSell = true
 		Analytics.onboarding(player, "FirstSell")
@@ -577,6 +592,7 @@ function PlotService.teleportHome(session: State.Session)
 		return
 	end
 	local spawnPoint = plot:FindFirstChild("SpawnPoint") :: BasePart
+	pcall(session.player.RequestStreamAroundAsync, session.player, spawnPoint.Position, 3)
 	character:PivotTo(spawnPoint.CFrame + Vector3.new(0, 3, 0))
 end
 
@@ -590,12 +606,15 @@ function PlotService.init(map: Instance)
 	for _, model in map.Plots:GetChildren() do
 		local index = model:GetAttribute("Index")
 		local cx, cz, inward = MapBuilder.plotPlacement(index)
+		local facing, along = MapBuilder.plotAxes(index)
 		local info: PlotInfo = {
 			model = model,
 			index = index,
 			cx = cx,
 			cz = cz,
 			inward = inward,
+			facing = facing,
+			along = along,
 			owner = nil,
 			soilPrompts = {},
 			sellPrompts = {},

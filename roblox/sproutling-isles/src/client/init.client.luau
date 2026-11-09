@@ -486,27 +486,49 @@ end
 local map = workspace:WaitForChild("Map")
 local plaza = map:WaitForChild("Plaza")
 local shop = plaza:WaitForChild("Seed Shop")
+-- every Seed Shop: the plaza's, and the Seed Barn in Greenhollow Gardens (added when it arrives)
+local shops: { Instance } = { shop }
+local restockLabels: { TextLabel } = {}
 
 local function refreshStock()
 	local ok, stock = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Stock") or "{}")
 	if not ok then
 		return
 	end
-	for _, kiosk in shop:WaitForChild("Kiosks"):GetChildren() do
-		local id = kiosk:GetAttribute("Species")
-		local species = id and Species.get(id)
-		local label = kiosk:FindFirstChild("StockLabel")
-		local textLabel = label and label:FindFirstChild("Text") :: TextLabel?
-		if species and textLabel then
-			local left = stock[id] or 0
-			textLabel.Text = species.name .. "\n" .. Format.number(species.price) .. (if left > 0 then ("  x" .. left) else "  SOLD OUT")
+	for _, s in shops do
+		local kiosks = s:FindFirstChild("Kiosks")
+		for _, kiosk in if kiosks then kiosks:GetChildren() else {} do
+			local id = kiosk:GetAttribute("Species")
+			local species = id and Species.get(id)
+			local label = kiosk:FindFirstChild("StockLabel")
+			local textLabel = label and label:FindFirstChild("Text") :: TextLabel?
+			if species and textLabel then
+				local left = stock[id] or 0
+				textLabel.Text = species.name .. "\n" .. Format.number(species.price) .. (if left > 0 then ("  x" .. left) else "  SOLD OUT")
+			end
 		end
 	end
 end
 player:GetAttributeChangedSignal("Stock"):Connect(refreshStock)
 task.defer(refreshStock)
 
-local restockLabel = (shop:WaitForChild("RestockBoard"):WaitForChild("Label"):WaitForChild("Text")) :: TextLabel
+table.insert(restockLabels, (shop:WaitForChild("RestockBoard"):WaitForChild("Label"):WaitForChild("Text")) :: TextLabel)
+task.spawn(function()
+	local village = map:WaitForChild("Greenhollow", 60)
+	local barn = village and village:WaitForChild("Seed Shop", 30)
+	if barn then
+		table.insert(shops, barn)
+		local board = barn:WaitForChild("RestockBoard", 30)
+		local text = board and board:WaitForChild("Label", 30)
+		text = text and text:WaitForChild("Text", 30)
+		if text then
+			table.insert(restockLabels, text :: TextLabel)
+		end
+		-- the kiosks get their labels from the server; give them a moment, then fill them in
+		task.wait(2)
+		refreshStock()
+	end
+end)
 local shrineLabel = plaza:WaitForChild("Rebirth Shrine"):WaitForChild("Anchor"):WaitForChild("Label"):WaitForChild("Text") :: TextLabel
 
 -- Sprout Supply is purely a UI shortcut, so its prompt is created locally
@@ -611,7 +633,9 @@ RunService.RenderStepped:Connect(function()
 
 	local nextRestock = ReplicatedStorage:GetAttribute("NextRestock")
 	if nextRestock then
-		restockLabel.Text = "Restock in " .. Format.time(math.max(0, nextRestock - t))
+		for _, restockLabel in restockLabels do
+			restockLabel.Text = "Restock in " .. Format.time(math.max(0, nextRestock - t))
+		end
 	end
 	shrineLabel.Text = "Rebirth: " .. Format.number(player:GetAttribute("RebirthCost") or 0) .. " Dew"
 
@@ -637,3 +661,74 @@ RunService.RenderStepped:Connect(function()
 
 	refreshEvent()
 end)
+
+----------------------------------------------------------------------------------------------
+-- scenery animation (client-only, cosmetic): windmill sails turn, floating crystals bob.
+-- With streaming on, animated models are Atomic: each one arrives or leaves whole, so they're
+-- tracked as they stream in and dropped when they stream out.
+
+task.spawn(function()
+	local map = workspace:WaitForChild("Map", 60)
+	if not map then
+		return
+	end
+	local spinners: { [Model]: number } = {}
+	-- Bob = true: small crystals that bob and turn; Bob = "float": balloons that rise and sink slowly
+	local bobbers: { [Model]: { base: CFrame, phase: number, spin: boolean, height: number } } = {}
+	local count = 0
+	local function track(d: Instance)
+		if not d:IsA("Model") then
+			return
+		end
+		local speed = d:GetAttribute("SpinSpeed")
+		local bob = d:GetAttribute("Bob")
+		if typeof(speed) == "number" then
+			spinners[d] = math.rad(speed)
+		elseif bob then
+			count += 1
+			local spin = bob == true
+			bobbers[d] = { base = d:GetPivot(), phase = count * 1.7, spin = spin, height = if spin then 1.2 else 4 }
+		end
+	end
+	for _, d in map:GetDescendants() do
+		track(d)
+	end
+	map.DescendantAdded:Connect(track)
+	map.DescendantRemoving:Connect(function(d)
+		if d:IsA("Model") then
+			spinners[d] = nil
+			bobbers[d] = nil
+		end
+	end)
+	RunService.RenderStepped:Connect(function(dt)
+		for model, speed in spinners do
+			if model.PrimaryPart then
+				model:PivotTo(model:GetPivot() * CFrame.Angles(0, 0, speed * dt))
+			end
+		end
+		local clock = os.clock()
+		for model, b in bobbers do
+			if model.PrimaryPart then
+				local speed = if b.spin then 1.2 else 0.35
+				local offset = math.sin(clock * speed + b.phase) * b.height
+				local turn = if b.spin then clock * 0.6 + b.phase else 0
+				model:PivotTo(b.base * CFrame.new(0, offset, 0) * CFrame.Angles(0, turn, 0))
+			end
+		end
+	end)
+end)
+
+-- RPG step 2: combat input, HUD and effects (see Combat.luau)
+require(script:WaitForChild("Combat"))
+-- RPG step 4: inventory and shop screens (see Inventory.luau)
+require(script:WaitForChild("Inventory"))
+-- quests: talk window, tracker and guide beam (see QuestLog.luau)
+require(script:WaitForChild("QuestLog"))
+-- levels, crates, vehicles and the world map
+require(script:WaitForChild("Progress"))
+require(script:WaitForChild("Vehicles"))
+require(script:WaitForChild("Waystones"))
+require(script:WaitForChild("Journal"))
+require(script:WaitForChild("DailyTasks"))
+require(script:WaitForChild("WorldMap"))
+require(script:WaitForChild("Help"))

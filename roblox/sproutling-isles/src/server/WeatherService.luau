@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Weather = require(Shared.Weather)
+local Ambience = require(Shared.Ambience)
 
 local Net = require(script.Parent.Net)
 local State = require(script.Parent.State)
@@ -17,6 +18,7 @@ local WeatherService = {}
 
 local current: Weather.WeatherType? = nil
 local endsAt = 0
+-- Captured in init(), after the server bootstrap has applied Ambience to Lighting.
 local defaultAmbient = Lighting.OutdoorAmbient
 local defaultFog = Lighting.FogColor
 -- 3d WeatherStart / WeatherSummonHatches
@@ -56,11 +58,17 @@ local function fireStop(w: Weather.WeatherType)
 	end
 end
 
-local function tweenSky(color: Color3?)
+local function tweenSky(color: Color3?, thick: boolean?)
 	local goal = if color
 		then { OutdoorAmbient = color, FogColor = color, FogEnd = 900 }
 		else { OutdoorAmbient = defaultAmbient, FogColor = defaultFog, FogEnd = 100000 }
 	TweenService:Create(Lighting, TweenInfo.new(4), goal):Play()
+	-- With an Atmosphere present Roblox ignores Fog*, so tint the Atmosphere too.
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere then
+		local atmosphereGoal = if color then Ambience.weatherAtmosphere(color, thick == true) else Ambience.clearAtmosphere()
+		TweenService:Create(atmosphere, TweenInfo.new(4), atmosphereGoal):Play()
+	end
 end
 
 function WeatherService.current(): Weather.WeatherType?
@@ -104,7 +112,7 @@ function WeatherService.start(id: string, byPlayer: Player?)
 	hatchesThisWeather = 0
 	ReplicatedStorage:SetAttribute("Weather", w.id)
 	ReplicatedStorage:SetAttribute("WeatherEndsIn", endsAt - os.clock())
-	tweenSky(w.sky)
+	tweenSky(w.sky, w.id == "spookyfog")
 	local text = w.announce
 	if byPlayer then
 		text = byPlayer.DisplayName .. " summoned " .. w.name .. "! " .. text
@@ -193,6 +201,8 @@ local function pickNatural(): string
 end
 
 function WeatherService.init()
+	defaultAmbient = Lighting.OutdoorAmbient
+	defaultFog = Lighting.FogColor
 	ReplicatedStorage:SetAttribute("Weather", "")
 	task.spawn(function()
 		local nextNatural = os.clock() + State.rng:NextInteger(Config.WeatherEverySeconds[1], Config.WeatherEverySeconds[2]) * 0.5

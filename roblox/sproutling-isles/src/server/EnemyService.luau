@@ -1,0 +1,889 @@
+-- Enemies: builds the monster models, spawns them at the hill camps (and training dummies in
+-- the barracks yard), runs their AI, and handles damage, death, rewards and respawns.
+--
+-- AI per enemy, ticked a few times a second: wander near the camp; chase the nearest living
+-- player inside aggro range; when in reach, telegraph (red flash) for `attackWindup` seconds,
+-- then hit if the player is still in reach and not mid-dodge; give up and walk home past the
+-- leash range. Models are server-owned so players can't push them around by network ownership.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Combat = require(Shared.Combat)
+local Landscape = require(Shared.Landscape)
+
+local CombatService = require(script.Parent.CombatService)
+local LootService = require(script.Parent.LootService)
+
+local EnemyService = {}
+
+type Enemy = {
+	kind: Combat.EnemyType,
+	model: Model,
+	root: BasePart,
+	humanoid: Humanoid,
+	radius: number,
+	home: Vector3,
+	target: Player?,
+	nextAttack: number,
+	winding: boolean,
+	nextWander: number,
+	lastHitBy: Player?,
+	dead: boolean,
+	leash: number,
+	onDeath: ((Enemy) -> ())?,
+	respawn: boolean,
+	attackIndex: number,
+}
+
+export type SpawnOptions = {
+	respawn: boolean?, -- default: true when the enemy type has a respawn time
+	onDeath: ((any) -> ())?,
+	leash: number?,
+}
+
+local enemies: { Enemy } = {}
+local killHooks: { (Player, string) -> () } = {}
+
+-- Calls fn(killer, enemyKindId) whenever a player defeats an enemy (QuestService counts kills).
+function EnemyService.onKill(fn: (Player, string) -> ())
+	table.insert(killHooks, fn)
+end
+local folder: Folder
+local bossAttack: (any, Vector3, Vector3) -> () -- defined below, used by think()
+
+----------------------------------------------------------------------------------------------
+-- models
+
+local function piece(m: Model, root: BasePart, name: string, size: Vector3, offset: CFrame, color: Color3, material: Enum.Material?, shape: Enum.PartType?): BasePart
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.CFrame = root.CFrame * offset
+	p.Color = color
+	p.Material = material or Enum.Material.SmoothPlastic
+	if shape then
+		p.Shape = shape
+	end
+	p.CanCollide = false
+	p.CanQuery = false
+	p.Massless = true
+	p.Parent = m
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = p
+	weld.Parent = p
+	return p
+end
+
+-- Returns the model, its root and its hit radius. `at` is the ground point to stand on.
+local function build(kind: Combat.EnemyType, at: Vector3): (Model, BasePart, number)
+	local m = Instance.new("Model")
+	m.Name = kind.name
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.Transparency = 1
+	root.CanCollide = true
+	m.PrimaryPart = root
+	local humanoid = Instance.new("Humanoid")
+	humanoid.RequiresNeck = false
+	humanoid.BreakJointsOnDeath = false
+	humanoid.DisplayName = kind.name
+	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn
+	humanoid.NameDisplayDistance = 70
+	humanoid.HealthDisplayDistance = 70
+	humanoid.MaxHealth = kind.health
+	humanoid.Health = kind.health
+	humanoid.WalkSpeed = kind.speed
+	local radius = 2.5
+	local id = kind.id
+	if id == "slime" then
+		root.Size = Vector3.new(4, 3, 4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 1.7, 0))
+		humanoid.HipHeight = 0.1
+		local tint = Color3.fromRGB(110, 200, 90)
+		piece(m, root, "Body", Vector3.new(4.6, 4.6, 4.6), CFrame.new(0, 0.2, 0), tint, Enum.Material.Glass, Enum.PartType.Ball).Transparency = 0.15
+		piece(m, root, "Core", Vector3.new(1.6, 1.6, 1.6), CFrame.new(0, 0.3, 0), Color3.fromRGB(60, 140, 50), Enum.Material.Neon, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.7, 0.9, 0.3), CFrame.new(s * 0.8, 1, -2.1), Color3.fromRGB(20, 20, 20))
+		end
+		radius = 2.6
+	elseif id == "goblin" then
+		root.Size = Vector3.new(2.4, 2.4, 1.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.3, 0))
+		humanoid.HipHeight = 2.1
+		local skin = Color3.fromRGB(110, 160, 70)
+		piece(m, root, "Torso", Vector3.new(2.4, 2.4, 1.6), CFrame.new(), Color3.fromRGB(120, 80, 50), Enum.Material.Fabric)
+		piece(m, root, "Head", Vector3.new(2, 1.8, 1.8), CFrame.new(0, 2.1, 0), skin)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Ear", Vector3.new(1.4, 0.4, 0.4), CFrame.new(s * 1.5, 2.4, 0) * CFrame.Angles(0, 0, s * math.rad(-20)), skin)
+			piece(m, root, "Eye", Vector3.new(0.4, 0.4, 0.2), CFrame.new(s * 0.45, 2.3, -0.92), Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.8, 2.2, 0.8), CFrame.new(s * 0.6, -2.3, 0), skin)
+			piece(m, root, "Arm", Vector3.new(0.7, 2.2, 0.7), CFrame.new(s * 1.6, -0.2, 0), skin)
+		end
+		for k = 0, 3 do
+			piece(m, root, "Thorn", Vector3.new(0.4, 1, 0.4), CFrame.new(-0.6 + k * 0.4, 1.2, 0.9) * CFrame.Angles(math.rad(-30), 0, 0), Color3.fromRGB(70, 110, 50))
+		end
+		piece(m, root, "Club", Vector3.new(0.6, 3, 0.6), CFrame.new(1.8, -0.6, -1) * CFrame.Angles(math.rad(-60), 0, 0), Color3.fromRGB(110, 75, 45), Enum.Material.Wood)
+		radius = 2
+	elseif id == "wolf" then
+		root.Size = Vector3.new(2.4, 2.2, 6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.2, 0))
+		humanoid.HipHeight = 2.1
+		local fur = Color3.fromRGB(110, 110, 120)
+		piece(m, root, "Body", Vector3.new(2.4, 2.2, 6), CFrame.new(), fur, Enum.Material.Fabric)
+		piece(m, root, "Head", Vector3.new(2, 1.8, 2.4), CFrame.new(0, 0.8, -3.6), fur, Enum.Material.Fabric)
+		piece(m, root, "Snout", Vector3.new(1.1, 0.9, 1.4), CFrame.new(0, 0.4, -5.2), Color3.fromRGB(80, 80, 88), Enum.Material.Fabric)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Ear", Vector3.new(0.5, 0.9, 0.4), CFrame.new(s * 0.6, 2, -3.4), fur, Enum.Material.Fabric)
+			piece(m, root, "Eye", Vector3.new(0.35, 0.3, 0.2), CFrame.new(s * 0.5, 1.1, -4.85), Color3.fromRGB(255, 120, 60), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.7, 2.2, 0.7), CFrame.new(s * 0.8, -2.1, -2), fur, Enum.Material.Fabric)
+			piece(m, root, "Leg", Vector3.new(0.7, 2.2, 0.7), CFrame.new(s * 0.8, -2.1, 2), fur, Enum.Material.Fabric)
+		end
+		piece(m, root, "Tail", Vector3.new(0.6, 0.6, 2.4), CFrame.new(0, 0.6, 3.8) * CFrame.Angles(math.rad(25), 0, 0), fur, Enum.Material.Fabric)
+		radius = 3
+	elseif id == "skeleton" then
+		root.Size = Vector3.new(2.2, 2.4, 1.2)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local bone = Color3.fromRGB(230, 224, 205)
+		piece(m, root, "Ribcage", Vector3.new(2.2, 2.4, 1.2), CFrame.new(), bone)
+		piece(m, root, "Skull", Vector3.new(1.8, 1.8, 1.8), CFrame.new(0, 2.1, 0), bone, nil, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.35, 0.2), CFrame.new(s * 0.4, 2.2, -0.85), Color3.fromRGB(120, 220, 255), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(0.45, 2.4, 0.45), CFrame.new(s * 1.4, -0.2, 0), bone)
+			piece(m, root, "Leg", Vector3.new(0.5, 2.3, 0.5), CFrame.new(s * 0.55, -2.3, 0), bone)
+		end
+		piece(m, root, "Blade", Vector3.new(0.25, 3.2, 0.7), CFrame.new(1.6, -0.4, -1.2) * CFrame.Angles(math.rad(-50), 0, 0), Color3.fromRGB(140, 110, 90), Enum.Material.CorrodedMetal)
+		radius = 2
+	elseif id == "bat" then
+		-- flies: a high hip height keeps it fluttering above the ground
+		root.Size = Vector3.new(2, 1.4, 2)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.7, 0))
+		humanoid.HipHeight = 5
+		local fur = Color3.fromRGB(70, 55, 90)
+		piece(m, root, "Body", Vector3.new(1.8, 1.8, 1.8), CFrame.new(), fur, Enum.Material.Fabric, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Wing", Vector3.new(2.6, 0.2, 1.6), CFrame.new(s * 2, 0.3, 0) * CFrame.Angles(0, 0, s * math.rad(20)), Color3.fromRGB(55, 40, 70), Enum.Material.Fabric)
+			piece(m, root, "Ear", Vector3.new(0.3, 0.7, 0.3), CFrame.new(s * 0.45, 1.1, 0), fur, Enum.Material.Fabric)
+			piece(m, root, "Eye", Vector3.new(0.3, 0.3, 0.2), CFrame.new(s * 0.35, 0.3, -0.85), Color3.fromRGB(255, 80, 80), Enum.Material.Neon)
+		end
+		radius = 2
+	elseif id == "golem" then
+		root.Size = Vector3.new(4, 4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.4, 0))
+		humanoid.HipHeight = 3.4
+		local rock = Color3.fromRGB(125, 120, 112)
+		piece(m, root, "Body", Vector3.new(4.4, 4, 3.2), CFrame.new(), rock, Enum.Material.Slate)
+		piece(m, root, "Head", Vector3.new(2.2, 1.8, 2), CFrame.new(0, 2.8, -0.2), rock, Enum.Material.Slate)
+		piece(m, root, "Core", Vector3.new(1.2, 1.2, 0.4), CFrame.new(0, 0.3, -1.6), Color3.fromRGB(110, 230, 255), Enum.Material.Neon)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.45, 0.3, 0.2), CFrame.new(s * 0.5, 2.9, -1.2), Color3.fromRGB(110, 230, 255), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(1.6, 4.4, 1.6), CFrame.new(s * 3.1, -0.8, 0), rock, Enum.Material.Slate)
+			piece(m, root, "Fist", Vector3.new(2, 1.8, 2), CFrame.new(s * 3.1, -3.4, 0), Color3.fromRGB(105, 100, 95), Enum.Material.Slate)
+			piece(m, root, "Leg", Vector3.new(1.6, 2.6, 1.6), CFrame.new(s * 1.2, -3.2, 0), rock, Enum.Material.Slate)
+		end
+		piece(m, root, "Moss", Vector3.new(3, 0.5, 2.4), CFrame.new(0.4, 2.1, 0.4), Color3.fromRGB(90, 140, 70), Enum.Material.Grass)
+		radius = 3
+	elseif id == "wisp" then
+		-- a floating ball of storm-light
+		root.Size = Vector3.new(2.4, 2.4, 2.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.2, 0))
+		humanoid.HipHeight = 4
+		piece(m, root, "Core", Vector3.new(1.8, 1.8, 1.8), CFrame.new(), Color3.fromRGB(170, 235, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		piece(m, root, "Shell", Vector3.new(3.4, 3.4, 3.4), CFrame.new(), Color3.fromRGB(120, 200, 255), Enum.Material.Glass, Enum.PartType.Ball).Transparency = 0.5
+		for k = 0, 2 do
+			local a = k / 3 * math.pi * 2
+			piece(m, root, "Spark", Vector3.new(0.6, 0.6, 0.6), CFrame.new(math.cos(a) * 2.4, math.sin(a * 2) * 0.6, math.sin(a) * 2.4), Color3.fromRGB(255, 255, 200), Enum.Material.Neon, Enum.PartType.Ball)
+		end
+		radius = 2
+	elseif id == "emberimp" then
+		-- a small red imp with horns and a flame for hair
+		root.Size = Vector3.new(2, 2, 1.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 2.8, 0))
+		humanoid.HipHeight = 1.8
+		local skin = Color3.fromRGB(200, 60, 40)
+		piece(m, root, "Body", Vector3.new(2, 2, 1.4), CFrame.new(), skin)
+		local head = piece(m, root, "Head", Vector3.new(1.8, 1.6, 1.6), CFrame.new(0, 1.8, 0), skin)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Horn", Vector3.new(0.3, 1, 0.3), CFrame.new(s * 0.6, 2.9, 0) * CFrame.Angles(0, 0, s * math.rad(-25)), Color3.fromRGB(40, 30, 30))
+			piece(m, root, "Eye", Vector3.new(0.35, 0.35, 0.2), CFrame.new(s * 0.4, 1.9, -0.82), Color3.fromRGB(255, 230, 80), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.6, 1.8, 0.6), CFrame.new(s * 0.5, -1.8, 0), skin)
+			piece(m, root, "Arm", Vector3.new(0.5, 1.8, 0.5), CFrame.new(s * 1.3, -0.2, 0), skin)
+		end
+		piece(m, root, "Tail", Vector3.new(0.3, 0.3, 2.2), CFrame.new(0, -0.6, 1.6) * CFrame.Angles(math.rad(-30), 0, 0), skin)
+		local flame = Instance.new("Fire")
+		flame.Size = 3
+		flame.Heat = 6
+		flame.Parent = head
+		radius = 2
+	elseif id == "magmahound" then
+		-- a black hound with glowing lava cracks
+		root.Size = Vector3.new(2.6, 2.4, 6.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local hide = Color3.fromRGB(40, 32, 30)
+		local lava = Color3.fromRGB(255, 110, 30)
+		piece(m, root, "Body", Vector3.new(2.6, 2.4, 6.4), CFrame.new(), hide, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.2, 2, 2.6), CFrame.new(0, 0.9, -3.8), hide, Enum.Material.Basalt)
+		piece(m, root, "Jaw", Vector3.new(1.4, 0.8, 1.6), CFrame.new(0, 0.2, -5.4), lava, Enum.Material.Neon)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Crack", Vector3.new(0.2, 1.8, 4.6), CFrame.new(s * 1.31, 0.2, 0), lava, Enum.Material.Neon)
+			piece(m, root, "Eye", Vector3.new(0.4, 0.3, 0.2), CFrame.new(s * 0.55, 1.3, -5.12), Color3.fromRGB(255, 220, 80), Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(0.8, 2.4, 0.8), CFrame.new(s * 0.85, -2.2, -2.2), hide, Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(0.8, 2.4, 0.8), CFrame.new(s * 0.85, -2.2, 2.2), hide, Enum.Material.Basalt)
+		end
+		local tail = piece(m, root, "Tail", Vector3.new(0.6, 0.6, 2.6), CFrame.new(0, 0.8, 4) * CFrame.Angles(math.rad(30), 0, 0), lava, Enum.Material.Neon)
+		local flame = Instance.new("Fire")
+		flame.Size = 3
+		flame.Parent = tail
+		radius = 3
+	elseif id == "cinderwraith" then
+		-- a floating cloak of ash around an ember heart
+		root.Size = Vector3.new(2.6, 3, 2.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.5, 0))
+		humanoid.HipHeight = 4
+		local ash = Color3.fromRGB(60, 55, 58)
+		piece(m, root, "Cloak", Vector3.new(3.2, 4.6, 3.2), CFrame.new(0, -0.6, 0), ash, Enum.Material.Fabric)
+		piece(m, root, "Hood", Vector3.new(2.6, 2.4, 2.6), CFrame.new(0, 2.2, 0), ash, Enum.Material.Fabric)
+		local heart = piece(m, root, "Heart", Vector3.new(1.4, 1.4, 1.4), CFrame.new(0, 0.4, -1.4), Color3.fromRGB(255, 140, 50), Enum.Material.Neon, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.25, 0.2), CFrame.new(s * 0.45, 2.2, -1.32), Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+			piece(m, root, "Sleeve", Vector3.new(0.9, 3, 0.9), CFrame.new(s * 2, -0.4, -0.4) * CFrame.Angles(math.rad(-30), 0, 0), ash, Enum.Material.Fabric)
+		end
+		local smoke = Instance.new("Fire")
+		smoke.Size = 4
+		smoke.Heat = 3
+		smoke.Color = Color3.fromRGB(255, 120, 40)
+		smoke.SecondaryColor = Color3.fromRGB(60, 50, 50)
+		smoke.Parent = heart
+		radius = 2.4
+	elseif id == "pyrrhax" then
+		-- the molten wyrm: a horned head, a ridged body and wings of cooling rock
+		local s = kind.size or 2.5
+		root.Size = Vector3.new(4, 4, 6) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.6 * s, 0))
+		humanoid.HipHeight = 3.6 * s
+		local rock = Color3.fromRGB(55, 40, 38)
+		local lava = Color3.fromRGB(255, 110, 30)
+		piece(m, root, "Body", Vector3.new(4, 4, 7) * s, CFrame.new(), rock, Enum.Material.Basalt)
+		piece(m, root, "Belly", Vector3.new(3.4, 1, 6) * s, CFrame.new(0, -1.8 * s, 0), lava, Enum.Material.Neon)
+		piece(m, root, "Neck", Vector3.new(2.2, 2.2, 4) * s, CFrame.new(0, 1.8 * s, -4.6 * s) * CFrame.Angles(math.rad(30), 0, 0), rock, Enum.Material.Basalt)
+		local head = piece(m, root, "Head", Vector3.new(2.6, 2.2, 3.6) * s, CFrame.new(0, 3.4 * s, -6.8 * s), rock, Enum.Material.Basalt)
+		piece(m, root, "Maw", Vector3.new(1.8, 0.6, 2) * s, CFrame.new(0, 2.6 * s, -8.2 * s), lava, Enum.Material.Neon)
+		for _, side in { -1, 1 } do
+			piece(m, root, "Horn", Vector3.new(0.5, 2.6, 0.5) * s, CFrame.new(side * 1 * s, 5 * s, -6.2 * s) * CFrame.Angles(math.rad(-30), 0, side * math.rad(-20)), Color3.fromRGB(30, 25, 25))
+			piece(m, root, "Eye", Vector3.new(0.6, 0.4, 0.2) * s, CFrame.new(side * 0.8 * s, 3.8 * s, -8.55 * s), Color3.fromRGB(255, 230, 90), Enum.Material.Neon)
+			piece(m, root, "Wing", Vector3.new(7, 0.4, 5) * s, CFrame.new(side * 5.2 * s, 2 * s, 0.4 * s) * CFrame.Angles(0, 0, side * math.rad(-25)), rock, Enum.Material.Basalt)
+			piece(m, root, "WingVein", Vector3.new(6.6, 0.45, 0.4) * s, CFrame.new(side * 5.2 * s, 2.05 * s, -0.6 * s) * CFrame.Angles(0, 0, side * math.rad(-25)), lava, Enum.Material.Neon)
+			piece(m, root, "Leg", Vector3.new(1.4, 3.2, 1.4) * s, CFrame.new(side * 1.6 * s, -3.6 * s, -2 * s), rock, Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(1.4, 3.2, 1.4) * s, CFrame.new(side * 1.6 * s, -3.6 * s, 2.2 * s), rock, Enum.Material.Basalt)
+		end
+		for k = 0, 4 do
+			piece(m, root, "Spine", Vector3.new(0.6, 1.4, 1) * s, CFrame.new(0, 2.5 * s, (-2.4 + k * 1.3) * s), lava, Enum.Material.Neon)
+		end
+		piece(m, root, "Tail", Vector3.new(1.6, 1.6, 7) * s, CFrame.new(0, -0.6 * s, 6.6 * s) * CFrame.Angles(math.rad(-15), 0, 0), rock, Enum.Material.Basalt)
+		local flame = Instance.new("Fire")
+		flame.Size = 10
+		flame.Heat = 12
+		flame.Parent = head
+		radius = 4 * s
+	elseif id == "rockmite" then
+		-- a low, quick burrower with a shell of grey stone and glowing quartz spines
+		root.Size = Vector3.new(2.4, 1.4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 2, 0))
+		humanoid.HipHeight = 1.3
+		local stone = Color3.fromRGB(120, 112, 104)
+		local quartz = Color3.fromRGB(200, 170, 255)
+		piece(m, root, "Shell", Vector3.new(2.6, 1.4, 3.2), CFrame.new(), stone, Enum.Material.Slate)
+		piece(m, root, "Head", Vector3.new(1.6, 1, 1.2), CFrame.new(0, -0.1, -2), stone, Enum.Material.Slate)
+		for k = -1, 1 do
+			piece(m, root, "Spine", Vector3.new(0.4, 1.2, 0.4), CFrame.new(k * 0.7, 1.1, k * 0.5) * CFrame.Angles(math.rad(-20), 0, k * math.rad(15)), quartz, Enum.Material.Neon)
+		end
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.3, 0.3, 0.2), CFrame.new(s * 0.45, 0.1, -2.62), Color3.fromRGB(255, 200, 90), Enum.Material.Neon)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.3, 1.2, 0.3), CFrame.new(s * 1.4, -0.9, k * 1) * CFrame.Angles(0, 0, s * math.rad(30)), stone, Enum.Material.Slate)
+			end
+		end
+		radius = 2
+	elseif id == "shardback" then
+		-- a big beetle with a back of jagged crystal plates
+		root.Size = Vector3.new(3.4, 2.4, 4.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3, 0))
+		humanoid.HipHeight = 1.8
+		local shell = Color3.fromRGB(90, 80, 72)
+		local crystal = Color3.fromRGB(150, 230, 210)
+		piece(m, root, "Body", Vector3.new(3.4, 2.2, 4.6), CFrame.new(), shell, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.2, 1.6, 1.6), CFrame.new(0, -0.2, -3), shell, Enum.Material.Basalt)
+		for k = 0, 3 do
+			piece(m, root, "Plate", Vector3.new(2.6 - k * 0.3, 1.6, 0.5), CFrame.new(0, 1.4, -1.4 + k * 1) * CFrame.Angles(math.rad(-25), 0, 0), crystal, Enum.Material.Glass).Transparency = 0.2
+		end
+		for _, s in { -1, 1 } do
+			piece(m, root, "Mandible", Vector3.new(0.4, 0.4, 1.4), CFrame.new(s * 0.7, -0.4, -4.2) * CFrame.Angles(0, s * math.rad(-25), 0), Color3.fromRGB(60, 52, 48), Enum.Material.Basalt)
+			piece(m, root, "Eye", Vector3.new(0.35, 0.35, 0.2), CFrame.new(s * 0.6, 0.1, -3.82), Color3.fromRGB(150, 230, 210), Enum.Material.Neon)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.4, 1.8, 0.4), CFrame.new(s * 2, -1.2, k * 1.4) * CFrame.Angles(0, 0, s * math.rad(35)), shell, Enum.Material.Basalt)
+			end
+		end
+		radius = 2.6
+	elseif id == "reefcrab" then
+		-- a broad crab in a coral-crusted shell, one claw bigger than the other
+		root.Size = Vector3.new(4.4, 2, 3.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3, 0))
+		humanoid.HipHeight = 2
+		local shell = Color3.fromRGB(215, 90, 60)
+		piece(m, root, "Shell", Vector3.new(4.6, 2, 3.4), CFrame.new(), shell, Enum.Material.SmoothPlastic)
+		piece(m, root, "Coral", Vector3.new(1.2, 1.4, 1.2), CFrame.new(-0.9, 1.5, 0.4), Color3.fromRGB(255, 140, 170), Enum.Material.Pebble)
+		piece(m, root, "Coral", Vector3.new(0.8, 1, 0.8), CFrame.new(1, 1.3, -0.2), Color3.fromRGB(120, 220, 200), Enum.Material.Pebble)
+		for _, s in { -1, 1 } do
+			local big = if s == 1 then 1.5 else 1
+			piece(m, root, "Arm", Vector3.new(0.5, 0.5, 1.6), CFrame.new(s * 2.2, 0, -1.8), shell)
+			piece(m, root, "Claw", Vector3.new(1.4, 1, 1.8) * big, CFrame.new(s * 2.4, 0.2, -3.2), shell)
+			piece(m, root, "EyeStalk", Vector3.new(0.25, 1, 0.25), CFrame.new(s * 0.6, 1.4, -1.4), shell)
+			piece(m, root, "Eye", Vector3.new(0.4, 0.4, 0.4), CFrame.new(s * 0.6, 2, -1.4), Color3.fromRGB(20, 20, 30), nil, Enum.PartType.Ball)
+			for k = -1, 1 do
+				piece(m, root, "Leg", Vector3.new(0.35, 1.8, 0.35), CFrame.new(s * 2.5, -1.2, k * 0.9 + 0.4) * CFrame.Angles(0, 0, s * math.rad(40)), shell)
+			end
+		end
+		radius = 3
+	elseif id == "driftjelly" then
+		-- a floating glassy bell trailing glowing ribbons
+		root.Size = Vector3.new(3, 2.4, 3)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.6, 0))
+		humanoid.HipHeight = 4.4
+		local bell = piece(m, root, "Bell", Vector3.new(3.6, 3, 3.6), CFrame.new(0, 0.4, 0), Color3.fromRGB(150, 210, 255), Enum.Material.Glass, Enum.PartType.Ball)
+		bell.Transparency = 0.35
+		local core = piece(m, root, "Core", Vector3.new(1.4, 1.4, 1.4), CFrame.new(0, 0.4, 0), Color3.fromRGB(110, 240, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2
+			piece(m, root, "Ribbon", Vector3.new(0.25, 3.4, 0.25), CFrame.new(math.cos(a) * 1.1, -2.2, math.sin(a) * 1.1) * CFrame.Angles(math.sin(a) * 0.3, 0, math.cos(a) * 0.3), Color3.fromRGB(160, 120, 255), Enum.Material.Neon)
+		end
+		local glowLight = Instance.new("PointLight")
+		glowLight.Range = 12
+		glowLight.Color = Color3.fromRGB(110, 240, 255)
+		glowLight.Parent = core
+		radius = 2.4
+	elseif id == "lurker" then
+		-- a hunched fish-folk hunter with fins, gills and a coral spear
+		root.Size = Vector3.new(2, 2.4, 1.4)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 3.4, 0))
+		humanoid.HipHeight = 2.2
+		local scale = Color3.fromRGB(50, 110, 120)
+		local belly = Color3.fromRGB(170, 210, 190)
+		piece(m, root, "Body", Vector3.new(2.2, 2.6, 1.6), CFrame.new(), scale, Enum.Material.SmoothPlastic)
+		piece(m, root, "Belly", Vector3.new(1.6, 2, 0.2), CFrame.new(0, -0.1, -0.85), belly)
+		piece(m, root, "Head", Vector3.new(1.8, 1.6, 2), CFrame.new(0, 2, -0.3), scale)
+		piece(m, root, "Fin", Vector3.new(0.2, 1.6, 2.4), CFrame.new(0, 3, 0.2), Color3.fromRGB(80, 200, 190), Enum.Material.Glass)
+		for _, s in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.4, 0.4, 0.2), CFrame.new(s * 0.55, 2.2, -1.32), Color3.fromRGB(255, 240, 120), Enum.Material.Neon)
+			piece(m, root, "Gill", Vector3.new(0.2, 0.8, 0.8), CFrame.new(s * 0.95, 1.7, 0), Color3.fromRGB(230, 90, 100))
+			piece(m, root, "Arm", Vector3.new(0.6, 2.4, 0.6), CFrame.new(s * 1.4, -0.2, -0.2), scale)
+			piece(m, root, "Leg", Vector3.new(0.7, 2.2, 0.7), CFrame.new(s * 0.55, -2.3, 0), scale)
+		end
+		piece(m, root, "Spear", Vector3.new(0.3, 0.3, 6), CFrame.new(1.5, -0.6, -1.6), Color3.fromRGB(120, 90, 70), Enum.Material.Wood)
+		piece(m, root, "SpearTip", Vector3.new(0.6, 0.6, 1.2), CFrame.new(1.5, -0.6, -5), Color3.fromRGB(255, 120, 150), Enum.Material.Pebble)
+		radius = 2.2
+	elseif id == "thalvorn" then
+		-- the tide kraken: a great domed head, glowing eyes and a ring of curling tentacles
+		local s = kind.size or 2.5
+		root.Size = Vector3.new(5, 4, 5) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5 * s, 0))
+		humanoid.HipHeight = 3 * s
+		local hide = Color3.fromRGB(70, 60, 130)
+		local spots = Color3.fromRGB(110, 230, 255)
+		piece(m, root, "Mantle", Vector3.new(6, 7, 6) * s, CFrame.new(0, 2.6 * s, 0.6 * s), hide, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+		piece(m, root, "Brow", Vector3.new(5.4, 1.2, 1.4) * s, CFrame.new(0, 1.6 * s, -2.4 * s), Color3.fromRGB(55, 46, 105))
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(1.4, 1.4, 0.6) * s, CFrame.new(side * 1.4 * s, 0.8 * s, -2.75 * s), Color3.fromRGB(255, 230, 90), Enum.Material.Neon, Enum.PartType.Ball)
+			piece(m, root, "Spot", Vector3.new(0.8, 0.8, 0.8) * s, CFrame.new(side * 2.4 * s, 3.6 * s, -0.6 * s), spots, Enum.Material.Neon, Enum.PartType.Ball)
+		end
+		piece(m, root, "Crest", Vector3.new(0.6, 2, 3) * s, CFrame.new(0, 6.2 * s, 0.6 * s), spots, Enum.Material.Neon)
+		for k = 0, 7 do
+			local a = k / 8 * math.pi * 2
+			local cx, cz = math.cos(a), math.sin(a)
+			piece(m, root, "Tentacle", Vector3.new(1.2, 1.2, 5) * s, CFrame.new(cx * 2.6 * s, -2.4 * s, cz * 2.6 * s) * CFrame.Angles(0, -a + math.pi / 2, 0) * CFrame.Angles(math.rad(25), 0, 0), hide)
+			piece(m, root, "TentacleTip", Vector3.new(0.8, 0.8, 3) * s, CFrame.new(cx * 5 * s, -4 * s, cz * 5 * s) * CFrame.Angles(0, -a + math.pi / 2, 0) * CFrame.Angles(math.rad(-15), 0, 0), Color3.fromRGB(150, 110, 210))
+		end
+		local light = Instance.new("PointLight")
+		light.Range = 30
+		light.Brightness = 1.4
+		light.Color = spots
+		light.Parent = root
+		radius = 4.4 * s
+	elseif id == "cragking" then
+		-- a towering golem of dark rock, crowned with glowstone
+		local s = kind.size or 2
+		root.Size = Vector3.new(4, 4, 3) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.4 * s, 0))
+		humanoid.HipHeight = 3.4 * s
+		local rock = Color3.fromRGB(80, 74, 70)
+		local glow = Color3.fromRGB(110, 230, 255)
+		piece(m, root, "Body", Vector3.new(4.6, 4.2, 3.4) * s, CFrame.new(), rock, Enum.Material.Basalt)
+		piece(m, root, "Head", Vector3.new(2.4, 2, 2.2) * s, CFrame.new(0, 3 * s, -0.2 * s), rock, Enum.Material.Basalt)
+		piece(m, root, "Core", Vector3.new(1.4, 1.4, 0.4) * s, CFrame.new(0, 0.3 * s, -1.75 * s), glow, Enum.Material.Neon)
+		for k = 0, 4 do
+			piece(m, root, "Crown", Vector3.new(0.6, 1.6, 0.6) * s, CFrame.new((k - 2) * 0.5 * s, 4.6 * s, 0) * CFrame.Angles(0, 0, (k - 2) * 0.15), glow, Enum.Material.Neon)
+		end
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.5, 0.35, 0.2) * s, CFrame.new(side * 0.55 * s, 3.1 * s, -1.35 * s), glow, Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(1.8, 4.8, 1.8) * s, CFrame.new(side * 3.3 * s, -0.8 * s, 0), rock, Enum.Material.Basalt)
+			piece(m, root, "Fist", Vector3.new(2.3, 2, 2.3) * s, CFrame.new(side * 3.3 * s, -3.6 * s, 0), Color3.fromRGB(65, 60, 58), Enum.Material.Basalt)
+			piece(m, root, "Leg", Vector3.new(1.8, 2.8, 1.8) * s, CFrame.new(side * 1.3 * s, -3.4 * s, 0), rock, Enum.Material.Basalt)
+			piece(m, root, "Shoulder", Vector3.new(1.4, 2.4, 1.4) * s, CFrame.new(side * 2.6 * s, 2.4 * s, 0) * CFrame.Angles(0, 0, side * 0.4), glow, Enum.Material.Neon)
+		end
+		radius = 3.4 * s
+	elseif id == "stormcaller" then
+		-- the storm's heart: a crackling core inside spinning rings
+		local s = kind.size or 2
+		root.Size = Vector3.new(3, 3, 3) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5.5 * s, 0))
+		humanoid.HipHeight = 4 * s
+		piece(m, root, "Core", Vector3.new(3, 3, 3) * s, CFrame.new(), Color3.fromRGB(190, 240, 255), Enum.Material.Neon, Enum.PartType.Ball)
+		piece(m, root, "Cloud", Vector3.new(5, 5, 5) * s, CFrame.new(0, 0.4 * s, 0), Color3.fromRGB(90, 100, 130), Enum.Material.SmoothPlastic, Enum.PartType.Ball).Transparency = 0.45
+		for k = 0, 2 do
+			piece(m, root, "Ring", Vector3.new(0.3, 7, 7) * s, CFrame.Angles(k * math.rad(60), math.rad(90), k * math.rad(35)), Color3.fromRGB(255, 230, 120), Enum.Material.Neon, Enum.PartType.Cylinder).Transparency = 0.2
+		end
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.6, 0.4, 0.2) * s, CFrame.new(side * 0.6 * s, 0.4 * s, -2.55 * s), Color3.fromRGB(255, 255, 255), Enum.Material.Neon)
+		end
+		for k = 0, 5 do
+			local a = k / 6 * math.pi * 2
+			piece(m, root, "Bolt", Vector3.new(0.3, 2.4, 0.3) * s, CFrame.new(math.cos(a) * 2.8 * s, -2.2 * s, math.sin(a) * 2.8 * s) * CFrame.Angles(0, 0, math.rad(25)), Color3.fromRGB(255, 240, 130), Enum.Material.Neon)
+		end
+		radius = 3.5 * s
+	elseif id == "warden" then
+		-- a towering skeleton in an iron crown with a rusted cleaver
+		local s = kind.size or 2
+		root.Size = Vector3.new(3.2, 3.2, 2) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 4.6 * s, 0))
+		humanoid.HipHeight = 3 * s
+		local bone = Color3.fromRGB(225, 218, 200)
+		piece(m, root, "Ribcage", Vector3.new(3.2, 3.2, 2) * s, CFrame.new(), bone)
+		piece(m, root, "Spine", Vector3.new(0.8, 2.6, 0.8) * s, CFrame.new(0, -2.6 * s, 0), bone)
+		piece(m, root, "Pelvis", Vector3.new(2.6, 0.9, 1.4) * s, CFrame.new(0, -3.8 * s, 0), bone)
+		piece(m, root, "Skull", Vector3.new(2.2, 2.2, 2.2) * s, CFrame.new(0, 2.8 * s, 0), bone, nil, Enum.PartType.Ball)
+		piece(m, root, "Jaw", Vector3.new(1.6, 0.5, 1.4) * s, CFrame.new(0, 1.7 * s, -0.4 * s), bone)
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.5, 0.4, 0.2) * s, CFrame.new(side * 0.45 * s, 2.9 * s, -1.05 * s), Color3.fromRGB(110, 230, 255), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(0.7, 4.2, 0.7) * s, CFrame.new(side * 2.2 * s, -0.6 * s, 0) * CFrame.Angles(0, 0, side * math.rad(8)), bone)
+			piece(m, root, "Leg", Vector3.new(0.8, 3.2, 0.8) * s, CFrame.new(side * 0.9 * s, -5.6 * s, 0), bone)
+		end
+		for k = 0, 4 do
+			piece(m, root, "Crown", Vector3.new(0.35, 1.1, 0.35) * s, CFrame.new((k - 2) * 0.45 * s, 4 * s, 0), Color3.fromRGB(70, 70, 76), Enum.Material.Metal)
+		end
+		piece(m, root, "Cleaver", Vector3.new(0.3, 5.5, 1.8) * s, CFrame.new(2.6 * s, -2.6 * s, -1.2 * s) * CFrame.Angles(math.rad(-25), 0, 0), Color3.fromRGB(130, 95, 70), Enum.Material.CorrodedMetal)
+		radius = 3.4 * s
+	elseif id == "treant" then
+		-- an ancient walking tree with amber eyes and a mossy crown
+		local s = kind.size or 2.5
+		root.Size = Vector3.new(3.4, 4.4, 3.4) * s
+		root.CFrame = CFrame.new(at + Vector3.new(0, 5 * s, 0))
+		humanoid.HipHeight = 2.8 * s
+		local bark = Color3.fromRGB(95, 70, 50)
+		piece(m, root, "Trunk", Vector3.new(4.4, 3.4, 3.4) * s, CFrame.new() * CFrame.Angles(0, 0, math.rad(90)), bark, Enum.Material.Wood, Enum.PartType.Cylinder)
+		piece(m, root, "Moss", Vector3.new(3.5, 1, 3.5) * s, CFrame.new(0, 0.6 * s, 0), Color3.fromRGB(80, 130, 60), Enum.Material.Grass)
+		for k = 0, 4 do
+			local a = k / 5 * math.pi * 2
+			piece(m, root, "Canopy", Vector3.new(3.4, 3.4, 3.4) * s, CFrame.new(math.cos(a) * 1.6 * s, 3.6 * s, math.sin(a) * 1.6 * s), Color3.fromRGB(70 + k * 8, 140 + k * 6, 60), Enum.Material.Grass, Enum.PartType.Ball)
+		end
+		piece(m, root, "Crown", Vector3.new(3.8, 3.8, 3.8) * s, CFrame.new(0, 4.6 * s, 0), Color3.fromRGB(90, 160, 70), Enum.Material.Grass, Enum.PartType.Ball)
+		for _, side in { -1, 1 } do
+			piece(m, root, "Eye", Vector3.new(0.6, 0.4, 0.2) * s, CFrame.new(side * 0.6 * s, 1.2 * s, -1.75 * s), Color3.fromRGB(255, 190, 60), Enum.Material.Neon)
+			piece(m, root, "Arm", Vector3.new(1, 5, 1) * s, CFrame.new(side * 2.6 * s, -0.6 * s, -0.6 * s) * CFrame.Angles(math.rad(-20), 0, side * math.rad(20)), bark, Enum.Material.Wood)
+			piece(m, root, "Claw", Vector3.new(1.6, 0.6, 1.6) * s, CFrame.new(side * 3.4 * s, -3 * s, -1.4 * s), bark, Enum.Material.Wood)
+			piece(m, root, "Leg", Vector3.new(1.4, 3, 1.4) * s, CFrame.new(side * 1 * s, -3.6 * s, 0), bark, Enum.Material.Wood)
+		end
+		for k = 0, 3 do
+			local a = k / 4 * math.pi * 2 + 0.4
+			piece(m, root, "Root", Vector3.new(0.7, 0.7, 3) * s, CFrame.new(math.cos(a) * 1.8 * s, -4.8 * s, math.sin(a) * 1.8 * s) * CFrame.Angles(math.rad(-30), a, 0), bark, Enum.Material.Wood)
+		end
+		radius = 4 * s
+	else -- training dummy
+		root.Size = Vector3.new(2.6, 4, 2.6)
+		root.CFrame = CFrame.new(at + Vector3.new(0, 2.4, 0))
+		root.Anchored = true
+		humanoid.HipHeight = 0
+		piece(m, root, "Post", Vector3.new(0.5, 7, 0.5), CFrame.new(0, 1, 0), Color3.fromRGB(110, 75, 50), Enum.Material.Wood)
+		piece(m, root, "Sack", Vector3.new(3, 3.4, 3), CFrame.new(0, 0.4, 0), Color3.fromRGB(215, 195, 145), Enum.Material.Fabric, Enum.PartType.Ball)
+		piece(m, root, "Head", Vector3.new(2, 2, 2), CFrame.new(0, 3, 0), Color3.fromRGB(215, 195, 145), Enum.Material.Fabric, Enum.PartType.Ball)
+		piece(m, root, "Arms", Vector3.new(5, 0.5, 0.5), CFrame.new(0, 1.8, 0), Color3.fromRGB(110, 75, 50), Enum.Material.Wood)
+		radius = 2
+	end
+	root.Parent = m
+	humanoid.Parent = m
+	return m, root, radius
+end
+
+----------------------------------------------------------------------------------------------
+-- spawning
+
+local function spawnEnemy(kind: Combat.EnemyType, home: Vector3, opts: SpawnOptions?): Enemy
+	local options: SpawnOptions = opts or {}
+	local model, root, radius = build(kind, home)
+	model:SetAttribute("Enemy", kind.id)
+	if kind.boss then
+		model:SetAttribute("Boss", true)
+	end
+	model.Parent = folder
+	if not root.Anchored then
+		pcall(function()
+			root:SetNetworkOwner(nil)
+		end)
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
+	local enemy: Enemy = {
+		kind = kind,
+		model = model,
+		root = root,
+		humanoid = humanoid,
+		radius = radius,
+		home = home,
+		target = nil,
+		nextAttack = 0,
+		winding = false,
+		nextWander = os.clock() + math.random() * 4,
+		lastHitBy = nil,
+		dead = false,
+		leash = options.leash or Combat.LeashRange,
+		onDeath = options.onDeath,
+		respawn = if options.respawn == nil then kind.respawn > 0 else options.respawn,
+		attackIndex = 0,
+	}
+	table.insert(enemies, enemy)
+	humanoid.Died:Connect(function()
+		if enemy.dead then
+			return
+		end
+		enemy.dead = true
+		local killer = enemy.lastHitBy
+		local deathPos = root.Position
+		if killer and killer.Parent then
+			CombatService.reward(killer, kind.reward, kind.name)
+			LootService.drop(killer, kind.id, deathPos)
+			for _, hook in killHooks do
+				task.spawn(hook, killer, kind.id)
+			end
+		end
+		CombatService.fx("defeat", { pos = deathPos, kind = kind.id, boss = kind.boss })
+		if enemy.onDeath then
+			task.spawn(enemy.onDeath, enemy)
+		end
+		task.delay(0.6, function()
+			model:Destroy()
+		end)
+		for i, e in enemies do
+			if e == enemy then
+				table.remove(enemies, i)
+				break
+			end
+		end
+		if enemy.respawn then
+			task.delay(kind.respawn, function()
+				spawnEnemy(kind, home, options)
+			end)
+		end
+	end)
+	return enemy
+end
+
+-- Spawns an enemy of kind `id` standing at `pos` (the ground point). Used by DungeonService.
+function EnemyService.spawn(id: string, pos: Vector3, opts: SpawnOptions?): any
+	local kind = Combat.Enemies[id]
+	assert(kind, "unknown enemy " .. tostring(id))
+	return spawnEnemy(kind, pos, opts)
+end
+
+-- Removes an enemy without rewards or loot (dungeon reset).
+function EnemyService.despawn(enemy: any)
+	if enemy.dead then
+		return
+	end
+	enemy.dead = true
+	for i, e in enemies do
+		if e == enemy then
+			table.remove(enemies, i)
+			break
+		end
+	end
+	enemy.model:Destroy()
+end
+
+-- Ground height at (x, z): the terrain, or the flat island (y = 0.4 for flagstones).
+local function groundAt(x: number, z: number): number
+	if Landscape.inPlayArea(x, z) then
+		return 0.4
+	end
+	return Landscape.height(x, z)
+end
+
+local function spawnCamps()
+	for ci, camp in Combat.Camps do
+		local kind = Combat.Enemies[camp.kind]
+		for k = 1, camp.count do
+			local a = (k / camp.count) * math.pi * 2 + ci
+			local x, z = camp.x + math.cos(a) * 10, camp.z + math.sin(a) * 10
+			spawnEnemy(kind, Vector3.new(x, groundAt(x, z), z))
+		end
+	end
+	-- camps the map builder marked (quest areas, sky isles): CampKind, CampCount, CampLeash and
+	-- Sky (stand on the marker's height instead of the terrain)
+	local map = Workspace:FindFirstChild("Map")
+	if not map then
+		return
+	end
+	for ci, marker in map:GetDescendants() do
+		local kindId = marker:GetAttribute("CampKind")
+		local kind = typeof(kindId) == "string" and Combat.Enemies[kindId]
+		if kind and marker:IsA("BasePart") then
+			local count = marker:GetAttribute("CampCount") or 3
+			local spread = marker:GetAttribute("CampSpread") or 10
+			local sky = marker:GetAttribute("Sky") == true
+			local centre = marker.Position - Vector3.new(0, 0.5, 0)
+			for k = 1, count do
+				local a = (k / count) * math.pi * 2 + ci
+				local x, z = centre.X + math.cos(a) * spread, centre.Z + math.sin(a) * spread
+				local y = if sky or count == 1 then centre.Y else groundAt(x, z)
+				spawnEnemy(kind, Vector3.new(x, y, z), { leash = marker:GetAttribute("CampLeash") or Combat.LeashRange, respawn = true })
+			end
+		end
+	end
+end
+
+----------------------------------------------------------------------------------------------
+-- damage (called through CombatService)
+
+function EnemyService.damage(enemy: Enemy, amount: number, by: Player, knockDir: Vector3, knockback: number)
+	if enemy.dead or enemy.humanoid.Health <= 0 then
+		return
+	end
+	enemy.lastHitBy = by
+	enemy.target = enemy.target or by
+	local dealt = math.min(amount, enemy.humanoid.Health)
+	enemy.humanoid:TakeDamage(amount)
+	if not enemy.root.Anchored then
+		enemy.root.AssemblyLinearVelocity = knockDir * knockback + Vector3.new(0, knockback * 0.4, 0)
+	end
+	CombatService.fx("hit", { model = enemy.model, pos = enemy.root.Position + Vector3.new(0, enemy.radius, 0), amount = math.floor(dealt + 0.5) })
+	if enemy.kind.dummy then
+		-- training dummies never die: top them back up shortly after
+		task.delay(1.5, function()
+			if not enemy.dead then
+				enemy.humanoid.Health = enemy.humanoid.MaxHealth
+			end
+		end)
+	end
+end
+
+-- Living enemies within radius of pos (plus their size).
+function EnemyService.near(pos: Vector3, radius: number): { Enemy }
+	local out = {}
+	for _, e in enemies do
+		if not e.dead and e.model.Parent and (e.root.Position - pos).Magnitude <= radius + e.radius then
+			table.insert(out, e)
+		end
+	end
+	return out
+end
+
+----------------------------------------------------------------------------------------------
+-- AI
+
+local function nearestPlayer(pos: Vector3, range: number): (Player?, BasePart?)
+	local best: Player?, bestRoot: BasePart?, bestDist = nil, nil, range
+	for _, p in Players:GetPlayers() do
+		local character = p.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid and humanoid.Health > 0 then
+			local d = (root.Position - pos).Magnitude
+			if d < bestDist then
+				best, bestRoot, bestDist = p, root, d
+			end
+		end
+	end
+	return best, bestRoot
+end
+
+-- Players (alive) inside a boss attack's area.
+local function playersIn(center: Vector3, radius: number, dir: Vector3?, arc: number?): { Player }
+	local out = {}
+	local cosArc = if arc then math.cos(math.rad(arc)) else -2
+	for _, p in Players:GetPlayers() do
+		local character = p.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid and humanoid.Health > 0 then
+			local offset = root.Position - center
+			local flat = Vector3.new(offset.X, 0, offset.Z)
+			if flat.Magnitude <= radius and math.abs(offset.Y) < 14 then
+				if not dir or flat.Magnitude < 0.01 or flat.Unit:Dot(dir) >= cosArc then
+					table.insert(out, p)
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- Telegraphs the boss's next attack on the ground, then lands it on everyone still inside.
+bossAttack = function(e: Enemy, targetPos: Vector3, facing: Vector3)
+	local attacks = e.kind.attacks :: { Combat.BossAttack }
+	e.attackIndex = e.attackIndex % #attacks + 1
+	local attack = attacks[e.attackIndex]
+	local ground = e.root.Position - Vector3.new(0, e.humanoid.HipHeight + e.root.Size.Y / 2, 0)
+	local center = if attack.kind == "roots" then Vector3.new(targetPos.X, ground.Y, targetPos.Z) else ground
+	local element = attack.element or e.kind.element
+	CombatService.fx("telegraph", { pos = center, radius = attack.radius, time = attack.windup, shape = attack.kind, dir = facing, arc = attack.arc, model = e.model, element = element })
+	task.delay(attack.windup, function()
+		e.winding = false
+		if e.dead then
+			return
+		end
+		local dir = if attack.kind == "swipe" then facing else nil
+		for _, p in playersIn(center, attack.radius, dir, attack.arc) do
+			CombatService.hurtPlayer(p, attack.damage, if attack.kind == "roots" then center - facing * 3 else e.root.Position, element)
+		end
+		CombatService.fx("burst", { pos = center, radius = attack.radius, shape = attack.kind, dir = facing, arc = attack.arc, element = element })
+	end)
+end
+
+local function think(e: Enemy, t: number)
+	if e.dead or e.kind.dummy or e.winding then
+		return
+	end
+	local pos = e.root.Position
+	if pos.Y < e.home.Y - 60 then
+		-- fell off a sky isle or a cliff: back home
+		e.root.CFrame = CFrame.new(e.home + Vector3.new(0, 6, 0))
+		e.root.AssemblyLinearVelocity = Vector3.zero
+		e.target = nil
+		return
+	end
+	local fromHome = (Vector3.new(pos.X, 0, pos.Z) - Vector3.new(e.home.X, 0, e.home.Z)).Magnitude
+	-- pick or keep a target
+	local targetRoot: BasePart? = nil
+	if e.target then
+		local character = e.target.Character
+		targetRoot = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if not targetRoot or not humanoid or humanoid.Health <= 0 or fromHome > e.leash or (targetRoot.Position - pos).Magnitude > e.kind.aggroRange * 1.8 then
+			e.target, targetRoot = nil, nil
+		end
+	end
+	if not e.target and fromHome <= e.leash then
+		e.target, targetRoot = nearestPlayer(pos, e.kind.aggroRange)
+	end
+	if not e.target or not targetRoot then
+		-- wander near home, or walk back to it
+		if fromHome > 20 then
+			e.humanoid:MoveTo(e.home)
+		elseif t >= e.nextWander then
+			e.nextWander = t + 3 + math.random() * 4
+			local a = math.random() * math.pi * 2
+			local x, z = e.home.X + math.cos(a) * 12, e.home.Z + math.sin(a) * 12
+			local y = groundAt(x, z)
+			if e.home.Y > y + 15 then
+				y = e.home.Y -- up on a sky isle
+			end
+			e.humanoid:MoveTo(Vector3.new(x, y, z))
+		end
+		return
+	end
+	local toTarget = targetRoot.Position - pos
+	local dist = Vector3.new(toTarget.X, 0, toTarget.Z).Magnitude
+	if dist > e.kind.attackRange + e.radius then
+		e.humanoid:MoveTo(targetRoot.Position)
+		return
+	end
+	-- in reach: stop, face the player, telegraph, then strike
+	e.humanoid:MoveTo(pos)
+	if t < e.nextAttack then
+		return
+	end
+	e.winding = true
+	e.nextAttack = t + e.kind.attackCooldown
+	local flat = Vector3.new(toTarget.X, 0, toTarget.Z)
+	if flat.Magnitude > 0.01 then
+		e.root.CFrame = CFrame.lookAt(pos, pos + flat.Unit)
+	end
+	if e.kind.boss and e.kind.attacks then
+		bossAttack(e, targetRoot.Position, if flat.Magnitude > 0.01 then flat.Unit else e.root.CFrame.LookVector)
+		return
+	end
+	CombatService.fx("windup", { model = e.model, time = e.kind.attackWindup })
+	local victim = e.target
+	task.delay(e.kind.attackWindup, function()
+		e.winding = false
+		if e.dead or not victim then
+			return
+		end
+		local character = victim.Character
+		local vRoot = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if vRoot then
+			local gap = vRoot.Position - e.root.Position
+			if Vector3.new(gap.X, 0, gap.Z).Magnitude <= e.kind.attackRange + e.radius + 2 then
+				CombatService.hurtPlayer(victim, e.kind.damage, e.root.Position, e.kind.element)
+			end
+		end
+		CombatService.fx("strike", { pos = e.root.Position + e.root.CFrame.LookVector * (e.radius + 1), kind = e.kind.id })
+	end)
+end
+
+function EnemyService.init()
+	folder = Instance.new("Folder")
+	folder.Name = "Enemies"
+	folder.Parent = Workspace
+	CombatService.register(EnemyService)
+
+	-- training dummies in the city barracks yard are always available
+	local map = Workspace:FindFirstChild("Map")
+	local spots = {}
+	if map then
+		for _, d in map:GetDescendants() do
+			if d:IsA("BasePart") and d:GetAttribute("DummySpot") then
+				table.insert(spots, d.Position - Vector3.new(0, 0.5, 0))
+			end
+		end
+	end
+	if #spots == 0 then
+		for _, d in Combat.Dummies do
+			table.insert(spots, Vector3.new(d.x, groundAt(d.x, d.z), d.z))
+		end
+	end
+	for _, spot in spots do
+		spawnEnemy(Combat.Enemies.dummy, spot)
+	end
+
+	-- hill camps wait for the terrain so monsters don't drop into the sea
+	task.spawn(function()
+		local waited = 0
+		while not Workspace:GetAttribute("TerrainReady") and waited < 180 do
+			task.wait(1)
+			waited += 1
+		end
+		spawnCamps()
+		-- the field boss in its clearing
+		local site = Landscape.Sites[Combat.FieldBoss.site]
+		if site then
+			spawnEnemy(Combat.Enemies[Combat.FieldBoss.kind], Vector3.new(site.x, site.h, site.z), { leash = site.r + 20 })
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			local t = os.clock()
+			for _, e in enemies do
+				local ok, err = pcall(think, e, t)
+				if not ok then
+					warn("[EnemyService] AI error:", err)
+				end
+			end
+			task.wait(0.2)
+		end
+	end)
+end
+
+return EnemyService

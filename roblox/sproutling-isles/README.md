@@ -11,6 +11,32 @@ The full game design doc lives in Claude Docs (linked from the PR/session); this
 **Quickest:** open `build/SproutlingIsles.rbxlx` in Studio (File > Open from File). The map is
 already baked in, and all scripts are in place. Press **Play**.
 
+The land around the island (hills, mountains, lagoon, sea and the roads) is Roblox Terrain built
+by `src/server/TerrainBuilder.luau` when the server starts, so in edit mode the island and the
+buildings float over empty space until you press **Play** (the land fills in over about a minute).
+To see it while editing, and skip that build at start-up, bake the terrain into the place once:
+paste this into Studio's command bar (View > Command Bar), wait for it to finish, then save.
+
+```lua
+require(game.ServerScriptService.Server.TerrainBuilder).build(workspace.Map, true)
+```
+
+Its shape lives in `src/shared/Landscape.luau`. Re-bake after `Landscape.Version` changes.
+
+### The world
+
+- A large landmass (about 2,300 by 3,500 studs) with a ragged coastline, rolling hills near the
+  island and high ridges and mountains towards the coast. The island sits in a lagoon with an
+  uneven sandy shore.
+- Roads are curves (`Landscape.Roads`) of different widths that swell and narrow, and they rise and
+  fall with the ground: the terrain is cut and banked along each one.
+- The walled city sits on rolling ground. Its wall wobbles and climbs with the hills, with
+  gatehouses where roads pass through. Landmarks take the nearest free ground; houses line every
+  road at varied setbacks and angles, back lanes fill the gaps, and every lot stands on a stone
+  plinth that turns into a terrace on a slope.
+- Out in the land: Southvale, Eastmere and Pinecrest villages, the Old Fort, the airship port
+  plateau, farmsteads along the country roads, and more monster camps. All are fast-travel stops.
+
 **Live-sync while editing code (recommended for development):**
 
 ```bash
@@ -32,6 +58,244 @@ Without Lune you can bake from Studio's command bar instead:
 `require(game.ReplicatedStorage.Shared.MapBuilder).Build(workspace)`. The server also builds
 the map at runtime if `Workspace.Map` is missing.
 
+## Combat (RPG step 2)
+
+Controls: **click** attack (R2 on gamepad), **Shift** dodge roll (B), **1 2 3** sword / bow / staff,
+**Q X C** Whirlwind / Firebolt / Second Wind. Phones get on-screen Hit, Roll, ability and Swap buttons.
+
+Try it: training dummies stand in the barracks yard in the city (south-east of the arena); monster
+camps (slimes, goblins, wolves) are out on the hills and spawn once the terrain has loaded. Tuning
+lives in `src/shared/Combat.luau`; the server code is `CombatService.luau` and `EnemyService.luau`,
+the client code `src/client/Combat.luau`.
+
+## Dungeon, field boss and loot (RPG step 3)
+
+- **The Hollow Crypt**: walk onto the purple portal in the hilltop castle's courtyard (west bridge, then
+  the path up). Six rooms: entry hall, crypt hall, bat cavern, ossuary, treasure vault, and the Bone
+  Warden's chamber. Clearing a room raises the portcullis to the next. Chests open once per player
+  per run; the crypt resets 2 minutes after the Warden falls or after a minute empty.
+- **Ironbark, the Old Grove**: a field boss in the clearing past the north-west hamlet (respawns
+  every 5 minutes). Bosses telegraph every attack with a red marker on the ground.
+- **Loot**: monsters drop materials and sometimes weapons (Common to Legendary, x1.0 to x2.1 damage);
+  only the player who earned a drop can pick it up. A better weapon upgrades yours; a worse one is
+  salvaged for Dew. Code: `src/shared/Loot.luau`, `DungeonBuilder.luau`, `src/server/LootService.luau`,
+  `DungeonService.luau`.
+
+## Inventory and shops (RPG step 4)
+
+- **B** (or the Bag button) opens the inventory: equipped weapons and armour, the weapon bag (equip,
+  salvage), potions and meals (use), materials. **H** drinks a Healing Draught, **J** a Stamina Tonic.
+- Walk up to a shop in the city and press its prompt: Blacksmith (swords), Fletcher (bows), Enchanter
+  (staffs), Armorer (three armour tiers that block 8/16/25% of damage), Alchemist (potions), the
+  tavern, Cook and the airship-port inn (meals). Every open shop buys your materials. Other trades
+  say they open in a later update. Catalogue: `src/shared/Shops.luau`; server `InventoryService.luau`;
+  client `src/client/Inventory.luau`.
+
+## Companions, horses and fast travel (RPG step 6)
+
+- **Beast Tamer** (250 Dew): press **P** to call your best Sproutling. It floats at your shoulder and
+  zaps the nearest monster every 1.8 s; its damage scales with that Sproutling's Dew/s.
+- **Stables** (800 Dew): press **V** to ride a horse (+14 walk speed). It can't enter the crypt.
+- **Skyward Shipyard** (airship port) and **Shipwright** (fishing docks) list destinations in their shop
+  window: 40 Dew by air, 25 by sea. Destinations: `src/shared/Travel.luau`.
+- Phones get Pet / Ride buttons once bought. Server: `CompanionService.luau`, `TravelService.luau`.
+
+## Quests, the wilds and the sky isles
+
+- **11 quest givers** live in camps out in the land and on two sky isles (`src/shared/Quests.luau`):
+  Bryn the Forest Warden, Old Maple the woodcutter, Sister Ilsa the herbalist, Tamsin the shepherd,
+  Gorrim the miner, Oswin the hermit and Aeronaut Pell up in the mountains, Captain Dorran at the
+  Old Fort, Pip the lost courier, and Lyra and Sage Vael in the sky. A gold **!** over a head
+  means a quest for you; a green **?** means one to hand in.
+- **18 quests** (all original): defeat monsters, gather quest items (satchels, amberwood, ghostcaps,
+  lambs, glowstone, relics, starfall shards), visit the three peak cairns, bring herbs, deliver a letter.
+  Rewards are Dew, materials, weapons, Healing Draughts and the **Skyward Charm**.
+- **Sky isles:** finish Gorrim's and Oswin's quests, then Pell's "Ride the Wind" to earn the Skyward
+  Charm. Every **wind shrine** (one below each named isle) then lifts you up; a **Wind Stone** on the
+  isle takes you back down. Each isle has a once-per-player **Sky Cache**, starfall shards and storm
+  wisps; Stormcrown holds the Stormcaller boss.
+- New monsters: Crag Golems, Storm Wisps and the Stormcaller. (Crypt skeletons and bats also got
+  their proper models; before this they were standing in as training dummies.)
+- The tracker (top right) lists active quests; tap one to follow it and a beam of light marks the
+  spot. **L** hides the tracker. Mountain tracks lead to the three mountain camps, which are also
+  airship stops.
+- The open land also has 23 homesteads (including extensions round the villages) and about 90
+  discoveries: campsites, mushroom rings, fallen logs, standing stones, wrecked wagons, wayside shrines.
+- Code: `src/shared/WildsBuilder.luau` (builds it all), `src/server/QuestService.luau`,
+  `src/client/QuestLog.luau`.
+
+## Levels, vehicles, the arena, crates and the map
+
+- **Levels (1-60):** XP from monsters, quests, arena waves, hatching and library tomes. The badge
+  (top left) shows level, rank and an XP bar. Each level-up plays a full-screen celebration
+  (spinning rays, a golden LEVEL UP!, the number bouncing in, confetti, then the new rank and
+  unlocks) and everyone nearby sees a pillar of light. Every level gives a crate (silver every 5th,
+  gold every 10th). Ranks: Wanderer, Adventurer, Pathfinder, Hero of the Isles, Champion, Sky Warden,
+  Legend, Mythic.
+- **Vehicles (G = garage),** unlocked by level and bought at the right building:
+  Carriage Works (city): Horse & Wagon L3, Carriage L6 (the car), Royal Coach L14.
+  Boatwright (harbour): Rowboat L2, Sloop L9, Swan Barge L20. Boats ride the sea and stop at the beach.
+  Aerie Workshop (airship port): Ornithopter L16 (the plane, always flying forward),
+  Aerial Screw L24 (the helicopter), Personal Skyship L34, Storm Griffin L50.
+  Flying: Space climbs, Ctrl dives (Up/Down buttons on phones).
+  Paint and trim: Coachpaint Atelier (land), Sailmaker (boats), Paint Loft (air), 12 colours.
+- **The Arena:** press "Start a trial" at the arena gate. Everyone on the floor fights waves that
+  get tougher (boss waves every 5th and 10th). Dew + XP per wave, crates on waves 5 and 10.
+- **Crates (K):** wooden, silver and golden; a spinning reel lands on the reward. Bought at the
+  Royal Treasury's crate vault.
+- **Every hall works:** Grand Library (XP tomes), Barracks quartermaster (sparring manual, war
+  paint), Tailor (speed cloak), Cartographer (world map), Adventurers' Guild (map of who needs help).
+- **Leaderboards:** Highest Levels (market square) and Arena Champions (at the arena), plus the
+  original income and rarest-hatch boards on the island. "Level" also shows in the player list.
+- **World map (M):** land, sea, city and every road, with pins for towns, quest givers, shops,
+  shrines, sky isles, the arena and the crypt. Tap a pin for a waypoint beam. The side panel lists
+  every way of getting around.
+
+## Waystones (fast travel)
+
+- 24 glowing obelisks across the Isles: the island bridge, the city market, harbour and airship port,
+  every hill site and village, the three mountain camps, and one on each of the five sky isles.
+- Touch one to **attune** it (+40 XP); its runes light up blue. Standing at any waystone, travel to
+  any attuned one for free. From anywhere else, **T**, the Travel button or a waystone pin on the
+  world map sends you once a minute. Not from inside a dungeon or during an arena trial.
+- Data: `src/shared/Waystones.luau`; server `WaystoneService.luau`; client `src/client/Waystones.luau`.
+
+## Second dungeon: The Deepdelve Mines
+
+- Entrance: a glowing stairwell by Gorrim's mine camp in the northern mountains (level 12+; the
+  portal turns away lower levels). Six rooms: Mine Mouth, Collapsed Gallery (Crag Golems), Glowstone
+  Cavern (bats and a golem among glowing crystals), Lost Miners' Rest (skeletons and golems),
+  the Ore Vault (chest) and the Heart of the Mountain, where **the Crag King** waits (2,400 HP,
+  slams, eruptions and sweeps; drops an Epic+ weapon).
+- Gorrim's new quest **Into the Deep** (after Glowstone Seams) sends you after him: 500 Dew, an Epic+
+  weapon and a Golden Crate.
+- `DungeonBuilder.Dungeons` now describes every dungeon (rooms, look, entrance, level), and
+  DungeonService runs each one on its own, so more can be added as data.
+
+## Third dungeon: The Emberdeep Caldera (fire)
+
+- Entrance: a molten stairwell at **Ember Peak**, a volcanic site at the end of the new Ember Trail
+  in the far north-west (level 20+). It has its own waystone and an airship stop.
+- Eight bigger rooms: Scorched Entry, Ash Gallery, River of Fire (lava channel with two bridges),
+  Obsidian Hall, Forge of the Deep, the Ember Vault (chest), Magma Lake and **Pyrrhax's Caldera**,
+  where the fire wyrm Pyrrhax waits (4,200 HP, four fire attacks, drops Legendary-tier loot).
+- **Fire element:** Ember Imps, Magma Hounds, Cinder Wraiths and Pyrrhax set you **Burning**
+  (6 damage a second for 4 seconds, shown as "BURNING!" above your bars, orange damage numbers and
+  orange telegraphs). Glowing lava floors are hazards that burn you on touch.
+- **Fireward Tonic** (Alchemist, 150 Dew): halves burn time and damage for 5 minutes.
+- **Brannoc Ashbeard the Firesmith** runs a forge camp at Ember Peak: "Sparks on the Slopes"
+  (8 Ember Imps) and then "Heart of the Caldera" (slay Pyrrhax: 1,200 Dew, a top weapon, a Golden Crate).
+- New materials: Ember Core, Obsidian, Wyrmscale.
+- `Landscape.Version` is now 4: re-bake the terrain in Studio.
+
+## Highcrag, Saltmere and the fourth dungeon: The Tidewrack Grotto (water)
+
+- **Highcrag**, a mountain village on a grassy terrace just below Ember Peak (and the Emberdeep
+  Caldera's entrance): ten tall houses, a beacon plaza with prayer flags, a bell tower, the
+  Highcrag Outfitter and the Climbers' Lodge (cooking). Waystone and airship stop.
+  - Elder Hesk: "Mites in the Terraces" (8 Rockmites), then "Snowbloom for the Beacon".
+  - Old Tobbin the Goatherd: "Goats on the Cliffs", then "The Grey Pack" (wolves).
+  - Yara Swiftwind the Mountain Guide: "The Three Lookouts", then "Over Saltwind Pass" (carry her
+    letter to Saltmere).
+- **Saltwind Pass**: a switchback trail out of Highcrag, through a notch at the summit (cairn and
+  prayer flags; one of Yara's lookouts) and down to the sea.
+- **Saltmere**, a fishing village on the beach: ten cottages, parasols and palms, a long pier with
+  a lighthouse and moored boats, the Tide Market and The Salty Gull inn (cooking). Open beaches
+  either side. Waystone, airship and ship stop.
+  - Harbourmaster Quill: "Claws on the Sand" (8 Reefclaw Crabs on the beach), then "Wreck Timber".
+  - Finnick the Pearl Diver: "Pearls of the Shallows", then "Sting of the Tide" (Drift Jellies).
+  - Coralie the Tidesinger: "Song of the Abyss" (after Quill's and Finnick's first quests): slay
+    Thalvorn for 1,500 Dew, a top weapon and a Golden Crate.
+- **The Tidewrack Grotto** (level 25+), a sea cave at the water's edge in Saltmere: eight rooms
+  (Sea Cave Mouth, Coral Gallery, The Drowned Wreck, Jellyfish Hollow, Whirlpool Steps, Pearl
+  Vault, Sunken Cathedral, Thalvorn's Abyss). Monsters: Reefclaw Crabs, Drift Jellies, Deepscale
+  Lurkers; boss **Thalvorn, the Tide Kraken** (5,200 HP). Whirlpools on the floor soak you.
+- **Every dungeon now has its own element and its own monsters:**
+
+  | Dungeon | Element | Effect on you | Monsters and boss |
+  | --- | --- | --- | --- |
+  | The Hollow Crypt | Shadow | Cursed: 2 damage a second for 4s | Skeletons, Gloom Bats, the Bone Warden |
+  | The Deepdelve Mines | Earth | Shattered: you take 30% more damage for 4s | Crag Golems, **Rockmites**, **Shardback Beetles**, the Crag King |
+  | The Emberdeep Caldera | Fire | Burning: 6 damage a second for 4s | Ember Imps, Magma Hounds, Cinder Wraiths, Pyrrhax |
+  | The Tidewrack Grotto | Water | Soaked: 40% slower and 2 damage a second for 4s | Reefclaw Crabs, Drift Jellies, Deepscale Lurkers, Thalvorn |
+
+  Each effect shows as a coloured warning above your bars, coloured damage numbers and coloured
+  attack telegraphs (water bursts as geysers, earth as rock spikes, shadow as a dark cloud). The
+  Mines no longer borrow the Crypt's bats and skeletons.
+- **Tidebalm** (Alchemist and Tide Market, 180 Dew) halves soaking, like Fireward Tonic for fire.
+- New materials: Glittering Geode, Sea Pearl, Tide Coral, Kraken Ink.
+- `Landscape.Version` is now 5: re-bake the terrain in Studio.
+
+## Building polish and one connected world
+
+- **Part budget raised to 100,000** (the map is about 63k parts, plus a 17k-part preview ground
+  that is removed at run time). StreamingEnabled keeps phones loading only what is near them.
+- **Houses** (village cottages, city townhouses, cottages, shops): bell-cast roofs with flared
+  eaves, tile courses, bargeboards and round ridges with finials; dormers; round chimney pots;
+  arched doors under little slate hoods with a step; arched windows on every side, painted
+  shutters and flower boxes at the front; round gable windows; round corner posts;
+  weathervanes on some roofs. Shops get striped scalloped awnings over the shop window.
+- **Landmarks**: guild halls get arched windows, roof dormers, banded turrets with finials; the
+  cathedral gets pinnacles, arched tower windows and capped buttresses; the mage tower gets
+  arched windows, balcony corbels and railings, two clinging turrets and a glowing rune halo.
+- **Nature**: fuller, rounder tree crowns; lamps get a base, collar and cap.
+- **One big map**: `Shared/GroundBuilder` lays a low-poly ground of wedge triangles (with the
+  roads drawn on it) over the whole landmass, so Studio's edit view shows every area standing
+  on the same land, and players have a floor while the real terrain builds. TerrainBuilder
+  removes it (`workspace.EditGround`) once the terrain is in. Guideposts mark the journey:
+  city, Ember Trail, Highcrag, Saltwind Pass, Saltmere (and the other tracks).
+
+## Greenhollow Gardens (the garden plots, moved off the island)
+
+- The 8 garden plots are now **garden houses** in **Greenhollow Gardens**, a farm village off the
+  city's Grand Way (south-west of the walls). The layout is a tree: Greenhollow Lane is the
+  trunk, and a curving branch path runs from it to each house's doors. The houses are spread
+  round the lane (four each side), each on its own levelled pad, turned to face its branch.
+- Each house is a timber-and-glass conservatory in its plot's colour (54 x 54 inside), with a
+  painted front gable and round window, its own name and plant theme, and jungle decor:
+  bamboo, monstera, banana plants, palms, vines hanging from the roof, mossy rocks. Soil beds
+  by the front doors, display pads on a stage at the back. Doors open at the front (gate, lock
+  button, owner sign) **and at the back**, so every garden can be walked into.
+- Branches are lined with lanterns and little trees; a **Trading Cart** (a Sell Stand) stands
+  where each branch meets the lane. Each house has a front garden (flower beds, bench,
+  birdbath, pots, corner lanterns), and the open ground is loaded with trees of every kind,
+  bushes, flower beds, mushroom rings, rocks, benches, picnic tables and crates.
+- The green at the top of the lane has the **Seed Barn** (a second Seed Shop), a Sell Stand, a
+  well, a welcome arch and Mara the Guide. Fenced crop fields, a barn and a silo sit on their
+  own pads. Waystone and airship stop. `Landscape.Reserved` keeps wild homesteads out.
+- The garden island keeps the plaza, Seed Shop, pond, parade and Sky Garden and is narrower.
+- Code: `MapBuilder.GardenPlots` / `Landscape.GardenPlots` (same numbers, checked at bake),
+  `plotPlacement` / `plotAxes` / `plotRot` (PlotService works in each house's own axes).
+  `Landscape.Version` 6: re-bake the terrain.
+
+## Monster Journal (overnight run 1)
+
+- **N** (or the Journal button) opens the Monster Journal: every monster by region (The Wild
+  Lands, Hollow Crypt, Deepdelve Mines, Emberdeep Caldera, Tidewrack Grotto), with its element,
+  your defeat count and a mastery bar. Undiscovered monsters show as "???".
+- First defeat of a kind: +25 Dew. Mastery (25 defeats, 3 for bosses): +150 Dew and XP.
+  Discovering every entry in a region: a one-time Dew reward and a silver or gold crate.
+- `Shared/Journal`, `server/JournalService` (data.journal), `client/Journal`.
+
+## Daily Tasks (overnight run 2)
+
+- **Y** (the Tasks button, or the Task Board on Greenhollow green) shows today's three tasks,
+  picked from a pool the player's level can reach: plant, harvest, sell, hunt, complete a
+  quest, fast travel, open a crate, and elemental hunts (shadow, earth at level 8+, fire 20+,
+  water 25+). Each pays Dew and XP; all three pay a silver crate, every fifth full day in a
+  row a golden one. New tasks at midnight UTC.
+- `Shared/DailyTasks`, `server/DailyService` (data.daily), `client/DailyTasks`;
+  `State.track(session, stat, n)` / `State.onTrack` are the activity hooks.
+
+## New players
+
+- **Mara the Guide** stands by the stone bridge south of the plaza. Her "First Steps" tour sends you
+  to the Market Square, the training yard, a first hunt, the Arena gate and the Airship Port. Each
+  step completes itself the moment you get there, pays out (Dew and crates) and starts the next,
+  then she hands you on to Bryn and the other quest givers. New players get a hint to find her.
+- **Help (F1 or the button):** every control and where to find everything.
+- **Daily gift:** a Wooden Crate each day you log in; every 7th day in a row adds a Silver Crate.
+
 ## Before publishing
 
 1. **Game Settings > Security:** turn on *Enable Studio Access to API Services* (for saving).
@@ -44,6 +308,15 @@ the map at runtime if `Workspace.Map` is missing.
 5. Test snatching with **Test > Clients and Servers > 2 players**. `Config.StudioDisableShield`
    (default true) turns off the 15-minute new-player shield, but only inside Studio. Live servers
    ignore it. The victim bonks a thief with **R** (gamepad **Y**).
+6. **Textures:** upload the 12 images in `assets/textures/` (Asset Manager > Bulk Import) and paste
+   their asset IDs into `src/shared/MaterialKit.luau`. Until then the royal kit stays off.
+
+### Performance (phones)
+
+About 34,000 baked parts (the land itself is Terrain, which costs no parts). **Streaming is on** (`default.project.json`: target radius 640, min 128), so
+phones load only what's near them. The plaza shop, Rebirth Shrine and Sprout Supply are Persistent,
+because the HUD reads their labels from anywhere. Plots and animated props are Atomic. Server teleports
+(home, crypt, fast travel) call `RequestStreamAroundAsync` before moving you.
 
 ## Code map
 
