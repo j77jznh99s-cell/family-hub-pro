@@ -1,6 +1,6 @@
 ---
 tags: [project, ios]
-updated: 2026-10-20
+updated: 2026-11-09
 ---
 # Family Hub
 
@@ -31,6 +31,7 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
   runs' fixes (`5b87ea8` … `88472e2`, local only, never pushed) are on two different tips of
   `claude/family-hub-widget-1w7cv9`. **Merged locally 2026-10-14 (`1a32998`, not pushed, not compiled):** one
   `Models.swift` conflict, both sides kept; `CatchUpNote` now decodes tolerantly like the other stored types.
+- **2026-11-09:** all local commits are now on GitHub (branch at `22a8ca3`); still none of it compiled.
 - **Details:** `FamilyHub/README.md` on that branch (now documents the new feature + its on-device-only limitation).
 
 ## Tasks
@@ -38,7 +39,7 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
 - [x] **app-engineer:** Catch-Up Recorder: a recorded transcript is lost if summarising fails or there's no API key — done 2026-10-15 (`9a3e9cb`, local only, not compiled): transcript saved as a note when recording stops (also when recognition ends on its own), summary later fills the same note; new "Earlier catch-ups" list in the recorder ("Not summarised yet", tap to retry, swipe to delete).
 - [x] **app-engineer:** Catch-Up Recorder: ticked follow-up items aren't saved — done 2026-10-15 (`9a3e9cb`): new `CatchUpNote.checkedActionItems` (decodes to empty on old files), saved via `Store.update`; a new summary clears old ticks. Tests added, not run.
 - [x] **app-engineer:** Catch-Up Recorder: the profile note's "Saved" state isn't stored, so reopening an old catch-up could add the same note to the profile twice — done 2026-10-17 (`ad6ee49`, local only, not compiled): new `CatchUpNote.noteSavedToPersonID` (nil on old files), set in the same `Store.update` write as the append (`AppData.saveCatchUpNoteToProfile`, a no-op if already saved); a new summary or a different person can be saved again. 5 tests added/extended, not run.
-- [ ] **app-engineer (small):** Catch-Up Recorder: show the live transcript while recording (today it appears only after Stop).
+- [x] **app-engineer (small):** Catch-Up Recorder: show the live transcript while recording (today it appears only after Stop) — done 2026-11-09 (`22a8ca3`, pushed, not compiled).
 - [ ] **owner:** saved catch-ups are listed only inside the recorder — enough, or also on each person's page? And swipe-to-delete there has no undo — keep it?
 - [ ] **owner:** the new "Catch-up" swipe on People (`PeopleView.swift:22–25`) probably replaces swipe-to-delete, and there's no Edit button, so people may no longer be deletable there. Pick: Delete in the swipe, an Edit button, or move Catch-up to the leading edge. Unverified on device.
 - [ ] **owner:** build it — `cd FamilyHub/Packages/FamilyHubCore && swift test` for the new

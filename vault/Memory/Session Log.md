@@ -1,6 +1,14 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-09 22:21: local hourly run — Family Hub: live transcript while recording, branch pushed
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `22a8ca3`) · **Agents used:** none (orchestrator inline; one-line UI change)
+
+- Pushed the 8 earlier unpushed local Family Hub commits (`0f097d3..6823a74`, fast-forward; GitHub had nothing new).
+- app-engineer task done: `CatchUpView` now shows `recorder.transcript` (live partial results) while recording, the saved note's transcript otherwise. Saving unchanged (still on stop). Not compiled (no Swift).
+- Pushed `22a8ca3`.
+
+---
 ## 2026-11-09: local hourly run — Sproutling Isles: merged local receipts fixes with the cloud RPG work, pushed
 **Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `96f39de`) · **Agents used:** none (orchestrator inline; merge only)
 
