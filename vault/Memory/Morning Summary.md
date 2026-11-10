@@ -8,6 +8,30 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-10
+
+**Done overnight/today**
+- Big catch-up pull from `main` — several other sessions/the owner's PC landed real work since yesterday's summary.
+- Sproutling Isles: Launch & Live Ops receipts/save-race bug fixes (local-PC) merged with the 33 cloud RPG-rebuild commits and pushed — `96f39de`.
+- Family Hub: the whole backlog of local-only Swift fixes (unreadable-data guard, widget read-modify-write race, tolerant decoding, Catch-Up Recorder follow-ups) is finally on GitHub — branch at `22a8ca3`. Still **not compiled**, no Xcode/Swift toolchain here.
+- Clip Studio: local-PC fixes landed, 125/125 tests passing locally.
+- Bybit bot: risk-gate/monitoring/alerts hardening done locally — **not yet pushed** to GitHub.
+
+**New projects waiting for your OK**
+- **Game Asset Store**: first product, "Daily Streaks Kit" ($9.99 test price), built at `products/game-assets/daily-streaks-kit/` on `claude/elegant-carson-k0ja0u` — untested, unlisted.
+- **Starling Heist**: new from-scratch Roblox steal-and-collect game, complete code+tests+CI+docs on `claude/starling-heist`, never run in Studio. New [[Decisions]] #22: launch this before/alongside/instead of Sproutling Isles? (recommendation: launch Starling Heist first).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- See [[Active Context]]'s "Waiting on the owner" list — it's long. Top items: Sproutling Isles RPG Studio play-test, Starling Heist push+Studio test, Daily Streaks Kit test+listing, Family Hub `swift test` + Xcode build, Clip Studio's 2 remaining timing decisions, getting the Bybit hardening pushed.
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed or you weigh in on one of the above.
+
+---
+
 ## 2026-10-03
 
 **Done overnight/today**
