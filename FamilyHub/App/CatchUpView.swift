@@ -57,8 +57,10 @@ struct CatchUpView: View {
 
                 Section {
                     recordingControls
-                    if !note.transcript.isEmpty {
-                        Text(note.transcript)
+                    // While recording, show the live partial transcript; it's saved to the note once recording stops.
+                    let shownTranscript = recorder.isRecording ? recorder.transcript : note.transcript
+                    if !shownTranscript.isEmpty {
+                        Text(shownTranscript)
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
