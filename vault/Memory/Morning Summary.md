@@ -8,6 +8,25 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-11
+
+**Done overnight**
+- Nothing — no new commits from any session since yesterday's summary.
+
+**New projects waiting for your OK**
+- None new (Game Asset Store's Daily Streaks Kit and Starling Heist, both from 2026-11-10, are still untested/unlisted).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged — see [[Active Context]]'s "Waiting on the owner" list.
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed or you weigh in on one of the above.
+
+---
+
 ## 2026-11-10
 
 **Done overnight/today**
