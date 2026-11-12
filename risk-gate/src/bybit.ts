@@ -33,11 +33,30 @@ function sign(secret: string, payload: string): string {
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
+// The only endpoints the gate's key may ever reach. No /v5/asset/* (withdraw,
+// transfer) on purpose: a code change can't move funds off the exchange.
+export const ALLOWED_ENDPOINTS: ReadonlySet<string> = new Set([
+  "GET /v5/account/wallet-balance",
+  "GET /v5/market/tickers",
+  "GET /v5/position/list",
+  "GET /v5/position/closed-pnl",
+  "POST /v5/order/create",
+  "POST /v5/order/cancel",
+  "POST /v5/position/set-leverage",
+]);
+
+export function assertAllowedEndpoint(method: string, endpoint: string): void {
+  if (!ALLOWED_ENDPOINTS.has(`${method} ${endpoint}`)) {
+    throw new Error(`Refusing ${method} ${endpoint}: not on the risk gate's endpoint allow-list.`);
+  }
+}
+
 async function signedRequest<T>(
   method: "GET" | "POST",
   endpoint: string,
   params: Record<string, unknown> = {}
 ): Promise<T> {
+  assertAllowedEndpoint(method, endpoint); // before credentials are read or anything is sent
   const { key, secret } = credentials();
   const timestamp = Date.now().toString();
   let url = `${baseUrl()}${endpoint}`;

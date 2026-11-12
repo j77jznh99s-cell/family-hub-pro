@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
 import {
+  ALLOWED_ENDPOINTS,
+  assertAllowedEndpoint,
   findClosablePosition,
   parseExchangeNumber,
   parseLeverage,
@@ -207,5 +210,23 @@ describe("sumClosedPnl", () => {
   it("throws when the page has no list", () => {
     assert.throws(() => sumClosedPnl({}), /no list/);
     assert.throws(() => sumClosedPnl({ list: null }), /no list/);
+  });
+});
+
+describe("endpoint allow-list", () => {
+  it("refuses withdraw/transfer and anything not listed, before any network call", () => {
+    assert.throws(() => assertAllowedEndpoint("POST", "/v5/asset/withdraw/create"), /allow-list/);
+    assert.throws(() => assertAllowedEndpoint("POST", "/v5/asset/transfer/inter-transfer"), /allow-list/);
+    assert.throws(() => assertAllowedEndpoint("GET", "/v5/order/create"), /allow-list/);
+    assert.doesNotThrow(() => assertAllowedEndpoint("POST", "/v5/order/create"));
+  });
+
+  it("covers every endpoint the client calls, and none under /v5/asset/", () => {
+    // Every call site sits after signedRequest's definition; the list itself sits before it.
+    const src = readFileSync(new URL("../src/bybit.ts", import.meta.url), "utf8").split("async function signedRequest")[1];
+    const calls = [...src.matchAll(/"(GET|POST)",\s*"(\/v5\/[^"]+)"/g)].map((m) => `${m[1]} ${m[2]}`);
+    assert.ok(calls.length >= 9, `found only ${calls.length} calls`);
+    for (const c of calls) assert.ok(ALLOWED_ENDPOINTS.has(c), `${c} missing from allow-list`);
+    for (const e of ALLOWED_ENDPOINTS) assert.ok(!e.includes("/v5/asset/"), e);
   });
 });
