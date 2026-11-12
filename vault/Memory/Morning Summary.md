@@ -8,6 +8,27 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-12
+
+**Done overnight**
+- Local-PC hourly run (2026-11-11 20:02): pushed Clip Studio's 7 local-only commits as a new branch `claude/clip-studio-presenter-fixes` on GitHub (only owner decisions left there). Sproutling Isles bug fixed: a give-up during load no longer reports a brand-new save, so returning players can't re-trigger the "Joined" bonus/Founding Gardener badge (`177fe64`, pushed, not linted/Studio-tested).
+- Local-PC hourly run (2026-11-10): Bybit bot's 8 earlier local commits pushed; confirmed no code path can withdraw/transfer funds and **enforced** it with an endpoint allow-list (`fcbe66b`, gate 99/99, tsc clean).
+
+**New projects waiting for your OK**
+- None new (Game Asset Store's Daily Streaks Kit and Starling Heist, both from 2026-11-10, are still untested/unlisted).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- New: in Bybit, check the API key is trade-only (withdrawals/transfers off, IP allow-list on if offered).
+- Unchanged otherwise — see [[Active Context]]'s "Waiting on the owner" list (Sproutling Isles Studio play-test, Starling Heist, Daily Streaks Kit, Family Hub Xcode build, Bybit testnet key, etc.).
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed or you weigh in on one of the above.
+
+---
+
 ## 2026-11-11
 
 **Done overnight**
