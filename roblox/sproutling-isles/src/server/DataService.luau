@@ -139,6 +139,7 @@ end
 -- Returns data table, whether it is backed by the DataStore, and whether this is a brand-new
 -- save (no profile existed for this player before this load) -- used to fire the "Joined"
 -- onboarding step exactly once, ever, even after this field is added to already-existing saves.
+-- When load gives up (profile unread) it reports false: a returning player must not get new-player rewards.
 function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 	if not store then
 		return DataService.defaultData(), false, true
@@ -147,7 +148,7 @@ function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 	-- if that write is still stuck after 30 s, run this session unsaved rather than load stale data
 	if not waitIdle(player.UserId, 30, pending) then
 		warn("[Sproutling] load gave up for", player.Name, "(previous save still running), progress will not save")
-		return DataService.defaultData(), false, true
+		return DataService.defaultData(), false, false
 	end
 	released[player.UserId] = nil
 	for attempt = 1, 6 do
@@ -182,7 +183,7 @@ function DataService.load(player: Player): ({ [string]: any }, boolean, boolean)
 		end
 		task.wait(5)
 	end
-	return DataService.defaultData(), false, true
+	return DataService.defaultData(), false, false
 end
 
 function DataService.save(player: Player, data, release: boolean): boolean
