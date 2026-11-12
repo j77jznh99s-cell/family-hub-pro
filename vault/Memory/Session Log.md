@@ -1,6 +1,14 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-11 20:02: local hourly run — Clip Studio branch pushed; Sproutling Isles: load give-up no longer counts as a new player
+**Device:** PC (desktop app) · **Branches:** `claude/clip-studio-presenter-fixes` (`61971ad`), `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `177fe64`) · **Agents used:** none (orchestrator inline; 2-line change)
+
+- AI Agent Team skipped (same uncommitted `agents/inbox/LOG.md` + `agents/newsletter/LOG.md`).
+- Clip Studio: pushed the 7 local-only commits (`207fbba`…`61971ad`) as the new remote branch `claude/clip-studio-presenter-fixes`. Only owner tasks left there.
+- Sproutling Isles roblox-engineer task: `DataService.load` returned `isNew = true` when it gave up (stuck leave-save, or 6 failed attempts), so a returning player could re-fire "Joined" and get the Founding Gardener badge. Both paths now return false. Only caller is `init.server.luau:143`; the session is unsaved, so a truly new player still gets `isNew = true` on the next good load. Not linted/Studio-tested (no selene/rojo/lune). Pushed.
+
+---
 ## 2026-11-10 19:08: local hourly run — Bybit Trading Bot: old commits pushed; endpoint allow-list (no withdraw/transfer)
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `fcbe66b`) · **Agents used:** none (orchestrator inline; small tightening change)
 

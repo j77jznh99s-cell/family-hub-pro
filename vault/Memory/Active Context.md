@@ -1,6 +1,6 @@
 ---
 tags: [memory]
-updated: 2026-11-10
+updated: 2026-11-11
 ---
 # Active Context
 
@@ -89,6 +89,7 @@ QA-reviewed 2026-10-06 18:00: sound; one older lost-purchase bug fixed (`c0e934c
 2026-10-15 10:21: last known receipts edge case fixed (`60c49d0`, local only, not linted): a receipt is no longer confirmed when the leave-save skipped its write because another server owns the profile.
 2026-10-19 10:56: qa-tester reviewed `16171a1`/`60c49d0`; one blocker fixed (`b918340`, local only, not linted): a fast rejoin could load before a queued leave-save and its later saves/receipts then reported success unsaved. Owner: BindToClose waits 25 s but a leave-save may wait 120 s (see [[Sproutling Isles]] tasks).
 Weekly drops: checked 2026-10-06 — already built that way (17 Oct / 24 Oct / Witching Hour 31 Oct), no change needed.
+2026-11-11 20:02 (hourly run): a load that gives up no longer reports a brand-new save (`177fe64`, pushed, not linted), so returning players can't re-get "Joined"/Founding Gardener. Clip Studio's local branch `claude/clip-studio-presenter-fixes` is now on GitHub too.
 2026-11-09 (hourly run): local receipts fixes (`01d455f`…`b918340`) merged with the cloud's 33 RPG commits (`96f39de`, clean, no new save callers) and **pushed** — GitHub pushes from the PC work again.
 2026-10-16 20:10: Roblox's 2026 Halloween event reported as "The Hollow" from Thu 22 Oct (fan/news sources only, unverified); no code change, optional Part 2 teaser 22 Oct; Witching Hour now worded "Friday 30 Oct night (US)". Hollow Harvest starts 17 Oct (tomorrow) on the real clock even if launch slips.
 
