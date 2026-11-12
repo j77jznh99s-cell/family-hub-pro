@@ -1,6 +1,6 @@
 ---
 tags: [project, trading, high-risk]
-updated: 2026-10-30
+updated: 2026-11-10
 ---
 # Bybit Trading Bot
 
@@ -54,6 +54,9 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   `position-check` run against an old-format `state` snapshot: expect no alerts and a file re-keyed to `symbol:side`
 - [x] **app-engineer:** if `position-check` keeps failing (bad data / outage), nothing tells the owner (cron only logs); send one Telegram alert on repeated failures —
   `0ba3a2b`, 2026-10-20 20:03: one alert after 3 failed runs in a row, one on recovery (`failureStep`, counter in `scripts/.state/`); scripts 49/49; real Telegram send not tested; not pushed
+- [x] **app-engineer:** confirm no code path can withdraw or transfer funds, and enforce it — `fcbe66b`, 2026-11-10:
+  none found; `signedRequest` now refuses anything off `ALLOWED_ENDPOINTS` (7 endpoints, nothing under `/v5/asset/`); gate 99/99, tsc clean; pushed (all earlier local commits pushed too)
+- [ ] **owner:** in Bybit, check the API key is trade-only: withdrawals and transfers off, IP allow-list on if offered
 - [ ] **owner:** create a Bybit **testnet** account + API key (contract-trading permission only), set it in
   `~/.codex/config.toml`'s `risk-gate` MCP env block (not in the repo), and run one real manual cycle
   (README §6). Nothing further can be verified without this.

@@ -1,6 +1,14 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-10 19:08: local hourly run — Bybit Trading Bot: old commits pushed; endpoint allow-list (no withdraw/transfer)
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `fcbe66b`) · **Agents used:** none (orchestrator inline; small tightening change)
+
+- Pushed the 8 earlier unpushed local Bybit commits (`6722583..0ba3a2b`, fast-forward; GitHub had nothing new, so the "orphan root" worry didn't apply: local was built on `6722583`).
+- No agent-owned tasks left, so did the Ideas item "confirm no code path can withdraw or transfer funds": confirmed (only wallet-balance, tickers, position list/closed-pnl, order create/cancel, set-leverage; scripts are GET-only). Made it enforced: `ALLOWED_ENDPOINTS` + `assertAllowedEndpoint` in `risk-gate/src/bybit.ts`, checked in `signedRequest` before credentials are read; nothing under `/v5/asset/`. 2 tests (withdraw/transfer refused; every call site is on the list). Gate 99/99, tsc clean; `checks.ts` untouched; no exchange calls. Pushed `fcbe66b`.
+- Still owner-only: Bybit key settings (trade-only, withdrawals off, IP allow-list).
+
+---
 ## 2026-11-09 22:21: local hourly run — Family Hub: live transcript while recording, branch pushed
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `22a8ca3`) · **Agents used:** none (orchestrator inline; one-line UI change)
 
