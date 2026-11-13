@@ -1,6 +1,6 @@
 ---
 tags: [project, ios]
-updated: 2026-11-09
+updated: 2026-11-13
 ---
 # Family Hub
 
@@ -54,7 +54,7 @@ iPhone app for keeping in touch with family, with lock screen and home screen wi
 - [ ] **owner (optional):** while the data file is unreadable the app can't save anything (by design, so it can't erase it). Want a "Start fresh" button (keeps `familyhub.unreadable.json`), or is "update the app" enough?
 - [x] **app-engineer:** the widget's ✓ can be lost if the app saves its older in-memory copy first (review #12) — fixed 2026-10-06 with `Store.update` read-modify-write (`b64728a`, local only, not compiled).
 - [x] **app-engineer:** `AppModel.upsert` replaced the whole `Person`, so saving an edit sheet opened before a widget ✓ put back the old `lastContacted` — fixed 2026-10-06 with a `Person.applyingEdits` 3-way merge + 4 tests (`a25463d`, local only, not compiled).
-- [ ] **app-engineer (optional):** coordinate app/widget file access with `NSFileCoordinator` (the race window is now one read+write).
+- [x] **app-engineer (optional):** coordinate app/widget file access with `NSFileCoordinator` — done 2026-11-13 (`13ff679`, pushed, not compiled): `Store.load/save/update` run inside a coordinated read/write; 1 concurrency test with two `Store` objects. No agent tasks left for Family Hub.
 - [x] **app-engineer:** new fields on `Person`, `ReachOut`, `Opener`, `LifeContext`, `Preferences` must be optional/defaulted so old files still load — done 2026-10-06: tolerant `init(from:)` on all 5 (no field breaks old files today; unknown theme/kind falls back instead of failing the file) + 15 `CompatibilityTests` + README note (`88472e2`, local only, not compiled).
 - [ ] **owner (optional):** 3 defaults chosen in `88472e2`, easy to change: an opener with no date counts as stale (gets rewritten); an unknown reach-out kind loads as "late" with its points kept (the kind is lost if saved again); a stored daily goal/cadence of 0 or less loads as 1.
 - [x] **app-engineer:** correctness review of `FamilyHubCore` (2026-10-03, `5b87ea8`).

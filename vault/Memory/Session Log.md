@@ -1,6 +1,14 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-13 15:50: local hourly run — Family Hub: app and widget file access now coordinated (NSFileCoordinator)
+**Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `13ff679`) · **Agents used:** none (orchestrator inline; ~30-line change)
+
+- Last agent-owned Family Hub task (optional): `Store.load/save/update` now run inside an `NSFileCoordinator` read/write (`.forMerging` for update's read-modify-write), so the app and the widget can no longer interleave between update's read and write. The in-process `NSLock` stays. Coordinator errors are thrown like the others.
+- 1 test: two `Store` objects (separate locks, like app + widget) do 40 concurrent updates on one file, none lost. Not compiled or run (no Swift on the PC).
+- Pushed `13ff679`. Family Hub now has only owner tasks left.
+
+---
 ## 2026-11-11 20:02: local hourly run — Clip Studio branch pushed; Sproutling Isles: load give-up no longer counts as a new player
 **Device:** PC (desktop app) · **Branches:** `claude/clip-studio-presenter-fixes` (`61971ad`), `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `177fe64`) · **Agents used:** none (orchestrator inline; 2-line change)
 
