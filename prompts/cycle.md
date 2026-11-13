@@ -11,7 +11,9 @@ You are the trading brain. Follow these steps in order.
    confidence, never the rules themselves.
 4. Write `memory/decision.json` before requesting an order. Include the
    action, symbol, quantity, stop, take profit, reasoning, and the lessons
-   checked (`checked_learnings`).
+   checked (`checked_learnings`). Then append that same JSON, on one line, to
+   `memory/decisions.jsonl` (every cycle, including `none`). Never edit or
+   delete earlier lines in that file.
 5. If the action is `long` or `short`, call risk-gate `place_order` with the
    exact quantity, stop, and take profit in `decision.json`. If the action
    is `close`, call risk-gate `close_position`.

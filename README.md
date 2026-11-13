@@ -41,6 +41,7 @@ trading-bot/
     trades.jsonl             one closed trade per line
     learnings.md              capped, running list of lessons
     decision.json             the latest cycle's decision, written before any order
+    decisions.jsonl           every cycle's decision, one per line, append-only
   risk-gate/                deterministic MCP server, TypeScript
     src/{index,checks,bybit,audit,paths,types}.ts
     src/checks.test.ts        unit tests for every rejection path
