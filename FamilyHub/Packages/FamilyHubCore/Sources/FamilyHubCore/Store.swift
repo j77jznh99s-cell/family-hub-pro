@@ -176,26 +176,48 @@ public final class Store: @unchecked Sendable {
     /// Like `load()`, but throws `UnreadableFileError` (after the backup) instead of handing out empty data.
     public func loadOrThrow() throws -> AppData {
         lock.lock(); defer { lock.unlock() }
-        return try loadUnlocked()
+        return try coordinated(writing: false) { try loadUnlocked() }
     }
 
     public func save(_ appData: AppData) throws {
         lock.lock(); defer { lock.unlock() }
-        try saveUnlocked(appData)
+        try coordinated(writing: true) { try saveUnlocked(appData) }
     }
 
     /// Read-modify-write: loads the latest file, applies `change`, saves and returns the result.
     /// Use this instead of saving an in-memory copy, so a write from the other process (the widget's ✓, or the app)
-    /// since your last load isn't overwritten. The lock only covers this process; app and widget aren't
-    /// coordinated (no NSFileCoordinator), so the remaining race window is this one read + write.
+    /// since your last load isn't overwritten. The lock covers this process; NSFileCoordinator makes the whole
+    /// read + write one step across the app and the widget (both use this Store on the shared App Group file).
     /// Throws `UnreadableFileError` (and saves nothing) if the file exists but can't be decoded.
     @discardableResult
     public func update(_ change: (inout AppData) throws -> Void) throws -> AppData {
         lock.lock(); defer { lock.unlock() }
-        var appData = try loadUnlocked()
-        try change(&appData)
-        try saveUnlocked(appData)
-        return appData
+        return try coordinated(writing: true) {
+            var appData = try loadUnlocked()
+            try change(&appData)
+            try saveUnlocked(appData)
+            return appData
+        }
+    }
+
+    /// Runs `body` while holding a cross-process file coordination on `url`; `.forMerging` because `update`
+    /// reads before it writes. Errors from `body` and from the coordinator itself are both thrown.
+    private func coordinated<T>(writing: Bool, _ body: () throws -> T) throws -> T {
+        var coordinatorError: NSError?
+        var result: Result<T, Error>?
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        if writing {
+            coordinator.coordinate(writingItemAt: url, options: .forMerging, error: &coordinatorError) { _ in
+                result = Result { try body() }
+            }
+        } else {
+            coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { _ in
+                result = Result { try body() }
+            }
+        }
+        if let coordinatorError { throw coordinatorError }
+        guard let result else { throw CocoaError(.fileLocking) }
+        return try result.get()
     }
 
     // NSLock isn't reentrant, so load(), save() and update() take the lock and share these.

@@ -199,6 +199,17 @@ final class AppDataTests: XCTestCase {
         XCTAssertEqual(Store(url: url).load(), saved)
     }
 
+    func testConcurrentUpdatesFromTwoStoresLoseNothing() throws {
+        // Two Store objects have separate locks, like the app and the widget; only file coordination keeps them apart.
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let stores = [Store(url: url), Store(url: url)]
+        DispatchQueue.concurrentPerform(iterations: 40) { i in
+            _ = try? stores[i % 2].update { $0.people.append(Person(name: "P\(i)")) }
+        }
+        XCTAssertEqual(Set(Store(url: url).load().people.map(\.name)), Set((0..<40).map { "P\($0)" }))
+    }
+
     func testUpdateClosureCanHandBackAResult() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("fh-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: url) }
