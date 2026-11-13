@@ -56,6 +56,9 @@ memory (`memory/decision.json`, `learnings.md`, `trades.jsonl`) and audit logs b
   `0ba3a2b`, 2026-10-20 20:03: one alert after 3 failed runs in a row, one on recovery (`failureStep`, counter in `scripts/.state/`); scripts 49/49; real Telegram send not tested; not pushed
 - [x] **app-engineer:** confirm no code path can withdraw or transfer funds, and enforce it — `fcbe66b`, 2026-11-10:
   none found; `signedRequest` now refuses anything off `ALLOWED_ENDPOINTS` (7 endpoints, nothing under `/v5/asset/`); gate 99/99, tsc clean; pushed (all earlier local commits pushed too)
+- [x] **app-engineer:** confirm one kill switch + an append-only decision log — `3531d09`, 2026-11-13: kill switch OK
+  (one `HALT_TRADING` file, checked on all 4 write tools), `audit.jsonl` append-only; but `decision.json` is overwritten
+  each cycle, so `prompts/cycle.md` step 4 now also appends each decision to `memory/decisions.jsonl`; prompt/docs only; pushed
 - [ ] **owner:** in Bybit, check the API key is trade-only: withdrawals and transfers off, IP allow-list on if offered
 - [ ] **owner:** create a Bybit **testnet** account + API key (contract-trading permission only), set it in
   `~/.codex/config.toml`'s `risk-gate` MCP env block (not in the repo), and run one real manual cycle

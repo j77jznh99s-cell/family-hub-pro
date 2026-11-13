@@ -74,7 +74,7 @@ its README/CHANGELOG; blocked on OANDA setup) · [[Gumroad Digital Products]] (d
 lines written 2026-09-26, sourced; owner still picks one, [[Decisions]] #20) · [[StarNet Automation]] (plan ready,
 needs the laptop) · [[Family Hub]] · [[Bybit Trading Bot]] (scaffold built & pushed 2026-09-21 to
 `claude/bybit-trading-bot-risk-gate-r7apfr`; all local work pushed 2026-11-10 up to `fcbe66b` (endpoint allow-list: the
-gate's key can't reach withdraw/transfer); gate 99/99, tsc clean; blocked on the owner supplying a real Bybit testnet key — see [[Bybit Trading Bot]]).
+gate's key can't reach withdraw/transfer); gate 99/99, tsc clean; 2026-11-13 each cycle's decision now also appended to `memory/decisions.jsonl` (`3531d09`); blocked on the owner supplying a real Bybit testnet key — see [[Bybit Trading Bot]]).
 
 **NEW 2026-10-03: [[Starling Heist]]**, a brand-new Roblox steal-and-collect game, built from scratch on request
 (branch `claude/starling-heist`, folder `roblox/starling-heist/`). Complete code, tests, CI and docs, but **not yet

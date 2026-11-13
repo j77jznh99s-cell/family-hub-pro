@@ -1,6 +1,14 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-13 15:55: local hourly run (manual) — Bybit: append-only decision history
+**Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `3531d09`) · **Agents used:** none (orchestrator inline; prompt/docs change)
+
+- Checked the Ideas item "single kill switch + append-only decision log": kill switch is one `HALT_TRADING` file checked on every write tool; `logs/audit.jsonl` is only ever appended to.
+- Gap: `memory/decision.json` is overwritten every cycle, so past decisions (including "none") were lost. `prompts/cycle.md` step 4 now also appends the decision to `memory/decisions.jsonl` (new, empty, tracked); README layout updated. No code or gate change, no exchange calls.
+- Pushed `3531d09`.
+
+---
 ## 2026-11-13 15:50: local hourly run — Family Hub: app and widget file access now coordinated (NSFileCoordinator)
 **Device:** PC (desktop app) · **Branch:** `claude/family-hub-widget-1w7cv9` (worktree `fhp-family-wt`, `13ff679`) · **Agents used:** none (orchestrator inline; ~30-line change)
 
