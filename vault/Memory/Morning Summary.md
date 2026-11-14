@@ -8,6 +8,26 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-14
+
+**Done overnight**
+- Local-PC hourly run (2026-11-13 15:50): Family Hub's app and widget now coordinate file access with `NSFileCoordinator` (`13ff679`, pushed, not compiled) — this was the last agent-owned Family Hub task; only your questions and the Xcode build are left there.
+- Local-PC hourly run (2026-11-13 15:55): Bybit bot's decision history is no longer overwritten each cycle — every cycle's decision now also appends to `memory/decisions.jsonl` (`3531d09`, pushed; prompt/docs only, no code/gate change).
+
+**New projects waiting for your OK**
+- None new (Game Asset Store's Daily Streaks Kit and Starling Heist, both from 2026-11-10, are still untested/unlisted).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged otherwise — see [[Active Context]]'s "Waiting on the owner" list (Bybit API key check, Sproutling Isles Studio play-test, Family Hub Xcode build, etc.).
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed or you weigh in on one of the above.
+
+---
+
 ## 2026-11-13
 
 **Done overnight**
