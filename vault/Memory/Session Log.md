@@ -1,6 +1,15 @@
 ---
 tags: [memory, log]
 ---
+## 2026-11-15 21:20: local hourly run — Sproutling Isles: Daily Tasks rolled from the saved level
+**Device:** PC (desktop app) · **Branch:** `claude/roblox-popular-game-trends-6u7sie` (worktree `fhp-roblox-wt`, `7e286a5`) · **Agents used:** none (orchestrator inline; one-line fix after a static review)
+
+- AI Agent Team skipped (same uncommitted `agents/inbox/LOG.md` + `agents/newsletter/LOG.md`); Clip Studio has only owner tasks.
+- Static review of the never-reviewed cloud Daily Tasks (`9dee71e`: `DailyService`, `Shared/DailyTasks`, the `State.track` hooks). One bug fixed: the day's tasks were rolled from the `Level` attribute, which `LevelService` sets from its own join poller (it also waits for leaderstats). DailyService's first push could run first, roll with level 1 and save that for the day, so a high-level player got no earth/fire/water hunts until the next UTC day. Now uses `LevelService.level` (saved `session.data.level`).
+- Checked and fine: streak keeps only after a full yesterday, all-done crate paid once (`full` flag saved), "silver"/"gold" crate tiers exist, every quest pays Dew so the `quest` hook always fires.
+- Not linted/built (no selene/rojo/lune), not Studio-tested. Pushed `7e286a5`.
+
+---
 ## 2026-11-13 15:55: local hourly run (manual) — Bybit: append-only decision history
 **Device:** PC (desktop app) · **Branch:** `claude/bybit-trading-bot-risk-gate-r7apfr` (worktree `fhp-bybit-wt`, `3531d09`) · **Agents used:** none (orchestrator inline; prompt/docs change)
 
