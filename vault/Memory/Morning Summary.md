@@ -8,6 +8,25 @@ Written each day at about 7:45 am Eastern by the morning Routine (see [[Hourly W
 
 ---
 
+## 2026-11-16
+
+**Done overnight**
+- Local-PC hourly run (2026-11-15 21:20): static review of Sproutling Isles' Daily Tasks found and fixed a bug — a high-level player who joined before their `Level` attribute loaded could get stuck with a day of level-1-only tasks; tasks now roll from the saved level instead (`7e286a5`, pushed, not linted/Studio-tested).
+
+**New projects waiting for your OK**
+- None new (Game Asset Store's Daily Streaks Kit and Starling Heist, both from 2026-11-10, are still untested/unlisted).
+
+**Needs you: costs money**
+- Nothing new.
+
+**Needs you**
+- Unchanged — see [[Active Context]]'s "Waiting on the owner" list.
+
+**Next up**
+- Nothing automatic until the hourly worker is resumed or you weigh in on one of the above.
+
+---
+
 ## 2026-11-15
 
 **Done overnight**
