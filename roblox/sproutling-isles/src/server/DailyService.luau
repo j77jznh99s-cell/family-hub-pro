@@ -31,7 +31,9 @@ local function today(session: any): any
 	local day = DailyTasks.day(now)
 	local d = session.data.daily
 	if not d or d.day ~= day then
-		local level = session.player:GetAttribute("Level") or 1
+		-- saved level, not the Level attribute: LevelService sets that a moment after join, and
+		-- a roll before then would lock a high-level player into level-1 tasks for the day
+		local level = LevelService.level(session.player)
 		local pool = {}
 		for _, t in DailyTasks.Pool do
 			if level >= (t.minLevel or 1) then
