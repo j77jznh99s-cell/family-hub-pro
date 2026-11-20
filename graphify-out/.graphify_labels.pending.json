@@ -14,7 +14,7 @@
   "12": "upload.js",
   "13": "Gumroad Digital Products",
   "14": "services/billing.js",
-  "15": "config.js",
+  "15": "Clip Studio",
   "16": "config.js",
   "17": "package.json",
   "18": "1. Pre-launch checklist",
@@ -29,7 +29,7 @@
   "27": "Sproutling Isles: Launch & Live Ops",
   "28": "CLAUDE.md — read this first, every session",
   "29": "storage.test.js",
-  "30": "routes/billing.js",
+  "30": "config.js",
   "31": "dependencies",
   "32": "knowledgeGraph.test.js",
   "33": "db.test.js",
@@ -71,6 +71,11 @@
   "69": "better-sqlite3",
   "70": "cors",
   "71": "stripe",
+  "72": "ffmpeg.js",
+  "73": "Demand brief (2026-11-09)",
   "74": "Crypto Signals (momentum checkpoint system)",
-  "75": "ref_path"
+  "75": "ref_path",
+  "76": "express",
+  "77": "clips.js",
+  "78": "Decisions"
 }
